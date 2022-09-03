@@ -1,0 +1,8 @@
+[package]
+name = "ray"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.48.0"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "ba6b1422904951dbdfa78c49f7a84ad128977e8f"}
