@@ -1,4 +1,4 @@
--- Hartogs' lemma for two variables: separately analytic functions are jointly analytic
+-- Hartogs's theorem for two variables: separately analytic functions are jointly analytic
 --   https://en.wikipedia.org/wiki/Hartogs's_theorem_on_separate_holomorphicity
 --   https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf
 
@@ -565,7 +565,7 @@ lemma uneven_term.analytic (u : uneven f c0 c1 r0 r1) (n : ℕ)
   exact continuous_linear_map.comp_analytic_on _ (uneven_series_analytic u n),
 end
 
--- The subharmonic functions we'll apply Hartog's lemma to
+-- The subharmonic functions we'll apply Hartogs's lemma to
 def uneven_log (u : uneven f c0 c1 r0 r1) (n : ℕ) (z1 : ℂ) : ℝ := (↑n)⁻¹ * max_log (-1) (∥r1^n • uneven_term u z1 n∥)
 
 -- Uniform bound on uneven_term in terms of uneven_log
@@ -712,7 +712,7 @@ end
   
 end hartogs
 
--- Hartog's theorem on ℂ × ℂ: separately analytic functions are jointly analytic
+-- Hartogs's theorem on ℂ × ℂ: separately analytic functions are jointly analytic
 theorem pair.hartogs {E : Type} [normed_add_comm_group E] [normed_space ℂ E] [complete_space E] [second_countable_topology E]
     {f : ℂ × ℂ → E} {s : set (ℂ × ℂ)} (so : is_open s)
     (fa0 : ∀ (c0 c1), (c0,c1) ∈ s → analytic_at ℂ (λ z0, f (z0,c1)) c0)

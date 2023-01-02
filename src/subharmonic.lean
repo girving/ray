@@ -1,4 +1,4 @@
--- Subharmonic / harmonic functions and Hartog's lemma
+-- Subharmonic / harmonic functions and Hartogs's lemma
 
 import analysis.convex.integral
 import analysis.fourier
@@ -856,7 +856,7 @@ lemma subharmonic_on.neg {f : ℂ → ℝ} {s : set ℂ}
   end,
 }
 
--- Hartog's lemma from https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf, superharmonic ennreal case.
+-- Hartogs's lemma from https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf, superharmonic ennreal case.
 -- Superharmonic functions that are bounded below and liminf bounded pointwise are liminf bounded uniformly.
 lemma superharmonic_on.hartogs {f : ℕ → ℂ → ennreal} {s k : set ℂ} {c : ennreal}
     (fs : ∀ n, superharmonic_on (f n) s) (fc : ∀ z, z ∈ s → at_top.liminf (λ n, f n z) ≥ c)
@@ -887,9 +887,9 @@ lemma superharmonic_on.hartogs {f : ℕ → ℂ → ennreal} {s k : set ℂ} {c 
     refine (h0.and h1).mp(filter.eventually_of_forall _),
     intros n h z zs, cases zs, exact h.1 z zs, exact h.2 z zs,
   },
-  -- Base case: Hartog's lemma near a point.  We choose radii r1 < r2 within s, apply
+  -- Base case: Hartogs's lemma near a point.  We choose radii r1 < r2 within s, apply
   -- Fatou's lemma at r1, use monotonicity to bound by r2 integrals, and apply the submean
-  -- property with radius r2 to get Hartog's within radius r2-r1.
+  -- property with radius r2 to get Hartogs's within radius r2-r1.
   intros z zs,
   rcases metric.is_open_iff.mp is_open_interior z (ks zs) with ⟨r,rp,rs⟩,
   generalize hr2 : r/2 = r2,  -- We'll use the submean property on disks of radius r2 < r
@@ -939,7 +939,7 @@ lemma superharmonic_on.hartogs {f : ℕ → ℂ → ennreal} {s k : set ℂ} {c 
   have fatou := le_liminf.simple.mp (trans im fatou') (e * volume (closed_ball z r1)) vec,
   rw complex.volume_closed_ball (le_of_lt r1p) at fatou,
   clear fatou' im fc vec,
-  -- Within radius r2-r1, Fatou's lemma implies local Hartog's
+  -- Within radius r2-r1, Fatou's lemma implies local Hartogs's
   use [closed_ball z (r2-r1), mem_nhds_within_of_mem_nhds (metric.closed_ball_mem_nhds _ (by bound))],
   refine fatou.mp (filter.eventually_of_forall _),
   intros n fn w ws,
@@ -951,7 +951,7 @@ lemma superharmonic_on.hartogs {f : ℕ → ℂ → ennreal} {s k : set ℂ} {c 
   ... ≤ f n w : (fs n).supmean w r2 r2p (r2s w ws),
 end
 
--- Hartog's lemma from https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf, real case.
+-- Hartogs's lemma from https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf, real case.
 -- Subharmonic functions that are bounded above and limsup bounded pointwise are limsup bounded uniformly.
 -- I'm going to write out the definition of limsup ≤ c since ℝ not being complete makes it otherwise complicated.
 lemma subharmonic_on.hartogs {f : ℕ → ℂ → ℝ} {s k : set ℂ} {c b : ℝ}
@@ -989,7 +989,7 @@ lemma subharmonic_on.hartogs {f : ℕ → ℂ → ℝ} {s k : set ℂ} {c b : �
     ... = ennreal.of_real (d.to_real) : by ring_nf
     ... = d : by rw ennreal.of_real_to_real df,
   },
-  -- Apply Hartog's lemma to g
+  -- Apply Hartogs's lemma to g
   have ks' := ks, rw ←interior_interior at ks',
   have h := superharmonic_on.hartogs gs gc ck ks',
   -- Finish up

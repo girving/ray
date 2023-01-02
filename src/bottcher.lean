@@ -412,7 +412,7 @@ theorem bottcher_analytic_c (s : super_c f g cs d r) {z : ℂ} (zm : z ∈ ball 
   repeat { exact complete_of_proper }
 end
 
--- bottcher is jointly analytic (using Hartog's theorem for simplicity)
+-- bottcher is jointly analytic (using Hartogs's theorem for simplicity)
 theorem bottcher_analytic2 (s : super_c f g cs d r)
     : analytic_on ℂ (uncurry (bottcher_c s)) (cs ×ˢ (ball (0 : ℂ) r)) := begin
   apply pair.hartogs (s.o.prod metric.is_open_ball), {
