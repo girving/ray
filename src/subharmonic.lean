@@ -228,7 +228,7 @@ theorem harmonic_on.linear {f : ℂ → E} {s : set ℂ} (fh : harmonic_on f s) 
 
 -- Real parts of harmonic functions are harmonic
 theorem harmonic_on.re {f : ℂ → ℂ} {s : set ℂ} (fh : harmonic_on f s) : harmonic_on (λ z, (f z).re) s := begin
-  simp only [←re_clm_apply], exact fh.linear _,
+  simp only [←complex.re_clm_apply], exact fh.linear _,
 end
 
 -- Complex conjugates of harmonic functions are harmonic

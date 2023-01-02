@@ -54,6 +54,10 @@ def fst_cmmap (R : Type) (A B : Type) [semiring R]
     [add_comm_monoid A] [module R A] [topological_space A]
     [add_comm_monoid B] [module R B] [topological_space B]
     : continuous_multilinear_map R (λ _ : fin 1, A × B) A := {
+  -- Once we upgrade mathlib, this can be
+  --   (continuous_linear_map.fst R A B).comp_continuous_multilinear_map
+  --     (continuous_multilinear_map.of_subsingleton R (A × B) (0 : fin 1))
+  -- and similarly for snd_cmmap.
   to_fun := λ z, (z 0).fst,
   map_add' := begin intros z i x y, have i0 : i = 0 := by simp, rw i0, simp end,
   map_smul' := begin intros z i s x, have i0 : i = 0 := by simp, rw i0, simp end,
@@ -285,14 +289,6 @@ lemma term_cmmap_norm (𝕜 : Type) [nontrivially_normed_field 𝕜] [normed_add
     }
   }
 end
-
--- re as a continuous_linear_map
-def re_clm : ℂ →L[ℝ] ℝ := {
-  to_fun := λ z, z.re,
-  map_add' := by simp,
-  map_smul' := by simp,
-}
-lemma re_clm_apply (z : ℂ) : re_clm z = z.re := rfl
 
 -- conj as a continuous_linear_map
 def conj_clm : ℂ →L[ℝ] ℂ := {
