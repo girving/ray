@@ -1,10 +1,13 @@
 -- Integration over the complex closed disk
 
+import analysis.special_functions.integrals
+import measure_theory.constructions.prod.integral
 import measure_theory.function.jacobian
+import measure_theory.integral.circle_integral
+import measure_theory.measure.lebesgue.complex
 
 import measure
 import prod
-import simple
 import tactics
 
 open complex (abs arg exp I)
@@ -45,7 +48,7 @@ lemma rcm_deriv.det (x : ℝ × ℝ) : (rcm_deriv x).det = x.1 := begin
   rw [continuous_linear_map.det, ←linear_map.det_to_matrix (basis.fin_two_prod ℝ), ←rcm_matrix],
   rw [matrix.det_fin_two, rcm00, rcm01, rcm10, rcm11], ring_nf,
   calc x.1 * cos x.2^2 + sin x.2^2 * x.1 = x.1 * (cos x.2^2 + sin x.2^2) : by ring
-  ... = x.1 : by simp,
+  ... = x.1 : by simp only [real.cos_sq_add_sin_sq, mul_one],
 end
 
 end real_circle_map
@@ -71,21 +74,25 @@ lemma circle_map_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) : ∃ t, t �
   generalize ha : 2*π = a,
   have ap : a > 0, { rw ←ha, exact real.two_pi_pos },
   set s := t + a - a*⌈t/a⌉,
-  existsi s, constructor, {
-    simp, constructor, {
+  use s, constructor, {
+    simp only [set.mem_Ioc, sub_pos, tsub_le_iff_right],
+    constructor, {
       calc a*⌈t/a⌉ < a*(t/a+1) : by bound [(mul_lt_mul_left ap).mpr, int.ceil_lt_add_one]
       ... = a/a*t + a : by ring
       ... = t + a : by field_simp [ne_of_gt ap]
     }, {
-      flip_ineq,
       calc a + a*⌈t/a⌉ ≥ a + a*(t/a) : by bound [int.le_ceil]
       ... = a/a*t + a : by ring
       ... = t + a : by field_simp [ne_of_gt ap]
     }
   }, {
-    rw [←ht, circle_map], simp,
+    rw [←ht, circle_map],
+    simp only [complex.of_real_sub, complex.of_real_add, complex.of_real_mul, complex.of_real_int_cast, add_right_inj,
+      mul_eq_mul_left_iff, complex.of_real_eq_zero],
     rw [mul_sub_right_distrib, right_distrib, complex.exp_sub, complex.exp_add],
-    rw [mul_comm _ ↑⌈_⌉, mul_assoc, complex.exp_int_mul, ←ha], simp,
+    rw [mul_comm _ ↑⌈_⌉, mul_assoc, complex.exp_int_mul, ←ha],
+    simp only [complex.of_real_mul, complex.of_real_bit0, complex.of_real_one, complex.exp_two_pi_mul_I, mul_one, one_zpow, div_one,
+      eq_self_iff_true, true_or],
   },
 end
 
@@ -101,17 +108,27 @@ lemma square_eq {c : ℂ} {r : ℝ}
     : complex.measurable_equiv_real_prod.symm ⁻¹' (closed_ball c r \ {c}) = real_circle_map c '' square r := begin
   rw ←measurable_equiv.image_eq_preimage,
   have e : real_circle_map c = (λ x : ℝ × ℝ, complex.measurable_equiv_real_prod (circle_map c x.1 x.2)), {
-    funext, rw real_circle_map_eq_circle_map, simp [complex.measurable_equiv_real_prod],
+    funext,
+    simp only [real_circle_map_eq_circle_map, complex.measurable_equiv_real_prod, complex.equiv_real_prod_apply,
+      homeomorph.to_measurable_equiv_coe, continuous_linear_equiv.coe_to_homeomorph,
+      complex.equiv_real_prod_clm_apply],
   },
   have i : (λ x : ℝ × ℝ, circle_map c x.1 x.2) '' square r = closed_ball c r \ {c}, {
     apply set.ext, intro z, rw set.mem_image, constructor, {
-      intro gp, rcases gp with ⟨⟨s,t⟩,ss,tz⟩, simp at tz, simp [square] at ss, rw ←tz, simp,
+      intro gp, rcases gp with ⟨⟨s,t⟩,ss,tz⟩,
+      simp only at tz,
+      simp only [square, set.prod_mk_mem_set_prod_eq, set.mem_Ioc] at ss,
+      rw ←tz,
+      simp only [set.mem_diff, metric.mem_closed_ball, set.mem_singleton_iff, circle_map_eq_center_iff],
       exact ⟨by simp [circle_map, abs_of_pos ss.1.1, ss.1.2], ne_of_gt ss.1.1⟩,
     }, {
-      intro zr, simp at zr, rw dist_comm at zr,
-      have zz : z ∈ sphere c (dist c z), { simp [complex.dist_eq], rw ←complex.abs_neg, simp },
+      intro zr, simp only [set.mem_diff, metric.mem_closed_ball, set.mem_singleton_iff] at zr, rw dist_comm at zr,
+      have zz : z ∈ sphere c (dist c z), {
+        simp only [complex.dist_eq, mem_sphere_iff_norm, complex.norm_eq_abs], rw complex.abs.map_sub,
+      },
       rcases circle_map_Ioc zz with ⟨t,ts,tz⟩,
-      existsi (⟨dist c z, t⟩ : ℝ × ℝ), simp [dist_nonneg, zr, ne.symm zr.2, square, ts, tz.symm],
+      use [dist c z, t],
+      simp [dist_nonneg, zr, ne.symm zr.2, square, ts, tz.symm],
     },
   },
   rw [e, set.image_comp _ _ (square r), i],
@@ -129,13 +146,13 @@ lemma arg_exp_of_im (t : ℝ) : ∃ n : ℤ, arg (exp (t * I)) = t - 2*π*n := b
   have en : exp (2*π*n*I) = 1, { rw [mul_comm _ ↑n, mul_assoc, complex.exp_int_mul], simp [complex.exp_neg] },
   have e : exp (t*I) = exp (↑(t - 2*π*n)*I) := by simp [mul_sub_right_distrib, complex.exp_sub, en],
   have ts : t - 2*π*n ∈ Ioc (-π) π, {
-    simp, constructor, {
+    simp only [set.mem_Ioc, neg_lt_sub_iff_lt_add, tsub_le_iff_right],
+    constructor, {
       have h : ↑n < t*(2*π)⁻¹ - 1/2 + 1, { rw ←hn, exact int.ceil_lt_add_one _ },
       calc 2*π*↑n < 2*π*(t*(2*π)⁻¹ - 1/2 + 1) : by bound [(mul_lt_mul_left real.two_pi_pos).mpr]
       ... = π + (2*π)*(2*π)⁻¹*t : by ring
       ... = π + t : by field_simp [ne_of_gt real.two_pi_pos]
     }, {
-      flip_ineq,
       have h : ↑n ≥ t*(2*π)⁻¹ - 1/2, { rw ←hn, exact int.le_ceil _ },
       calc π + 2*π*↑n ≥ π + 2*π*(t*(2*π)⁻¹ - 1/2) : by bound [real.two_pi_pos]
       ...  = (2*π)*(2*π)⁻¹*t : by ring
@@ -159,23 +176,30 @@ lemma rcm_inj {c : ℂ} {r : ℝ} : set.inj_on (real_circle_map c) (square r) :=
   rw [←ae, hx] at h, clear e ae hx,
   have n0 : 2*π*(nx - ny) < (2*π)*1 := by linarith,
   have n1 : (2*π)*-1 < 2*π*(nx - ny) := by linarith,
-  have hn : (nx : ℝ) - ny = ↑(nx - ny) := by simp,
-  have hn1 : (-1 : ℝ) = ↑(-1 : ℤ) := by simp,
-  have h1 : (1 : ℝ) = ↑(1 : ℤ) := by simp,
+  have hn : (nx : ℝ) - ny = ↑(nx - ny) := by simp only [int.cast_sub],
+  have hn1 : (-1 : ℝ) = ↑(-1 : ℤ) := by simp only [int.cast_neg, algebra_map.coe_one],
+  have h1 : (1 : ℝ) = ↑(1 : ℤ) := by simp only [algebra_map.coe_one],
   rw [mul_lt_mul_left real.two_pi_pos, hn] at n0 n1,
   rw hn1 at n1, rw h1 at n0, rw int.cast_lt at n0 n1,
   have n : nx = ny := by linarith,
   rw n at h,
   have i : x.2 = y.2 := by linarith,
   have g : (x.1,x.2) = (y.1,y.2) := by rw [re, i],
-  simp at g, exact g,
+  simp only [prod.mk.eta] at g, exact g,
 end
 
 end fubini_helper
 
 -- Inverse lemma for fubini_ball
 lemma measurable_symm_equiv_inverse {z : ℂ} : complex.measurable_equiv_real_prod.symm (complex.equiv_real_prod z) = z := begin
-  simp, rw [complex.measurable_equiv_real_prod, homeomorph.to_measurable_equiv_symm_coe], simp, apply complex.ext, simp, simp,
+  simp only [complex.equiv_real_prod_apply],
+  rw [complex.measurable_equiv_real_prod, homeomorph.to_measurable_equiv_symm_coe],
+  simp only [continuous_linear_equiv.symm_to_homeomorph, continuous_linear_equiv.coe_to_homeomorph],
+  apply complex.ext, {
+    simp only [complex.equiv_real_prod_clm_symm_apply_re],
+  }, {
+    simp only [complex.equiv_real_prod_clm_symm_apply_im],
+  },
 end
 
 -- circle_map is continuous on ℝ × ℝ
@@ -206,7 +230,8 @@ lemma fubini_ball {E : Type} [normed_add_comm_group E] [normed_space ℝ E] [com
   have e : ∀ x : ℝ × ℝ, x ∈ square r → |x.1| • f (circle_map c x.1 x.2) = x.1 • f (circle_map c x.1 x.2), {
     intros x xs, rw abs_of_pos (square.rp xs),
   },
-  rw measure_theory.set_integral_congr measurable.square e, clear e, simp,
+  rw measure_theory.set_integral_congr measurable.square e, clear e,
+  simp only,
   rw [square, measure.volume_eq_prod, measure_theory.set_integral_prod],
   simp [integral_smul],
   have fi : integrable_on (λ x : ℝ × ℝ, x.1 • f (circle_map c x.1 x.2)) (Icc 0 r ×ˢ Icc 0 (2*π)), {
@@ -215,7 +240,8 @@ lemma fubini_ball {E : Type} [normed_add_comm_group E] [normed_space ℝ E] [com
     apply continuous_on.smul,
     exact continuous_fst.continuous_on,
     apply fc.comp (continuous_circle_map_full.continuous_on),
-    intros x xs, simp only, simp at xs,
+    intros x xs, simp only,
+    simp only [set.Icc_prod_Icc, set.mem_Icc] at xs,
     apply metric.closed_ball_subset_closed_ball xs.2.1,
     apply circle_map_mem_closed_ball _ xs.1.1,
   },
@@ -223,11 +249,16 @@ lemma fubini_ball {E : Type} [normed_add_comm_group E] [normed_space ℝ E] [com
 end 
 
 -- The volume of complex closed balls
-lemma complex.volume_closed_ball' {c : ℂ} {r : ℝ} (rp : r ≥ 0) : (volume (closed_ball c r)).to_real = π * r^2 := begin
+lemma complex.volume_closed_ball' {c : ℂ} {r : ℝ} (rp : r ≥ 0)
+    : (complex.measure_space.volume (closed_ball c r)).to_real = π * r^2 := begin
   have c : continuous_on (λ _ : ℂ, (1 : ℝ)) (closed_ball c r) := continuous_on_const,
   have f := fubini_ball c, clear c,
-  simp [ennreal.to_real_of_real (le_of_lt real.two_pi_pos), ←interval_integral.integral_of_le rp] at f,
-  have e : r ^ 2 / 2 * (2 * π) = π * r^2 := by ring, rwa e at f,
+  have e : r ^ 2 / 2 * (2 * π) = π * r^2 := by ring,
+  simp only [e, ennreal.to_real_of_real (le_of_lt real.two_pi_pos), ←interval_integral.integral_of_le rp, integral_const,
+    measure.restrict_apply, measurable_set.univ, set.univ_inter, algebra.id.smul_eq_mul, mul_one, real.volume_Ioc,
+    tsub_zero, interval_integral.integral_mul_const, integral_id, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero,
+    not_false_iff] at f,
+  exact f,
 end
 
 lemma complex.volume_closed_ball {c : ℂ} {r : ℝ} (rp : r ≥ 0) : volume (closed_ball c r) = ennreal.of_real (π * r^2) := begin
@@ -294,7 +325,9 @@ lemma nice_volume.closed_ball (c : ℂ) {r : ℝ} (rp : r > 0) : nice_volume (cl
 -- closed_balls have local volume
 lemma local_volume.closed_ball {c : ℂ} {r : ℝ} (rp : r > 0) : local_volume_set (closed_ball c r) := begin
   apply local_volume.closure_interior,
-  intros x r rp, rw complex.volume_ball (le_of_lt rp), simp, bound [real.pi_pos],
+  intros x r rp,
+  simp only [complex.volume_ball (le_of_lt rp), gt_iff_lt, ennreal.of_real_pos],
+  bound [real.pi_pos],
   have rz := ne_of_gt rp,
-  simp [interior_closed_ball c rz, closure_ball c rz],
+  simp only [interior_closed_ball c rz, closure_ball c rz],
 end

@@ -6,6 +6,7 @@ import analysis.analytic.basic
 import analysis.calculus.fderiv_analytic
 import analysis.complex.cauchy_integral
 import analysis.inner_product_space.euclidean_dist
+import analysis.normed.field.infinite_sum
 import analysis.normed.group.basic
 import analysis.normed_space.multilinear
 import data.complex.basic
@@ -22,9 +23,7 @@ import topology.basic
 
 import analytic
 import bounds
-import holomorphic
 import multilinear
-import simple
 import tactics
 import topology
 
@@ -34,7 +33,7 @@ open function (curry uncurry)
 open linear_order (min)
 open metric (ball closed_ball sphere bounded is_open_ball)
 open prod (swap)
-open_locale real nnreal ennreal topological_space
+open_locale real nnreal ennreal topology
 noncomputable theory
 
 section osgood
@@ -75,7 +74,7 @@ structure sep (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r b : ℝ) (s : set (ℂ × 
   (fa0 : ∀ {c0 c1}, (c0,c1) ∈ s → analytic_at ℂ (λ z0, f (z0,c1)) c0)
   (fa1 : ∀ {c0 c1}, (c0,c1) ∈ s → analytic_at ℂ (λ z1, f (c0,z1)) c1)
   (bp : b ≥ 0)
-  (fb : ∀ {z0 z1}, z0 ∈ sphere c0 r → z1 ∈ sphere c1 r → ∥f (z0,z1)∥ ≤ b)
+  (fb : ∀ {z0 z1}, z0 ∈ sphere c0 r → z1 ∈ sphere c1 r → ‖f (z0,z1)‖ ≤ b)
 
 lemma spheres_subset_closed_ball {c0 c1 : ℂ} {r : ℝ} : sphere c0 r ×ˢ sphere c1 r ⊆ closed_ball (c0,c1) r := begin
   rw [←closed_ball_prod_same, set.subset_def], intro z, simp, rw [complex.dist_eq, complex.dist_eq],
@@ -89,7 +88,7 @@ lemma mem_sphere_closed {z c : ℂ} {r : ℝ} : z ∈ sphere c r → z ∈ close
 
 -- Spheres don't contain their center
 lemma center_not_in_sphere {c z : ℂ} {r : ℝ} (rp : r > 0) (zs : z ∈ sphere c r) : z - c ≠ 0 := begin
-  simp at zs, rw ←complex.abs_ne_zero, rw zs, exact ne_of_gt rp
+  simp at zs, rw ←complex.abs.ne_zero_iff, rw zs, exact ne_of_gt rp,
 end
 
 -- f is continuous in z0
@@ -182,12 +181,12 @@ lemma continuous_on.circle_integral {f : ℂ → ℂ → E} {s : set ℂ}
     : continuous_on (λ z0, ∮ z1 in C(c1, r), f z0 z1) s := begin
   rcases fc.bounded_norm (is_compact.prod cs (is_compact_sphere _ _)) with ⟨b,_,bh⟩,
   intros z1 z1s,
-  have fb : ∀ᶠ (x : ℂ) in 𝓝[s] z1, ∀ᵐ (t : ℝ), t ∈ set.interval_oc 0 (2 * π) →
-      ∥deriv (circle_map c1 r) t • (λ (z1 : ℂ), f x z1) (circle_map c1 r t)∥ ≤ r * b, {
+  have fb : ∀ᶠ (x : ℂ) in 𝓝[s] z1, ∀ᵐ (t : ℝ), t ∈ set.uIoc 0 (2 * π) →
+      ‖deriv (circle_map c1 r) t • (λ (z1 : ℂ), f x z1) (circle_map c1 r t)‖ ≤ r * b, {
     apply eventually_nhds_within_of_forall, intros x xs, 
     apply measure_theory.ae_of_all _, intros t ti, simp, rw [norm_smul, complex.norm_eq_abs], simp,
     have bx := bh (x, circle_map c1 r t) (set.mk_mem_prod xs (circle_map_mem_sphere c1 (by bound) t)),
-    calc |r| * ∥f x (circle_map c1 r t)∥ ≤ |r| * b : by bound
+    calc |r| * ‖f x (circle_map c1 r t)‖ ≤ |r| * b : by bound
     ... = r * b : by rw abs_of_pos rp
   },
   refine interval_integral.continuous_within_at_of_dominated_interval _ fb (by simp) _, {
@@ -199,7 +198,7 @@ lemma continuous_on.circle_integral {f : ℂ → ℂ → E} {s : set ℂ}
     simp, rw comp, apply continuous_on.comp fc,
     exact continuous_on.prod continuous_on_const (continuous.continuous_on (continuous_circle_map _ _)),
     intros t ti, simp, exact ⟨xs, by bound⟩,
-    exact measurable_set_interval_oc
+    exact measurable_set_uIoc
   }, {
     apply measure_theory.ae_of_all _, intros t ti, simp,
     apply continuous_on.smul continuous_on_const,
@@ -218,14 +217,15 @@ lemma continuous_on.inv_sphere {c : ℂ} {r : ℝ} (rp : r > 0) : continuous_on 
 lemma continuous_on.inv_sphere_ball {c w : ℂ} {r : ℝ} (rp : r > 0) (wr : w ∈ ball (0 : ℂ) r)
     : continuous_on (λ z, (z - (c + w))⁻¹) (sphere c r) := begin
   refine continuous_on.inv₀ (continuous_on.sub continuous_on_id continuous_on_const) (λ z zs, _),
-  rw ←complex.abs_ne_zero, simp at zs wr,
-  apply ne_of_gt, flip_ineq,
+  rw ←complex.abs.ne_zero_iff,
+  simp only [mem_ball_zero_iff, complex.norm_eq_abs, mem_sphere_iff_norm] at zs wr,
+  apply ne_of_gt,
   calc abs (z - (c + w)) = abs (z - c + (-w)) : by ring_nf
-  ... ≥ abs (z - c) - abs (-w) : simple.abs_sub_ge _ _
+  ... ≥ abs (z - c) - abs (-w) : by bound
   ... = r - abs (-w) : by rw zs
-  ... = r - abs w : by simp
+  ... = r - abs w : by rw complex.abs.map_neg
   ... > r - r : sub_lt_sub_left wr _
-  ... = 0 : by ring
+  ... = 0 : by ring,
 end
 
 -- Cauchy series terms are continuous in the function
@@ -258,7 +258,7 @@ lemma seminorm_eq_norm (x : E)
 -- Sums commute with circle_integral under reasonable hypotheses
 lemma sum_integral_commute {f : ℕ → ℂ → E} {g : ℂ → E} {c : ℂ} {r : ℝ}
     (b : ℕ → ℝ) (rp : r > 0) (fc : ∀ n, continuous_on (f n) (sphere c r))
-    (fb : ∀ n z, z ∈ sphere c r → ∥f n z∥ ≤ b n) (bs : summable b)
+    (fb : ∀ n z, z ∈ sphere c r → ‖f n z‖ ≤ b n) (bs : summable b)
     (h : ∀ z, z ∈ sphere c r → has_sum (λ n, f n z) (g z))
     : has_sum (λ n, ∮ z in C(c, r), f n z) (∮ z in C(c, r), g z) := begin
   rw circle_integral, simp_rw circle_integral, simp,
@@ -267,7 +267,7 @@ lemma sum_integral_commute {f : ℕ → ℂ → E} {g : ℂ → E} {c : ℂ} {r 
     apply continuous_on.mul (continuous.continuous_on (continuous_circle_map _ _)) continuous_on_const,
     apply continuous_on.comp (fc n) (continuous.continuous_on (continuous_circle_map _ _)),
     intros t ti, exact circle_map_mem_sphere _ (by bound) _,
-    exact measurable_set_interval_oc
+    exact measurable_set_uIoc,
   }, {
     intro n, apply measure_theory.ae_of_all, intros t ti, rw [norm_smul, complex.norm_eq_abs], simp, rw abs_of_pos rp,
     refine mul_le_mul_of_nonneg_left _ (le_of_lt rp),
@@ -287,18 +287,18 @@ end
 
 -- The simple bound on circle_interval
 lemma bounded_circle_integral {f : ℂ → E} {c : ℂ} {r b : ℝ}
-    (rp : r > 0) (fc : continuous_on f (sphere c r)) (fb : ∀ z, z ∈ sphere c r → ∥f z∥ ≤ b)
-    : ∥∮ z in C(c,r), f z∥ ≤ 2 * π * r * b := begin
+    (rp : r > 0) (fc : continuous_on f (sphere c r)) (fb : ∀ z, z ∈ sphere c r → ‖f z‖ ≤ b)
+    : ‖∮ z in C(c,r), f z‖ ≤ 2 * π * r * b := begin
   rw circle_integral, simp,
   have nonneg_2π := le_of_lt real.two_pi_pos,
-  have ib : ∥∫ t in 0..2*π, (circle_map 0 r t * I) • f (circle_map c r t)∥
-          ≤ ∫ t in 0..2*π, ∥(circle_map 0 r t * I) • f (circle_map c r t)∥
+  have ib : ‖∫ t in 0..2*π, (circle_map 0 r t * I) • f (circle_map c r t)‖
+          ≤ ∫ t in 0..2*π, ‖(circle_map 0 r t * I) • f (circle_map c r t)‖
           := interval_integral.norm_integral_le_integral_norm nonneg_2π,
   refine trans ib _, clear ib,
   simp_rw [norm_smul, complex.norm_eq_abs], simp,
-  have mo : ∀ t, t ∈ set.Icc 0 (2*π) → ∥f (circle_map c r t)∥ ≤ b :=
+  have mo : ∀ t, t ∈ set.Icc 0 (2*π) → ‖f (circle_map c r t)‖ ≤ b :=
     λ t ti, fb (circle_map c r t) (circle_map_mem_sphere c (by bound) t),
-  have i0 : interval_integrable (λ t, ∥f (circle_map c r t)∥) real.measure_space.volume 0 (2*π), {
+  have i0 : interval_integrable (λ t, ‖f (circle_map c r t)‖) real.measure_space.volume 0 (2*π), {
     apply continuous_on.interval_integrable,
     have ca : continuous_on norm set.univ := continuous.continuous_on continuous_norm,
     refine continuous_on.comp ca _ (set.maps_to_univ _ _),
@@ -309,16 +309,16 @@ lemma bounded_circle_integral {f : ℂ → E} {c : ℂ} {r b : ℝ}
   have i1 : interval_integrable (λ _, b) real.measure_space.volume 0 (2*π) := interval_integrable_const,
   have im := interval_integral.integral_mono_on nonneg_2π i0 i1 mo,
   simp at im,
-  calc |r| * ∫ t in 0..2*π, ∥f (circle_map c r t)∥ ≤ |r| * (2*π*b) : by bound
+  calc |r| * ∫ t in 0..2*π, ‖f (circle_map c r t)‖ ≤ |r| * (2*π*b) : by bound
   ... = r * (2*π*b) : by rw abs_of_pos rp
   ... = 2*π*r*b : by ring
 end
 
 -- The 1D Cauchy integral without the constant has the expected bound
 lemma cauchy1_bound {f : ℂ → E} {b r : ℝ} {c : ℂ}
-    (rp : r > 0) (bp : b ≥ 0) (fc : continuous_on f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ∥f z∥ ≤ b) (n : ℕ)
-    : ∥∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z∥ ≤ 2 * π * b * r⁻¹^n := begin
-  have sb : ∀ z, z ∈ sphere c r → ∥(z - c)⁻¹^n • (z - c)⁻¹ • f z∥ ≤ r⁻¹^n * r⁻¹ * b, {
+    (rp : r > 0) (bp : b ≥ 0) (fc : continuous_on f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ‖f z‖ ≤ b) (n : ℕ)
+    : ‖∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z‖ ≤ 2 * π * b * r⁻¹^n := begin
+  have sb : ∀ z, z ∈ sphere c r → ‖(z - c)⁻¹^n • (z - c)⁻¹ • f z‖ ≤ r⁻¹^n * r⁻¹ * b, {
     intros z zs, have fb := bh z zs,
     rw [norm_smul, norm_smul, complex.norm_eq_abs, complex.norm_eq_abs], simp at ⊢ zs, rw zs, ring_nf, bound
   },
@@ -326,18 +326,18 @@ lemma cauchy1_bound {f : ℂ → E} {b r : ℝ} {c : ℂ}
     apply continuous_on.smul, apply continuous_on.pow, exact continuous_on.inv_sphere rp,
     apply continuous_on.smul, exact continuous_on.inv_sphere rp, assumption
   },
-  calc ∥∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z∥ ≤ 2 * π * r * (r⁻¹ ^ n * r⁻¹ * b) : isb
+  calc ‖∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z‖ ≤ 2 * π * r * (r⁻¹ ^ n * r⁻¹ * b) : isb
   ... = 2 * π * b * r⁻¹^n * (r * r⁻¹) : by ring 
   ... = 2 * π * b * r⁻¹^n : by { rw field.mul_inv_cancel (ne_of_gt rp), simp }
 end
 
 -- The 1D Cauchy integral with the constant has the expected bound
 lemma cauchy1_bound' {f : ℂ → E} {b r : ℝ} {c : ℂ}
-    (rp : r > 0) (bp : b ≥ 0) (fc : continuous_on f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ∥f z∥ ≤ b) (n : ℕ)
-    : ∥(2*π*I : ℂ)⁻¹ • ∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z∥ ≤ b * r⁻¹^n := begin
+    (rp : r > 0) (bp : b ≥ 0) (fc : continuous_on f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ‖f z‖ ≤ b) (n : ℕ)
+    : ‖(2*π*I : ℂ)⁻¹ • ∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z‖ ≤ b * r⁻¹^n := begin
   have a : abs ((2*π*I : ℂ)⁻¹) = (2*π)⁻¹, { simp, exact le_of_lt real.pi_pos },
   rw [norm_smul, complex.norm_eq_abs, a],
-  calc (2*π)⁻¹ * ∥∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z∥
+  calc (2*π)⁻¹ * ‖∮ z in C(c, r), (z - c)⁻¹^n • (z - c)⁻¹ • f z‖
       ≤ (2*π)⁻¹ * (2*π * b * r⁻¹^n) : by bound [cauchy1_bound rp bp fc bh n, rp, real.pi_pos]
   ... = (2*π)⁻¹ * (2*π) * b * r⁻¹^n : by ring
   ... = b * r⁻¹^n : by field_simp [ne_of_gt real.pi_pos]
@@ -346,7 +346,7 @@ end
 -- Corollary of cauchy1_bound used in cauchy2_has_sum_n1n0
 lemma cauchy2_has_sum_n1n0_bound (h : sep f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r) (w1m : w1 ∈ ball (0 : ℂ) r)
     (n : ℕ) {z0 : ℂ} (z0s : z0 ∈ sphere c0 r)
-    : ∥w1^n • (2*π*I : ℂ)⁻¹ • (z0 - (c0 + w0))⁻¹ • ∮ z1 in C(c1, r), (z1 - c1)⁻¹^n • (z1 - c1)⁻¹ • f (z0,z1)∥
+    : ‖w1^n • (2*π*I : ℂ)⁻¹ • (z0 - (c0 + w0))⁻¹ • ∮ z1 in C(c1, r), (z1 - c1)⁻¹^n • (z1 - c1)⁻¹ • f (z0,z1)‖
       ≤ (r - abs w0)⁻¹ * b * (abs w1 / r) ^ n := begin
   have isb := cauchy1_bound h.rp h.bp (continuous_on.mono (h.fc1 (mem_sphere_closed z0s)) metric.sphere_subset_closed_ball)
     (λ z1 z1s, h.fb z0s z1s) n,
@@ -360,8 +360,8 @@ lemma cauchy2_has_sum_n1n0_bound (h : sep f c0 c1 r b s) (w0m : w0 ∈ ball (0 :
   have pp := real.pi_pos,
   have a : (abs (2*π*I : ℂ))⁻¹ = (2*π)⁻¹, { simp, bound },
   rw [norm_smul, norm_smul, norm_smul, complex.norm_eq_abs, complex.norm_eq_abs, complex.norm_eq_abs,
-      complex.abs_pow, complex.abs_inv, complex.abs_inv, a],
-  calc abs w1^n * ((2*π)⁻¹ * ((abs (z0 - (c0 + w0)))⁻¹ * ∥∮ z1 in C(c1, r), (z1 - c1)⁻¹^n • (z1 - c1)⁻¹ • f (z0,z1)∥))
+      complex.abs.map_pow, map_inv₀, map_inv₀, a],
+  calc abs w1^n * ((2*π)⁻¹ * ((abs (z0 - (c0 + w0)))⁻¹ * ‖∮ z1 in C(c1, r), (z1 - c1)⁻¹^n • (z1 - c1)⁻¹ • f (z0,z1)‖))
       ≤ abs w1^n * ((2*π)⁻¹ * ((abs (z0 - (c0 + w0)))⁻¹ * (2*π*b*r⁻¹^n))) : by bound
   ... ≤ abs w1^n * ((2*π)⁻¹ * ((r - abs w0)⁻¹ * (2*π*b*r⁻¹^n))) : by bound [h.bp, h.rp]
   ... = (2*π) * (2*π)⁻¹ * (r - abs w0)⁻¹ * b * (abs w1^n * r⁻¹^n) : by ring
@@ -410,7 +410,7 @@ lemma cauchy2_has_sum_n1n0 (h : sep f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) 
 end
 
 -- 2D Cauchy series terms are geometrically bounded
-lemma series2_coeff_bound (h : sep f c0 c1 r b s) (n0 n1 : ℕ) : ∥series2_coeff h n0 n1∥ ≤ b * r⁻¹^(n0 + n1) := begin
+lemma series2_coeff_bound (h : sep f c0 c1 r b s) (n0 n1 : ℕ) : ‖series2_coeff h n0 n1‖ ≤ b * r⁻¹^(n0 + n1) := begin
   have inner_c : continuous_on (λ z0, (2*π*I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - c1)⁻¹^n1 • (z1 - c1)⁻¹ • f (z0,z1)) (sphere c0 r) :=
     continuous_on.smul continuous_on_const (continuous_on.cauchy1 h.rp (continuous_on.mono h.fc h.rs')),
   have inner_b := λ z0 z0s,
@@ -426,16 +426,16 @@ def series2 (h : sep f c0 c1 r b s) : formal_multilinear_series ℂ (ℂ × ℂ)
   λ n, (finset.range (n+1)).sum (λ n0, term_cmmap ℂ n n0 (series2_coeff h n0 (n - n0)))
 
 -- series2 is (roughly) geometrically bounded
-lemma series2_norm (h : sep f c0 c1 r b s) (n : ℕ) : ∥series2 h n∥ ≤ (n+1) * b * r⁻¹^n := begin
+lemma series2_norm (h : sep f c0 c1 r b s) (n : ℕ) : ‖series2 h n‖ ≤ (n+1) * b * r⁻¹^n := begin
   rw series2, simp,
-  have tb : ∀ n0, n0 ∈ finset.range (n+1) → ∥term_cmmap ℂ n n0 (series2_coeff h n0 (n-n0))∥ ≤ b * r⁻¹^n, {
+  have tb : ∀ n0, n0 ∈ finset.range (n+1) → ‖term_cmmap ℂ n n0 (series2_coeff h n0 (n-n0))‖ ≤ b * r⁻¹^n, {
     intros n0 n0n, simp at n0n,
     apply trans (term_cmmap_norm ℂ n n0 (series2_coeff h n0 (n-n0))),
     have sb := series2_coeff_bound h n0 (n-n0),
     rw [←nat.add_sub_assoc (nat.le_of_lt_succ n0n) n0, nat.add_sub_cancel_left] at sb,
     assumption
   },
-  transitivity (finset.range (n+1)).sum (λ n0, ∥term_cmmap ℂ n n0 (series2_coeff h n0 (n-n0))∥), bound [norm_sum_le],
+  transitivity (finset.range (n+1)).sum (λ n0, ‖term_cmmap ℂ n n0 (series2_coeff h n0 (n-n0))‖), bound [norm_sum_le],
   transitivity (finset.range (n+1)).sum (λ _, b * r⁻¹^n), bound [finset.sum_le_sum, norm_smul_le], clear tb,
   rw finset.sum_const, simp, ring_nf
 end
@@ -448,15 +448,15 @@ lemma cauchy2_radius (h : sep f c0 c1 r b s) : ennreal.of_real r ≤ (series2 h)
   rw [ennreal.coe_to_real, ennreal.to_real_of_real (le_of_lt h.rp)] at tr,
   apply formal_multilinear_series.le_radius_of_summable_nnnorm,
   simp_rw [←norm_to_nnreal, ←nnreal.summable_coe], simp,
-  have lo : ∀ n : ℕ, 0 ≤ ∥series2 h n∥ * ↑t^n, { intro, bound },
-  have hi : ∀ n : ℕ, ∥series2 h n∥ * ↑t^n ≤ (n+1) * b * (t/r)^n, {
+  have lo : ∀ n : ℕ, 0 ≤ ‖series2 h n‖ * ↑t^n, { intro, bound },
+  have hi : ∀ n : ℕ, ‖series2 h n‖ * ↑t^n ≤ (n+1) * b * (t/r)^n, {
     intro n,
     transitivity (↑n+1) * b * r⁻¹^n * ↑t^n, { bound [series2_norm h n] },
     rw [mul_assoc ((↑n+1) * b) _ _, ←mul_pow, inv_mul_eq_div]
   },
   refine summable_of_nonneg_of_le lo hi _,
   simp_rw [mul_comm _ b, mul_assoc b _ _], apply summable.mul_left b,
-  have trn : ∥↑t / r∥ < 1, { simp, rw [abs_of_pos h.rp, div_lt_one h.rp], assumption },
+  have trn : ‖↑t / r‖ < 1, { simp, rw [abs_of_pos h.rp, div_lt_one h.rp], assumption },
   simp_rw [right_distrib _ _ _, one_mul], 
   exact summable.add (has_sum_coe_mul_geometric_of_norm_lt_1 trn).summable (has_sum_geometric_of_norm_lt_1 trn).summable
 end
@@ -472,7 +472,7 @@ lemma cauchy2_has_sum_2d (h : sep f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r)
   have fs : ∀ n1 : ℕ, has_sum (λ n0, f ⟨n1, n0⟩) (g n1), {
     intro n1, rw [←hf, ←hg], simp, simp_rw smul_comm (w0^_) _, apply has_sum.const_smul, exact cauchy2_has_sum_n0 h w0m w1m n1
   },
-  have fb : ∀ n : ℕ × ℕ, ∥f n∥ ≤ b * (abs w0 / r)^n.snd * (abs w1 / r)^n.fst, {
+  have fb : ∀ n : ℕ × ℕ, ‖f n‖ ≤ b * (abs w0 / r)^n.snd * (abs w1 / r)^n.fst, {
     intro n, rw ←hf, simp,
     rw [norm_smul, norm_smul, mul_assoc], rw [complex.norm_eq_abs, complex.norm_eq_abs, ←mul_assoc], simp,
     transitivity abs w0^n.snd * abs w1^n.fst * (b * r⁻¹ ^ (n.snd + n.fst)), bound [series2_coeff_bound h n.snd n.fst],
@@ -568,31 +568,15 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : set (ℂ × ℂ)} [normed_
   simp at a, assumption
 end
 
--- f : ℂ × ℂ → ℂ is differentiable iff it is analytic
-lemma differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : set (ℂ × ℂ)}
-    [normed_add_comm_group E] [normed_space ℂ E] [complete_space E]
-    (o : is_open s) : differentiable_on ℂ f s ↔ analytic_on ℂ f s := begin
-  constructor, {
-    intro d, apply osgood o d.continuous_on, {
-      intros z0 z1 zs,
-      rcases metric.is_open_iff.mp o (z0,z1) zs with ⟨r,rp,rs⟩,
-      have d0 : differentiable_on ℂ (λ z0, f (z0,z1)) (ball z0 r), {
-        apply differentiable_on.comp d,
-        exact differentiable_on.prod differentiable_on_id (differentiable_on_const _),
-        intros z0 z0s, apply rs, simp at ⊢ z0s, assumption
-      },
-      exact (differentiable_iff_analytic is_open_ball).mp d0 z0 (metric.mem_ball_self rp)
-    }, {
-      intros z0 z1 zs,
-      rcases metric.is_open_iff.mp o (z0,z1) zs with ⟨r,rp,rs⟩,
-      have d1 : differentiable_on ℂ (λ z1, f (z0,z1)) (ball z1 r), {
-        apply differentiable_on.comp d,
-        exact differentiable_on.prod (differentiable_on_const _) differentiable_on_id ,
-        intros z1 z1s, apply rs, simp at ⊢ z1s, assumption
-      },
-      exact (differentiable_iff_analytic is_open_ball).mp d1 z1 (metric.mem_ball_self rp)
-    }
-  }, {
-    exact λ a, a.differentiable_on,
-  }
+-- Osgood at a point
+theorem osgood_at' {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [normed_add_comm_group E] [normed_space ℂ E] [complete_space E]
+    (h : ∀ᶠ x : ℂ × ℂ in 𝓝 c, continuous_at f x ∧ analytic_at ℂ (λ z, f (z,x.2)) x.1 ∧ analytic_at ℂ (λ z, f (x.1,z)) x.2)
+    : analytic_at ℂ f c := begin
+  rcases eventually_nhds_iff.mp h with ⟨s,h,o,cs⟩,
+  exact osgood o (λ _ m, (h _ m).1.continuous_within_at) (λ _ _ m, (h _ m).2.1) (λ _ _ m, (h _ m).2.2) c cs,
 end
+theorem osgood_at {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [normed_add_comm_group E] [normed_space ℂ E] [complete_space E]
+    (fc : ∀ᶠ x in 𝓝 c, continuous_at f x)
+    (fa0 : ∀ᶠ x : ℂ × ℂ in 𝓝 c, analytic_at ℂ (λ z, f (z,x.2)) x.1)
+    (fa1 : ∀ᶠ x : ℂ × ℂ in 𝓝 c, analytic_at ℂ (λ z, f (x.1,z)) x.2)
+    : analytic_at ℂ f c := osgood_at' (fc.and (fa0.and fa1))

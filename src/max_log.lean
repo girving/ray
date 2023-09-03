@@ -1,5 +1,6 @@
 -- λ x, max b (log x)
 
+import analysis.special_functions.pow.complex
 import data.complex.basic
 import data.real.basic
 
@@ -10,7 +11,7 @@ open_locale real
 open set (univ Ici)
 noncomputable theory
 
-variables {E : Type} [normed_add_comm_group E] [complete_space E] [normed_space ℂ E]
+variables {E : Type} [normed_add_comm_group E] [normed_space ℂ E]
 
 -- max b (log x)
 def max_log (b x : ℝ) : ℝ := (max b.exp x).log
@@ -40,9 +41,9 @@ lemma continuous_max_log (b : ℝ) : continuous (λ x, max_log b x) := begin
   apply continuous_at_id, apply continuous.continuous_at, continuity,
 end
 
--- max b (log ∥f z∥) is continuous for continuous f
+-- max b (log ‖f z‖) is continuous for continuous f
 theorem continuous_on.max_log_norm {f : ℂ → E} {s : set ℂ}
-    (fc : continuous_on f s) (b : ℝ) : continuous_on (λ z, max_log b ∥f z∥) s :=
+    (fc : continuous_on f s) (b : ℝ) : continuous_on (λ z, max_log b ‖f z‖) s :=
   (continuous_max_log b).comp_continuous_on fc.norm
 
 -- log is Lipschitz away from 0

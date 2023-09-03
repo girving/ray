@@ -18,7 +18,6 @@ import topology.uniform_space.uniform_convergence
 
 import analytic
 import bounds
-import simple
 import tactics
 import topology
 
@@ -26,7 +25,7 @@ open complex (abs I)
 open filter (at_top)
 open measure_theory.measure_space (volume)
 open metric (ball closed_ball sphere)
-open_locale real nnreal topological_space
+open_locale real nnreal topology
 
 noncomputable theory
 
@@ -61,7 +60,7 @@ end
 lemma analytic_on_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0) (h : analytic_on ℂ f (ball z r))
     : ∃ p : power_series, has_fpower_series_on_ball f p z r := begin
   have h0 := analytic_on_small_cball h (r/2) (nnreal.half_lt_self $ ne_of_gt rp),
-  rcases analytic_on_cball_radius (nnreal.half_pos rp) h0 with ⟨p, ph⟩,
+  rcases analytic_on_cball_radius (half_pos rp) h0 with ⟨p, ph⟩,
   set R := formal_multilinear_series.radius p,
   refine ⟨p, { r_le := _, r_pos := ennreal.coe_pos.mpr rp, has_sum := _ }⟩, {
     apply ennreal.le_of_forall_pos_nnreal_lt,
@@ -75,7 +74,10 @@ lemma analytic_on_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r 
     intros y yr,
     rw [emetric.ball, set.mem_set_of] at yr,
     rcases exists_between yr with ⟨t,t0,t1⟩,
-    have ht := analytic_on_small_cball h t.to_nnreal (simple.nnreal_ennreal_coe_lt t1),
+    have t1' : t.to_nnreal < r, {
+      rw ←with_top.coe_lt_coe, exact lt_of_le_of_lt (ennreal.coe_to_nnreal_le_self) t1,
+    },
+    have ht := analytic_on_small_cball h t.to_nnreal t1',
     rcases analytic_on_cball_radius _ ht with ⟨p',hp'⟩,
     have pp : p = p' := has_fpower_series_at.eq_formal_multilinear_series ⟨↑(r/2),ph⟩ ⟨t.to_nnreal,hp'⟩,
     rw ←pp at hp',
@@ -83,8 +85,8 @@ lemma analytic_on_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r 
     rw [emetric.ball, set.mem_set_of],
     calc edist y 0 < t : t0
     ... = ↑(t.to_nnreal) : (ennreal.coe_to_nnreal $ ne_top_of_lt t1).symm,
-    exact simple.to_nnreal_pos t0 t1
-  }
+    exact ennreal.to_nnreal_pos (ne_of_gt $ pos_of_gt t0) (ne_top_of_lt t1),
+  },
 end
 
 lemma cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : ℂ} {n : ℕ}
@@ -92,29 +94,31 @@ lemma cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : 
   : abs (cauchy_power_series f c r n (λ _, w)) ≤ abs w ^ n * r⁻¹ ^ n * d :=
 begin
   set wr := abs w ^ n * r⁻¹ ^ n * d, 
-  rw [cauchy_power_series_apply f c r n w],
-  rw [smul_eq_mul, complex.abs_mul],
+  rw [cauchy_power_series_apply f c r n w, smul_eq_mul, complex.abs.map_mul],
   generalize hg : (λ z, (w / (z - c)) ^ n • (z - c)⁻¹ • f z) = g,
-  have gs : ∀ z ∈ sphere c r, ∥g z∥ ≤ wr * r⁻¹, {
-    intro, simp, intro, rw ←hg, simp, rw H,
-    have zb : z ∈ closed_ball c r, simp, rw [←nnreal.coe_le_coe, coe_nndist, complex.dist_eq], linarith,
+  have gs : ∀ z ∈ sphere c r, ‖g z‖ ≤ wr * r⁻¹, {
+    intro, simp only [mem_sphere_iff_norm, complex.norm_eq_abs], intro zr,
+    simp only [←hg, zr, div_pow, algebra.id.smul_eq_mul, absolute_value.map_mul, map_div₀, complex.abs_pow, map_inv₀],
+    have zb : z ∈ closed_ball c r, {
+      simp only [metric.mem_closed_ball, dist_le_coe, ←nnreal.coe_le_coe, coe_nndist, complex.dist_eq, zr],
+    },
     have zs := h z zb,
-    calc abs w ^ n / ↑r ^ n * (r⁻¹ * abs (f z)) = abs w ^ n * r⁻¹ ^ n * (r⁻¹ * abs (f z))
-      : by rw simple.div_pow_inv (abs w ^ n) ↑r n
+    calc abs w ^ n / ↑r ^ n * (r⁻¹ * abs (f z)) = abs w ^ n * r⁻¹ ^ n * (r⁻¹ * abs (f z)) : by rw [div_eq_mul_inv, ←inv_pow]
     ... ≤ abs w ^ n * r⁻¹ ^ n * (r⁻¹ * d) : by bound
     ... = abs w ^ n * r⁻¹ ^ n * d * r⁻¹ : by ring
-    ... = wr * r⁻¹ : rfl
+    ... = wr * r⁻¹ : rfl,
   },
   have cn := circle_integral.norm_integral_le_of_norm_le_const (nnreal.coe_nonneg r) gs,
   rw complex.norm_eq_abs at cn,
-  simp at hg cn ⊢,
+  simp only [mul_inv_rev, complex.inv_I, absolute_value.map_neg, absolute_value.map_mul, complex.abs_I, map_inv₀,
+    complex.abs_of_real, complex.abs_two, one_mul, div_pow, algebra.id.smul_eq_mul] at hg cn ⊢,
   have p3 : |π| = π := abs_eq_self.elim_right (by linarith [real.pi_gt_three]),
   calc |π|⁻¹ * 2⁻¹ * abs (circle_integral g c ↑r) ≤ |π|⁻¹ * 2⁻¹ * (2*π*r * (wr * r⁻¹)) : by bound
   ... = (π * |π|⁻¹) * (r * r⁻¹) * wr : by ring
   ... = (π * π⁻¹) * (r * r⁻¹) * wr : by rw p3
   ... = 1 * (r * r⁻¹) * wr : by rw mul_inv_cancel real.pi_ne_zero
   ... = 1 * 1 * wr : by rw mul_inv_cancel (nnreal.coe_ne_zero.elim_right $ ne_of_gt rp)
-  ... = wr : by ring
+  ... = wr : by ring,
 end
 
 lemma circle_integral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ}
@@ -124,7 +128,8 @@ lemma circle_integral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ}
   rw circle_integral, generalize hg : (λ θ : ℝ, deriv (circle_map c r) θ • g (circle_map c r θ)) = gc,
   rw circle_integral, generalize hfg : (λ θ : ℝ, deriv (circle_map c r) θ • (f-g) (circle_map c r θ)) = fgc,
   have hs : fc - gc = fgc, {
-    rw [←hf, ←hg, ←hfg], apply funext, simp, intro, rw mul_sub_left_distrib,
+    rw [←hf, ←hg, ←hfg], funext,
+    simp only [deriv_circle_map, algebra.id.smul_eq_mul, pi.sub_apply, mul_sub_left_distrib],
   },
   rw ←hs, clear hfg hs fgc, symmetry,
   have fci := circle_integrable.out fi, rw hf at fci,
@@ -133,7 +138,8 @@ lemma circle_integral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ}
 end
 
 lemma circle_map_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circle_map c r θ - c ≠ 0 := begin
-  simp, intro h, rw h at rp, simp at rp, exact rp
+  simp only [circle_map_sub_center, ne.def, circle_map_eq_center_iff, nnreal.coe_eq_zero],
+  intro h, rw h at rp, simp only [gt_iff_lt, not_lt_zero'] at rp, exact rp
 end
 
 lemma cauchy_is_circle_integrable {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0}
@@ -160,11 +166,11 @@ begin
   rw [cauchy_power_series_apply g c r n w], 
   rw [cauchy_power_series_apply (f-g) c r n w],
   set s : ℂ := (2 * π * I)⁻¹,
-  simp,
+  simp only [div_pow, algebra.id.smul_eq_mul, pi.sub_apply],
   have hfg : (λ z, w^n / (z - c)^n * ((z - c)⁻¹ * (f - g) z))
            = (λ z, w^n / (z - c)^n * ((z - c)⁻¹ * f z))
            - (λ z, w^n / (z - c)^n * ((z - c)⁻¹ * g z)), {
-    apply funext, simp, intro, ring,
+    apply funext, simp only [pi.sub_apply], intro, ring,
   },
   have fi := cauchy_is_circle_integrable n w rp cf,
   have gi := cauchy_is_circle_integrable n w rp cg,
@@ -173,7 +179,7 @@ begin
   clear cia fi gi hfg cf cg rp,
   have flip : (λ z, w^n/(z-c)^n * ((z-c)⁻¹ * f z)) - (λ z, w^n/(z-c)^n * ((z-c)⁻¹ * g z))
             = (λ z, w^n/(z-c)^n * ((z-c)⁻¹ * f z) - w^n/(z-c)^n * ((z-c)⁻¹ * g z)) := rfl,
-  rw flip, clear flip, ring_nf
+  simp only [flip, mul_sub_left_distrib],
 end
 
 lemma cauchy_dist {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0}

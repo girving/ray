@@ -3,51 +3,21 @@
 -- Based on the nice tactic tutorial at
 --   https://leanprover-community.github.io/extras/tactic_writing.html
 
-import algebra.order.ring
 import analysis.calculus.tangent_cone
+import algebra.order.absolute_value
 import data.real.basic
 import data.complex.basic
 import init.meta.interactive_base
 import init.meta.rewrite_tactic
-import simple
 import tactic.norm_num
+
+import absolute_value
 
 open complex (abs)
 open interactive (parse)
 open interactive.types
 open lean.parser (ident many tk)
 open_locale nnreal
-
-meta def aux (q : pexpr) (t : tactic unit) : tactic expr := do
-  e ← tactic.i_to_expr q,
-  (_, h) ← tactic.solve_aux e t,
-  return h
-
-meta def try_aux (q : pexpr) (t : tactic unit) : tactic (option expr) := do
-  e ← tactic.i_to_expr q,
-  (tactic.solve_aux e t >>= λ h, pure $ some h.snd) <|> return none
-
-meta def pexact (q : pexpr) : tactic unit := do
-  t ← tactic.i_to_expr q,
-  tactic.exact t
-
-meta def is_ineq : expr → bool
-| `(_ ≤ _) := tt
-| `(_ < _) := tt
-| `(_ ≥ _) := tt
-| `(_ > _) := tt
-| _ := ff
-
--- Flip ≤/≥ and </> in target
-meta def tactic.interactive.flip_ineq : tactic unit := do
-  t ← tactic.target,
-  match t with
-  | `(%%a ≤ %%b) := do t ← tactic.i_to_expr ``(simple.ge_to_le), _ ← tactic.apply t, return ()
-  | `(%%a < %%b) := do t ← tactic.i_to_expr ``(simple.gt_to_lt), _ ← tactic.apply t, return ()
-  | `(%%a ≥ %%b) := do t ← tactic.i_to_expr ``(simple.le_to_ge), _ ← tactic.apply t, return ()
-  | `(%%a > %%b) := do t ← tactic.i_to_expr ``(simple.lt_to_gt), _ ← tactic.apply t, return ()
-  | _ := tactic.fail "flip_ineq got a non-inequality"
-  end
 
 -- [f h | f ∈ fs, h ∈ hs]
 meta def calls (fs : list pexpr) (hs : list pexpr) : tactic (list expr) := do
@@ -63,53 +33,57 @@ meta def calls (fs : list pexpr) (hs : list pexpr) : tactic (list expr) := do
 meta def notes (fs : list pexpr) (hs : list pexpr) : tactic unit :=
   calls fs hs >>= monad.mapm' (λ e, do _ ← tactic.note `this none e, return ())
 
+-- Rules used by the bound tactic
+@[user_attribute] meta def bound_rules : user_attribute := {
+  name := `bound_rules, descr := "Rules for the bound tactic" }
+
+-- Extra bound lemmas
+lemma sq_le_sq_of_nonneg {x y : ℝ} (p : 0 ≤ x) (h : x ≤ y) : x^2 ≤ y^2 := by nlinarith
+lemma sq_lt_sq_of_nonneg {x y : ℝ} (p : 0 ≤ x) (h : x < y) : x^2 < y^2 := by nlinarith
+lemma nnreal.coe_pos_of_lt {r : nnreal} : 0 < r → 0 < (r : ℝ) := nnreal.coe_pos.mpr
+lemma nnreal.coe_lt_coe_of_lt {r₁ r₂ : nnreal} : r₁ < r₂ → (r₁ : ℝ) < r₂ := nnreal.coe_lt_coe.mpr
+lemma mul_inv_le_one_of_le {α : Type} [group α] [has_le α] [covariant_class α α (function.swap has_mul.mul) has_le.le]
+    {a b : α} : a ≤ b → a * b⁻¹ ≤ 1 := mul_inv_le_one_iff_le.mpr
+
+-- Basics
+attribute [bound_rules] le_rfl
+-- 0 ≤, 0 <
+attribute [bound_rules] sq_nonneg mul_pos mul_nonneg div_pos div_nonneg pow_pos pow_nonneg sub_nonneg_of_le add_nonneg
+attribute [bound_rules] sub_pos_of_lt inv_nonneg_of_nonneg inv_pos_of_pos nnreal.coe_pos_of_lt nat.cast_nonneg
+attribute [bound_rules] nnreal.coe_nonneg abs_nonneg absolute_value.nonneg norm_nonneg dist_nonneg nat.zero_lt_succ
+-- ≤
+attribute [bound_rules] div_le_div_of_le_of_nonneg div_le_div sq_le_sq_of_nonneg mul_le_mul_of_nonneg_left
+attribute [bound_rules] mul_le_mul_of_nonneg_right mul_le_mul sub_le_sub add_le_add div_le_one_of_le mul_inv_le_one_of_le
+attribute [bound_rules] div_le_self le_add_of_nonneg_right le_add_of_nonneg_left pow_le_pow_of_le_left inv_le_inv_of_le
+-- Triangle inequalities
+attribute [bound_rules] dist_triangle absolute_value.le_add absolute_value.le_sub absolute_value.add_le
+attribute [bound_rules] absolute_value.sub_le' absolute_value.abs_abv_sub_le_abv_sub norm_sub_le
+-- <
+attribute [bound_rules] div_lt_self add_lt_add_left add_lt_add_right nnreal.coe_lt_coe_of_lt sq_lt_sq_of_nonneg
+-- min and max
+attribute [bound_rules] min_le_right min_le_left le_max_left le_max_right le_min max_le lt_min max_lt
+-- Deal with covariant_class instances
+attribute [bound_rules] covariant_swap_add_lt_of_covariant_add_lt
+ 
 -- Straightforward propagation of inequalities.
 -- Roughly, handles a bunch of cases of the form
 --   f x {≤,<} f y
 -- where f is increasing and x ≤ y is immediate.
-meta def bound (hs : list pexpr) : tactic unit := do
+meta def bound (args : list pexpr) : tactic unit := do
   -- Helpful diagnostic: tactic.target >>= λ e, tactic.fail format! "bailing: {e}"
-  notes [``(le_of_lt)] hs,  -- Turn each < into a ≤
-  let lemmas := hs ++ [
-    -- Basics
-    ``(le_rfl),
-    -- 0 ≤, 0 <
-    ``(sq_nonneg _),
-    ``(mul_pos), ``(mul_nonneg), ``(div_pos), ``(div_nonneg),
-    ``(simple.pow_pos'), ``(simple.pow_nonneg'),
-    ``(simple.ring_sub_nonneg), ``(simple.ring_add_nonneg), ``(simple.ring_sub_pos),
-    ``(inv_nonneg.mpr), ``(inv_pos.mpr),
-    ``(nnreal.coe_pos.mpr), ``(simple.nat_nonneg _), ``(nnreal.coe_nonneg _),
-    ``(simple.real_abs_nonneg), ``(complex.abs_nonneg _), ``(norm_nonneg), ``(dist_nonneg),
-    ``(nat.zero_lt_succ _),
-    -- ≤
-    ``(simple.div_le_div_right), ``(div_le_div),
-    ``(simple.sq_increasing),
-    ``(mul_le_mul_of_nonneg_left), ``(mul_le_mul_of_nonneg_right), ``(mul_le_mul),
-    ``(simple.ring_sub_le_sub), ``(simple.ring_add_le_add),
-    ``(simple.div_le_one), ``(simple.div_cancel_le), ``(div_le_self),
-    ``(simple.le_add_nonneg_right), ``(simple.le_add_nonneg_left),
-    ``(pow_le_pow_of_le_left), ``(inv_le_inv_of_le),
-    -- Triangle inequalities
-    ``(dist_triangle _ _ _), ``(simple.abs_sub'), ``(simple.abs_sub_ge'), ``(complex.abs_add _ _), ``(norm_sub_le),
-    -- <
-    ``(div_lt_self),
-    ``(simple.ring_add_lt_add_left), ``(simple.ring_add_lt_add_right),
-    ``(nnreal.coe_lt_coe.mpr),
-    -- min and max
-    ``(min_le_right), ``(min_le_left), ``(le_max_left), ``(le_max_right), ``(le_min), ``(max_le),
-    ``(lt_min), ``(max_lt),
-    -- Constants
-    ``(zero_le_one), ``(zero_lt_one), ``(ennreal.zero_lt_one),
-    ``(zero_le_bit0.mpr), ``(zero_lt_bit0.mpr),
-    ``(simple.zero_lt_bit1), ``(simple.zero_le_bit1),
-    ``(nat.bit0_lt), ``(nat.bit1_lt), 
-    ``(nat.bit0_le), ``(nat.bit1_le),
-    ``(bit0_le_bit0.mpr), ``(bit0_lt_bit0.mpr), ``(bit1_le_bit1.mpr), ``(bit1_lt_bit1.mpr),
-    ``(norm_num.le_one_bit0 _), ``(norm_num.lt_one_bit0 _),
-    ``(with_top.zero_lt_top)
-  ],
-  tactic.apply_rules lemmas [] 32 {unify := ff}
+  notes [``(le_of_lt)] args,  -- Turn each < into a ≤
+  -- Do apply_rules, but with assumption <|> positivity <|> apply_list ... <|> norm_num
+  let n := 32,  -- maximum iteration depth
+  let opt : tactic.apply_cfg := {unify := ff},
+  let attrs := [`bound_rules],
+  attr_exprs ← tactic.lock_tactic_state $ attrs.mfoldl
+    (λ l n, list.append l <$> tactic.resolve_attribute_expr_list n) [],
+  let args_exprs := args.map tactic.i_to_expr_for_apply ++ attr_exprs,
+  tactic.iterate_at_most_on_subgoals n (
+    tactic.assumption <|>
+    tactic.interactive.positivity <|>
+    tactic.apply_list_expr opt args_exprs <|>
+    tactic.interactive.norm_num [] (interactive.loc.ns [none]))
 
 meta def tactic.interactive.notes (fs : parse pexpr_list) (hs : parse opt_pexpr_list) : tactic unit := notes fs hs
 meta def tactic.interactive.bound (hs : parse opt_pexpr_list) : tactic unit := bound hs

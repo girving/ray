@@ -6,7 +6,7 @@ import analysis.normed_space.basic
 import data.complex.basic
 
 open complex (abs I)
-open_locale topological_space
+open_locale topology
 noncomputable theory
 
 -- The finite dimensional complex vector spaces.

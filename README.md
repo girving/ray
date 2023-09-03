@@ -1,21 +1,51 @@
-Mandelbrot set formalization
-============================
+The Mandelbrot set is connected
+===============================
 
-The main goal of this repo is to prove that the Mandelbrot set is
-connected via Böttcher coordinates.  But I'm also using it to learn Lean
-generally, which means various detours along the way.  So far, we have
-two results:
+The goal of this repository is to formalize standard results about the
+Mandelbrot set in Lean.  The main result is that [the Mandelbrot set and
+its complement are connected](https://github.com/girving/ray/blob/main/src/mandelbrot.lean#L25),
+by exhibiting the analytic Böttcher homeomorphism from the exterior of the Mandelbrot set to
+the exterior of the closed unit disk.  But I'm also using it to learn Lean generally,
+which means detours along the way.  The main results are
 
-**[Hartog's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity):**
+**Hartog's theorem ([hartogs.lean](https://github.com/girving/ray/blob/main/src/hartogs.lean#L752)):**
 Let $E$ be a separable Banach space, and $f : \mathbb{C}^2 \to E$
 a function which is analytic along each axis at each point in an open set $S \subset \mathbb{C}^2$.
 Then $f$ is jointly analytic in $S$.
 
-**[Böttcher's theorem](https://en.wikipedia.org/wiki/B%C3%B6ttcher%27s_equation):** 
+**Böttcher's theorem ([bottcher_near.lean](https://github.com/girving/ray/blob/main/src/bottcher_near.lean)):** 
 Let $f : \mathbb{C} \to \mathbb{C}$ be analytic with a monic superattracting fixpoint at 0,
-so that $f(z) = z^d + O(z^{d+1})$.  Then there is an analytic $b : \mathbb{C} \to \mathbb{C}$
-near 0 s.t. $b(f(z)) = b(z)^d$.  If $f(z) = f_p(z)$ is also analytic in a parameter $p$, then
-$b(z) = b_p(z)$ is also analytic in $p$.
+so that $f(z) = z^d + O(z^{d+1})$.  Then there is an analytic $b : \mathbb{C} \to \mathbb{C}$ near 0 s.t.
+$b(f(z)) = b(z)^d$.  If $f(z) = f_c(z)$ is also analytic in a parameter $c$, then $b(z) = b_c(z)$ is also analytic in $c$.
+
+**Analytic continuation of the Böttcher map up to the critical value ([bottcher.lean](https://github.com/girving/ray/blob/main/src/bottcher.lean), [ray.lean](https://github.com/girving/ray/blob/main/src/ray.lean)):** Let $S$ be a compact, 1D complex
+manifold, $f : S \to S$ a holomorphic map with a fixpoint $f(a) = a$, and assume $f$ has no
+other preimages of $a$.  Starting with the local Böttcher map $b(z)$ defined in a neighborhood of
+$a$, we get a continuous potential map $\phi : S \to [0,1]$ s.t. $\phi(z) = |b(z)|$ near $a$ and
+$\phi(f(z)) = \phi(z)^d$ everywhere.  Let $\phi^\ast = \min~\\{\phi(z) | f'(z) = 0, z \ne a\\}$ be the
+critical potential.  Then $b(z)$ can be analytically continued throughout the postcritical region
+$P = \\{z | \phi(z) < \phi^\ast\\}$, and gives a analytic homeomorphism from $P$ to the open disk
+$D_{\phi^\ast}(0) \subset \mathbb{C}$.  If $f(z) = f_c(z)$ is also analytic in a parameter
+$c \in \mathbb{C}$, then $b_c(z)$ can be analytically continued throughout
+$P = \\{(c,z) | \phi_c(z) < \phi^\ast_c\\}$.
+
+**Böttcher map for the Multibrot set ([multibrot.lean](https://github.com/girving/ray/blob/main/src/multibrot.lean)):** Let $M_d \subset \mathbb{S}$ be the [Multibrot set](https://en.wikipedia.org/wiki/Multibrot_set) for the
+family $f_c(z) = z^d + c$, viewed as a subset of the Riemann sphere $\mathbb{S}$.  Then $(c,c)$ is
+postcritical for each $c \in \mathbb{S} - M_d$, so the diagonal $b_c(c)$ of the Böttcher map is
+holomorphic throughout $\mathbb{S} - M_d$, and defines an analytic bijection from $\mathbb{S} - M_d$
+to the open unit disk $D_1(0)$.
+
+**Multibrot connectness ([multibrot_connected.lean](https://github.com/girving/ray/blob/main/src/multibrot_connected.lean#L76), [mandelbrot.lean](https://github.com/girving/ray/blob/main/src/mandelbrot.lean#L25)):**
+Each Multibrot set $M_d$ and its complement $\mathbb{S} - M_d$
+are corrected, including the Mandelbrot set $M = M_2$.
+
+## References
+
+1. [John Milnor (1990), Dynamics in one complex variable](https://arxiv.org/abs/math/9201272)
+2. [Dierk Schleicher (1998), Rational parameter rays of the Mandelbrot set](https://arxiv.org/abs/math/9711213)
+3. [Paul Garrett (2005), Hartogs’ Theorem: separate analyticity implies joint](https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf)
+4. [Hartog's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity)
+5. [Böttcher's theorem](https://en.wikipedia.org/wiki/B%C3%B6ttcher%27s_equation)
 
 ## Building
 

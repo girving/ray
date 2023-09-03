@@ -12,20 +12,18 @@ import data.stream.defs
 import data.stream.init
 import topology.metric_space.basic
 import topology.uniform_space.uniform_convergence
-import topology.algebra.infinite_sum
 
 import analytic
 import bounds
 import finset
 import holomorphic
 import series
-import simple
 import tactics
 
 open complex (abs exp log)
 open filter (at_top)
 open metric (ball closed_ball sphere)
-open_locale classical real nnreal ennreal topological_space
+open_locale classical real nnreal ennreal topology
 
 noncomputable theory
 
@@ -43,29 +41,27 @@ lemma has_prod.prod_exists {f : ℕ → ℂ} {g : ℂ} (h : has_prod f g) : prod
 
 -- tprod is the product if it exists
 lemma has_prod.tprod_eq {f : ℕ → ℂ} {g : ℂ} : has_prod f g → tprod f = g := begin
-  intro h, rw tprod, simp [h.prod_exists],
-  have s := classical.some_spec (h.prod_exists),
-  exact s.unique h
+  intro h, rw tprod, simp only [h.prod_exists, dif_pos],
+  exact (classical.some_spec (h.prod_exists)).unique h,
 end
 
 -- tprod_on is the product on s if it exists on s
 lemma has_prod_on.tprod_on_eq {f : ℕ → ℂ → ℂ} {g : ℂ → ℂ} {s : set ℂ}
-    : has_prod_on f g s → ∀ z, z ∈ s → tprod_on f z = g z := begin
-  intros h z zs, exact (h z zs).tprod_eq
-end
+    : has_prod_on f g s → ∀ z, z ∈ s → tprod_on f z = g z :=
+  λ h z zs, (h z zs).tprod_eq
 
 -- The product of ones is one
-theorem prod_ones : has_prod (λ _, (1 : ℂ)) 1 := by { rw has_prod, simp, exact tendsto_const_nhds }
+theorem prod_ones : has_prod (λ _, (1 : ℂ)) 1 := by simp only [has_prod, finset.prod_const_one, tendsto_const_nhds_iff]
 
 -- The product of ones is one (tprod version)
 theorem prod_ones' : tprod (λ _, (1 : ℂ)) = 1 := has_prod.tprod_eq prod_ones
 
 -- Analytic products that converge exponentially converge to analytic functions.
--- For now, we require the constant to be ≤ 1/2 so that we can take logs without care.
+-- For now, we require the constant to be ≤ 1/2 so that we can take logs without care, and get nonzero results.
 theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : set ℂ} {a c : ℝ}
     (o : is_open s) (c12 : c ≤ 1/2) (a0 : a ≥ 0) (a1 : a < 1)
     (h : ∀ n, analytic_on ℂ (f n) s) (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a^n)
-    : ∃ (g : ℂ → ℂ), has_prod_on f g s ∧ analytic_on ℂ g s := begin
+    : ∃ (g : ℂ → ℂ), has_prod_on f g s ∧ analytic_on ℂ g s ∧ ∀ z, z ∈ s → g z ≠ 0 := begin
   set fl := λ n z, log (f n z),
   have near1 : ∀ n z, z ∈ s → abs (f n z - 1) ≤ 1/2, {
     intros n z zs,
@@ -90,8 +86,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : set ℂ} {a c : �
   },
   rcases fast_series_converge o a0 a1 hl hfl with ⟨gl,gla,us⟩,
   set g := λ z, exp (gl z),
-  existsi g,
-  constructor, {
+  use g, refine ⟨_,_,_⟩, {
     intros z zs,
     specialize us z zs, simp at us,
     have comp : filter.tendsto (exp ∘ λ N : finset ℕ, N.sum (λ n, fl n z)) at_top (𝓝 (exp (gl z)))
@@ -101,22 +96,25 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : set ℂ} {a c : �
     },
     rw expsum0 at comp, assumption
   }, {
-    intros z zs,
-    exact analytic_at.comp (entire.exp _) (gla z zs)
-  }
+    exact λ z zs, analytic_at.exp.comp (gla z zs),
+  }, {
+    simp only [complex.exp_ne_zero, ne.def, not_false_iff, implies_true_iff],
+  },
 end
 
 -- Same as above, but converge to tprod_on
 theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : set ℂ} {c a : ℝ}
     (o : is_open s) (c12 : c ≤ 1/2) (a0 : 0 ≤ a) (a1 : a < 1) 
     (h : ∀ n, analytic_on ℂ (f n) s) (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a^n)
-    : prod_exists_on f s ∧ analytic_on ℂ (tprod_on f) s := begin
-  rcases fast_products_converge o c12 a0 a1 h hf with ⟨g,gp,ga⟩,
-  constructor, {
-    intros z zs, existsi g z, exact gp z zs
+    : prod_exists_on f s ∧ analytic_on ℂ (tprod_on f) s ∧ ∀ z, z ∈ s → tprod_on f z ≠ 0 := begin
+  rcases fast_products_converge o c12 a0 a1 h hf with ⟨g,gp,ga,g0⟩,
+  refine ⟨_,_,_⟩, {
+    exact λ z zs, ⟨g z, gp z zs⟩,
   }, {
     rwa ←analytic_on_congr o (λ z zs, (gp.tprod_on_eq z zs).symm),
-  }
+  }, {
+    intros z zs, rw gp.tprod_on_eq z zs, exact g0 z zs,
+  },
 end
 
 -- Powers commute with products
@@ -168,7 +166,7 @@ end
 -- Products that start with zero are zero
 lemma product_head_zero {f : ℕ → ℂ} (f0 : f 0 = 0) : has_prod f 0 := begin
   rw has_prod, rw metric.tendsto_at_top, intros e ep,
-  existsi (finset.range 1), intros N N1,
+  use finset.range 1, intros N N1,
   simp at N1, rw finset.prod_eq_zero N1 f0, simpa
 end
 

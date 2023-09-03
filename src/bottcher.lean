@@ -1,428 +1,227 @@
--- Bottcher map for Julia sets
+-- The bottcher map throughout s.post
 
-import data.complex.basic
-import data.complex.exponential
-import analysis.complex.removable_singularity
-import analysis.special_functions.complex.log
-import tactic.monotonicity
-import topology.basic
+import ray
 
-import analytic
-import hartogs
-import if_p
-import osgood
-import products
-import zeros
-
-open complex (exp log abs cpow)
+open complex (abs)
+open filter (tendsto at_top eventually_of_forall)
 open function (curry uncurry)
-open metric (ball closed_ball is_open_ball)
-open nat (iterate)
-open set (univ)
-open_locale nnreal
+open metric (ball closed_ball is_open_ball ball_mem_nhds mem_ball mem_closed_ball mem_ball_self)
+open one_dimension
+open set
+open_locale topology
 noncomputable theory
 
-section bottcher
+-- All information for a monic superattracting fixed point at the origin
+variables {S : Type} [topological_space S] [compact_space S] [normal_space S] [complex_manifold I S]
+variables {f : ℂ → S → S}
+variables {c x : ℂ}
+variables {a z : S}
+variables {d n : ℕ}
+variables {s : super f d a}
+variables {y : ℂ × ℂ}
 
--- Information about a fixpoint.  Notes:
--- 1. Fixpoints are superattracting if d ≥ 2
--- 2. Monic fixpoints are those where a = 1
-structure fixpoint (f : ℂ → ℂ) (c : ℂ) : Type :=
-  (d : ℕ)  -- Order of the fixpoint
-  (g : ℂ → ℂ)
-  (a : ℂ)
-  (a0 : a ≠ 0)
-  (gc : g c = 1)
-  (fc : f c = c)
-  (fg : ∀ z, f z = c + a * (z - c)^d * g z)
-  (fa : analytic_at ℂ f c)
-  (ga : analytic_at ℂ g c)
-
--- All information for a superattracting fixed point
-variables {f g : ℂ → ℂ}
-variables {d : ℕ}
-variables {c a z : ℂ}
-variables {r : ℝ}
-
-structure super (f g : ℂ → ℂ) (d : ℕ) (c a : ℂ) (r : ℝ) : Prop :=
-  (d2 : d ≥ 2)
-  (a0 : a ≠ 0)
-  (gc : g c = 1)
-  (fc : f c = c)
-  (fg : ∀ z, f z = c + a * (z - c)^d * g z)
-  (rp : r > 0)
-  (r2 : r ≤ 1/2)
-  (fa : analytic_on ℂ f (ball 0 r))
-  (ga : analytic_on ℂ g (ball 0 r))
-  (gs : ∀ {z : ℂ}, abs z ≤ r → abs (g z - 1) ≤ 1/4)
-
--- First, we prove Bottcher's theorem for a monic, superattracting fixed point at 0.  We have
---   f z = z^d * g z
---   g 0 = 1
--- Ignoring multiple values, we want
---   (E n z)^(d^n) = f^[n] z
---   E n z = (f^[n] z)^(1/d^n)
---   E n z = (f (f^[n-1] z))^(1/d^n)
---   E n z = (f ((E (n-1) z)^(d^(n-1))))^(1/d^n)
---   E n z = ((E (n-1) z)^(d^n) * g ((E (n-1) z)^(d^(n-1))))^(1/d^n)
---   E n z = E (n-1) z * (g ((E (n-1) z)^(d^(n-1))))^(1/d^n)
---   E n z = E (n-1) z * (g (f^[n-1] z))^(1/d^n)
---   E n z = z * prod_{1 < k ≤ n} (g (f^[k-1] z))^(1/d^k)
-
--- Terms in our infinite product
-def term (s : super f g d 0 a r) (n : ℕ) (z : ℂ) := g (f^[n] z) ^ (1/d^(n+1) : ℂ)
-
--- With term in hand, we can define Böttcher coordinates
-def bottcher (s : super f g d 0 1 r) (z : ℂ) := z * tprod (λ n, term s n z)
-
--- ^d shifts term (n+1) to term n:
---   (term n z)^d = (g (f^[n] z) ^ 1/d^(n+1))^d
---                = (g (f^[n-1] (f z)) ^ 1/d^n)
---                = term (n-1) (f z)
-lemma term_eqn (s : super f g d 0 1 r) : ∀ n, abs z ≤ r → term s n (f z) = (term s (n+1) z)^d := begin
-  intros n zr, rw term, rw term,
-  rw ←function.iterate_succ_apply,
-  rw [simple.pow_mul_nat, div_mul, simple.pow_div _],
-  simp, exact ne_of_gt (gt_of_ge_of_gt s.d2 (by norm_num))
+-- s.ray has a global inverse
+lemma super.ray_inv (s : super f d a) [one_preimage s] 
+    : ∃ b : ℂ → S → ℂ, holomorphic_on II I (uncurry b) s.post ∧
+        ∀ y : ℂ × ℂ, y ∈ s.ext → b y.1 (s.ray y.1 y.2) = y.2 := begin
+  rw ←s.ray_bij.image_eq,
+  exact global_complex_inverse_fun_open s.ray_holomorphic_on (λ _ m, s.ray_noncritical m)
+    s.ray_bij.inj_on s.is_open_ext,
 end
 
--- The analogue of term_eqn (-1):
---   (z * term 0 z)^d = (z * g z ^ 1/d)^d
---                    = z^d * g z
---                    = f z
-lemma term_base (s : super f g d 0 1 r) : abs z ≤ r → f z = (z * term s 0 z)^d := begin
-  intro zr, rw term, simp,
-  rw [mul_pow, simple.pow_mul_nat, inv_mul_cancel _],
-  rw s.fg, simp,
-  simp, exact ne_of_gt (gt_of_ge_of_gt s.d2 (by norm_num))
+-- The bottcher map throughout s.post
+def super.bottcher_post (s : super f d a) [one_preimage s] : ℂ → S → ℂ := classical.some s.ray_inv
+
+-- The bottcher map tweaked so the defining equation is satisfied even where it isn't continuous
+def super.bottcher (s : super f d a) [one_preimage s] : ℂ → S → ℂ := 
+  λ c z, @dite _ (∃ n, (c, f c^[n] z) ∈ s.post) (classical.dec _)
+    (λ h, let n := @nat.find _ (classical.dec_pred _) h in (λ w, w ^ (d : ℂ)⁻¹)^[n] (s.bottcher_post c (f c^[n] z)))
+    (λ _, 1)
+
+-- bottcher = bottcher_post on post
+lemma super.bottcher_eq_bottcher_post (s : super f d a) [one_preimage s] (m : (c,z) ∈ s.post)
+    : s.bottcher c z = s.bottcher_post c z := begin
+  have h : ∃ n, (c, f c^[n] z) ∈ s.post := ⟨0, by simpa only [function.iterate_zero_apply]⟩,
+  have h0 := (@nat.find_eq_zero _ (classical.dec_pred _) h).mpr m,
+  simp only [super.bottcher, h, dif_pos, h0, function.iterate_zero_apply, pow_zero, inv_one, complex.cpow_one],
+end
+lemma super.eq_on_bottcher_bottcher_post (s : super f d a) [one_preimage s]
+    : eq_on (uncurry s.bottcher) (uncurry s.bottcher_post) s.post := λ _ m, s.bottcher_eq_bottcher_post m
+
+-- s.bottcher is holomorphic
+lemma super.bottcher_holomorphic_on (s : super f d a) [one_preimage s]
+    : holomorphic_on II I (uncurry s.bottcher) s.post := begin
+  rintros ⟨c,z⟩ m, apply ((classical.some_spec s.ray_inv).1 _ m).congr,
+  exact s.eq_on_bottcher_bottcher_post.symm.eventually_eq_of_mem (s.is_open_post.mem_nhds m),
 end
 
--- How fast do we converge?  Within r, we (very loosely) have
---   abs (f z) = abs (z^d * g z) ≤ 5/4 * (abs z)^d ≤ 5/8 * abs z
---   abs (f^(n) z) ≤ (5/8)^n * abs z ≤ 1/2 * (5/8)^n
---   abs (term s n z - 1) ≤ 4 * 1/d^(n+1) * 1/4 ≤ 1/2 * (1/d)^n
-
--- We use this a few times, so make it a lemma
-lemma super.dr2 (s : super f g d 0 1 r) : (d : ℝ) ≥ 2 := begin
-  flip_ineq, transitivity ((2 : ℕ) : ℝ), norm_num,
-  exact simple.nat_real_coe_le_coe s.d2
+-- s.bottcher is the left inverse of s.ray
+lemma super.bottcher_ray (s : super f d a) [one_preimage s] (m : (c,x) ∈ s.ext)
+    : s.bottcher c (s.ray c x) = x := begin
+  rw s.bottcher_eq_bottcher_post (s.ray_post m), exact (classical.some_spec s.ray_inv).2 _ m,
 end
 
--- abs (f z) ≤ 5/8 * abs z within r
-lemma f_converges (s : super f g d 0 1 r) : abs z ≤ r → abs (f z) ≤ 5/8 * abs z := begin
-  intro zr,
-  rw s.fg, simp,
-  have gs : abs (g z) ≤ 5/4, {
-    calc abs (g z) = abs (g z - 1 + 1) : by ring_nf
-    ... ≤ abs (g z - 1) + abs (1 : ℂ) : complex.abs_add _ _
-    ... ≤ 1/4 + abs (1 : ℂ) : by bound [s.gs zr]
-    ... ≤ 5/4 : by norm_num
+-- s.bottcher is the right inverse of s.ray
+lemma super.ray_bottcher (s : super f d a) [one_preimage s] (m : (c,z) ∈ s.post)
+    : s.ray c (s.bottcher c z) = z := begin
+  rcases s.ray_surj m with ⟨x,m,e⟩, rw [←e, s.bottcher_ray m],
+end
+
+-- s.bottcher maps s.post to s.ext
+lemma super.bottcher_ext (s : super f d a) [one_preimage s] (m : (c,z) ∈ s.post)
+    : (c, s.bottcher c z) ∈ s.ext := begin
+  rcases s.ray_surj m with ⟨x,m,e⟩, rw [←e, s.bottcher_ray m], exact m,
+end
+
+-- s.bottcher is locally s.bottcher_near
+lemma super.bottcher_eq_bottcher_near (s : super f d a) [one_preimage s] (c : ℂ)
+    : ∀ᶠ z in 𝓝 a, s.bottcher c z = s.bottcher_near c z := begin
+  have eq := (s.ray_nontrivial (s.mem_ext c)).nhds_eq_map_nhds, simp only [s.ray_zero] at eq,
+  simp only [eq, filter.eventually_map],
+  apply ((continuous_at_const.prod continuous_at_id).eventually (s.ray_eqn_zero c)).mp,
+  refine ((s.is_open_ext.snd_preimage c).eventually_mem (s.mem_ext c)).mp (eventually_of_forall (λ z m e, _)),
+  simp only [s.bottcher_ray m], exact e.symm,
+end
+
+-- s.ext and s.post are homeomorphic
+def super.equiv (s : super f d a) [one_preimage s] : local_equiv (ℂ × ℂ) (ℂ × S) := {
+  to_fun := λ y : ℂ × ℂ, (y.1, s.ray y.1 y.2),  
+  inv_fun := λ y : ℂ × S, (y.1, s.bottcher y.1 y.2),
+  source := s.ext,
+  target := s.post,
+  map_source' := begin rintros ⟨c,x⟩ m, exact s.ray_post m end,
+  map_target' := begin rintros ⟨c,z⟩ m, exact s.bottcher_ext m end,
+  left_inv' := begin rintros ⟨c,x⟩ m, simp only [s.bottcher_ray m] end,
+  right_inv' := begin rintros ⟨c,z⟩ m, simp only [s.ray_bottcher m] end, 
+}
+def super.homeomorph (s : super f d a) [one_preimage s] : local_homeomorph (ℂ × ℂ) (ℂ × S) := {
+  to_local_equiv := s.equiv,
+  open_source := s.is_open_ext,
+  open_target := s.is_open_post,
+  continuous_to_fun := continuous_on_fst.prod (s.ray_holomorphic_on.continuous_on),
+  continuous_inv_fun := continuous_on_fst.prod (s.bottcher_holomorphic_on.continuous_on),
+}
+
+-- Slices of s.ext and s.post are homeomorphic
+def super.equiv_slice (s : super f d a) [one_preimage s] (c : ℂ) : local_equiv ℂ S := {
+  to_fun := s.ray c,
+  inv_fun := s.bottcher c,
+  source := {x | (c,x) ∈ s.ext},
+  target := {z | (c,z) ∈ s.post},
+  map_source' := λ _ m, s.ray_post m, map_target' := λ _ m, s.bottcher_ext m,
+  left_inv' := λ _ m, by simp only [s.bottcher_ray m], right_inv' := λ _ m, by simp only [s.ray_bottcher m], 
+}
+def super.homeomorph_slice (s : super f d a) [one_preimage s] (c : ℂ) : local_homeomorph ℂ S := {
+  to_local_equiv := s.equiv_slice c,
+  open_source := s.is_open_ext.snd_preimage c,
+  open_target := s.is_open_post.snd_preimage c,
+  continuous_to_fun := λ _ m, (s.ray_holomorphic m).in2.continuous_at.continuous_within_at,
+  continuous_inv_fun := λ _ m, (s.bottcher_holomorphic_on _ m).in2.continuous_at.continuous_within_at, 
+}
+
+-- s.post and s.post slices are connected
+lemma super.post_connected (s : super f d a) [one_preimage s] : is_connected s.post := begin
+  have e : s.post = s.homeomorph '' s.ext := s.homeomorph.image_source_eq_target.symm,
+  rw e, exact s.ext_connected.image _ s.homeomorph.continuous_on,
+end
+lemma super.post_slice_connected (s : super f d a) [one_preimage s] (c : ℂ)
+    : is_connected {z | (c,z) ∈ s.post} := begin
+  have e : {z | (c,z) ∈ s.post} = s.homeomorph_slice c '' {x | (c,x) ∈ s.ext} :=
+    (s.homeomorph_slice c).image_source_eq_target.symm,
+  rw e, exact (s.ext_slice_connected c).image _ (s.homeomorph_slice c).continuous_on,
+end
+
+-- Outside of the basin, we've defined bottcher = 1 for simplicity
+lemma super.bottcher_not_basin (s : super f d a) [one_preimage s] (m : (c,z) ∉ s.basin) : s.bottcher c z = 1 := begin
+  have p : ¬∃ n, (c, f c^[n] z) ∈ s.post, {
+    contrapose m, simp only [not_not] at m ⊢, rcases m with ⟨n,m⟩,
+    rcases s.post_basin m with ⟨k,m⟩, simp only [←function.iterate_add_apply] at m, use [k+n, m],
   },
-  have az1 : abs z ≤ 1 := trans zr (trans s.r2 (by norm_num)),
-  calc abs z ^ d * abs (g z) ≤ abs z ^ 2 * (5/4)
-      : by bound [pow_le_pow_of_le_one (by bound) az1 s.d2]
-  ... = abs z * abs z * (5/4) : by ring_nf
-  ... ≤ 1/2 * abs z * (5/4) : by bound [trans zr s.r2]
-  ... = 5/8 * abs z : by ring
+  simp only [super.bottcher, p], rw dif_neg, exact not_false,
 end
 
--- abs (f z) ≤ abs z within r
-lemma f_remains (s : super f g d 0 1 r) : abs z ≤ r → abs (f z) ≤ abs z := begin
-  intro zs,
-  transitivity 5/8 * abs z,
-  exact f_converges s zs,
-  transitivity 1 * abs z, bound, simp
+lemma super.basin_post (s : super f d a) [one_preimage s] (m : (c,z) ∈ s.basin) : ∃ n, (c, f c^[n] z) ∈ s.post := begin
+  rcases tendsto_at_top_nhds.mp (s.basin_attracts m) {z | (c,z) ∈ s.post} (s.post_a c)
+    (s.is_open_post.snd_preimage c) with ⟨n,h⟩,  
+  specialize h n (le_refl n), simp only [mem_set_of] at h, use [n,h],
 end
 
-lemma five_eights_pow_le {n : ℕ} {r : ℝ} : r > 0 → (5/8)^n * r ≤ r := begin
-  intro rp, transitivity 1^n * r, bound, simp
-end
-
-lemma five_eights_pow_lt {n : ℕ} {r : ℝ} : r > 0 → n ≠ 0 → (5/8)^n * r < r := begin
-  intros rp np,
-  have h : (5/8 : ℝ)^n < 1 := pow_lt_one (by norm_num) (by norm_num) np,
-  exact lt_of_lt_of_le (mul_lt_mul_of_pos_right h rp) (by simp)
-end
-
--- abs (f^[n] z) ≤ (5/8)^n * abs z
-lemma iterates_converge (s : super f g d 0 1 r) : ∀ n, abs z ≤ r → abs (f^[n] z) ≤ (5/8)^n * r := begin
-  intros n zr,
-  induction n with n nh, { simpa },
-  rw function.iterate_succ',
-  transitivity 5/8 * abs (f^[n] z),
-  apply f_converges s (trans nh (five_eights_pow_le s.rp)),
-  calc 5/8 * abs (f^[n] z) ≤ 5/8 * ((5/8)^n * r) : by bound [s.rp]
-  ... = 5/8 * (5/8)^n * r : by ring
-  ... = (5/8)^(n+1) * r : by rw ←pow_succ
-  ... = (5/8)^(n.succ) * r : rfl
-end
-
--- Often, all we need is abs (f^[n] z) ≤ r
-lemma iterates_remain (s : super f g d 0 1 r) : ∀ n, abs z ≤ r → abs (f^[n] z) ≤ r := begin
-  intros n zr,
-  exact trans (iterates_converge s n zr) (five_eights_pow_le s.rp)
-end
-
--- iterates_remain as set.maps_to
-lemma iterates_maps_to (s : super f g d 0 1 r) : ∀ n, set.maps_to (f^[n]) (ball 0 r) (ball 0 r) := begin
-  intros n z zs, simp at ⊢ zs,
-  by_cases np : n = 0, { rw np, simpa },
-  exact lt_of_le_of_lt (iterates_converge s n (le_of_lt zs)) (five_eights_pow_lt s.rp np)
-end
-
--- Iterates are analytic
-lemma iterates_analytic (s : super f g d 0 1 r) : ∀ n, analytic_on ℂ (f^[n]) (ball 0 r) := begin
-  intro n,
-  rw ←differentiable_iff_analytic is_open_ball,
-  induction n with n, {
-    simp, exact λ _ _, differentiable_within_at_id
-  }, {
-    rw function.iterate_succ',
-    refine differentiable_on.comp _ (by assumption) (iterates_maps_to s n),
-    exact (differentiable_iff_analytic is_open_ball).mpr s.fa,
-  },
-  exact complete_of_proper
-end
-
--- term is analytic close to 0
-lemma term_analytic (s : super f g d 0 1 r) : ∀ n, analytic_on ℂ (term s n) (ball 0 r) := begin
-  intro n,
-  rw ←differentiable_iff_analytic is_open_ball,
-  apply differentiable_on.cpow, {
-    refine differentiable_on.comp _ _ (iterates_maps_to s n),
-    exact (differentiable_iff_analytic is_open_ball).mpr s.ga,
-    exact (differentiable_iff_analytic is_open_ball).mpr (iterates_analytic s n)
-  }, {
-    exact differentiable_on_const _
-  }, {
-    intros z zr, simp at zr,
-    refine near_one_avoids_negative_reals _,
-    exact lt_of_le_of_lt (s.gs (iterates_remain s n (le_of_lt zr))) (by norm_num),
-  },
-  exact complete_of_proper
-end
-
--- term converges to 1 exponentially, sufficiently close to 0
-lemma term_converges (s : super f g d 0 1 r) : ∀ n, abs z ≤ r → abs (term s n z - 1) ≤ 1/2 * (1/2)^n := begin
-  intros n zr,
-  rw term,
-  transitivity 4 * abs (g (f^[n] z) - 1) * abs (1/d^(n+1) : ℂ), {
-    apply pow_small, {
-      transitivity (1/4 : ℝ),
-      exact s.gs (iterates_remain s n zr),
-      norm_num
-    }, {
-      simp, apply inv_le_one,
-      have hd : 1 ≤ (d : ℝ) := trans (by norm_num) s.dr2,
-      exact one_le_pow_of_one_le hd _
-    }
-  }, {
-    have fns : abs (f^[n] z) ≤ r := iterates_remain s n zr,
-    have gs : abs (g (f^[n] z) - 1) ≤ 1/4 := s.gs fns,
-    have ps : abs (1/↑d^(n+1) : ℂ) ≤ 1/2 * (1/2)^n, {
-      have nn : 1/2 * (1/2 : ℝ)^n = (1/2)^(n+1) := (pow_succ _ _).symm,
-      rw nn, simp, apply inv_le_inv_of_le, bound, bound [s.dr2]
+-- The defining equation
+lemma super.bottcher_eqn (s : super f d a) [one_preimage s] : s.bottcher c (f c z) = s.bottcher c z ^ d := begin
+  have h0 : ∀ {c z}, (c,z) ∈ s.post → s.bottcher c (f c z) = s.bottcher c z ^ d, {
+    intros c z m,
+    suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d, {
+      refine (holomorphic_on.eq_of_locally_eq _ (λ z m, (s.bottcher_holomorphic_on (c,z) m).in2.pow)
+        (s.post_slice_connected c).is_preconnected ⟨a, s.post_a c, e⟩).self_set _ m,
+      exact λ z m, (s.bottcher_holomorphic_on _ (s.stays_post m)).in2.comp (s.fa _).in2,
     },
-    calc 4 * abs (g (f^[n] z) - 1) * abs (1/↑d^(n+1) : ℂ) ≤ 4 * (1/4) * (1/2 * (1/2)^n) : by bound
-    ... = 1/2 * (1/2)^n : by ring
-  }
-end
-
--- term is nonzero, sufficiently close to 0
-lemma term_nonzero (s : super f g d 0 1 r) : ∀ n, abs z ≤ r → term s n z ≠ 0 := begin
-  intros n zr,
-  have h := term_converges s n zr,
-  have o : 1/2 * (1/2 : ℝ)^n < 1, {
-    have p : (1/2 : ℝ)^n ≤ 1 := pow_le_one n (by norm_num) (by bound),
-    calc 1/2 * (1/2 : ℝ)^n ≤ 1/2 * 1 : by bound
-    ... < 1 : by norm_num
+    have e := s.bottcher_eq_bottcher_near c,
+    have fc := (s.fa (c,a)).in2.continuous_at, simp only [continuous_at, s.f0] at fc,
+    apply e.mp, apply (fc.eventually e).mp,
+    apply ((s.is_open_near.snd_preimage c).eventually_mem (s.mem_near c)).mp,
+    refine eventually_of_forall (λ w m e0 e1, _), simp only at m e0 e1,
+    simp only [e0,e1], exact s.bottcher_near_eqn m,
   },
-  exact near_one_avoids_zero (lt_of_le_of_lt h o)
-end
-
--- The term product exists and is analytic
-lemma term_prod (s : super f g d 0 1 r)
-    : prod_exists_on (term s) (ball 0 r) ∧ analytic_on ℂ (tprod_on (term s)) (ball 0 r) := begin
-  have c12 : (1/2 : ℝ) ≤ 1/2 := by norm_num,
-  have a0 : 0 ≤ (1/2 : ℝ) := by norm_num,
-  have a1 : (1/2 : ℝ) < 1 := by norm_num,
-  apply fast_products_converge' is_open_ball c12 a0 a1, {
-    exact term_analytic s
-  }, {
-    intros n z zr, simp at zr, exact term_converges s n (le_of_lt zr)
-  }
-end
-
--- bottcher satisfies b (f z) = (b z)^d near 0
-theorem bottcher_eqn (s : super f g d 0 1 r) : abs z < r → bottcher s (f z) = (bottcher s z)^d := begin
-  intro zr,
-  rw bottcher, rw bottcher,
-  have zs : z ∈ ball (0 : ℂ) r := by simpa,
-  have zr' := le_of_lt zr,
-  have pe := (term_prod s).left z zs,
-  rw mul_pow,
-  rw product_pow' pe, simp,
-  have pe : prod_exists (λ n, term s n z ^ d), { rcases pe with ⟨g,hg⟩, exact ⟨_,product_pow d hg⟩ },
-  rw product_split pe, simp,
-  simp_rw ←term_eqn s _ zr',
-  rw ←mul_assoc, rw ←mul_pow, rw ←term_base s zr'
-end
-
--- f^[n] 0 = 0
-lemma iterates_at_zero (s : super f g d 0 1 r) : ∀ n, f^[n] 0 = 0 := begin
-  intro n, induction n with n h, simp,
-  rw function.iterate_succ', simp, rw [h, s.fc]
-end
-
--- term s n 0 = 1
-lemma term_at_zero (s : super f g d 0 1 r) : ∀ n, term s n 0 = 1 := begin
-  intro n, rw [term, iterates_at_zero s, s.gc], simp
-end
-
--- prod (term s _ 0) = 1
-lemma term_prod_at_zero (s : super f g d 0 1 r) : tprod_on (term s) 0 = 1 := begin
-  simp_rw [tprod_on, term_at_zero s], exact prod_ones'
-end
-
--- b' 0 = 1, and in particular b is a local isomorphism
-theorem bottcher_monic (s : super f g d 0 1 r) : has_deriv_at (bottcher s) 1 0 := begin
-  have p := term_prod s,
-  have dp := (p.right 0 (metric.mem_ball_self s.rp)).has_deriv_at,
-  have dz : has_deriv_at (λ z : ℂ, z) 1 0 := has_deriv_at_id 0,
-  have db := has_deriv_at.mul dz dp, simp at db,
-  rw term_prod_at_zero at db, exact db
-end
-
--- bottcher is analytic in z
-theorem bottcher_analytic_z (s : super f g d 0 1 r) : analytic_on ℂ (bottcher s) (ball 0 r) := begin
-  rw ←differentiable_iff_analytic is_open_ball,
-  exact differentiable_on.mul differentiable_on_id (term_prod s).right.differentiable_on,
-  exact complete_of_proper
-end
-
-end bottcher
-
--- Next we prove that everything is analytic in an additional function parameter
-section bottcher_c
-
-variables {f g : ℂ → ℂ → ℂ}
-variables {cs : set ℂ}
-variables {d : ℕ}
-variables {r : ℝ}
-
--- super everywhere on a parameter set
-structure super_c (f g : ℂ → ℂ → ℂ) (cs : set ℂ) (d : ℕ) (r : ℝ) :=
-(rp : r > 0)
-(o : is_open cs)
-(s : Π c, c ∈ cs → super (f c) (g c) d 0 1 r)
-(fa : analytic_on ℂ (uncurry f) (cs ×ˢ (ball (0 : ℂ) r)))
-(ga : analytic_on ℂ (uncurry g) (cs ×ˢ (ball (0 : ℂ) r)))
-
--- The set on which everything is defined is open
-lemma super_c.o2 (s : super_c f g cs d r) : is_open (cs ×ˢ (ball (0 : ℂ) r)) := is_open.prod s.o is_open_ball
-
--- Differentiability of f and g
-lemma super_c.fd (s : super_c f g cs d r) : differentiable_on ℂ (uncurry f) (cs ×ˢ (ball (0 : ℂ) r)) :=
-  (differentiable_iff_analytic2 s.o2).mpr s.fa
-lemma super_c.gd (s : super_c f g cs d r) : differentiable_on ℂ (uncurry g) (cs ×ˢ (ball (0 : ℂ) r)) :=
-  (differentiable_iff_analytic2 s.o2).mpr s.ga
-
--- Parameterized version of bottcher
-def bottcher_c (s : super_c f g cs d r) (c z : ℂ) : ℂ :=
-  if_p (c ∈ cs) (λ m, bottcher (s.s c m) z)
-
--- bottcher_c factors as expected
-lemma bottcher_c_def (s : super_c f g cs d r) (c z : ℂ)
-    : bottcher_c s c z = z * tprod (λ n, if_p (c ∈ cs) (λ m, term (s.s c m) n z)) := begin
-  simp_rw [bottcher_c, bottcher],
-  by_cases m : c ∈ cs, {
-    simp_rw if_p_true m
-  }, {
-    simp_rw [if_p_false m, has_prod.zero.tprod_eq], simp
-  }
-end
-
---lemma term_prod_fast_c
--- tprod_on (λ n c, if_p (c ∈ cs) (λ m, term (s.s c m) n z))
-
-    --(o : is_open s) (c12 : c ≤ 1/2) (a0 : 0 ≤ a) (a1 : a < 1)
-    --(h : ∀ n, analytic_on ℂ (f n) s) (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a^n)
-
-lemma iterates_maps_to_c (s : super_c f g cs d r) {z : ℂ}
-    (n : ℕ) (zm : z ∈ ball (0 : ℂ) r)
-    : set.maps_to (λ (c : ℂ), (c, f c^[n] z)) cs (cs ×ˢ ball 0 r) := begin
-  intros c cm, simp at ⊢ zm, refine ⟨cm,_⟩,
-  by_cases n0 : n = 0, { rw n0, simpa },
-  exact lt_of_le_of_lt (iterates_converge (s.s c cm) n (le_of_lt zm)) (five_eights_pow_lt s.rp n0)
-end
-
-lemma iterates_differentiable_c (s : super_c f g cs d r) {z : ℂ}
-    (n : ℕ) (zm : z ∈ ball (0 : ℂ) r)
-    : differentiable_on ℂ (λ c, f c^[n] z) cs := begin
-  induction n with n nh, {
-    simp, exact differentiable_on_const _
-  }, {
-    simp_rw function.iterate_succ', simp,
-    have e : (λ c, f c (f c^[n] z)) = (uncurry f) ∘ (λ c, (c, f c^[n] z)) := rfl,
-    rw e, clear e, apply differentiable_on.comp s.fd,
-    exact differentiable_on.prod differentiable_on_id nh,
-    exact iterates_maps_to_c s n zm
-  }
-end
-
-lemma term_analytic_c (s : super_c f g cs d r) {z : ℂ}
-    (n : ℕ) (zm : z ∈ ball (0 : ℂ) r)
-    : analytic_on ℂ (λ c, if_p (c ∈ cs) (λ m, term (s.s c m) n z)) cs := begin
-  simp_rw term,
-  rw analytic_on_congr s.o (if_p_const cs),
-  rw ←differentiable_iff_analytic s.o,
-  apply differentiable_on.cpow, {
-    have e : (λ c, g c (f c^[n] z)) = (uncurry g) ∘ (λ c, (c, f c^[n] z)) := rfl,
-    rw e, apply differentiable_on.comp s.gd,
-    apply differentiable_on.prod differentiable_on_id,
-    exact iterates_differentiable_c s n zm,
-    exact iterates_maps_to_c s n zm
-  }, {
-    exact differentiable_on_const _
-  }, {
-    intros c cm, simp at zm,
-    refine near_one_avoids_negative_reals _,
-    exact lt_of_le_of_lt ((s.s c cm).gs (iterates_remain (s.s c cm) n (le_of_lt zm))) (by norm_num)
+  by_cases p : (c,z) ∈ s.post, simp only [h0 p],
+  by_cases m : (c,z) ∈ s.basin, {
+    have e0 : ∃ n, (c, f c^[n] z) ∈ s.post := s.basin_post m,
+    have e1 : ∃ n, (c, f c^[n] (f c z)) ∈ s.post, {
+      rcases e0 with ⟨n,e0⟩, use n,
+      simp only [←function.iterate_succ_apply, function.iterate_succ_apply'],
+      exact s.stays_post e0,
+    },
+    simp only [super.bottcher, e0, e1, dif_pos],
+    generalize hk0 : @nat.find _ (classical.dec_pred _) e0 = k0,
+    generalize hk1 : @nat.find _ (classical.dec_pred _) e1 = k1,
+    have kk : k0 = k1 + 1, {
+      rw [←hk0, ←hk1], apply le_antisymm, {
+        apply nat.find_le, simp only [function.iterate_succ_apply],
+        exact @nat.find_spec _ (classical.dec_pred _) e1,
+      }, {
+        rw [nat.succ_le_iff, nat.lt_find_iff], intros n n1,
+        contrapose n1, simp only [not_not, not_le] at n1 ⊢,
+        have n0 : n ≠ 0, {
+          contrapose p, simp only [not_not] at ⊢ p, simp only [p, function.iterate_zero_apply] at n1, exact n1,
+        },
+        rw [←nat.succ_le_iff, nat.succ_eq_add_one, ←nat.sub_add_cancel (nat.pos_of_ne_zero n0)],
+        apply nat.succ_le_succ, apply nat.find_le,
+        simp only [←function.iterate_succ_apply, nat.succ_eq_add_one, nat.sub_add_cancel (nat.pos_of_ne_zero n0), n1],
+      },
+    },
+    simp only [kk, ←function.iterate_succ_apply, function.iterate_succ_apply'],
+    rw complex.cpow_nat_inv_pow _ s.d0,
   },
-  repeat { exact complete_of_proper },
-end
-
--- bottcher is analytic in c
-theorem bottcher_analytic_c (s : super_c f g cs d r) {z : ℂ} (zm : z ∈ ball (0 : ℂ) r)
-    : analytic_on ℂ (λ c, bottcher_c s c z) cs := begin
-  simp_rw bottcher_c_def s,
-  rw ←differentiable_iff_analytic s.o,
-  apply differentiable_on.mul (differentiable_on_const _),
-  rw differentiable_iff_analytic s.o,
-  rw ←tprod_on,
-  have c12 : (1/2 : ℝ) ≤ 1/2 := by norm_num,
-  have a0 : 0 ≤ (1/2 : ℝ) := by norm_num,
-  have a1 : (1/2 : ℝ) < 1 := by norm_num,
-  refine (fast_products_converge' s.o c12 a0 a1 _ _).right, {
-    exact λ n, term_analytic_c s n zm
-  }, {
-    intros n c cm, rw if_p_true cm, simp at zm,
-    exact term_converges (s.s c cm) n (le_of_lt zm)
+  have m1 : (c, f c z) ∉ s.basin, {
+    contrapose m, simp only [not_not] at m ⊢,
+    rcases m with ⟨n,m⟩, use n+1, simp only at ⊢ m, rwa function.iterate_succ_apply,
   },
-  repeat { exact complete_of_proper }
+  simp only [s.bottcher_not_basin m, s.bottcher_not_basin m1, one_pow],
 end
 
--- bottcher is jointly analytic (using Hartogs's theorem for simplicity)
-theorem bottcher_analytic2 (s : super_c f g cs d r)
-    : analytic_on ℂ (uncurry (bottcher_c s)) (cs ×ˢ (ball (0 : ℂ) r)) := begin
-  apply pair.hartogs (s.o.prod metric.is_open_ball), {
-    simp, intros c0 c1 c0s c1s, exact bottcher_analytic_c s (by simpa) _ c0s,
-  }, {
-    simp, intros c0 c1 c0s c1s,
-    have e : bottcher_c s c0 = bottcher (s.s c0 c0s), { funext, rw [bottcher_c, if_p_true c0s] },
-    rw e, apply bottcher_analytic_z, simpa,
+-- The defining equation, iterated
+lemma super.bottcher_eqn_iter (s : super f d a) [one_preimage s] (n : ℕ)
+    : s.bottcher c (f c^[n] z) = s.bottcher c z ^ d^n := begin
+  induction n with n h, simp only [function.iterate_zero_apply, pow_zero, pow_one],
+  simp only [function.iterate_succ_apply', s.bottcher_eqn, h, ←pow_mul, pow_succ'],
+end
+
+-- abs bottcher = potential
+lemma super.abs_bottcher (s : super f d a) [one_preimage s] : abs (s.bottcher c z) = s.potential c z := begin
+  have base : ∀ {c z}, (c,z) ∈ s.post → abs (s.bottcher c z) = s.potential c z, {
+    intros c z m, rcases s.ray_surj m with ⟨x,m,e⟩, rw [←e, s.bottcher_ray m, s.ray_potential m],
   },
-  apply_instance, apply_instance,
+  by_cases m : (c,z) ∈ s.basin, {
+    rcases s.basin_post m with ⟨n,p⟩,
+    rw [←real.pow_nat_rpow_nat_inv (complex.abs.nonneg _) (pow_ne_zero n s.d0),
+      ←complex.abs.map_pow, ←s.bottcher_eqn_iter n, base p, s.potential_eqn_iter,
+      real.pow_nat_rpow_nat_inv s.potential_nonneg (pow_ne_zero n s.d0)],
+  }, {
+    have m' := m, simp only [super.basin, not_exists, mem_set_of] at m',
+    simp only [s.bottcher_not_basin m, complex.abs.map_one, s.potential_eq_one m'],
+  },
 end
 
-end bottcher_c
+-- abs < 1
+lemma super.bottcher_lt_one (s : super f d a) [one_preimage s] (m : (c,z) ∈ s.post) : abs (s.bottcher c z) < 1 := begin
+  replace m := s.bottcher_ext m, simp only [super.ext, mem_set_of] at m, exact lt_of_lt_of_le m s.p_le_one,
+end

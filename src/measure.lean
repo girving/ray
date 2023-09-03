@@ -3,8 +3,8 @@
 import data.set.basic
 import data.set.prod
 import data.real.ennreal
-import measure_theory.constructions.prod
-import measure_theory.measure.complex_lebesgue
+import measure_theory.integral.circle_integral
+import measure_theory.measure.lebesgue.complex
 import measure_theory.measure.measure_space_def
 import measure_theory.integral.average
 import topology.subset_properties
@@ -17,7 +17,7 @@ open measure_theory
 open metric (ball closed_ball sphere)
 open set (Ioc Icc)
 open topological_space (second_countable_topology)
-open_locale real ennreal topological_space
+open_locale real ennreal topology
 noncomputable theory
 
 variables {E : Type} [normed_add_comm_group E] [normed_space ℝ E] [complete_space E] [second_countable_topology E]
@@ -42,7 +42,7 @@ end
 -- We can ignore hypotheses under ∀ᵐ
 lemma ae_drop_imp {f g : X → Prop} : (∀ᵐ x, g x) → (∀ᵐ x, f x → g x) := begin
   intro h,
-  rw ae_iff at ⊢ h, simp, rw set.set_of_and, rw ←ennreal.le_zero_iff at ⊢ h,
+  rw ae_iff at ⊢ h, simp only [not_forall, exists_prop], rw set.set_of_and, rw ←ennreal.le_zero_iff at ⊢ h,
   exact trans (measure_mono (set.inter_subset_right _ _)) h,
 end
 
@@ -59,7 +59,7 @@ lemma ae_eq_on_def {Y : Type} {f g : X → Y} {s : set X} (m : measurable_set s)
 -- Removing a null set isn't significant measure-wise
 lemma ae_minus_null {s t : set X} (tz : volume t = 0) : s =ᵐ[volume] (s \ t) := begin
   simp [filter.eventually_eq],
-  have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ (s \ t)), { intros x h, simp, finish },
+  have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ (s \ t)), { intros x h, simp only [set.mem_diff, h, not_false_iff, and_true] },
   simp_rw [set.mem_def] at e, refine ae_imp _ e,
   rw [ae_iff], simpa [set.set_of_set],
 end
@@ -72,23 +72,29 @@ lemma ae_minus_point [has_no_atoms (volume : measure X)] {s : set X} {x : X}
 @[instance] def complex.is_add_haar_measure_volume : (volume : measure ℂ).is_add_haar_measure := begin
   have v : (volume : measure ℂ) = volume.map complex.equiv_real_prod_add_hom.symm, {
     have e : (⇑(complex.measurable_equiv_real_prod.symm) : ℝ × ℝ → ℂ) = ⇑(complex.equiv_real_prod_add_hom.symm), {
-      apply funext, intro x, rw [complex.ext_iff, complex.measurable_equiv_real_prod], simp,
+      funext x,
+      simp only [complex.ext_iff, complex.measurable_equiv_real_prod, homeomorph.to_measurable_equiv_symm_coe,
+        continuous_linear_equiv.symm_to_homeomorph, continuous_linear_equiv.coe_to_homeomorph,
+        complex.equiv_real_prod_clm_symm_apply_re, complex.equiv_real_prod_add_hom_symm_apply_re, eq_self_iff_true,
+        complex.equiv_real_prod_clm_symm_apply_im, complex.equiv_real_prod_add_hom_symm_apply_im, and_self],
     },
     rw ←e, clear e,
     exact (measure_preserving.symm _ complex.volume_preserving_equiv_real_prod).map_eq.symm,
   },
   rw v,
-  apply measure.is_add_haar_measure_map (volume : measure (ℝ × ℝ)) complex.equiv_real_prod_add_hom.symm, {
-    have e : (⇑(complex.equiv_real_prodₗ.symm) : ℝ × ℝ → ℂ) = ⇑(complex.equiv_real_prod_add_hom.symm), {
-      apply funext, intro x, rw complex.ext_iff, simp,
-    },
+  have e : (⇑(complex.equiv_real_prod_clm.symm) : ℝ × ℝ → ℂ) = ⇑(complex.equiv_real_prod_add_hom.symm.to_add_monoid_hom), {
+    funext x,
+    simp only [complex.ext_iff, add_equiv.coe_to_add_monoid_hom, complex.equiv_real_prod_clm_symm_apply_re,
+      complex.equiv_real_prod_add_hom_symm_apply_re, eq_self_iff_true, complex.equiv_real_prod_clm_symm_apply_im,
+      complex.equiv_real_prod_add_hom_symm_apply_im, and_self],
+  },
+  apply measure.is_add_haar_measure_map (volume : measure (ℝ × ℝ)) complex.equiv_real_prod_add_hom.symm.to_add_monoid_hom, {
     rw ←e, apply continuous_linear_map.continuous,
   }, {
-    simp,
-    have e : (⇑(complex.equiv_real_prodₗ) : ℂ → ℝ × ℝ) = ⇑(complex.equiv_real_prod_add_hom), {
-      apply funext, intro x, simp,
-    },
-    rw ←e, apply continuous_linear_map.continuous,
+    simp only [add_equiv.coe_to_add_monoid_hom, equiv_like.comp_surjective],
+    exact function.surjective_id,
+  }, {
+    rw ←e, exact complex.equiv_real_prod_clm.symm.to_homeomorph.to_cocompact_map.cocompact_tendsto',
   },
 end
 
@@ -195,7 +201,7 @@ lemma mean_bound {f : X → ℝ} {s : set X} {b : ℝ}
   simp at ⊢ ib,
   transitivity (volume s).to_real⁻¹ * ((volume s).to_real * b),
   bound [sn.pos],
-  rw [←mul_assoc _ _ b, inv_mul_cancel sn.real_nonneg], simp,
+  rw [←mul_assoc _ _ b, inv_mul_cancel sn.real_nonneg], simp only [one_mul],
 end
 
 -- Sets where each point is near positive volume
@@ -211,7 +217,7 @@ lemma local_volume.closure_interior (s : set X)
   rcases metric.is_open_iff.mp is_open_interior y ys with ⟨e,ep,ye⟩,
   set t := min e (r - dist x y),
   have es : ball y t ⊆ s ∩ ball x r, {
-    simp, constructor,
+    simp only [set.subset_inter_iff], constructor,
     exact trans (metric.ball_subset_ball (by bound)) (trans ye interior_subset),
     apply metric.ball_subset_ball',
     transitivity r - dist x y + dist y x, bound, simp [dist_comm],
@@ -222,9 +228,11 @@ end
 -- Intervals have local volume
 lemma local_volume.Ioc {a b : ℝ} : local_volume_set (set.Ioc a b) := begin
   apply local_volume.closure_interior,
-  intros x r rp, simp, exact rp,
-  by_cases ab : a = b, { rw ab, simp },
-  simp, rw closure_Ioo ab, simp [set.Ioc_subset_Icc_self],
+  intros x r rp,
+  simp only [real.volume_ball, gt_iff_lt, ennreal.of_real_pos, zero_lt_mul_left, zero_lt_bit0, zero_lt_one],
+  exact rp,
+  by_cases ab : a = b, { simp only [ab, set.Ioc_self, set.empty_subset] },
+  simp only [interior_Ioc, closure_Ioo ab, set.Ioc_subset_Icc_self],
 end
 lemma local_volume.Itau : local_volume_set Itau := local_volume.Ioc
 
@@ -234,7 +242,8 @@ lemma mean_squeeze {f : X → ℝ} {s : set X} {b : ℝ}
     (lo : b ≤ ⨍ x in s, f x) (hi : ∀ x, x ∈ s → f x ≤ b)
     : ∀ x, x ∈ s → f x = b := begin
   contrapose lo, rw set_average_eq,
-  simp, simp only [not_forall] at lo,
+  simp only [algebra.id.smul_eq_mul, not_le],
+  simp only [not_forall] at lo,
   rcases lo with ⟨x,xs,fx'⟩,
   have fx := lt_of_le_of_ne (hi x xs) fx', clear fx',
   rcases metric.continuous_on_iff.mp fc x xs ((b - f x)/2) (by bound) with ⟨e,ep,he⟩,
@@ -287,7 +296,7 @@ lemma mean_squeeze {f : X → ℝ} {s : set X} {b : ℝ}
     ... < vs * b - 0 : sub_lt_sub_left (by bound) _
     ... = b * vs : by ring
   }, {
-    rw disjoint.comm, exact set.disjoint_diff,
+    rw disjoint.comm, exact set.disjoint_sdiff_right,
   }, {
     exact tm,
   }, {
@@ -302,18 +311,19 @@ lemma continuous_on.interval_integral {f : X → ℝ → E} {s : set X} {a b : �
     : continuous_on (λ x, ∫ t in a..b, f x t) s := begin
   rcases fc.bounded_norm (sc.prod is_compact_Icc) with ⟨c,cp,fb⟩,
   simp only [set.forall_prod_set, uncurry] at fb,
-  have e : ∀ x t, f x t = (uncurry f) (x,t) := by simp,
+  have e : ∀ x t, f x t = (uncurry f) (x,t) :=
+    by simp only [function.uncurry_apply_pair, eq_self_iff_true, forall_forall_const, implies_true_iff],
   intros x xs,
   apply @interval_integral.continuous_within_at_of_dominated_interval _ _ _ _ _ _ _ _ _ _ (λ _, c), {
     apply eventually_nhds_within_of_forall, intros y ys,
     refine continuous_on.ae_strongly_measurable _ measurable_set_Ioc,
-    rw [set.interval_oc_of_le ab], simp_rw e, apply fc.comp, {
+    rw [set.uIoc_of_le ab], simp_rw e, apply fc.comp, {
       apply continuous.continuous_on, continuity,
     }, {
      intros t ts, exact set.mk_mem_prod ys (set.Ioc_subset_Icc_self ts),
     },
   }, {
-    apply eventually_nhds_within_of_forall, intros y ys, rw [set.interval_oc_of_le ab],
+    apply eventually_nhds_within_of_forall, intros y ys, rw [set.uIoc_of_le ab],
     apply ae_of_all, intros t ts, apply fb _ ys _ (set.Ioc_subset_Icc_self ts),
   }, {
     exact interval_integrable_const,
@@ -321,7 +331,7 @@ lemma continuous_on.interval_integral {f : X → ℝ → E} {s : set X} {a b : �
     apply ae_of_all, intros t ts, simp_rw e, apply fc.comp, {
       apply continuous.continuous_on, continuity,
     }, {
-      rw [set.interval_oc_of_le ab] at ts,
+      rw [set.uIoc_of_le ab] at ts,
       intros y ys, exact set.mk_mem_prod ys (set.Ioc_subset_Icc_self ts),
     },
     assumption,

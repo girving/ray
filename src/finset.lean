@@ -4,8 +4,10 @@ import data.complex.basic
 import data.finset.basic
 import data.stream.defs
 import order.filter.at_top_bot
+
+open complex (abs)
 open filter (at_top)
-open_locale topological_space
+open_locale topology
 
 -- Insert 0, adding 1 to existing elements
 def push (N : finset ℕ) := insert 0 (finset.image (λ n, n + 1) N)
@@ -67,4 +69,26 @@ lemma tendsto_comp_push {A : Type} {f : finset ℕ → A} {l : filter A}
   rw push_range,
   have h : {N : finset ℕ | 0 ∈ N} = {N : finset ℕ | {0} ≤ N} := by simp,
   rw h, exact filter.mem_at_top _
+end
+
+lemma finset_complex_abs_sum_le (N : finset ℕ) (f : ℕ → ℂ)
+    : abs (N.sum (λ n, f n)) ≤ N.sum (λ n, abs (f n)) :=
+begin
+  induction N using finset.induction with n N Nn h, {
+    simp
+  }, {
+    rw finset.sum_insert Nn,
+    rw finset.sum_insert Nn,
+    transitivity abs (f n) + abs (N.sum (λ n, f n)), {
+      exact complex.abs.add_le _ _
+    }, {
+      apply add_le_add_left, assumption
+    }
+  }
+end
+
+lemma subset_union_sdiff (A B : finset ℕ) : B ⊆ A ∪ B \ A := begin
+  rw finset.subset_iff, intros x Bx,
+  rw [finset.mem_union, finset.mem_sdiff],
+  finish
 end

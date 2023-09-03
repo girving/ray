@@ -1,6 +1,7 @@
 -- Facts about products
 
-import analysis.calculus.fderiv
+import analysis.calculus.fderiv.basic
+import analysis.calculus.fderiv.prod
 import analysis.normed.field.basic
 import data.prod.basic
 import data.set.basic
@@ -9,7 +10,7 @@ import topology.basic
 open function (uncurry curry)
 open metric (ball)
 open prod (swap)
-open_locale topological_space
+open_locale topology
 noncomputable theory
 
 variables {A B C : Type}
