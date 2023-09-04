@@ -35,17 +35,18 @@ postcritical for each $c \in \mathbb{S} - M_d$, so the diagonal $b_c(c)$ of the 
 holomorphic throughout $\mathbb{S} - M_d$, and defines an analytic bijection from $\mathbb{S} - M_d$
 to the open unit disk $D_1(0)$.
 
-**Multibrot connectness ([multibrot_connected.lean](https://github.com/girving/ray/blob/main/src/multibrot_connected.lean#L76), [mandelbrot.lean](https://github.com/girving/ray/blob/main/src/mandelbrot.lean#L25)):**
+**Multibrot connectness ([multibrot_connected.lean](https://github.com/girving/ray/blob/main/src/multibrot_connected.lean#L76), [mandelbrot.lean](https://github.com/girving/ray/blob/main/src/mandelbrot.lean#L25)), Corollary 8.3 of [Douady and Hubbard](https://pi.math.cornell.edu/~hubbard/OrsayEnglish.pdf):**
 Each Multibrot set $M_d$ and its complement $\mathbb{S} - M_d$
 are corrected, including the Mandelbrot set $M = M_2$.
 
 ## References
 
-1. [John Milnor (1990), Dynamics in one complex variable](https://arxiv.org/abs/math/9201272)
-2. [Dierk Schleicher (1998), Rational parameter rays of the Mandelbrot set](https://arxiv.org/abs/math/9711213)
-3. [Paul Garrett (2005), Hartogs’ Theorem: separate analyticity implies joint](https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf)
-4. [Hartog's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity)
-5. [Böttcher's theorem](https://en.wikipedia.org/wiki/B%C3%B6ttcher%27s_equation)
+1. [Adrien Douady, John Hubbard (1984-5). Exploring the Mandelbrot set.  The Orsay Notes](https://pi.math.cornell.edu/~hubbard/OrsayEnglish.pdf)
+2. [John Milnor (1990), Dynamics in one complex variable](https://arxiv.org/abs/math/9201272)
+3. [Dierk Schleicher (1998), Rational parameter rays of the Mandelbrot set](https://arxiv.org/abs/math/9711213)
+4. [Paul Garrett (2005), Hartogs’ Theorem: separate analyticity implies joint](https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf)
+5. [Hartog's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity)
+6. [Böttcher's theorem](https://en.wikipedia.org/wiki/B%C3%B6ttcher%27s_equation)
 
 ## Building
 
