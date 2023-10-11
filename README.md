@@ -29,7 +29,7 @@ other preimages of $a$.  Starting with the local Böttcher map $b(z)$ defined in
 $a$, we get a continuous potential map $\phi : S \to [0,1]$ s.t. $\phi(z) = |b(z)|$ near $a$ and
 $\phi(f(z)) = \phi(z)^d$ everywhere.  Let $\phi^\ast = \min~\\{\phi(z) | f'(z) = 0, z \ne a\\}$ be the
 critical potential.  Then $b(z)$ can be analytically continued throughout the postcritical region
-$P = \\{z | \phi(z) < \phi^\ast\\}$, and gives a analytic homeomorphism from $P$ to the open disk
+$P = \\{z | \phi(z) < \phi^\ast\\}$, and gives an analytic homeomorphism from $P$ to the open disk
 $D_{\phi^\ast}(0) \subset \mathbb{C}$.  If $f(z) = f_c(z)$ is also analytic in a parameter
 $c \in \mathbb{C}$, then $b_c(z)$ can be analytically continued throughout
 $P = \\{(c,z) | \phi_c(z) < \phi^\ast_c\\}$.
