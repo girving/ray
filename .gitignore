@@ -1,3 +1,5 @@
-*.olean
-/_target
-/leanpkg.path
+!/lean_packages/manifest.json
+/build
+/lean_packages
+/lake-packages/*
+/lakefile.olean
