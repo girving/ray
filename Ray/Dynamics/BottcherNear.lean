@@ -402,7 +402,7 @@ theorem term_prod_at_zero (s : SuperNear f d t) : tprodOn (term f d) 0 = 1 := by
 /-- `bottcherNear' 0 = 1` (so in particular `bottcherNear` is a local isomorphism) -/
 theorem bottcherNear_monic (s : SuperNear f d t) : HasDerivAt (bottcherNear f d) 1 0 := by
   have dz : HasDerivAt (fun z : ℂ ↦ z) 1 0 := hasDerivAt_id 0
-  have db := HasDerivAt.mul dz (term_prod_analytic_z s 0 s.t0).hasDerivAt
+  have db := HasDerivAt.mul dz (term_prod_analytic_z s 0 s.t0).differentiableAt.hasDerivAt
   simp only [one_mul, MulZeroClass.zero_mul, add_zero] at db
   rw [term_prod_at_zero s] at db; exact db
 

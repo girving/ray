@@ -117,7 +117,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
   intro s' sn
   generalize hs : s' ∩ {p | AnalyticAt ℂ (uncurry f) p} = s
   have ss : s ⊆ s' := by rw [← hs]; apply inter_subset_left
-  replace sn : s ∈ 𝓝 (c, z); · rw [← hs]; exact Filter.inter_mem sn fa.eventually
+  replace sn : s ∈ 𝓝 (c, z); · rw [← hs]; exact Filter.inter_mem sn fa.eventually_analyticAt
   replace fa : AnalyticOn ℂ (uncurry f) s; · rw [← hs]; apply inter_subset_right
   refine' Filter.mem_of_superset _ (image_subset _ ss)
   clear ss hs s'

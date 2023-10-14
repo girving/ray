@@ -36,21 +36,6 @@ variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F
 variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
 variable {H : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
 
-/-- Infinite radius of convergence implies entire -/
-theorem radius_inf_to_entire {f : E → F} (p : FormalMultilinearSeries 𝕜 E F) (z : E) :
-    HasFPowerSeriesOnBall f p z ∞ → AnalyticOn 𝕜 f univ := by
-  intro h w _
-  refine' HasFPowerSeriesOnBall.analyticAt_of_mem h _
-  rw [EMetric.mem_ball]; exact edist_lt_top w z
-
-/-- Analytic functions have derivatives -/
-theorem AnalyticAt.hasDerivAt {f : 𝕜 → E} {z : 𝕜} :
-    AnalyticAt 𝕜 f z → HasDerivAt f (deriv f z) z := by
-  intro a
-  have dwa : DifferentiableWithinAt 𝕜 f univ z := AnalyticAt.differentiableWithinAt a
-  refine' (dwa.differentiableAt _).hasDerivAt
-  exact IsOpen.mem_nhds isOpen_univ (Set.mem_univ z)
-
 /-- `id` is analytic at any point -/
 theorem analyticAt_id {x : E} : AnalyticAt 𝕜 (fun x : E ↦ x) x :=
   (ContinuousLinearMap.id 𝕜 E).analyticAt x
@@ -77,11 +62,6 @@ theorem AnalyticOn.sum {f : ℕ → E → F} {s : Set E} (h : ∀ n, AnalyticOn 
 theorem ChangeOrigin.analyticAt (p : FormalMultilinearSeries 𝕜 E F) (rp : p.radius > 0) (n : ℕ) :
     AnalyticAt 𝕜 (fun x ↦ p.changeOrigin x n) 0 :=
   (FormalMultilinearSeries.hasFPowerSeriesOnBall_changeOrigin p n rp).analyticAt
-
-/-- Analytic at a point means analytic locally -/
-theorem AnalyticAt.eventually {f : E → F} {z : E} (fa : AnalyticAt 𝕜 f z) :
-    ∀ᶠ w in 𝓝 z, AnalyticAt 𝕜 f w :=
-  (isOpen_analyticAt 𝕜 f).eventually_mem fa
 
 /-- Analytic at a point means analytic in a small ball -/
 theorem AnalyticAt.ball {f : E → F} {z : E} :
@@ -572,7 +552,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
     AnalyticAt 𝕜 (fun x : E × 𝕜 ↦ _root_.deriv (f x.1) x.2) c := by
   set p : (E × 𝕜 →L[𝕜] 𝕜) →L[𝕜] 𝕜 := ContinuousLinearMap.apply 𝕜 𝕜 (0, 1)
   have e : ∀ᶠ x : E × 𝕜 in 𝓝 c, _root_.deriv (f x.1) x.2 = p (_root_.fderiv 𝕜 (uncurry f) x) := by
-    refine' fa.eventually.mp (eventually_of_forall _)
+    refine' fa.eventually_analyticAt.mp (eventually_of_forall _)
     intro ⟨x, y⟩ fa; simp only [← fderiv_deriv]
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
     rw [e]; rw [fderiv.comp]
