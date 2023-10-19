@@ -36,12 +36,8 @@ variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F
 variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
 variable {H : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
 
-/-- `id` is analytic at any point -/
-theorem analyticAt_id {x : E} : AnalyticAt 𝕜 (fun x : E ↦ x) x :=
-  (ContinuousLinearMap.id 𝕜 E).analyticAt x
-
 /-- `id` is entire -/
-theorem analyticOn_id {s : Set E} : AnalyticOn 𝕜 (fun x : E ↦ x) s := fun _ _ ↦ analyticAt_id
+theorem analyticOn_id {s : Set E} : AnalyticOn 𝕜 (fun x : E ↦ x) s := fun _ _ ↦ analyticAt_id _ _
 
 /-- Finite sums of analytic functions are analytic -/
 theorem AnalyticAt.sum {f : ℕ → E → F} {c : E} (h : ∀ n, AnalyticAt 𝕜 (f n) c) (N : Finset ℕ) :
@@ -107,40 +103,6 @@ theorem analyticOn_fst {s : Set (E × F)} : AnalyticOn 𝕜 (fun p : E × F ↦ 
 theorem analyticOn_snd {s : Set (E × F)} : AnalyticOn 𝕜 (fun p : E × F ↦ p.snd) s := fun _ _ ↦
   analyticAt_snd
 
-/-- Products of analytic functions are analytic -/
-theorem AnalyticAt.prod {f : E → F} {g : E → G} {x : E} (fa : AnalyticAt 𝕜 f x)
-    (ga : AnalyticAt 𝕜 g x) : AnalyticAt 𝕜 (fun x ↦ (f x, g x)) x := by
-  rcases fa with ⟨p, pr, fp⟩
-  rcases ga with ⟨q, qr, gq⟩
-  set pq : FormalMultilinearSeries 𝕜 E (F × G) := fun n ↦ (p n).prod (q n)
-  have pqr : min pr qr ≤ pq.radius := by
-    apply ENNReal.le_of_forall_nnreal_lt; intro r rr
-    rcases p.norm_mul_pow_le_of_lt_radius
-        (lt_of_lt_of_le rr (_root_.trans (min_le_left pr qr) fp.r_le)) with
-      ⟨pc, _, ph⟩
-    rcases q.norm_mul_pow_le_of_lt_radius
-        (lt_of_lt_of_le rr (_root_.trans (min_le_right pr qr) gq.r_le)) with
-      ⟨qc, _, qh⟩
-    apply pq.le_radius_of_bound (max pc qc); intro n
-    calc
-      ‖pq n‖ * ↑r^n = max ‖p n‖ ‖q n‖ * ↑r^n := by
-        simp only [ContinuousMultilinearMap.op_norm_prod]
-      _ = max (‖p n‖ * ↑r^n) (‖q n‖ * ↑r^n) := (max_mul_of_nonneg _ _ (by bound))
-      _ ≤ max pc qc := max_le_max (ph n) (qh n)
-  use pq, min pr qr
-  exact
-    { r_le := pqr
-      r_pos := by bound [fp.r_pos, gq.r_pos]
-      hasSum := by
-        intro y yr; apply HasSum.prod_mk
-        exact fp.hasSum (EMetric.ball_subset_ball (by bound) yr)
-        exact gq.hasSum (EMetric.ball_subset_ball (by bound) yr) }
-
--- Products of analytic functions are analytic -/
-theorem AnalyticOn.prod {f : E → F} {g : E → G} {s : Set E} (fa : AnalyticOn 𝕜 f s)
-    (ga : AnalyticOn 𝕜 g s) : AnalyticOn 𝕜 (fun z ↦ (f z, g z)) s := fun _ m ↦
-  (fa _ m).prod (ga _ m)
-
 /-- `AnalyticAt.comp` for a curried function -/
 theorem AnalyticAt.curry_comp {h : F → G → H} {f : E → F} {g : E → G} {x : E}
     (ha : AnalyticAt 𝕜 (uncurry h) (f x, g x)) (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) :
@@ -157,12 +119,12 @@ theorem AnalyticOn.curry_comp {h : F → G → H} {f : E → F} {g : E → G} {s
 /-- Curried analytic functions are analytic in the first coordinate -/
 theorem AnalyticAt.in1 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
     AnalyticAt 𝕜 (fun x ↦ f x y) x :=
-  AnalyticAt.curry_comp fa analyticAt_id analyticAt_const
+  AnalyticAt.curry_comp fa (analyticAt_id _ _) analyticAt_const
 
 /-- Curried analytic functions are analytic in the second coordinate -/
 theorem AnalyticAt.in2 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
     AnalyticAt 𝕜 (fun y ↦ f x y) y :=
-  AnalyticAt.curry_comp fa analyticAt_const analyticAt_id
+  AnalyticAt.curry_comp fa analyticAt_const (analyticAt_id _ _)
 
 /-- Curried analytic functions are analytic in the first coordinate -/
 theorem AnalyticOn.in1 {f : E → F → G} {s : Set (E × F)} {y : F} (fa : AnalyticOn 𝕜 (uncurry f) s) :
@@ -198,48 +160,17 @@ theorem analyticOn_mul [CompleteSpace 𝕜] : AnalyticOn 𝕜 (fun x : 𝕜 × �
       rw [e]; apply hasSum_ite_eq }
 
 /-- `f * g` is analytic -/
-theorem AnalyticAt.mul [CompleteSpace 𝕜] {f g : E → 𝕜} {x : E}
-    (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) : AnalyticAt 𝕜 (fun x ↦ f x * g x) x := by
-  have e : (fun x ↦ f x * g x) = (fun p : 𝕜 × 𝕜 ↦ p.1 * p.2) ∘ fun x ↦ (f x, g x) := rfl
-  rw [e]; exact (analyticOn_mul _ (Set.mem_univ _)).comp (fa.prod ga)
-
-/-- `f * g` is analytic -/
 theorem AnalyticOn.mul [CompleteSpace 𝕜] {f g : E → 𝕜} {s : Set E}
     (fa : AnalyticOn 𝕜 f s) (ga : AnalyticOn 𝕜 g s) :
     AnalyticOn 𝕜 (fun x ↦ f x * g x) s := fun x m ↦ (fa x m).mul (ga x m)
 
-/-- `x⁻¹` is analytic away from `x = 0` -/
-theorem analyticAt_inv {y : 𝕜} (y0 : y ≠ 0) : AnalyticAt 𝕜 (fun x ↦ x⁻¹) y := by
-  -- x⁻¹ = (y - (y - x))⁻¹ = y⁻¹ (1 - (-y⁻¹)(x - y))⁻¹ = ∑ₙ y⁻¹ (-y⁻¹)^n (x - y)^n
-  set p : FormalMultilinearSeries 𝕜 𝕜 𝕜 := fun n ↦
-    ContinuousMultilinearMap.mkPiField 𝕜 _ (y⁻¹ * (-y⁻¹)^n)
-  refine ⟨p, ‖y‖₊, ?_⟩; exact {
-    r_le := by
-      apply p.le_radius_of_bound (C := ‖y‖⁻¹); intro n
-      simp only [ContinuousMultilinearMap.norm_mkPiField, norm_pow, norm_neg, norm_inv, inv_pow,
-        NNReal.coe_div, coe_nnnorm, NNReal.coe_ofNat, div_pow, norm_mul, mul_assoc]
-      rw [inv_mul_cancel, mul_one]; apply pow_ne_zero; rwa [norm_ne_zero_iff]
-    r_pos := by
-      simp only [pos_iff_ne_zero, ne_eq, ENNReal.coe_eq_zero, nnnorm_eq_zero, y0, not_false_eq_true]
-    hasSum := by
-      intro x m
-      simp only [Metric.emetric_ball_nnreal, coe_nnnorm, Metric.mem_ball, dist_zero_right] at m
-      simp only [ContinuousMultilinearMap.mkPiField_apply, Finset.prod_const, Finset.card_fin,
-        smul_eq_mul, ←mul_assoc _ y⁻¹ _, mul_comm _ y⁻¹, mul_assoc y⁻¹ _ _, ←mul_pow, mul_comm x _]
-      have e : (y + x)⁻¹ = y⁻¹ * (1 - (-y⁻¹ * x))⁻¹ := by field_simp [y0]
-      rw [e]; simp only [←smul_eq_mul]; apply HasSum.const_smul; simp only [smul_eq_mul]
-      apply hasSum_geometric_of_norm_lt_1 (ξ := -y⁻¹ * x)
-      simp only [neg_mul, norm_neg, norm_div, norm_inv, ←div_eq_inv_mul]
-      bound; rwa [norm_pos_iff]
-  }
-
 /-- `(f x)⁻¹` is analytic away from `f x = 0` -/
 theorem AnalyticAt.inv {f : E → 𝕜} {x : E} (fa : AnalyticAt 𝕜 f x) (f0 : f x ≠ 0) :
-    AnalyticAt 𝕜 (fun x ↦ (f x)⁻¹) x := (analyticAt_inv f0).comp fa
+    AnalyticAt 𝕜 (fun x ↦ (f x)⁻¹) x := (analyticAt_inv _ f0).comp fa
 
 /-- `x⁻¹` is analytic away from zero -/
 theorem analyticOn_inv : AnalyticOn 𝕜 (fun z ↦ z⁻¹) {z : 𝕜 | z ≠ 0} := by
-  intro z m; exact analyticAt_inv m
+  intro z m; exact analyticAt_inv _ m
 
 /-- `x⁻¹` is analytic away from zero -/
 theorem AnalyticOn.inv {f : E → 𝕜} {s : Set E} (fa : AnalyticOn 𝕜 f s) (f0 : ∀ x, x ∈ s → f x ≠ 0) :
@@ -257,17 +188,10 @@ theorem AnalyticOn.div [CompleteSpace 𝕜] {f g : E → 𝕜} {s : Set E}
     AnalyticOn 𝕜 (fun x ↦ f x / g x) s := fun x m ↦
   (fa x m).div (ga x m) (g0 x m)
 
-/-- `(f x)^n` is analytic -/
-theorem AnalyticAt.pow [CompleteSpace 𝕜] {f : E → 𝕜} {x : E} (fa : AnalyticAt 𝕜 f x) {n : ℕ} :
-    AnalyticAt 𝕜 (fun x ↦ f x ^ n) x := by
-  induction' n with n h
-  · simp only [pow_zero]; exact analyticAt_const
-  · simp_rw [pow_succ]; exact fa.mul h
-
 /-- `z^n` is analytic -/
 theorem AnalyticAt.monomial [CompleteSpace 𝕜] (n : ℕ) {z : 𝕜} :
     AnalyticAt 𝕜 (fun z : 𝕜 ↦ z ^ n) z :=
-  analyticAt_id.pow
+  (analyticAt_id _ _).pow _
 
 /-- `z^n` is entire -/
 theorem AnalyticOn.monomial [CompleteSpace 𝕜] (n : ℕ) : AnalyticOn 𝕜 (fun z : 𝕜 ↦ z ^ n) univ :=

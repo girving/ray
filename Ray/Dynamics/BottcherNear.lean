@@ -529,9 +529,9 @@ theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpe
     simp only [g2, g]
     by_cases zero : z = 0; · simp only [zero, eq_self_iff_true, if_true]; exact analyticAt_const
     · simp only [zero, if_false]; refine' AnalyticAt.div _ analyticAt_const (pow_ne_zero _ zero)
-      refine' (fa _ _).curry_comp analyticAt_id analyticAt_const; exact m
+      refine' (fa _ _).curry_comp (analyticAt_id _ _) analyticAt_const; exact m
   · intro c z m; apply (s.s (tc m)).ga_of_fa
-    refine' (fa _ _).curry_comp analyticAt_const analyticAt_id; exact m
+    refine' (fa _ _).curry_comp analyticAt_const (analyticAt_id _ _); exact m
 
 /-- `g2` is jointly analytic -/
 theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOn ℂ (g2 f d) t :=
@@ -634,7 +634,7 @@ theorem iterates_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : 
     AnalyticAt ℂ (fun c ↦ (f c)^[n] z) c := by
   induction' n with n nh; · simp only [Function.iterate_zero, id.def]; exact analyticAt_const
   · simp_rw [Function.iterate_succ']; simp only [Function.comp_apply]
-    refine' (s.fa _ _).comp (analyticAt_id.prod nh)
+    refine' (s.fa _ _).comp ((analyticAt_id _ _).prod nh)
     exact (s.ts m).mapsTo n m
 
 theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
@@ -642,7 +642,7 @@ theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, 
   refine' AnalyticAt.cpow _ analyticAt_const _
   · have e : (fun c ↦ g (f c) d ((f c)^[n] z)) = fun c ↦ g2 f d (c, (f c)^[n] z) := rfl
     rw [e]; refine' (s.ga _ _).comp _; exact (s.ts m).mapsTo n m
-    apply analyticAt_id.prod (iterates_analytic_c s n m)
+    apply (analyticAt_id _ _).prod (iterates_analytic_c s n m)
   · refine' near_one_avoids_negative_reals _
     exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (by norm_num)
 

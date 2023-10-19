@@ -115,8 +115,8 @@ theorem NontrivialAnalyticOn.discreteTopology (n : NontrivialAnalyticOn f s) (a 
 
 /-- pow is nontrivial -/
 theorem powNontrivial {d : ℕ} (dp : d > 0) : NontrivialAnalyticOn (fun z ↦ z ^ d) univ := by
-  apply Entire.nontrivialAnalyticOn fun _ _ ↦ analyticAt_id.pow; use 0, 1
-  simp only [one_pow, zero_pow dp]; norm_num
+  apply Entire.nontrivialAnalyticOn fun _ _ ↦ (analyticAt_id _ _).pow _; use 0, 1
+  simp only [id, one_pow, zero_pow dp, Pi.pow_def]; norm_num
 
 /-- All roots of unity as a set -/
 def allRootsOfUnity :=

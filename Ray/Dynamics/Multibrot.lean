@@ -122,7 +122,7 @@ theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
   simp only [f, ← coe_zero, lift_coe', f', zero_pow d_pos, zero_add]
 
 theorem analytic_f' : AnalyticOn ℂ (uncurry (f' d)) univ := fun _ _ ↦
-  analyticAt_snd.pow.add analyticAt_fst
+  (analyticAt_snd.pow _).add analyticAt_fst
 
 theorem deriv_f' {z : ℂ} : deriv (f' d c) z = d * z ^ (d - 1) := by
   have h : HasDerivAt (f' d c) (d * z ^ (d - 1) + 0) z :=
@@ -191,8 +191,8 @@ theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
     mul_one]
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
-  apply (analyticAt_const.add (analyticAt_const.mul analyticAt_id.pow)).inv
-  rw [Pi.add_apply]; simp only [zero_pow d_pos, MulZeroClass.mul_zero]; norm_num
+  apply (analyticAt_const.add (analyticAt_const.mul ((analyticAt_id _ _).pow _))).inv
+  simp only [zero_pow d_pos, MulZeroClass.mul_zero]; norm_num
 
 theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
   funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
@@ -256,8 +256,8 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
       t2 := fun {z} m ↦ le_trans (zb m) (by norm_num)
       fa := by
         intro z m; rw [fl_f]
-        refine analyticAt_id.pow.div (analyticAt_const.add
-          (analyticAt_const.mul analyticAt_id.pow)) ?_
+        refine ((analyticAt_id _ _).pow _).div (analyticAt_const.add
+          (analyticAt_const.mul ((analyticAt_id _ _).pow _))) ?_
         rw [← Complex.abs.ne_zero_iff]; exact (lt_of_lt_of_le (by norm_num) (cz1 m)).ne'
       ft := by
         intro z m; specialize cz1 m; specialize zb m
@@ -296,8 +296,14 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
       one_mul, ContinuousLinearMap.zero_apply, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero,
       false_or_iff, pow_eq_zero_iff d_minus_one_pos]
-    constructor; intro h; specialize h 1; simp only [one_ne_zero, false_or_iff] at h; exact h
-    exact fun h x ↦ Or.inr h
+    dsimp [TangentSpace]
+    simp only [ge_iff_le, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, tsub_pos_iff_lt,
+      pow_eq_zero_iff d_minus_one_pos, false_or]
+    constructor
+    · intro h; specialize h 1
+      simp only [one_mul, mul_eq_zero, one_ne_zero, false_or_iff] at h
+      exact h
+    · exact fun h x ↦ Or.inr h
 
 /-- The multibrot set is all `c`'s s.t. `0` doesn't reach `∞` -/
 theorem multibrot_basin' : c ∈ multibrot d ↔ (c, (c : 𝕊)) ∉ (superF d).basin := by
@@ -1262,7 +1268,7 @@ theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
   rw [Ne.def, ContinuousLinearMap.ext_iff, not_forall]; use 1
   simp only [ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
     Algebra.id.smul_eq_mul, mul_one, ContinuousLinearMap.zero_apply]
-  norm_num
+  convert one_ne_zero; exact NeZero.one
 
 /-!
 ## Injectivity of Böttcher coordinates

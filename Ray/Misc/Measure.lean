@@ -6,7 +6,6 @@ import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-import Mathlib.Topology.SubsetProperties
 import Ray.Misc.Topology
 
 /-!

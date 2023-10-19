@@ -601,13 +601,15 @@ theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
     exact
       { gh := mh n
         b := by
-          intro t; rw [rir rp, fourier_apply]
+          intro t; rw [rir rp]
+          apply Eq.trans fourier_apply
           simp only [coe_nat_zsmul, toCircle_smul, SubmonoidClass.coe_pow] }
   · exists fun z : ℂ ↦ conj (((↑r)⁻¹ * (z - c)) ^ n)
     exact
       { gh := (mh n).conj
         b := by
-          intro t; rw [rir rp, fourier_apply]
+          intro t; rw [rir rp]
+          apply Eq.trans fourier_apply
           simp only [neg_smul, coe_nat_zsmul, toCircle_neg, toCircle_smul, coe_inv_unitSphere,
             SubmonoidClass.coe_pow, Complex.inv_def, map_pow, normSq_eq_of_mem_circle, one_pow,
             inv_one, Complex.ofReal_one, mul_one] }

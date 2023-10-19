@@ -65,7 +65,7 @@ theorem duals_bddAbove {g : ℝ → ℝ} (gm : Monotone g) (x : E) :
   rw [bddAbove_def]; use g ‖x‖
   simp only [Complex.norm_eq_abs, Set.mem_range, forall_exists_index,
     forall_apply_eq_imp_iff']
-  intro n; apply gm; apply dualVector_le
+  intro _ _ h; rw [←h]; apply gm; apply dualVector_le
 
 /-- One-sided Lipschitz bounds on the reals -/
 theorem LipschitzWith.le {f : G → ℝ} {k : ℝ≥0} (fk : LipschitzWith k f) (x y : G) :

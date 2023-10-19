@@ -1,6 +1,5 @@
 -- Bottcher map throughout a superattracting basis (up to critical points)
 import Mathlib.Topology.ExtendFrom
-import Mathlib.Topology.SubsetProperties
 import Ray.AnalyticManifold.LocalInj
 import Ray.AnalyticManifold.Nonseparating
 import Ray.Dynamics.Postcritical
@@ -195,8 +194,10 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
       (eventually_of_forall fun _ e ↦ e.eqn)
   rw [mfderiv_eq_fderiv, loc.fderiv_eq] at x0
   have d := (differentiableAt_pow (𝕜 := ℂ) (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
-  rw [x0, ContinuousLinearMap.zero_apply, deriv_pow, mul_eq_zero, Nat.cast_eq_zero,
-    pow_eq_zero_iff', pow_eq_zero_iff'] at d
+  apply_fun (fun x ↦ x 1) at x0
+  rw [x0] at d
+  replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+  rw [deriv_pow, mul_eq_zero, Nat.cast_eq_zero, pow_eq_zero_iff', pow_eq_zero_iff'] at d
   simp only [s.d0, false_and_iff, false_or_iff] at d; exact d.1
 
 /-- `p < 1` for any `p` in `Grow` -/

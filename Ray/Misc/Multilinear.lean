@@ -264,3 +264,21 @@ lemma ContinuousLinearMap.apply_eq_zero_of_eq_zero {𝕜 X Y : Type} [NormedFiel
     [TopologicalSpace X] [NormedAddCommGroup X] [Module 𝕜 X] [NormedAddCommGroup Y] [Module 𝕜 Y]
     (f : X →L[𝕜] Y) {x : X} (h : x = 0) : f x = 0 := by
   rw [h, ContinuousLinearMap.map_zero]
+
+/-- `.smulRight` is nonzero if it's inputs are -/
+lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [TopologicalSpace A]
+    [AddCommMonoid A] [TopologicalSpace R] [Module R A] [TopologicalSpace B] [AddCommMonoid B]
+    [Module R B] [ContinuousSMul R B] [NoZeroSMulDivisors R B] {c : A →L[R] R} {f : B}
+    (c0 : c ≠ 0) (f0 : f ≠ 0) :
+    c.smulRight f ≠ 0 := by
+  rcases ContinuousLinearMap.exists_ne_zero c0 with ⟨x,cx⟩
+  simp only [Ne.def, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
+    ContinuousLinearMap.smulRight_apply, smul_eq_zero, not_or]
+  use x
+
+/-- `1 ≠ 0`, `ContinuousLinearMap` case -/
+lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A] [AddCommMonoid A]
+    [Module R A] [Nontrivial A] : (1 : A →L[R] A) ≠ 0 := by
+  simp only [Ne.def, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
+    ContinuousLinearMap.one_apply]
+  apply exists_ne

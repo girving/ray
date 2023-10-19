@@ -86,7 +86,7 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [@analyticAt_iff_holomorphicAt _ _ (ℂ × ℂ) (ModelProd ℂ ℂ) _ _ _ _ ℂ ℂ _ _ _ _ II I]
-  refine' ((analyticAt_id.sub analyticAt_const).holomorphicAt I I).comp _
+  refine' (((analyticAt_id _ _).sub analyticAt_const).holomorphicAt I I).comp _
   refine' (HolomorphicAt.extChartAt _).comp _
   simp only [s.f0, extChartAt, LocalHomeomorph.extend, LocalEquiv.coe_trans,
     ModelWithCorners.toLocalEquiv_coe, LocalHomeomorph.coe_coe, Function.comp_apply, zero_add,
@@ -169,7 +169,8 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
       _ ≤ e * abs z := by bound [b.2]
   have p' := (p.trans od).add od
   simp only [sub_add_cancel] at p'
-  exact p'
+  refine p'.congr_left ?_
+  intro z; exact (sub_zero _).symm
 
 /-- `a` is a critical point for `f` -/
 theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
@@ -525,11 +526,7 @@ theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
   simp only [Super.bottcherNear]; apply mderiv_comp_ne_zero'
   · simp only [sub_self, mfderiv_eq_fderiv,
       (_root_.bottcherNear_monic (s.superNearC.s (Set.mem_univ c))).hasFDerivAt.fderiv]
-    by_contra h
-    have b := ContinuousLinearMap.ext_iff.mp h 1
-    simp only [ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
-      Algebra.id.smul_eq_mul, mul_one, ContinuousLinearMap.zero_apply,
-      (Ne.def _ _).mp one_ne_zero] at b
+    exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     have e : Sub.sub (mfderiv I I (extChartAt I a) a) 0 = mfderiv I I (extChartAt I a) a :=

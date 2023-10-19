@@ -364,14 +364,14 @@ theorem holomorphic_coe : Holomorphic I I (fun z : ℂ ↦ (z : 𝕊)) := by
   rw [holomorphic_iff]; use continuous_coe; intro z
   simp only [extChartAt_coe, extChartAt_eq_refl, LocalEquiv.refl_symm, LocalEquiv.refl_coe,
     Function.comp.right_id, id.def, Function.comp, LocalEquiv.invFun_as_coe]
-  rw [← LocalEquiv.invFun_as_coe]; simp only [coeLocalEquiv, toComplex_coe]; exact analyticAt_id
+  rw [← LocalEquiv.invFun_as_coe]; simp only [coeLocalEquiv, toComplex_coe]; apply analyticAt_id
 
 /-- `OnePoint.toComplex : 𝕊 → ℂ` is holomorphic except at `∞` -/
 theorem holomorphicAt_toComplex {z : ℂ} : HolomorphicAt I I (OnePoint.toComplex : 𝕊 → ℂ) z := by
   rw [holomorphicAt_iff]; use continuousAt_toComplex
   simp only [toComplex_coe, Function.comp, extChartAt_coe, extChartAt_eq_refl, LocalEquiv.refl_coe,
     id, LocalEquiv.symm_symm, coeLocalEquiv_apply, coeLocalEquiv_symm_apply]
-  exact analyticAt_id
+  apply analyticAt_id
 
 /-- Inversion is holomorphic -/
 theorem holomorphic_inv : Holomorphic I I fun z : 𝕊 ↦ z⁻¹ := by
@@ -380,17 +380,17 @@ theorem holomorphic_inv : Holomorphic I I fun z : 𝕊 ↦ z⁻¹ := by
       LocalEquiv.trans_apply, Equiv.toLocalEquiv_apply, invEquiv_apply, coeLocalEquiv_symm_apply,
       toComplex_coe, LocalEquiv.coe_trans_symm, LocalEquiv.symm_symm, coeLocalEquiv_apply,
       Equiv.toLocalEquiv_symm_apply, invEquiv_symm, inv_inv]
-    exact analyticAt_id
+    apply analyticAt_id
   · simp only [extChartAt_coe, LocalEquiv.symm_symm, Function.comp, coeLocalEquiv_apply,
       coeLocalEquiv_symm_apply, toComplex_coe]
     by_cases z0 : z = 0
     · simp only [z0, coe_zero, extChartAt_inf, LocalEquiv.trans_apply, coeLocalEquiv_symm_apply,
         invEquiv_apply, Equiv.toLocalEquiv_apply, inv_zero', inv_inv, toComplex_coe]
-      exact analyticAt_id
+      apply analyticAt_id
     · simp only [inv_coe z0, extChartAt_coe, coeLocalEquiv_symm_apply]
-      refine' (analyticAt_id.inv z0).congr _
+      refine' ((analyticAt_id _ _).inv z0).congr _
       refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
-      rw [id] at w0; simp only [inv_coe w0, toComplex_coe]
+      rw [id] at w0; simp only [inv_coe w0, toComplex_coe, id]
 
 /-- Given `f : ℂ → X`, fill in the value at `∞` to get `𝕊 → X` -/
 def fill {X : Type} (f : ℂ → X) (y : X) : 𝕊 → X := fun z ↦ z.rec y f

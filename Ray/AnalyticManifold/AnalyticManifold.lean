@@ -327,10 +327,10 @@ theorem extChartAt_open_target (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] 
 
 /-- `id` is holomorphic -/
 theorem holomorphicAt_id {x : M} : HolomorphicAt I I (fun x ↦ x) x := by
-  rw [holomorphicAt_iff]; use continuousAt_id; apply analyticAt_id.congr
+  rw [holomorphicAt_iff]; use continuousAt_id; apply (analyticAt_id _ _).congr
   refine ((extChartAt_open_target I x).eventually_mem (mem_extChartAt_target I x)).mp
     (eventually_of_forall fun y m ↦ ?_)
-  simp only [Function.comp, LocalEquiv.right_inv _ m]
+  simp only [Function.comp, LocalEquiv.right_inv _ m, id]
 
 /-- `id` is holomorphic -/
 theorem holomorphic_id : Holomorphic I I fun x : M ↦ x := fun _ ↦ holomorphicAt_id
@@ -466,7 +466,7 @@ theorem HolomorphicAt.mul {f g : M → 𝕜} {x : M}
 /-- Inverse is holomorphic away from zeros -/
 theorem HolomorphicAt.inv {f : M → 𝕜} {x : M} (fa : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) f x)
     (f0 : f x ≠ 0) : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ (f x)⁻¹) x :=
-  ((analyticAt_id.inv f0).holomorphicAt _ _).comp fa
+  (((analyticAt_id _ _).inv f0).holomorphicAt _ _).comp fa
 
 /-- Division is holomorphic away from denominator zeros -/
 theorem HolomorphicAt.div {f g : M → 𝕜} {x : M}
@@ -479,7 +479,7 @@ theorem HolomorphicAt.div {f g : M → 𝕜} {x : M}
 theorem HolomorphicAt.pow {f : M → 𝕜} {x : M} (fa : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) f x)
     {n : ℕ} : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x ^ n) x := by
   have e : (fun x ↦ f x ^ n) = (fun z : 𝕜 ↦ z ^ n) ∘ f := rfl
-  rw [e]; exact (analyticAt_id.pow.holomorphicAt _ _).comp fa
+  rw [e]; exact (((analyticAt_id _ _).pow _).holomorphicAt _ _).comp fa
 
 /-- Complex powers `f x ^ g x` are holomorphic if `f x` avoids the negative real axis  -/
 theorem HolomorphicAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
@@ -617,23 +617,26 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     have d : HasMFDerivAt J L (uncurry f ∘ fun x ↦ (x, z)) y
         (df.comp ((ContinuousLinearMap.id 𝕜 (TangentSpace J y)).prod 0)) :=
       fh.comp y ((hasMFDerivAt_id _ _).prod (hasMFDerivAt_const _ _ _ _))
-    have e := hasMFDerivAt_unique fh0 d
-    rw [e, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
-      ContinuousLinearMap.id_apply, ContinuousLinearMap.zero_apply]
+    simp only [hasMFDerivAt_unique fh0 d]
+    refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
+    refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
+    simp only [ContinuousLinearMap.zero_apply, Prod.mk.injEq, and_true]
+    exact rfl
   have hv : ∀ v : TangentSpace K z, df (0, v) = df1 v := by
     intro v
     have d : HasMFDerivAt K L (uncurry f ∘ fun x ↦ (y, x)) z (df.comp
         ((0 : TangentSpace K z →L[𝕜] TangentSpace J y).prod
           (ContinuousLinearMap.id 𝕜 (TangentSpace K z)))) :=
       fh.comp z ((hasMFDerivAt_const _ _ _ _).prod (hasMFDerivAt_id _ _))
-    have e := hasMFDerivAt_unique fh1 d
-    rw [e, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
-      ContinuousLinearMap.id_apply, ContinuousLinearMap.zero_apply]
+    rw [hasMFDerivAt_unique fh1 d]
+    refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
+    refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
+    simp only [Prod.mk.injEq]
+    exact ⟨(ContinuousLinearMap.zero_apply _).symm, rfl⟩
   have e : (u, v) = (u, 0) + (0, v) := by simp only [Prod.mk_add_mk, add_zero, zero_add]
-  rw [e, ContinuousLinearMap.map_add, hu u, hv v, ContinuousLinearMap.add_apply,
-    ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply, ContinuousLinearMap.coe_fst',
-    ContinuousLinearMap.coe_snd']
-  simp only [Function.uncurry_apply_pair, Prod.mk_add_mk, add_zero, zero_add]
+  nth_rw 1 [e]; rw [ContinuousLinearMap.map_add, hu u, hv v]
+  refine Eq.trans ?_ (ContinuousLinearMap.add_apply _ _ _).symm
+  exact congr_arg₂ _ rfl rfl
 
 /-- `HasMFDerivAt` composition for curried functions -/
 theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}

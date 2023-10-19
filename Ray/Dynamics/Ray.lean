@@ -175,8 +175,10 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
     rw [e.mfderiv_eq]; contrapose x0; simp only [not_not] at x0 ⊢
     rw [mfderiv_eq_fderiv] at x0
     have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
-    rw [x0, ContinuousLinearMap.zero_apply, deriv_pow, mul_eq_zero, Nat.cast_eq_zero,
-      pow_eq_zero_iff', pow_eq_zero_iff'] at d
+    apply_fun (fun x ↦ x 1) at x0
+    rw [x0] at d
+    replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+    rw [deriv_pow, mul_eq_zero, Nat.cast_eq_zero, pow_eq_zero_iff', pow_eq_zero_iff'] at d
     simp only [s.d0, false_and_iff, false_or_iff] at d; exact d.1
   simp only [mfderiv_comp x
       (s.bottcherNearIter_holomorphic (s.ray_near post)).in2.mdifferentiableAt
