@@ -306,16 +306,16 @@ theorem Holomorphic.prod {f : M → N} {g : M → O} (fh : Holomorphic I J f) (g
     Holomorphic I (J.prod K) fun x ↦ (f x, g x) := fun _ ↦ (fh _).prod (gh _)
 
 /-- `HolomorphicAt.comp` for a curried function -/
-theorem HolomorphicAt.curry_comp {h : N → O → P} {f : M → N} {g : M → O} {x : M}
+theorem HolomorphicAt.comp₂ {h : N → O → P} {f : M → N} {g : M → O} {x : M}
     (ha : HolomorphicAt (J.prod K) L (uncurry h) (f x, g x)) (fa : HolomorphicAt I J f x)
     (ga : HolomorphicAt I K g x) : HolomorphicAt I L (fun x ↦ h (f x) (g x)) x :=
   ha.comp (g := fun _ ↦ (_, _)) (fa.prod ga)
 
-/-- `HolomorphicAt.curry_comp`, with a separate argument for point equality -/
-theorem HolomorphicAt.curry_comp_of_eq {h : N → O → P} {f : M → N} {g : M → O} {x : M} {y : N × O}
+/-- `HolomorphicAt.comp₂`, with a separate argument for point equality -/
+theorem HolomorphicAt.comp₂_of_eq {h : N → O → P} {f : M → N} {g : M → O} {x : M} {y : N × O}
     (ha : HolomorphicAt (J.prod K) L (uncurry h) y) (fa : HolomorphicAt I J f x)
     (ga : HolomorphicAt I K g x) (e : (f x, g x) = y) :
-    HolomorphicAt I L (fun x ↦ h (f x) (g x)) x := by rw [← e] at ha; exact ha.curry_comp fa ga
+    HolomorphicAt I L (fun x ↦ h (f x) (g x)) x := by rw [← e] at ha; exact ha.comp₂ fa ga
 
 /-- If we're boundaryless, `extChartAt` has open target -/
 theorem extChartAt_open_target (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] [ChartedSpace A M]
@@ -346,12 +346,12 @@ theorem holomorphic_const {c : N} : Holomorphic I J fun _ : M ↦ c := fun _ ↦
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
 theorem HolomorphicAt.in1 [I.Boundaryless] {f : M → N → O} {x : M} {y : N}
     (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt I K (fun x ↦ f x y) x :=
-  HolomorphicAt.curry_comp fa holomorphicAt_id holomorphicAt_const
+  HolomorphicAt.comp₂ fa holomorphicAt_id holomorphicAt_const
 
 /-- Curried holomorphic functions are holomorphic in the second coordinate -/
 theorem HolomorphicAt.in2 [J.Boundaryless] {f : M → N → O} {x : M} {y : N}
     (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt J K (fun y ↦ f x y) y :=
-  HolomorphicAt.curry_comp fa holomorphicAt_const holomorphicAt_id
+  HolomorphicAt.comp₂ fa holomorphicAt_const holomorphicAt_id
 
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
 theorem Holomorphic.in1 [I.Boundaryless] {f : M → N → O} (fa : Holomorphic (I.prod J) K (uncurry f))

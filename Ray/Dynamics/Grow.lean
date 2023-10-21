@@ -335,7 +335,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   have pt : Tendsto (fun p : ℂ × ℂ ↦ (p.1, p.2 ^ d ^ n)) (𝓝 (c, x)) (𝓝 (c, x ^ d ^ n)) :=
     continuousAt_fst.prod (continuousAt_snd.pow _)
   have ian : HolomorphicAt II I (uncurry fun e y : ℂ ↦ i e (y ^ d ^ n)) (c, x) :=
-    ia.curry_comp_of_eq holomorphicAt_fst holomorphicAt_snd.pow rfl
+    ia.comp₂_of_eq holomorphicAt_fst holomorphicAt_snd.pow rfl
   use fun e y ↦ i e (y ^ d ^ n); constructor
   · -- We satisfy eqn near x
     apply eqn_near ian

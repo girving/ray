@@ -165,7 +165,7 @@ theorem Super.iter_holomorphic' (s : Super f d a) (n : ℕ) :
     Holomorphic II I fun p : ℂ × S ↦ (f p.1)^[n] p.2 := by
   intro p; induction' n with n h; simp [Function.iterate_zero, holomorphicAt_snd]
   simp only [Function.iterate_succ', Function.comp]
-  exact (s.fa _).curry_comp holomorphicAt_fst h
+  exact (s.fa _).comp₂ holomorphicAt_fst h
 
 theorem Super.iter_holomorphic (s : Super f d a) (n : ℕ) :
     Holomorphic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by

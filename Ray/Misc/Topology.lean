@@ -13,7 +13,6 @@ import Ray.Tactic.Bound
 
 open Metric (ball closedBall sphere mem_sphere mem_ball)
 open Filter (atTop Tendsto eventually_of_forall)
-open Function (uncurry)
 open OrderDual (ofDual toDual)
 open Set
 open scoped Real NNReal Topology
@@ -242,53 +241,43 @@ theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [Topol
     (eventually_of_forall fun y i ↦ @interior_subset _ _ s _ i)
 
 /-- `ContinuousAt.comp` for curried functions -/
-theorem ContinuousAt.curry_comp {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [TopologicalSpace C] [TopologicalSpace D] {f : B → C → D} {g : A → B} {h : A → C} {x : A}
-    (fc : ContinuousAt (uncurry f) (g x, h x)) (gc : ContinuousAt g x) (hc : ContinuousAt h x) :
-    ContinuousAt (fun x ↦ f (g x) (h x)) x := by
-  have e : (fun x ↦ f (g x) (h x)) = uncurry f ∘ fun x ↦ (g x, h x) := rfl
-  rw [e]; exact ContinuousAt.comp fc (gc.prod hc)
+theorem ContinuousAt.comp₂ {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
+    [TopologicalSpace C] [TopologicalSpace D] {f : B × C → D} {g : A → B} {h : A → C} {x : A}
+    (fc : ContinuousAt f (g x, h x)) (gc : ContinuousAt g x) (hc : ContinuousAt h x) :
+    ContinuousAt (fun x ↦ f (g x, h x)) x :=
+  ContinuousAt.comp fc (gc.prod hc)
 
 /-- `ContinuousAt.comp_of_eq` for curried functions -/
-theorem ContinuousAt.curry_comp_of_eq {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [TopologicalSpace C] [TopologicalSpace D] {f : B → C → D} {g : A → B} {h : A → C} {x : A}
-    {y : B × C} (fc : ContinuousAt (uncurry f) y) (gc : ContinuousAt g x) (hc : ContinuousAt h x)
-    (e : (g x, h x) = y) : ContinuousAt (fun x ↦ f (g x) (h x)) x := by
-  rw [←e] at fc; exact fc.curry_comp gc hc
+theorem ContinuousAt.comp₂_of_eq {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
+    [TopologicalSpace C] [TopologicalSpace D] {f : B × C → D} {g : A → B} {h : A → C} {x : A}
+    {y : B × C} (fc : ContinuousAt f y) (gc : ContinuousAt g x) (hc : ContinuousAt h x)
+    (e : (g x, h x) = y) : ContinuousAt (fun x ↦ f (g x, h x)) x := by
+  rw [←e] at fc; exact fc.comp₂ gc hc
 
 /-- `ContinuousAt.comp` for curried functions and `ContinuousWithinAt` -/
-theorem ContinuousAt.curry_comp_continuousWithinAt {A B C D : Type} [TopologicalSpace A]
-    [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace D] {f : B → C → D} {g : A → B}
-    {h : A → C} {x : A} {s : Set A} (fc : ContinuousAt (uncurry f) (g x, h x))
+theorem ContinuousAt.comp₂_continuousWithinAt {A B C D : Type} [TopologicalSpace A]
+    [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace D] {f : B × C → D} {g : A → B}
+    {h : A → C} {x : A} {s : Set A} (fc : ContinuousAt f (g x, h x))
     (gc : ContinuousWithinAt g s x) (hc : ContinuousWithinAt h s x) :
-    ContinuousWithinAt (fun x ↦ f (g x) (h x)) s x := by
-  have e : (fun x ↦ f (g x) (h x)) = uncurry f ∘ fun x ↦ (g x, h x) := rfl
-  rw [e]; exact ContinuousAt.comp_continuousWithinAt fc (gc.prod hc)
+    ContinuousWithinAt (fun x ↦ f (g x, h x)) s x :=
+  ContinuousAt.comp_continuousWithinAt fc (gc.prod hc)
 
 /-- `ContinuousAt.comp_of_eq` for curried functions and `ContinuousWithinAt` -/
-theorem ContinuousAt.curry_comp_continuousWithinAt_of_eq {A B C D : Type} [TopologicalSpace A]
-    [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace D] {f : B → C → D} {g : A → B}
-    {h : A → C} {x : A} {s : Set A} {y : B × C} (fc : ContinuousAt (uncurry f) y)
+theorem ContinuousAt.comp₂_continuousWithinAt_of_eq {A B C D : Type} [TopologicalSpace A]
+    [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace D] {f : B × C → D} {g : A → B}
+    {h : A → C} {x : A} {s : Set A} {y : B × C} (fc : ContinuousAt f y)
     (gc : ContinuousWithinAt g s x) (hc : ContinuousWithinAt h s x) (e : (g x, h x) = y) :
-    ContinuousWithinAt (fun x ↦ f (g x) (h x)) s x := by
-  rw [← e] at fc; exact fc.curry_comp_continuousWithinAt gc hc
-
-/-- `Continuous.comp` for curried functions -/
-theorem Continuous.curry_comp {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [TopologicalSpace C] [TopologicalSpace D] {f : B → C → D} {g : A → B} {h : A → C}
-    (fc : Continuous (uncurry f)) (gc : Continuous g) (hc : Continuous h) :
-    Continuous fun x ↦ f (g x) (h x) := by
-  have e : (fun x ↦ f (g x) (h x)) = uncurry f ∘ fun x ↦ (g x, h x) := rfl
-  rw [e]; exact fc.comp (gc.prod hc)
+    ContinuousWithinAt (fun x ↦ f (g x, h x)) s x := by
+  rw [← e] at fc; exact fc.comp₂_continuousWithinAt gc hc
 
 /-- Curried continuous functions are continuous in the first argument -/
 theorem Continuous.in1 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
-    {f : A → B → C} (fc : Continuous (uncurry f)) {b : B} : Continuous fun a ↦ f a b :=
+    {f : A × B → C} (fc : Continuous f) {b : B} : Continuous fun a ↦ f (a, b) :=
   fc.comp (continuous_id.prod continuous_const)
 
 /-- Curried continuous functions are continuous in the second argument -/
 theorem Continuous.in2 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
-    {f : A → B → C} (fc : Continuous (uncurry f)) {a : A} : Continuous fun b ↦ f a b :=
+    {f : A × B → C} (fc : Continuous f) {a : A} : Continuous fun b ↦ f (a, b) :=
   fc.comp (continuous_const.prod continuous_id)
 
 /-- In a compact space, uniqueness of limit points implies convergence -/

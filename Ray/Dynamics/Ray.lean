@@ -255,7 +255,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
       rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel _ x00]
     have er : ∀ᶠ y in 𝓝 (c, ↑t * x0), Eqn s n r y := by
       rw [← hr]; apply eqn_near
-      exact (s.ray_holomorphic (pt p1 m)).curry_comp_of_eq holomorphicAt_fst
+      exact (s.ray_holomorphic (pt p1 m)).comp₂_of_eq holomorphicAt_fst
           (holomorphicAt_const.mul holomorphicAt_snd) (by simp only [xe])
       rw [xe]; exact e1.self.near
       have xc : ContinuousAt (fun y : ℂ × ℂ ↦ (y.1, x1 / x0 * y.2)) (c, ↑t * x0) :=

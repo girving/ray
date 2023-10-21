@@ -7,8 +7,8 @@ import Ray.AnalyticManifold.OneDimension
 
 Given `f : ℂ × S → T`, we seek `g : ℂ × T → S` s.t. `g c (f c z) = z`.
 
-The key theorems are `complex_inverse_fun` and `complex_inverse_fun'`;
-everything else is intermediate lemmas.
+The key theorems are `complex_inverse_fun` and `complex_inverse_fun'`; everything else is
+intermediate lemmas.
 
 These results are straightforward consequences of the 2D inverse function theorem
 applied to `(c,z) ↦ (c, f c z)` mapped to charts, but (at least for me)
@@ -251,7 +251,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       f x.1 ((extChartAt I z).symm (i.he.symm (x.1, extChartAt I (f c z) x.2)).2) ∈
         (extChartAt I (f c z)).source := by
     refine' ContinuousAt.eventually_mem _ (isOpen_extChartAt_source _ _) _
-    · apply i.fa.continuousAt.curry_comp_of_eq continuousAt_fst
+    · apply i.fa.continuousAt.comp₂_of_eq continuousAt_fst
       · refine' ContinuousAt.comp _ _
         simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _
         apply continuousAt_snd.comp
@@ -261,7 +261,8 @@ theorem Cinv.right_inv (i : Cinv f c z) :
             apply (continuousAt_extChartAt I _).comp_of_eq
             · exact continuousAt_snd
             · rfl
-      · simp only [i.inv_at, LocalEquiv.left_inv _ (mem_extChartAt_source _ _)]
+      · simp only [i.inv_at, LocalEquiv.left_inv _ (mem_extChartAt_source _ _),
+          LocalEquiv.invFun_as_coe]
     · simp only [i.inv_at, LocalEquiv.left_inv _ (mem_extChartAt_source _ _)]
       apply mem_extChartAt_source
   refine' fm.mp (Filter.eventually_of_mem (o.mem_nhds m) _); intro x m mf

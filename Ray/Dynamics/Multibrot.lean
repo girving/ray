@@ -488,7 +488,7 @@ theorem isCompact_multibrot : IsCompact (multibrot d) := by
   refine' IsClosed.preimage _ Metric.isClosed_ball
   induction' n with n h; simp only [Function.iterate_zero_apply]; exact continuous_id
   simp only [Function.iterate_succ_apply']; rw [continuous_iff_continuousAt]; intro c
-  exact (analytic_f' _ (mem_univ _)).continuousAt.curry_comp continuousAt_id h.continuousAt
+  exact (analytic_f' _ (mem_univ _)).continuousAt.comp₂ continuousAt_id h.continuousAt
 
 /-- The exterior of the Multibrot set is open -/
 theorem isOpen_multibrotExt : IsOpen (multibrotExt d) := by
@@ -556,7 +556,7 @@ theorem bottcher_tendsto_zero : Tendsto (bottcher' d) atInf (𝓝 0) := by
 /-- `bottcher' d` is holomorphic outside the Multibrot set -/
 theorem bottcher_analytic : AnalyticOn ℂ (bottcher' d) (multibrot d)ᶜ := by
   set s := superF d; intro c m; apply HolomorphicAt.analyticAt I I
-  exact (s.bottcher_holomorphicOn (c, c) (multibrotPost m)).curry_comp_of_eq holomorphicAt_id
+  exact (s.bottcher_holomorphicOn (c, c) (multibrotPost m)).comp₂_of_eq holomorphicAt_id
     (holomorphic_coe _) rfl
 
 /-- `bottcher d` is holomorphic outside the Multibrot set -/
@@ -591,7 +591,7 @@ theorem potential_continuous : Continuous (potential d) := by
     rw [continuousAt_congr e]
     exact Complex.continuous_abs.continuousAt.comp
       (bottcherHolomorphic d _ multibrotExt_inf).continuousAt
-  · exact continuousAt_fill_coe ((Continuous.potential s).curry_comp
+  · exact continuousAt_fill_coe ((Continuous.potential s).comp₂
       continuous_id continuous_coe).continuousAt
 
 theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibrotExt d := by

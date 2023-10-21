@@ -104,27 +104,26 @@ theorem analyticOn_snd {s : Set (E × F)} : AnalyticOn 𝕜 (fun p : E × F ↦ 
   analyticAt_snd
 
 /-- `AnalyticAt.comp` for a curried function -/
-theorem AnalyticAt.curry_comp {h : F → G → H} {f : E → F} {g : E → G} {x : E}
-    (ha : AnalyticAt 𝕜 (uncurry h) (f x, g x)) (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) :
-    AnalyticAt 𝕜 (fun x ↦ h (f x) (g x)) x := by
-  have e : (fun x ↦ h (f x) (g x)) = uncurry h ∘ fun x ↦ (f x, g x) := rfl
-  rw [e]; exact AnalyticAt.comp ha (fa.prod ga)
+theorem AnalyticAt.comp₂ {h : F × G → H} {f : E → F} {g : E → G} {x : E}
+    (ha : AnalyticAt 𝕜 h (f x, g x)) (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) :
+    AnalyticAt 𝕜 (fun x ↦ h (f x, g x)) x :=
+  AnalyticAt.comp ha (fa.prod ga)
 
 /-- `AnalyticOn.comp` for a curried function -/
-theorem AnalyticOn.curry_comp {h : F → G → H} {f : E → F} {g : E → G} {s : Set (F × G)} {t : Set E}
+theorem AnalyticOn.comp₂ {h : F → G → H} {f : E → F} {g : E → G} {s : Set (F × G)} {t : Set E}
     (ha : AnalyticOn 𝕜 (uncurry h) s) (fa : AnalyticOn 𝕜 f t) (ga : AnalyticOn 𝕜 g t)
     (m : ∀ x, x ∈ t → (f x, g x) ∈ s) : AnalyticOn 𝕜 (fun x ↦ h (f x) (g x)) t := fun _ xt ↦
-  (ha _ (m _ xt)).curry_comp (fa _ xt) (ga _ xt)
+  (ha _ (m _ xt)).comp₂ (fa _ xt) (ga _ xt)
 
 /-- Curried analytic functions are analytic in the first coordinate -/
 theorem AnalyticAt.in1 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
     AnalyticAt 𝕜 (fun x ↦ f x y) x :=
-  AnalyticAt.curry_comp fa (analyticAt_id _ _) analyticAt_const
+  AnalyticAt.comp₂ fa (analyticAt_id _ _) analyticAt_const
 
 /-- Curried analytic functions are analytic in the second coordinate -/
 theorem AnalyticAt.in2 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
     AnalyticAt 𝕜 (fun y ↦ f x y) y :=
-  AnalyticAt.curry_comp fa analyticAt_const (analyticAt_id _ _)
+  AnalyticAt.comp₂ fa analyticAt_const (analyticAt_id _ _)
 
 /-- Curried analytic functions are analytic in the first coordinate -/
 theorem AnalyticOn.in1 {f : E → F → G} {s : Set (E × F)} {y : F} (fa : AnalyticOn 𝕜 (uncurry f) s) :

@@ -93,7 +93,7 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
     LocalEquiv.coe_trans_symm, LocalHomeomorph.coe_coe_symm, ModelWithCorners.toLocalEquiv_coe_symm,
     ModelWithCorners.left_inv, LocalHomeomorph.left_inv, mem_chart_source, LocalEquiv.trans_source,
     ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
-  refine' (s.fa _).curry_comp holomorphicAt_fst _
+  refine' (s.fa _).comp₂ holomorphicAt_fst _
   refine' (HolomorphicAt.extChartAt_symm _).comp _
   simp only [extChartAt, LocalHomeomorph.extend, LocalEquiv.coe_trans,
     ModelWithCorners.toLocalEquiv_coe, LocalHomeomorph.coe_coe, Function.comp_apply, zero_add,
@@ -108,7 +108,7 @@ theorem Super.holomorphicAt_iter (s : Super f d a) {T : Type} [TopologicalSpace 
     (ga : HolomorphicAt II I g p) (ha : HolomorphicAt II I h p) :
     HolomorphicAt II I (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
   induction' n with n h; simp only [Function.iterate_zero, id.def]; exact ha
-  simp_rw [Function.iterate_succ']; exact (s.fa _).curry_comp ga h
+  simp_rw [Function.iterate_succ']; exact (s.fa _).comp₂ ga h
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuous_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
@@ -475,7 +475,7 @@ theorem Super.bottcherNear_holomorphic (s : Super f d a) :
 theorem Super.bottcherNearIter_holomorphic (s : Super f d a) {n : ℕ}
     (r : (c, (f c)^[n] z) ∈ s.near) :
     HolomorphicAt II I (uncurry (s.bottcherNearIter n)) (c, z) := by
-  refine (s.bottcherNear_holomorphic _ ?_).curry_comp holomorphicAt_fst (s.holomorphic_iter _)
+  refine (s.bottcherNear_holomorphic _ ?_).comp₂ holomorphicAt_fst (s.holomorphic_iter _)
   exact r
 
 /-- `s.bottcherNear` satisfies the defining equation -/

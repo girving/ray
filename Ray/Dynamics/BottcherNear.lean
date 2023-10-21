@@ -529,9 +529,9 @@ theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpe
     simp only [g2, g]
     by_cases zero : z = 0; · simp only [zero, eq_self_iff_true, if_true]; exact analyticAt_const
     · simp only [zero, if_false]; refine' AnalyticAt.div _ analyticAt_const (pow_ne_zero _ zero)
-      refine' (fa _ _).curry_comp (analyticAt_id _ _) analyticAt_const; exact m
+      refine' (fa _ _).comp₂ (analyticAt_id _ _) analyticAt_const; exact m
   · intro c z m; apply (s.s (tc m)).ga_of_fa
-    refine' (fa _ _).curry_comp analyticAt_const (analyticAt_id _ _); exact m
+    refine' (fa _ _).comp₂ analyticAt_const (analyticAt_id _ _); exact m
 
 /-- `g2` is jointly analytic -/
 theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOn ℂ (g2 f d) t :=
@@ -602,7 +602,7 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
         s := by
           intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]
           apply (s.s (rc m)).super_on_ball rp rh
-          · apply fa.curry_comp analyticOn_const analyticOn_id
+          · apply fa.comp₂ analyticOn_const analyticOn_id
             intro z zm; apply Metric.ball_subset_ball (by bound : r ≤ r2)
             simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]; exact zm
           · simp only [Complex.dist_eq, Prod.dist_eq, sub_zero, max_lt_iff, and_imp, g2, g0] at gs

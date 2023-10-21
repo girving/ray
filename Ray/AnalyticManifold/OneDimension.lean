@@ -295,7 +295,7 @@ theorem HolomorphicAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
     AnalyticAt ℂ (uncurry (inChart f c z)) (c, _root_.extChartAt I z z) := by
   apply HolomorphicAt.analyticAt II I
   apply (HolomorphicAt.extChartAt (mem_extChartAt_source I (f c z))).comp_of_eq
-  apply fa.curry_comp_of_eq holomorphicAt_fst
+  apply fa.comp₂_of_eq holomorphicAt_fst
   apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq holomorphicAt_snd
   repeat' simp only [LocalEquiv.left_inv _ (mem_extChartAt_source I z)]
 
