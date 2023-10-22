@@ -170,7 +170,7 @@ theorem product_drop {f : ℕ → ℂ} {g : ℂ} (f0 : f 0 ≠ 0) (h : HasProd f
       fun N : Finset ℕ ↦ N.prod fun n ↦ f (n + 1) := by
     clear c h g; apply funext; intro N; simp
     nth_rw 2 [← Stream'.eta f]
-    simp only [←push_prod, Stream'.head, Stream'.tail, Stream'.nth, ←mul_assoc, inv_mul_cancel f0,
+    simp only [←push_prod, Stream'.head, Stream'.tail, Stream'.get, ←mul_assoc, inv_mul_cancel f0,
       one_mul]
   rw [s] at c; assumption
 

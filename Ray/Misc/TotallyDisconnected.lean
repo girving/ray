@@ -1,7 +1,6 @@
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Cardinality
 import Mathlib.SetTheory.Cardinal.Basic
-import Mathlib.Topology.Connected
 import Mathlib.Topology.MetricSpace.Basic
 
 /-!
