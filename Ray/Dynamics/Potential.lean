@@ -331,7 +331,7 @@ theorem Barrier.potential_large {s : Super f d a} [OnePreimage s] {n t : Set (�
     refine' ContinuousOn.mono _ b.near
     intro ⟨c, z⟩ m; apply ContinuousAt.continuousWithinAt
     apply ContinuousAt.potential_of_reaches s; use 0; simpa only [Function.iterate_zero_apply]
-  rcases pc.compact_min b.compact t0 with ⟨⟨e, z⟩, ps, pm⟩
+  rcases b.compact.exists_isMinOn t0 pc with ⟨⟨e, z⟩, ps, pm⟩
   use s.potential e z; constructor
   · have h := b.hole e; contrapose h; simp only [not_lt] at h
     have h' := le_antisymm h s.potential_nonneg
@@ -348,9 +348,9 @@ def Barrier.fast {s : Super f d a} {n t : Set (ℂ × S)} (_ : Barrier s c n t) 
 theorem Barrier.closed_fast {s : Super f d a} {n t : Set (ℂ × S)} (b : Barrier s c n t) (m : ℕ) :
     IsClosed (b.fast m) := by
   apply isClosed_iUnion_of_finite; intro k; refine' IsClosed.preimage _ b.compact.isClosed
-  apply continuous_fst.prod; generalize hn : (k : ℕ) = n; clear k hn; induction' n with n h
+  apply continuous_fst.prod_mk; generalize hn : (k : ℕ) = n; clear k hn; induction' n with n h
   simp only [Function.iterate_zero_apply]; exact continuous_snd
-  simp only [Function.iterate_succ_apply']; exact s.fa.continuous.comp (continuous_fst.prod h)
+  simp only [Function.iterate_succ_apply']; exact s.fa.continuous.comp (continuous_fst.prod_mk h)
 
 theorem Barrier.mem_fast {s : Super f d a} {n t : Set (ℂ × S)} (b : Barrier s c n t) {m : ℕ} {e : ℂ}
     {z : S} : (e, z) ∈ b.fast m ↔ ∃ n, n < m ∧ (e, (f e)^[n] z) ∈ t := by

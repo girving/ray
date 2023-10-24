@@ -18,52 +18,14 @@ open Set
 open scoped Real NNReal Topology
 noncomputable section
 
-/-- Open sets contain nontrivial closed balls near any point -/
-theorem open_has_cball {s : Set ℂ} (o : IsOpen s) (z) (h : z ∈ s) :
-    ∃ r : ℝ≥0, r > 0 ∧ closedBall z r ⊆ s := by
-  rw [Metric.isOpen_iff] at o
-  have oz := o z h
-  rcases oz with ⟨t, ht, bs⟩
-  set r : ℝ≥0 := (t / 2).toNNReal
-  exists r
-  constructor
-  · refine' Real.toNNReal_pos.mp _
-    simp only [NNReal.val_eq_coe, Real.coe_toNNReal', ge_iff_le, Real.toNNReal_pos, lt_max_iff,
-      lt_self_iff_false, or_false]
-    bound
-  · refine' _root_.trans (Metric.closedBall_subset_ball _) bs
-    calc
-      ↑r = t / 2 := Real.coe_toNNReal (t / 2) (by bound)
-      _ < t := by bound
-
-/-- Neighborhoods of `z` contain a nonempty ball around `z` -/
-theorem nhd_has_ball {z : ℂ} {s : Set ℂ} (h : s ∈ 𝓝 z) : ∃ r, r > 0 ∧ Metric.ball z r ⊆ s := by
-  rcases mem_nhds_iff.mp h with ⟨so, os, iso, zso⟩
-  rcases Metric.isOpen_iff.mp iso z zso with ⟨r, rp, rb⟩
-  exists r; constructor; assumption
-  trans so; assumption; assumption
-
-/-- If something is true near c, it is true at c -/
-theorem Filter.Eventually.self {A : Type} [TopologicalSpace A] {p : A → Prop} {x : A}
-    (h : ∀ᶠ y in 𝓝 x, p y) : p x := by
-  rcases eventually_nhds_iff.mp h with ⟨s, ps, _, xs⟩; exact ps x xs
-
-/-- If something is true near a set, it is true on the set -/
-theorem Filter.Eventually.self_set {A : Type} [TopologicalSpace A] {p : A → Prop} {s : Set A}
-    (h : ∀ᶠ y in 𝓝ˢ s, p y) : ∀ y, y ∈ s → p y := by
-  rcases mem_nhdsSet_iff_exists.mp h with ⟨t, _, st, tp⟩; exact fun _ m ↦ tp (st m)
-
 /-- `IsOpen s → s ∈ 𝓝ˢ s` -/
-theorem mem_nhdsSet_self {X : Type} [TopologicalSpace X] {s : Set X} (o : IsOpen s) : s ∈ 𝓝ˢ s :=
+theorem IsOpen.mem_nhdsSet_self {X : Type} [TopologicalSpace X] {s : Set X} (o : IsOpen s) :
+    s ∈ 𝓝ˢ s :=
   o.mem_nhdsSet.mpr (subset_refl _)
 
 /-- Turn `s ⊆ setOf p` back into a clean forall -/
 theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x := by
   constructor; intro sub x m; exact sub m; intro sub x m; simp only [mem_setOf]; exact sub _ m
-
-/-- `𝓝ˢ` members must include the set -/
-theorem subset_of_nhdsSet {X : Type} [TopologicalSpace X] {s t : Set X} (m : s ∈ 𝓝ˢ t) : t ⊆ s :=
-  fun _ n ↦ mem_of_mem_nhds (nhds_le_nhdsSet n m)
 
 /-- A proposition is true `∀ᶠ in 𝓝ˢ` if it is true on a larger open set -/
 theorem eventually_nhdsSet_iff {X : Type} [TopologicalSpace X] {s : Set X} {p : X → Prop} :
@@ -75,56 +37,11 @@ theorem eventually_nhdsSet_iff_forall {X : Type} [TopologicalSpace X] {s : Set X
     (∀ᶠ x in 𝓝ˢ s, p x) ↔ ∀ x, x ∈ s → ∀ᶠ y in 𝓝 x, p y := by
   simp only [Filter.eventually_iff, mem_nhdsSet_iff_forall, subset_setOf]
 
-/-- `𝓝ˢ (s ×ˢ t)` factors for compact sets -/
-theorem nhdsSet_prod {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y] {s : Set X} {t : Set Y}
-    (sc : IsCompact s) (tc : IsCompact t) : 𝓝ˢ (s ×ˢ t) = 𝓝ˢ s ×ˢ 𝓝ˢ t := by
-  apply le_antisymm
-  · intro u m; rw [mem_nhdsSet_iff_forall]; intro ⟨x, y⟩ ⟨xs, yt⟩
-    simp only [nhds_prod_eq]; exact Filter.prod_mono (nhds_le_nhdsSet xs) (nhds_le_nhdsSet yt) m
-  · intro u m; rw [mem_nhdsSet_iff_forall] at m
-    apply @IsCompact.induction_on _ _ _ sc (fun x ↦ u ∈ 𝓝ˢ x ×ˢ 𝓝ˢ t)
-    · simp only [nhdsSet_empty, Filter.bot_prod, Filter.mem_bot]
-    · intro s0 s1 sub m; exact Filter.prod_mono_left _ (nhdsSet_mono sub) m
-    · intro s0 s1 m0 m1; simp only [nhdsSet_union, Filter.sup_prod]
-      exact Filter.mem_sup.mpr ⟨m0, m1⟩
-    · intro x xs
-      apply @IsCompact.induction_on _ _ _ tc (fun y ↦ ∃ v, v ∈ 𝓝[s] x ∧ u ∈ 𝓝ˢ v ×ˢ 𝓝ˢ y)
-      · use univ, Filter.univ_mem; simp only [nhdsSet_empty, Filter.prod_bot, Filter.mem_bot]
-      · intro t0 t1 sub ⟨s, n, m⟩; use s, n; exact Filter.prod_mono_right _ (nhdsSet_mono sub) m
-      · intro t0 t1 ⟨s0, n0, m0⟩ ⟨s1, n1, m1⟩; use s0 ∩ s1, Filter.inter_mem n0 n1
-        simp only [nhdsSet_union, Filter.prod_sup]; refine' Filter.mem_sup.mpr ⟨_, _⟩
-        exact Filter.prod_mono_left _ (nhdsSet_mono (inter_subset_left _ _)) m0
-        exact Filter.prod_mono_left _ (nhdsSet_mono (inter_subset_right _ _)) m1
-      · intro y yt; specialize m ⟨x, y⟩ ⟨xs, yt⟩
-        rcases mem_nhds_prod_iff'.mp m with ⟨p, q, po, xp, qo, yq, sub⟩
-        use q, nhdsWithin_le_nhds (qo.mem_nhds yq), p, nhdsWithin_le_nhds (po.mem_nhds xp)
-        exact Filter.mem_of_superset (Filter.prod_mem_prod (mem_nhdsSet_self po)
-          (mem_nhdsSet_self qo)) sub
-
-/-- Continuous functions achieve their supremum on compact sets -/
-theorem ContinuousOn.compact_max {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [ConditionallyCompleteLinearOrder B] [OrderTopology B] {f : A → B} {s : Set A}
-    (fc : ContinuousOn f s) (cs : IsCompact s) (sn : s.Nonempty) : ∃ x, x ∈ s ∧ IsMaxOn f s x := by
-  have ic := IsCompact.image_of_continuousOn cs fc
-  have ss := IsCompact.sSup_mem ic (nonempty_image_iff.mpr sn)
-  rcases(Set.mem_image _ _ _).mp ss with ⟨x, xs, xm⟩
-  exists x, xs
-  rw [isMaxOn_iff]; intro y ys; rw [xm]
-  exact le_csSup ic.bddAbove ((Set.mem_image _ _ _).mpr ⟨y, ys, rfl⟩)
-
-/-- Continuous functions achieve their infimum on compact sets -/
-theorem ContinuousOn.compact_min {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [ConditionallyCompleteLinearOrder B] [OrderTopology B] {f : A → B} {s : Set A}
-    (fc : ContinuousOn f s) (cs : IsCompact s) (sn : s.Nonempty) : ∃ x, x ∈ s ∧ IsMinOn f s x := by
-  set g : A → Bᵒᵈ := fun x ↦ f x
-  have gc : ContinuousOn g s := fc
-  exact gc.compact_max cs sn
-
 /-- Continuous functions on compact sets are bounded above -/
 theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s : Set X}
     (fc : ContinuousOn f s) (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → f x ≤ b := by
   by_cases n : s.Nonempty
-  · rcases fc.compact_max sc n with ⟨x, _, xm⟩
+  · rcases sc.exists_isMaxOn n fc with ⟨x, _, xm⟩
     use max 0 (f x), by bound
     intro y ys; exact _root_.trans (xm ys) (by bound)
   · rw [Set.not_nonempty_iff_eq_empty] at n
@@ -136,7 +53,7 @@ theorem ContinuousOn.bounded_norm {X Y : Type} [TopologicalSpace X] [NormedAddCo
     ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → ‖f x‖ ≤ b := by
   by_cases n : s.Nonempty
   · have nc : ContinuousOn (fun x ↦ ‖f x‖) s := continuous_norm.comp_continuousOn fc
-    rcases nc.compact_max sc n with ⟨x, _, xm⟩
+    rcases sc.exists_isMaxOn n nc with ⟨x, _, xm⟩
     exists ‖f x‖, norm_nonneg _
   · rw [Set.not_nonempty_iff_eq_empty] at n
     exists (0 : ℝ), le_refl _; simp [n]
@@ -181,13 +98,6 @@ theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddC
         _ = 1 + bs.max' _ := by ring
         _ = b := rfl
 
-/-- Functions from empty spaces are continuous -/
-theorem IsEmpty.continuous {A B : Type} [TopologicalSpace A] [TopologicalSpace B] [IsEmpty A]
-    (f : A → B) : Continuous f := by
-  rw [continuous_def]; intro s _
-  have e : f ⁻¹' s = ∅ := by apply Set.subset_eq_empty (Set.subset_univ _); simp
-  simp [e]
-
 /-- `{b | (a,b) ∈ s}` is open if `s` is open -/
 theorem IsOpen.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B] {s : Set (A × B)}
     (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} := by
@@ -217,12 +127,6 @@ theorem continuousAt_iff_tendsto_nhdsWithin {A B : Type} [TopologicalSpace A] [T
   exact fun t ↦ t.mono_left nhdsWithin_le_nhds
   intro t; rw [← nhdsWithin_compl_singleton_sup_pure]
   exact Filter.Tendsto.sup t (tendsto_pure_nhds _ _)
-
-/-- Products of continuous functions are continues (analogue of `ContinuousAt.prod`) -/
-theorem Continuous.prod {A B C : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [TopologicalSpace C] {f : A → B} {g : A → C} (fc : Continuous f) (gc : Continuous g) :
-    Continuous fun x ↦ (f x, g x) :=
-  continuous_id.comp₂ fc gc
 
 /-- If `f x ∈ s` for `s` open and `f` continuous at `z`, `∈` holds locally.
     This is `IsOpen.eventually_mem`, but assuming only `ContinuousAt`. -/
@@ -273,12 +177,12 @@ theorem ContinuousAt.comp₂_continuousWithinAt_of_eq {A B C D : Type} [Topologi
 /-- Curried continuous functions are continuous in the first argument -/
 theorem Continuous.in1 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
     {f : A × B → C} (fc : Continuous f) {b : B} : Continuous fun a ↦ f (a, b) :=
-  fc.comp (continuous_id.prod continuous_const)
+  fc.comp (continuous_id.prod_mk continuous_const)
 
 /-- Curried continuous functions are continuous in the second argument -/
 theorem Continuous.in2 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
     {f : A × B → C} (fc : Continuous f) {a : A} : Continuous fun b ↦ f (a, b) :=
-  fc.comp (continuous_const.prod continuous_id)
+  fc.comp (continuous_const.prod_mk continuous_id)
 
 /-- In a compact space, uniqueness of limit points implies convergence -/
 theorem le_nhds_of_clusterPt_unique {A : Type} [TopologicalSpace A] [CompactSpace A] {l : Filter A}

@@ -54,7 +54,7 @@ structure AnalyticManifold {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜
     [TopologicalSpace M] [ChartedSpace H M] extends HasGroupoid M (analyticGroupoid I) : Prop
 
 /-- Normed spaces are complex manifolds over themselves -/
-instance AnalyticManifold.self {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+instance AnalyticManifold.self_of_nhds {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [CompleteSpace E] : AnalyticManifold (modelWithCornersSelf 𝕜 E) E :=
   AnalyticManifold.mk (by infer_instance)
 
@@ -552,7 +552,7 @@ theorem extChartAt_mderiv_right_inverse' {x y : M} (m : y ∈ (extChartAt I x).s
 theorem HolomorphicAt.congr {f g : M → N} {x : M} (fa : HolomorphicAt I J f x) (e : f =ᶠ[𝓝 x] g) :
     HolomorphicAt I J g x := by
   rw [holomorphicAt_iff] at fa ⊢; use fa.1.congr e; apply fa.2.congr
-  rw [e.self]; refine' Filter.EventuallyEq.fun_comp _ (_root_.extChartAt J (g x))
+  rw [e.self_of_nhds]; refine' Filter.EventuallyEq.fun_comp _ (_root_.extChartAt J (g x))
   have t := (continuousAt_extChartAt_symm I x).tendsto
   rw [LocalEquiv.left_inv _ (mem_extChartAt_source I x)] at t
   exact e.comp_tendsto t
@@ -568,7 +568,7 @@ theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f
   refine' eventually_of_forall fun y a m fm ↦ _
   simp only at a m fm; rw [mem_setOf] at a
   have h := a.holomorphicAt (modelWithCornersSelf 𝕜 E) (modelWithCornersSelf 𝕜 F); clear a
-  have h' := (HolomorphicAt.extChartAt_symm (LocalEquiv.map_source _ fm.self)).comp_of_eq
+  have h' := (HolomorphicAt.extChartAt_symm (LocalEquiv.map_source _ fm.self_of_nhds)).comp_of_eq
       (h.comp (HolomorphicAt.extChartAt m)) ?_
   swap; simp only [Function.comp, LocalEquiv.left_inv _ m]
   apply h'.congr; clear h h'; simp only [Function.comp]

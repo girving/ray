@@ -347,7 +347,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
       exact fa.inChart.deriv2.continuousAt.comp_of_eq
         (continuousAt_fst.prod ((continuousAt_extChartAt I z).comp_of_eq continuousAt_snd rfl))
         rfl
-    · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self]; exact f0
+    · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
   refine' g0.mp (g0n.mp (eventually_of_forall fun w g0 e ↦ _))
   rw [Ne.def, e]; exact g0
 

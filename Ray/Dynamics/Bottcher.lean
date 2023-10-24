@@ -181,8 +181,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d
     · refine'
         (HolomorphicOn.eq_of_locally_eq _ (fun z m ↦ (s.bottcher_holomorphicOn (c, z) m).in2.pow)
-              (s.post_slice_connected c).isPreconnected ⟨a, s.post_a c, e⟩).self_set
-          _ m
+          (s.post_slice_connected c).isPreconnected ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
       exact fun z m ↦ (s.bottcher_holomorphicOn _ (s.stays_post m)).in2.comp (s.fa _).in2
     have e := s.bottcher_eq_bottcherNear c
     have fc := (s.fa (c, a)).in2.continuousAt; simp only [ContinuousAt, s.f0] at fc

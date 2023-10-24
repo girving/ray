@@ -644,7 +644,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
       have pb : potential d x = abs b := by
         apply tendsto_nhds_unique_of_frequently_eq potential_continuous.continuousAt
           continuousAt_const
-        refine' e.mp (eventually_of_forall _); intro z ⟨_, h⟩; rw [← h.self, abs_bottcher]
+        refine' e.mp (eventually_of_forall _); intro z ⟨_, h⟩; rw [← h.self_of_nhds, abs_bottcher]
       rw [← pb, potential_lt_one] at b1
       have e' : ∃ᶠ y in 𝓝[{x}ᶜ] x, y ∈ t := by
         simp only [frequently_nhdsWithin_iff, mem_compl_singleton_iff]
@@ -654,7 +654,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
       cases' HolomorphicAt.eventually_eq_or_eventually_ne (bottcherHolomorphic d _ b1)
         holomorphicAt_const with h h
       use h; contrapose h; simp only [Filter.not_eventually, not_not] at h ⊢
-      exact e'.mp (eventually_of_forall fun y yt ↦ yt.2.self)
+      exact e'.mp (eventually_of_forall fun y yt ↦ yt.2.self_of_nhds)
   -- Contradiction!
   have m0 : (0 : 𝕊) ∈ multibrotExt d :=
     haveI m : (0 : 𝕊) ∈ t := by simp only [tu, mem_univ]
@@ -1134,7 +1134,7 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (cb : exp 48 ≤ abs c) (cz : abs
     refine' lt_of_le_of_lt m _
     refine' inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) _
     exact max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))
-  refine' (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected _).self_set
+  refine' (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected _).self_of_nhdsSet
   use 0, mem_closedBall_self (by bound)
   have e : ∀ᶠ z in 𝓝 0, bottcherNear (fl (f d) ∞ c) d z = s.bottcherNear c (z : 𝕊)⁻¹ := by
     simp only [Super.bottcherNear, extChartAt_inf_apply, inv_inv, toComplex_coe, inv_inf,
@@ -1319,7 +1319,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   -- Find the smallest potential which (almost) violates injectivity,
   -- and a pair (x,y) which realizes it
   have pc : Continuous fun q : 𝕊 × 𝕊 ↦ potential d q.1 := potential_continuous.comp continuous_fst
-  rcases pc.continuousOn.compact_min t2c' t2ne' with ⟨⟨x, y⟩, m2, min⟩
+  rcases t2c'.exists_isMinOn t2ne' pc.continuousOn with ⟨⟨x, y⟩, m2, min⟩
   simp only [isMinOn_iff] at min
   generalize xp : potential d x = p; rw [xp] at min
   have m1 := t12' m2
@@ -1338,7 +1338,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
         q.1 = q.2 ∧ abs q.1 < p := by
       rw [nhds_prod_eq, ← Filter.prod_map_map_eq, ← (bottcherNontrivial xm).nhds_eq_map_nhds, ←
         (bottcherNontrivial ym).nhds_eq_map_nhds, m1.1, ← nhds_prod_eq]
-      apply (continuous_id.prod continuous_id).continuousAt.frequently
+      apply (continuous_id.prod_mk continuous_id).continuousAt.frequently
       simp only [eq_self_iff_true, true_and_iff, ← yp, ← abs_bottcher]; apply frequently_smaller
       rw [← Complex.abs.ne_zero_iff, abs_bottcher, yp]; exact p0
     simp only [Filter.frequently_map] at f

@@ -219,7 +219,7 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
     (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
   set t := {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a}
-  suffices st : s ⊆ t; exact fun z m ↦ (st m).2.self
+  suffices st : s ⊆ t; exact fun z m ↦ (st m).2.self_of_nhds
   refine p.subset_of_closure_inter_subset ?_ ?_ ?_
   · rw [isOpen_iff_eventually]; intro z m; simp only [Set.mem_setOf_eq] at m ⊢
     exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (eventually_of_forall fun y h ↦ h)
@@ -231,7 +231,7 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
     have m' := m.1; contrapose m'; simp only [Filter.not_frequently]
     refine' h.mp (eventually_of_forall _); intro x i
     by_cases xz : x = z; rwa [xz]; specialize i xz; contrapose i
-    simp only [not_not] at i ⊢; exact i.2.self
+    simp only [not_not] at i ⊢; exact i.2.self_of_nhds
 
 /-- If `S` is locally connected, we don't need the open assumption in
     `HolomorphicOn.const_of_locally_const` -/
@@ -365,7 +365,7 @@ theorem NontrivialHolomorphicAt.congr {f g : S → T} {z : S} (n : NontrivialHol
     (e : f =ᶠ[𝓝 z] g) : NontrivialHolomorphicAt g z := by
   use n.holomorphicAt.congr e
   refine' n.nonconst.mp (e.mp (eventually_of_forall fun w ew n ↦ _))
-  rwa [← ew, ← e.self]
+  rwa [← ew, ← e.self_of_nhds]
 
 section EqOfLocallyEq
 
@@ -390,11 +390,11 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
   set t := {x | f =ᶠ[𝓝 x] g}
   suffices h : s ⊆ interior t
   · simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff] at h
-    exact h.mp (eventually_of_forall fun _ e ↦ e.self)
+    exact h.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
   apply sp.relative_clopen; · exact e
   · intro x ⟨_, xt⟩; rw [mem_interior_iff_mem_nhds]; exact xt.eventually_nhds
   · intro x ⟨xs, xt⟩; rw [mem_closure_iff_frequently] at xt
-    have ex' : ∃ᶠ y in 𝓝 x, f y = g y := xt.mp (eventually_of_forall fun _ e ↦ e.self)
+    have ex' : ∃ᶠ y in 𝓝 x, f y = g y := xt.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
     have ex : f x = g x :=
       tendsto_nhds_unique_of_frequently_eq (fa _ xs).continuousAt (ga _ xs).continuousAt ex'
     generalize hd : (fun y : E ↦

@@ -46,7 +46,7 @@ theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : 
     have h : ∃ x, (c, x) ∈ s ∧ f c x = f c z := ⟨z, m, rfl⟩
     simp only [← hg, dif_pos h]
     rcases choose_spec h with ⟨m0, w0⟩
-    have left := (i _ m).left_inv.self
+    have left := (i _ m).left_inv.self_of_nhds
     simp only at left
     have e : (c, choose h) = (c, (i _ m).g c (f c z)) := by
       refine (inj.eq_iff m0 ?_).mp ?_

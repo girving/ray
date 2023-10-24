@@ -65,7 +65,7 @@ lemma Base.ball (b : Base p s f) (x : closure s) :
   have n : {z | p g z ∧ p f z} ∈ 𝓝ˢ (s ∩ Metric.ball x r) := by
     refine Filter.inter_mem ?_ ?_
     · exact nhdsSet_mono (inter_subset_right _ _)
-        (Filter.mem_of_superset (mem_nhdsSet_self isOpen_ball) pg)
+        (Filter.mem_of_superset isOpen_ball.mem_nhdsSet_self pg)
     · exact nhdsSet_mono (inter_subset_left _ _) b.start
   rcases local_preconnected_nhdsSet (b.convex.inter (convex_ball _ _)).isPreconnected n with
     ⟨u, uo, iu, up, uc⟩
@@ -173,8 +173,8 @@ theorem Base.ug (b : Base p s f) (x : closure s) :
     (fun _ m ↦ b.gp _ (inter_subset_left _ _ m)) (fun _ m ↦ b.gp _ (inter_subset_right _ _ m))
     ?_ ⟨b.yt zt, m⟩
   rcases b.convex.inter_ball (b.y zt) x (b.rp _) (b.rp _) ⟨_, ⟨b.yt zt, m⟩⟩ with ⟨w, m⟩
-  exact ⟨w, ⟨m.1.2, m.2⟩, _root_.trans ((b.gf _).self_set _ ⟨m.1.1, m.1.2⟩)
-    ((b.gf x).self_set _ ⟨m.1.1, m.2⟩).symm⟩
+  exact ⟨w, ⟨m.1.2, m.2⟩, _root_.trans ((b.gf _).self_of_nhdsSet ⟨m.1.1, m.1.2⟩)
+    ((b.gf x).self_of_nhdsSet ⟨m.1.1, m.2⟩).symm⟩
 
 /-- `u` is equal to our original `f` -/
 theorem Base.uf (b : Base p s f) : b.u =ᶠ[𝓝ˢ s] f := by

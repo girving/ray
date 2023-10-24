@@ -63,7 +63,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   rcases complex_inverse_fun' (ba.holomorphicAt I I) nc with ⟨i, ia, ib, bi⟩
   rw [bottcherNear_zero] at bi ia
-  have i0 : i 0 = 0 := by nth_rw 1 [← bottcherNear_zero]; rw [ib.self]
+  have i0 : i 0 = 0 := by nth_rw 1 [← bottcherNear_zero]; rw [ib.self_of_nhds]
   have inj : ∀ᶠ p : ℂ × ℂ in 𝓝 (0, 0), i p.1 = i p.2 → p.1 = p.2 := by
     refine' ia.local_inj _
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero

@@ -99,7 +99,7 @@ lemma Super.ray_spec (s : Super f d a) [OnePreimage s] :
 /-- `s.ray` satisfies `Eqn` -/
 lemma Super.ray_eqn_self (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     Eqn s (s.np c (abs x)) s.ray (c, x) :=
-  (s.ray_spec (Complex.abs.nonneg _) post).eqn.self_set _ mem_domain_self
+  (s.ray_spec (Complex.abs.nonneg _) post).eqn.self_of_nhdsSet _ mem_domain_self
 
 /-- `s.ray` is holomorphic on `s.ext` (up to the critical potential for each `c`) -/
 theorem Super.ray_holomorphic (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
@@ -246,7 +246,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
       (nhds_le_nhdsSet mem_domain_self)
     simp only [← pe, hn] at e0 e1
     have de : (↑t * x0) ^ d ^ n = (↑t * x1) ^ d ^ n := by
-      have e0 := e0.self.eqn; have e1 := e1.self.eqn; simp only [hn, ← pe, ← e] at e0 e1
+      have e0 := e0.self_of_nhds.eqn; have e1 := e1.self_of_nhds.eqn; simp only [hn, ← pe, ← e] at e0 e1
       exact e0.symm.trans e1
     simp only [mul_pow] at de
     replace de := mul_left_cancel₀ (pow_ne_zero _ t0) de
@@ -257,7 +257,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
       rw [← hr]; apply eqn_near
       exact (s.ray_holomorphic (pt p1 m)).comp₂_of_eq holomorphicAt_fst
           (holomorphicAt_const.mul holomorphicAt_snd) (by simp only [xe])
-      rw [xe]; exact e1.self.near
+      rw [xe]; exact e1.self_of_nhds.near
       have xc : ContinuousAt (fun y : ℂ × ℂ ↦ (y.1, x1 / x0 * y.2)) (c, ↑t * x0) :=
         continuousAt_fst.prod (continuousAt_const.mul continuousAt_snd)
       simp only [ContinuousAt] at xc
@@ -320,7 +320,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     simp only [mem_diff, mem_setOf]; use p01.le; contrapose i0
     simp only [not_not, mem_image, mem_setOf, not_forall, exists_prop] at i0 ⊢; exact i0
   have ne : u.Nonempty := ⟨z0, z0u⟩
-  rcases pc.continuousOn.compact_min uc ne with ⟨z, zu, zm⟩
+  rcases uc.exists_isMinOn ne pc.continuousOn with ⟨z, zu, zm⟩
   simp only [mem_diff, mem_setOf] at zu
   replace zm : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w
   · have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2

@@ -146,7 +146,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
     apply fa.in2.continuousOn.mono; intro x xs; apply rs
     simp only [← closedBall_prod_same, mem_prod_eq]
     use Metric.mem_closedBall_self rp.le, Metric.sphere_subset_closedBall xs
-  rcases fc.compact_min (isCompact_sphere _ _) (NormedSpace.sphere_nonempty.mpr rp.le) with
+  rcases (isCompact_sphere _ _).exists_isMinOn (NormedSpace.sphere_nonempty.mpr rp.le) fc with
     ⟨x, xs, xm⟩
   set e := ‖f c x - f c z‖
   have ep : 0 < e := by

@@ -409,7 +409,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
 /-- A subharmonic function achieves its maximum on the boundary -/
 theorem SubharmonicOn.maximum_principle {f : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
     (sc : IsCompact s) (sn : s.Nonempty) : ∃ w, w ∈ frontier s ∧ IsMaxOn f s w := by
-  rcases fs.cont.compact_max sc sn with ⟨x, xs, xm⟩
+  rcases sc.exists_isMaxOn sn fs.cont with ⟨x, xs, xm⟩
   rcases exists_mem_frontier_infDist_compl_eq_dist xs sc.ne_univ with ⟨w, wb, h⟩
   exists w, wb
   generalize hr : abs (w - x) = r

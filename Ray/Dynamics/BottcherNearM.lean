@@ -115,7 +115,7 @@ theorem Super.continuous_iter (s : Super f d a) {T : Type} [TopologicalSpace T] 
     {h : T → S} {n : ℕ} (gc : Continuous g) (hc : Continuous h) :
     Continuous fun x ↦ (f (g x))^[n] (h x) := by
   induction' n with n h; simp only [Function.iterate_zero, id.def]; exact hc
-  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp (gc.prod h)
+  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp (gc.prod_mk h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuousOn_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
@@ -298,7 +298,8 @@ theorem Super.superNearC (s : Super f d a) : SuperNearC s.fl d univ s.near' :=
 
 theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
   apply (continuousOn_extChartAt _ _).preimage_open_of_open (isOpen_extChartAt_source _ _)
-  exact IsOpen.preimage (continuous_fst.prod (continuous_snd.sub continuous_const)) s.superNearC.o
+  exact IsOpen.preimage (continuous_fst.prod_mk (continuous_snd.sub continuous_const))
+    s.superNearC.o
 
 /-- `(c,a)` is near -/
 theorem Super.mem_near (s : Super f d a) (c : ℂ) : (c, a) ∈ s.near := by
@@ -396,7 +397,7 @@ def Super.basin (s : Super f d a) : Set (ℂ × S) :=
 
 theorem Super.isOpen_preimage (s : Super f d a) (n : ℕ) :
     IsOpen {p : ℂ × S | (p.1, (f p.1)^[n] p.2) ∈ s.near} :=
-  IsOpen.preimage (continuous_fst.prod (s.continuous_iter continuous_fst continuous_snd))
+  IsOpen.preimage (continuous_fst.prod_mk (s.continuous_iter continuous_fst continuous_snd))
     s.isOpen_near
 
 /-- `s.basin` is open -/

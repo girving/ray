@@ -194,7 +194,9 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
     {s : Set ℂ} (o : IsOpen s) (h : ∀ n, AnalyticOn ℂ (f n) s)
     (u : TendstoUniformlyOn f g atTop s) : AnalyticOn ℂ g s := by
   intro c hc
-  rcases open_has_cball o c hc with ⟨r, rp, cb⟩
+  rcases Metric.nhds_basis_closedBall.mem_iff.mp (o.mem_nhds hc) with ⟨r, rp, cb⟩
+  lift r to ℝ≥0 using rp.le
+  simp only [NNReal.coe_pos] at rp
   have hb : ∀ n, AnalyticOn ℂ (f n) (closedBall c r) := fun n ↦ (h n).mono cb
   set pr := fun n ↦ cauchyPowerSeries (f n) c r
   have hpf : ∀ n, HasFPowerSeriesOnBall (f n) (pr n) c r := by

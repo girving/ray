@@ -131,7 +131,7 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     refine' (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (eventually_of_forall fun y n m ↦ _))
     by_cases yt : y ∈ t
     simp only [mem_union, mem_setOf, eventually_nhdsWithin_iff]; right; use m, yt, n
-    exact mono _ (n.self yt)
+    exact mono _ (n.self_of_nhds yt)
   have mem : ∀ {x u c}, x ∈ s → x ∈ t → c ∈ 𝓝[tᶜ] x → c ⊆ u → x ∈ f u := by
     intro x u c m xt cn cu; right; use m, xt
     simp only [Filter.eventually_iff, setOf_mem_eq]; exact Filter.mem_of_superset cn cu

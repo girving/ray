@@ -288,7 +288,7 @@ theorem AnalyticAt.leading_approx {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt �
 /-- `orderAt > 0` means `f` has a zero -/
 theorem AnalyticAt.zero_of_order_pos {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
     (p : orderAt f c > 0) : f c = 0 := by
-  have a := (Asymptotics.isBigOWith_iff.mp (fa.leading_approx.forall_isBigOWith zero_lt_one)).self
+  have a := (Asymptotics.isBigOWith_iff.mp (fa.leading_approx.forall_isBigOWith zero_lt_one)).self_of_nhds
   simp only [(pow_eq_zero_iff p).mpr, sub_self, zero_smul, sub_zero, norm_zero,
     MulZeroClass.mul_zero, norm_le_zero_iff] at a
   exact a
