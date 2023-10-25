@@ -393,18 +393,17 @@ theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace 
 /-- If we converge to `g`, we're eventually greater than anything less than `g` -/
 theorem Filter.Tendsto.exists_lt {X : Type} [LinearOrder X] [TopologicalSpace X]
     [OrderClosedTopology X] {f : ℕ → X} {g : X} (tend : Tendsto f atTop (𝓝 g)) :
-    ∀ {x}, x < g → ∃ n, x < f n := by
-  intro x h; contrapose h; simp only [not_lt, not_exists] at h ⊢; exact le_of_tendsto' tend h
+    ∀ {x}, x < g → ∃ n, x < f n := fun hx ↦
+  (tend.eventually (eventually_gt_nhds hx)).exists
 
 /-- `≠ → eventual ≠` -/
 theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (h : x ≠ y) :
-    ∀ᶠ q : X × X in 𝓝 (x, y), q.1 ≠ q.2 := by
-  contrapose h; simp only [not_not, Filter.not_eventually] at h ⊢
-  refine' tendsto_nhds_unique_of_frequently_eq _ _ h; exact continuousAt_fst; exact continuousAt_snd
+    ∀ᶠ q : X × X in 𝓝 (x, y), q.1 ≠ q.2 :=
+  (isOpen_ne_fun continuous_fst continuous_snd).mem_nhds h
 
 /-- In a metric space, `sphere ⊆ ball` -/
-theorem Metric.sphere_subset_ball {z : ℂ} {a b : ℝ} (ab : a < b) : sphere z a ⊆ ball z b := by
-  intro x m; simp only [mem_sphere, mem_ball, Complex.dist_eq] at m ⊢; rwa [m]
+theorem Metric.sphere_subset_ball {X : Type*} [PseudoMetricSpace X] {z : X} {a b : ℝ} (ab : a < b) :
+    sphere z a ⊆ ball z b := fun _ _ ↦ by simp_all
 
 /-- Near any real, there are frequently smaller reals -/
 theorem Real.frequently_smaller (x : ℝ) : ∃ᶠ y in 𝓝 x, y < x := by
