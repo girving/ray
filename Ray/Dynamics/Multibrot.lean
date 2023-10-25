@@ -1,5 +1,5 @@
 import Mathlib.Analysis.Complex.Basic
-import Mathlib.Analysis.Calculus.Lhopital
+import Mathlib.Analysis.Calculus.LHopital
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Complex.Basic
 import Ray.Analytic.Holomorphic

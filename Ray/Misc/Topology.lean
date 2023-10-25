@@ -19,13 +19,13 @@ open scoped Real NNReal Topology
 noncomputable section
 
 /-- `IsOpen s → s ∈ 𝓝ˢ s` -/
-theorem IsOpen.mem_nhdsSet_self {X : Type} [TopologicalSpace X] {s : Set X} (o : IsOpen s) :
+theorem IsOpen.mem_nhdsSet_self {X : Type*} [TopologicalSpace X] {s : Set X} (o : IsOpen s) :
     s ∈ 𝓝ˢ s :=
-  o.mem_nhdsSet.mpr (subset_refl _)
+  o.mem_nhdsSet.mpr Subset.rfl
 
 /-- Turn `s ⊆ setOf p` back into a clean forall -/
-theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x := by
-  constructor; intro sub x m; exact sub m; intro sub x m; simp only [mem_setOf]; exact sub _ m
+theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x :=
+  Iff.rfl
 
 /-- A proposition is true `∀ᶠ in 𝓝ˢ` if it is true on a larger open set -/
 theorem eventually_nhdsSet_iff {X : Type} [TopologicalSpace X] {s : Set X} {p : X → Prop} :
@@ -40,23 +40,13 @@ theorem eventually_nhdsSet_iff_forall {X : Type} [TopologicalSpace X] {s : Set X
 /-- Continuous functions on compact sets are bounded above -/
 theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s : Set X}
     (fc : ContinuousOn f s) (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → f x ≤ b := by
-  by_cases n : s.Nonempty
-  · rcases sc.exists_isMaxOn n fc with ⟨x, _, xm⟩
-    use max 0 (f x), by bound
-    intro y ys; exact _root_.trans (xm ys) (by bound)
-  · rw [Set.not_nonempty_iff_eq_empty] at n
-    exists (0 : ℝ), le_refl _; simp [n]
+  simpa using (sc.bddAbove_image fc).exists_ge 0
 
 /-- Continuous functions on compact sets have bounded norm -/
 theorem ContinuousOn.bounded_norm {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
     {f : X → Y} {s : Set X} (fc : ContinuousOn f s) (sc : IsCompact s) :
-    ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → ‖f x‖ ≤ b := by
-  by_cases n : s.Nonempty
-  · have nc : ContinuousOn (fun x ↦ ‖f x‖) s := continuous_norm.comp_continuousOn fc
-    rcases sc.exists_isMaxOn n nc with ⟨x, _, xm⟩
-    exists ‖f x‖, norm_nonneg _
-  · rw [Set.not_nonempty_iff_eq_empty] at n
-    exists (0 : ℝ), le_refl _; simp [n]
+    ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → ‖f x‖ ≤ b :=
+  fc.norm.bounded sc
 
 /-- Uniform cauchy sequences are cauchy sequences at points -/
 theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
@@ -100,17 +90,13 @@ theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddC
 
 /-- `{b | (a,b) ∈ s}` is open if `s` is open -/
 theorem IsOpen.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B] {s : Set (A × B)}
-    (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} := by
-  rw [isOpen_iff_mem_nhds]; intro b m; simp only [Set.mem_setOf_eq] at m
-  rcases mem_nhds_prod_iff.mp (o.mem_nhds m) with ⟨u, un, v, vn, uv⟩
-  apply Filter.mem_of_superset vn
-  intro b bv; apply uv
-  simp only [mem_of_mem_nhds un, bv, Set.prod_mk_mem_set_prod_eq, and_self_iff]
+    (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} :=
+  o.preimage (Continuous.Prod.mk a)
 
 /-- `{b | (a,b) ∈ s}` is closed if `s` is closed -/
 theorem IsClosed.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    {s : Set (A × B)} (c : IsClosed s) (a : A) : IsClosed {b | (a, b) ∈ s} := by
-  simp only [← isOpen_compl_iff, compl_setOf] at c ⊢; exact c.snd_preimage _
+    {s : Set (A × B)} (c : IsClosed s) (a : A) : IsClosed {b | (a, b) ∈ s} :=
+  c.preimage (Continuous.Prod.mk a)
 
 /-- Tendsto commutes with ⁻¹ away from zero -/
 theorem tendsto_iff_tendsto_inv {A B : Type} [NontriviallyNormedField B]
@@ -132,17 +118,14 @@ theorem continuousAt_iff_tendsto_nhdsWithin {A B : Type} [TopologicalSpace A] [T
     This is `IsOpen.eventually_mem`, but assuming only `ContinuousAt`. -/
 theorem ContinuousAt.eventually_mem {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (o : IsOpen s) (m : f x ∈ s) :
-    ∀ᶠ y in 𝓝 x, f y ∈ s := by
-  rw [ContinuousAt, ← IsOpen.nhdsWithin_eq o m] at fc
-  exact eventually_mem_of_tendsto_nhdsWithin fc
+    ∀ᶠ y in 𝓝 x, f y ∈ s :=
+  fc (o.mem_nhds m)
 
 /-- If `f x ∈ s` for `s ∈ 𝓝 (f x)` and `f` continuous at `z`, `∈` holds locally -/
 theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
-    ∀ᶠ y in 𝓝 x, f y ∈ s := by
-  rw [← mem_interior_iff_mem_nhds] at m
-  exact (fc.eventually_mem isOpen_interior m).mp
-    (eventually_of_forall fun y i ↦ @interior_subset _ _ s _ i)
+    ∀ᶠ y in 𝓝 x, f y ∈ s :=
+  (eventually_mem_nhds.2 (fc m)).mono fun _x hx ↦ mem_preimage.1 (mem_of_mem_nhds hx)
 
 /-- `ContinuousAt.comp` for curried functions -/
 theorem ContinuousAt.comp₂ {A B C D : Type} [TopologicalSpace A] [TopologicalSpace B]
@@ -211,9 +194,8 @@ theorem tendsto_of_cluster_pt_unique {A B : Type} [TopologicalSpace B]
 /-- Continuous images of compact closures are closures of images -/
 theorem Continuous.image_compact_closure {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     [T2Space B] {f : A → B} {s : Set A} (fc : Continuous f) (sc : IsCompact (closure s)) :
-    f '' closure s = closure (f '' s) := by
-  apply subset_antisymm (image_closure_subset_closure_image fc)
-  rw [←(sc.image fc).isClosed.closure_eq]; exact closure_mono (Set.image_subset _ subset_closure)
+    f '' closure s = closure (f '' s) :=
+  image_closure_of_isCompact sc fc.continuousOn
 
 /-- The reverse direction of `IsClosed.Icc_subset_of_forall_mem_nhdsWithin` -/
 theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
@@ -389,9 +371,8 @@ theorem locally_injective_on_compact {X Y : Type} [TopologicalSpace X] [Topologi
 theorem Prod.frequently {A B : Type} {f : Filter A} {g : Filter B} {p : A → Prop} {q : B → Prop} :
     (∃ᶠ x : A × B in f ×ˢ g, p x.1 ∧ q x.2) ↔ (∃ᶠ a in f, p a) ∧ ∃ᶠ b in g, q b := by
   constructor
-  · intro h; contrapose h; simp only [Filter.not_frequently, not_and_or] at h ⊢; cases' h with h h
-    exact (h.prod_inl g).mp (eventually_of_forall (by tauto))
-    exact (h.prod_inr f).mp (eventually_of_forall (by tauto))
+  · exact fun h ↦ ⟨Filter.tendsto_fst.frequently (h.mono fun _ ↦ And.left),
+      Filter.tendsto_snd.frequently (h.mono fun _ ↦ And.right)⟩
   · intro ⟨u, v⟩; simp only [Filter.frequently_iff] at u v ⊢; intro s m
     rcases Filter.mem_prod_iff.mp m with ⟨s0, m0, s1, m1, sub⟩
     rcases u m0 with ⟨a, am, ap⟩
@@ -440,11 +421,8 @@ theorem Real.frequently_larger (x : ℝ) : ∃ᶠ y in 𝓝 x, x < y := by
 /-- A set is closed if the closure doesn't add new points -/
 theorem isClosed_iff_closure_diff {X : Type} [TopologicalSpace X] {s : Set X} :
     IsClosed s ↔ closure s \ s = ∅ := by
-  constructor
-  · intro h; simp only [h.closure_eq, diff_self]
-  · intro h; simp only [diff_eq_empty] at h; exact isClosed_of_closure_subset h
+  rw [diff_eq_empty, closure_subset_iff_isClosed]
 
 /-- The `⊥` filter has no cluster_pts -/
-theorem ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := by
-  simp only [clusterPt_iff, Filter.mem_bot, not_forall, not_nonempty_iff_eq_empty]
-  use univ, Filter.univ_mem, ∅; simp only [univ_inter, eq_self_iff_true, and_self_iff]
+theorem ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := fun h ↦
+  (h.neBot.mono inf_le_right).ne rfl
