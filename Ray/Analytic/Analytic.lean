@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
+import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
@@ -36,172 +37,15 @@ variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F
 variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
 variable {H : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
 
-/-- `id` is entire -/
-theorem analyticOn_id {s : Set E} : AnalyticOn 𝕜 (fun x : E ↦ x) s := fun _ _ ↦ analyticAt_id _ _
-
-/-- Finite sums of analytic functions are analytic -/
-theorem AnalyticAt.sum {f : ℕ → E → F} {c : E} (h : ∀ n, AnalyticAt 𝕜 (f n) c) (N : Finset ℕ) :
-    AnalyticAt 𝕜 (fun z ↦ N.sum fun n ↦ f n z) c := by
-  induction' N using Finset.induction with a B aB hB
-  · simp only [Finset.sum_empty]; exact analyticAt_const
-  · simp_rw [Finset.sum_insert aB]
-    apply AnalyticAt.add
-    exact h a
-    exact hB
-
-/-- Finite sums of analytic functions are analytic -/
-theorem AnalyticOn.sum {f : ℕ → E → F} {s : Set E} (h : ∀ n, AnalyticOn 𝕜 (f n) s) (N : Finset ℕ) :
-    AnalyticOn 𝕜 (fun z ↦ N.sum fun n ↦ f n z) s := fun z zs ↦
-  AnalyticAt.sum (fun n ↦ h n z zs) N
-
-/-- Power series terms are analytic -/
-theorem ChangeOrigin.analyticAt (p : FormalMultilinearSeries 𝕜 E F) (rp : p.radius > 0) (n : ℕ) :
-    AnalyticAt 𝕜 (fun x ↦ p.changeOrigin x n) 0 :=
-  (FormalMultilinearSeries.hasFPowerSeriesOnBall_changeOrigin p n rp).analyticAt
-
 /-- Analytic at a point means analytic in a small ball -/
-theorem AnalyticAt.ball {f : E → F} {z : E} :
-    AnalyticAt 𝕜 f z → ∃ r : ℝ, r > 0 ∧ AnalyticOn 𝕜 f (ball z r) := by
-  intro a
-  rcases a with ⟨p, r, h⟩
-  by_cases ri : r = ∞
-  · exists (1 : ℝ)
-    exact ⟨by norm_num, fun z _ ↦ HasFPowerSeriesOnBall.analyticOn h z (by rw [ri]; simp)⟩
-  · exists r.toReal
-    constructor; · exact ENNReal.toReal_pos h.r_pos.ne' ri
-    · intro z zs
-      refine' HasFPowerSeriesOnBall.analyticOn h z _
-      simp at zs ⊢
-      have rr := ENNReal.ofReal_toReal ri
-      rw [← rr, edist_lt_ofReal]; assumption
-
-/-- Analytic at a point means analytic in a small closed ball -/
-theorem AnalyticAt.cball {f : E → F} {z : E} :
-    AnalyticAt 𝕜 f z → ∃ r : ℝ, r > 0 ∧ AnalyticOn 𝕜 f (closedBall z r) := by
-  intro a
-  rcases AnalyticAt.ball a with ⟨r, rp, ao⟩
-  exists r / 2
-  constructor; · linarith
-  · intro z zs
-    refine' ao z _
-    simp at zs ⊢
-    exact lt_of_le_of_lt zs (by linarith)
-
-/-- `fst` is analytic -/
-theorem analyticAt_fst {p : E × F} : AnalyticAt 𝕜 (fun p : E × F ↦ p.fst) p :=
-  (ContinuousLinearMap.fst 𝕜 E F).analyticAt p
-
-/-- `snd` is analytic -/
-theorem analyticAt_snd {p : E × F} : AnalyticAt 𝕜 (fun p : E × F ↦ p.snd) p :=
-  (ContinuousLinearMap.snd 𝕜 E F).analyticAt p
-
-/-- `fst` is analytic -/
-theorem analyticOn_fst {s : Set (E × F)} : AnalyticOn 𝕜 (fun p : E × F ↦ p.fst) s := fun _ _ ↦
-  analyticAt_fst
-
-/-- `snd` is analytic -/
-theorem analyticOn_snd {s : Set (E × F)} : AnalyticOn 𝕜 (fun p : E × F ↦ p.snd) s := fun _ _ ↦
-  analyticAt_snd
-
-/-- `AnalyticAt.comp` for a curried function -/
-theorem AnalyticAt.comp₂ {h : F × G → H} {f : E → F} {g : E → G} {x : E}
-    (ha : AnalyticAt 𝕜 h (f x, g x)) (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) :
-    AnalyticAt 𝕜 (fun x ↦ h (f x, g x)) x :=
-  AnalyticAt.comp ha (fa.prod ga)
-
-/-- `AnalyticOn.comp` for a curried function -/
-theorem AnalyticOn.comp₂ {h : F → G → H} {f : E → F} {g : E → G} {s : Set (F × G)} {t : Set E}
-    (ha : AnalyticOn 𝕜 (uncurry h) s) (fa : AnalyticOn 𝕜 f t) (ga : AnalyticOn 𝕜 g t)
-    (m : ∀ x, x ∈ t → (f x, g x) ∈ s) : AnalyticOn 𝕜 (fun x ↦ h (f x) (g x)) t := fun _ xt ↦
-  (ha _ (m _ xt)).comp₂ (fa _ xt) (ga _ xt)
-
-/-- Curried analytic functions are analytic in the first coordinate -/
-theorem AnalyticAt.in1 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
-    AnalyticAt 𝕜 (fun x ↦ f x y) x :=
-  AnalyticAt.comp₂ fa (analyticAt_id _ _) analyticAt_const
-
-/-- Curried analytic functions are analytic in the second coordinate -/
-theorem AnalyticAt.in2 {f : E → F → G} {x : E} {y : F} (fa : AnalyticAt 𝕜 (uncurry f) (x, y)) :
-    AnalyticAt 𝕜 (fun y ↦ f x y) y :=
-  AnalyticAt.comp₂ fa analyticAt_const (analyticAt_id _ _)
-
-/-- Curried analytic functions are analytic in the first coordinate -/
-theorem AnalyticOn.in1 {f : E → F → G} {s : Set (E × F)} {y : F} (fa : AnalyticOn 𝕜 (uncurry f) s) :
-    AnalyticOn 𝕜 (fun x ↦ f x y) {x | (x, y) ∈ s} := fun x m ↦ (fa (x, y) m).in1
-
-/-- Curried analytic functions are analytic in the second coordinate -/
-theorem AnalyticOn.in2 {f : E → F → G} {x : E} {s : Set (E × F)} (fa : AnalyticOn 𝕜 (uncurry f) s) :
-    AnalyticOn 𝕜 (fun y ↦ f x y) {y | (x, y) ∈ s} := fun y m ↦ (fa (x, y) m).in2
-
-/-- Analytic everywhere means continuous -/
-theorem AnalyticOn.continuous {f : E → F} (fa : AnalyticOn 𝕜 f univ) : Continuous f := by
-  rw [continuous_iff_continuousOn_univ]; exact fa.continuousOn
-
-/-- Multiplication is analytic -/
-theorem analyticOn_mul [CompleteSpace 𝕜] : AnalyticOn 𝕜 (fun x : 𝕜 × 𝕜 ↦ x.1 * x.2) univ := by
-  set p : FormalMultilinearSeries 𝕜 (𝕜 × 𝕜) 𝕜 := fun n ↦ if n = 2 then termCmmap 𝕜 n 1 1 else 0
-  rw [←Metric.eball_top_eq_univ 0]; apply HasFPowerSeriesOnBall.analyticOn (p := p)
-  exact {
-    r_le := by
-      rw [FormalMultilinearSeries.radius_eq_top_of_eventually_eq_zero]
-      rw [Filter.eventually_atTop]; use 3; intro n n2
-      have ne : n ≠ 2 := by linarith
-      simp only [ge_iff_le, ne, ite_false, implies_true]
-    r_pos := by simp only
-    hasSum := by
-      intro (x,y) _; simp only [zero_add]
-      have e : (fun n ↦ (if n = 2 then termCmmap 𝕜 n 1 1 else 0) (fun _ ↦ (x, y))) =
-          (fun n ↦ if n = 2 then x * y else 0) := by
-        ext n; by_cases n2 : n = 2
-        repeat simp only [n2, ite_true, termCmmap_apply, ge_iff_le, min_eq_left, pow_one,
-            Nat.succ_sub_succ_eq_sub, tsub_zero, smul_eq_mul, mul_one, ite_false,
-            ContinuousMultilinearMap.zero_apply]
-      rw [e]; apply hasSum_ite_eq }
+theorem AnalyticAt.ball {f : E → F} {z : E} (fa : AnalyticAt 𝕜 f z) :
+    ∃ r : ℝ, 0 < r ∧ AnalyticOn 𝕜 f (ball z r) :=
+  Metric.isOpen_iff.mp (isOpen_analyticAt _ _) _ fa
 
 /-- `f * g` is analytic -/
 theorem AnalyticOn.mul [CompleteSpace 𝕜] {f g : E → 𝕜} {s : Set E}
-    (fa : AnalyticOn 𝕜 f s) (ga : AnalyticOn 𝕜 g s) :
-    AnalyticOn 𝕜 (fun x ↦ f x * g x) s := fun x m ↦ (fa x m).mul (ga x m)
-
-/-- `(f x)⁻¹` is analytic away from `f x = 0` -/
-theorem AnalyticAt.inv {f : E → 𝕜} {x : E} (fa : AnalyticAt 𝕜 f x) (f0 : f x ≠ 0) :
-    AnalyticAt 𝕜 (fun x ↦ (f x)⁻¹) x := (analyticAt_inv _ f0).comp fa
-
-/-- `x⁻¹` is analytic away from zero -/
-theorem analyticOn_inv : AnalyticOn 𝕜 (fun z ↦ z⁻¹) {z : 𝕜 | z ≠ 0} := by
-  intro z m; exact analyticAt_inv _ m
-
-/-- `x⁻¹` is analytic away from zero -/
-theorem AnalyticOn.inv {f : E → 𝕜} {s : Set E} (fa : AnalyticOn 𝕜 f s) (f0 : ∀ x, x ∈ s → f x ≠ 0) :
-    AnalyticOn 𝕜 (fun x ↦ (f x)⁻¹) s := fun x m ↦ (fa x m).inv (f0 x m)
-
-/-- `f x / g x` is analytic away from `g x = 0` -/
-theorem AnalyticAt.div [CompleteSpace 𝕜] {f g : E → 𝕜} {x : E}
-    (fa : AnalyticAt 𝕜 f x) (ga : AnalyticAt 𝕜 g x) (g0 : g x ≠ 0) :
-    AnalyticAt 𝕜 (fun x ↦ f x / g x) x := by
-  simp_rw [div_eq_mul_inv]; exact fa.mul (ga.inv g0)
-
-/-- `f x / g x` is analytic away from `g x = 0` -/
-theorem AnalyticOn.div [CompleteSpace 𝕜] {f g : E → 𝕜} {s : Set E}
-    (fa : AnalyticOn 𝕜 f s) (ga : AnalyticOn 𝕜 g s) (g0 : ∀ x, x ∈ s → g x ≠ 0) :
-    AnalyticOn 𝕜 (fun x ↦ f x / g x) s := fun x m ↦
-  (fa x m).div (ga x m) (g0 x m)
-
-/-- `z^n` is analytic -/
-theorem AnalyticAt.monomial [CompleteSpace 𝕜] (n : ℕ) {z : 𝕜} :
-    AnalyticAt 𝕜 (fun z : 𝕜 ↦ z ^ n) z :=
-  (analyticAt_id _ _).pow _
-
-/-- `z^n` is entire -/
-theorem AnalyticOn.monomial [CompleteSpace 𝕜] (n : ℕ) : AnalyticOn 𝕜 (fun z : 𝕜 ↦ z ^ n) univ :=
-  fun _ _ ↦ AnalyticAt.monomial _
-
-/-- Finite products of analytic functions are analytic -/
-theorem prod_analytic [CompleteSpace 𝕜] {f : ℕ → E → 𝕜} {s : Set E}
-    (h : ∀ n, AnalyticOn 𝕜 (f n) s) (N : Finset ℕ) :
-    AnalyticOn 𝕜 (fun z ↦ N.prod fun n ↦ f n z) s := by
-  induction' N using Finset.induction with a B aB hB; · simp; intro z _; exact analyticAt_const
-  · simp_rw [Finset.prod_insert aB]; exact (h a).mul hB
+    (fa : AnalyticOn 𝕜 f s) (ga : AnalyticOn 𝕜 g s) : AnalyticOn 𝕜 (fun x ↦ f x * g x) s :=
+  fun x m ↦ (fa x m).mul (ga x m)
 
 /-- The order of a zero at a point.
     We define this in terms of the function alone so that expressions involving order can
@@ -459,7 +303,8 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
 /-- `fderiv` is analytic -/
 theorem AnalyticAt.fderiv {f : E → F} {c : E} (fa : AnalyticAt 𝕜 f c) :
     AnalyticAt 𝕜 (fderiv 𝕜 f) c := by
-  rcases fa.ball with ⟨r, rp, fa⟩; exact fa.fderiv _ (Metric.mem_ball_self rp)
+  rcases Metric.isOpen_iff.mp (isOpen_analyticAt 𝕜 f) _ fa with ⟨r, rp, fa⟩
+  exact AnalyticOn.fderiv fa _ (Metric.mem_ball_self rp)
 
 /-- `deriv` is analytic -/
 theorem AnalyticAt.deriv {f : 𝕜 → 𝕜} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) [CompleteSpace 𝕜] :

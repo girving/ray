@@ -305,7 +305,7 @@ theorem iterates_converge (s : SuperNear f d t) :
 
 /-- Iterates are analytic -/
 theorem iterates_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ f^[n] t := by
-  intro n; induction' n with n h; · simp only [Function.iterate_zero]; exact analyticOn_id
+  intro n; induction' n with n h; · simp only [Function.iterate_zero]; exact analyticOn_id _
   · rw [Function.iterate_succ']; intro z zt; exact (s.fa _ (s.mapsTo n zt)).comp (h z zt)
 
 /-- `term` is analytic close to 0 -/
@@ -416,7 +416,7 @@ theorem bottcherNear_ne_zero (s : SuperNear f d t) : z ∈ t → z ≠ 0 → bot
 
 /-- `bottcherNear` is analytic in `z` -/
 theorem bottcherNear_analytic_z (s : SuperNear f d t) : AnalyticOn ℂ (bottcherNear f d) t :=
-  analyticOn_id.mul (term_prod_analytic_z s)
+  (analyticOn_id _).mul (term_prod_analytic_z s)
 
 /-- `f^[n] z → 0` -/
 theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
@@ -602,7 +602,7 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
         s := by
           intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]
           apply (s.s (rc m)).super_on_ball rp rh
-          · apply fa.comp₂ analyticOn_const analyticOn_id
+          · apply fa.comp₂ analyticOn_const (analyticOn_id _)
             intro z zm; apply Metric.ball_subset_ball (by bound : r ≤ r2)
             simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]; exact zm
           · simp only [Complex.dist_eq, Prod.dist_eq, sub_zero, max_lt_iff, and_imp, g2, g0] at gs
@@ -671,7 +671,7 @@ theorem bottcherNear_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z)
 /-- `bottcherNear` is jointly analytic -/
 theorem bottcherNear_analytic (s : SuperNearC f d u t) :
     AnalyticOn ℂ (fun p : ℂ × ℂ ↦ bottcherNear (f p.1) d p.2) t := fun _ m ↦
-  analyticAt_snd.mul (term_prod_analytic s _ m)
+  (analyticAt_snd _).mul (term_prod_analytic s _ m)
 
 /-- `deriv f` is nonzero away from 0 -/
 theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :

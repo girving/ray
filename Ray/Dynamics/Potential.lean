@@ -449,7 +449,7 @@ theorem Super.potential_basis' (s : Super f d a) [OnePreimage s] (c : ℂ) {t : 
       replace m := le_antisymm (not_lt.mp m) s.potential_nonneg
       rw [s.potential_eq_zero_of_onePreimage] at m; simp only [m, not_mem_compl_iff]
       exact mem_of_mem_nhds n
-    · exact (o.isClosed_compl.isCompact.image (Continuous.potential s).in2).isClosed
+    · exact (o.isClosed_compl.isCompact.image (Continuous.potential s).along_snd).isClosed
   use q, qp, qt
 
 /-- potential levelsets form a neighborhood basis at `a` (general version) -/
@@ -482,7 +482,7 @@ theorem Super.has_nice_n (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op 
     ∃ n, s.IsNiceN c p n := by
   have et : ∀ᶠ z in 𝓝 a, (c, z) ∈ s.near ∧ mfderiv I I (s.bottcherNear c) z ≠ 0 := by
     apply
-      (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).in2
+      (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
           (s.bottcherNear_mfderiv_ne_zero c)).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
     refine' eventually_of_forall fun z m nc ↦ _; use m, nc

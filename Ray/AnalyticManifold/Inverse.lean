@@ -61,7 +61,7 @@ theorem Cinv.fa' (i : Cinv f c z) : AnalyticAt ℂ i.f' (c, i.z') := by
   simp only [holomorphicAt_iff, uncurry, extChartAt_prod, Function.comp, LocalEquiv.prod_coe_symm,
     LocalEquiv.prod_coe] at fa
   exact fa.2
-theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := analyticAt_fst.prod i.fa'
+theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := (analyticAt_fst _).prod i.fa'
 
 /-- The key nonzero derivative: `d(f c z)/dz` -/
 @[nolint unusedArguments]
@@ -112,8 +112,8 @@ lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := 
     apply hasMFDerivAt_fst
     refine' HasMFDerivAt.comp _ _ (hasMFDerivAt_snd _ _ _)
     exact (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
-    rw [i.zz]; exact i.fa.in1.mdifferentiableAt.hasMFDerivAt
-    rw [i.zz]; exact i.fa.in2.mdifferentiableAt.hasMFDerivAt
+    rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
+    rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
 
 lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
   refine' HasMFDerivAt.prod _ i.has_df'; apply hasMFDerivAt_fst

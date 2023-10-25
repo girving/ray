@@ -317,12 +317,12 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   have cd : HolomorphicAt I I (extChartAt I (f c z)) (f e w) := HolomorphicAt.extChartAt fm
   have fd : HolomorphicAt I I (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
     simp only [Function.comp]
-    exact HolomorphicAt.comp_of_eq fa.in2 (HolomorphicAt.extChartAt_symm m')
+    exact HolomorphicAt.comp_of_eq fa.along_snd (HolomorphicAt.extChartAt_symm m')
       (LocalEquiv.right_inv _ m)
   have ce : (fun w ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm w))) =
       extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
   rw [ce, mfderiv_comp_of_eq cd.mdifferentiableAt fd.mdifferentiableAt ?blah,
-    mfderiv_comp_of_eq fa.in2.mdifferentiableAt
+    mfderiv_comp_of_eq fa.along_snd.mdifferentiableAt
       (HolomorphicAt.extChartAt_symm m').mdifferentiableAt]
   · simp only [mderiv_comp_eq_zero_iff, Function.comp]
     rw [(extChartAt I z).left_inv m]

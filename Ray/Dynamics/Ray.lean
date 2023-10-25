@@ -108,7 +108,7 @@ theorem Super.ray_holomorphic (s : Super f d a) [OnePreimage s] (post : (c, x) �
 
 /-- `s.ray c` is holomorphic up to the critical potential (that is, on `ball 0 (s.p c)`) -/
 theorem Super.ray_holomorphic_slice (s : Super f d a) [OnePreimage s] (c : ℂ) :
-    HolomorphicOn I I (s.ray c) {x | (c, x) ∈ s.ext} := fun _ m ↦ (s.ray_holomorphic m).in2
+    HolomorphicOn I I (s.ray c) {x | (c, x) ∈ s.ext} := fun _ m ↦ (s.ray_holomorphic m).along_snd
 
 /-- `s.ray` is holomorphic on `s.ext` (up to the critical potential for each `c`) -/
 theorem Super.ray_holomorphicOn (s : Super f d a) [OnePreimage s] :
@@ -159,9 +159,9 @@ theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
     rw [e.mfderiv_eq]; exact id_mderiv_ne_zero
   contrapose h; simp only [not_not] at h ⊢
   have hb : MDifferentiableAt I I (s.bottcherNear c) (s.ray c 0) := by
-    rw [s.ray_zero]; exact (s.bottcherNear_holomorphic _ (s.mem_near c)).in2.mdifferentiableAt
+    rw [s.ray_zero]; exact (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd.mdifferentiableAt
   have hr : MDifferentiableAt I I (s.ray c) 0 :=
-    (s.ray_holomorphic (s.mem_ext c)).in2.mdifferentiableAt
+    (s.ray_holomorphic (s.mem_ext c)).along_snd.mdifferentiableAt
   rw [mfderiv_comp 0 hb hr, h, ContinuousLinearMap.comp_zero]
 
 -- `s.ray` is noncritical everywhere in `s.ext`
@@ -181,15 +181,15 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
     rw [deriv_pow, mul_eq_zero, Nat.cast_eq_zero, pow_eq_zero_iff', pow_eq_zero_iff'] at d
     simp only [s.d0, false_and_iff, false_or_iff] at d; exact d.1
   simp only [mfderiv_comp x
-      (s.bottcherNearIter_holomorphic (s.ray_near post)).in2.mdifferentiableAt
-      (s.ray_holomorphic post).in2.mdifferentiableAt,
+      (s.bottcherNearIter_holomorphic (s.ray_near post)).along_snd.mdifferentiableAt
+      (s.ray_holomorphic post).along_snd.mdifferentiableAt,
     Ne.def, mderiv_comp_eq_zero_iff, not_or] at h
   exact h.2
 
 /-- `s.ray` is nontrivial, since it is noncritical at 0 and `s.ext` is connected -/
 theorem Super.ray_nontrivial (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     NontrivialHolomorphicAt (s.ray c) x :=
-  (nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.ray_holomorphic (s.mem_ext c)).in2
+  (nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.ray_holomorphic (s.mem_ext c)).along_snd
         (s.ray_noncritical_zero c)).on_preconnected
     (s.ray_holomorphic_slice c) (s.mem_ext c) (s.isOpen_ext.snd_preimage c)
     (s.ext_slice_connected c).isPreconnected _ post
@@ -222,7 +222,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
   · replace h := _root_.trans h interior_subset
     replace tc := (tc x0 0).prod_mk (tc x1 0); simp only [← nhds_prod_eq] at tc
     simp only [ContinuousAt, Complex.ofReal_zero, MulZeroClass.zero_mul] at tc
-    have inj := tc.eventually ((s.ray_holomorphic (s.mem_ext c)).in2.local_inj
+    have inj := tc.eventually ((s.ray_holomorphic (s.mem_ext c)).along_snd.local_inj
       (s.ray_noncritical_zero c))
     rcases Metric.eventually_nhds_iff.mp inj with ⟨r, rp, inj⟩
     simp only [Real.dist_eq, sub_zero] at inj
@@ -275,7 +275,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
   · intro t ⟨m, e⟩; simp only [mem_setOf, mem_closure_iff_frequently] at e ⊢
     have rc : ∀ {x : ℂ}, (c, x) ∈ s.ext → ContinuousAt (fun t : ℝ ↦ s.ray c (↑t * x)) t :=
       fun {x} p ↦
-      (s.ray_holomorphic (pt p m)).in2.continuousAt.comp_of_eq
+      (s.ray_holomorphic (pt p m)).along_snd.continuousAt.comp_of_eq
         (Complex.continuous_ofReal.continuousAt.mul continuousAt_const) rfl
     exact tendsto_nhds_unique_of_frequently_eq (rc p0) (rc p1) e
 
@@ -296,7 +296,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   set i := s.ray c '' {x | (c, x) ∈ s.ext}
   set j := {z | s.potential c z ≤ p1} ∩ i
   set u := {z | s.potential c z ≤ p1} \ i
-  have pc : Continuous (s.potential c) := (Continuous.potential s).in2
+  have pc : Continuous (s.potential c) := (Continuous.potential s).along_snd
   have io : IsOpen i := by
     rw [isOpen_iff_eventually]; intro z ⟨x, m, xz⟩
     have eq := (s.ray_nontrivial m).nhds_eq_map_nhds; rw [xz] at eq
@@ -314,7 +314,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
       use xp, x, zp1
     rw [e]; refine' (IsCompact.image_of_continuousOn (isCompact_closedBall _ _) _).isClosed
     intro x m; simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
-    exact (s.ray_holomorphic (lt_of_le_of_lt m post)).in2.continuousAt.continuousWithinAt
+    exact (s.ray_holomorphic (lt_of_le_of_lt m post)).along_snd.continuousAt.continuousWithinAt
   have uc : IsCompact u := ((isClosed_le pc continuous_const).sdiff io).isCompact
   have z0u : z0 ∈ u := by
     simp only [mem_diff, mem_setOf]; use p01.le; contrapose i0
@@ -326,7 +326,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   · have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
     apply (jc.isOpen_compl.eventually_mem m).mp
-    apply ((Continuous.potential s).in2.continuousAt.eventually_lt continuousAt_const lt).mp
+    apply ((Continuous.potential s).along_snd.continuousAt.eventually_lt continuousAt_const lt).mp
     refine' eventually_of_forall fun w lt m ↦ _
     rw [compl_inter] at m; cases' m with m m
     · simp only [compl_setOf, mem_setOf, not_le] at m; linarith

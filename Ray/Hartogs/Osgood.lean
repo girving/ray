@@ -290,7 +290,7 @@ theorem sum_integral_commute {f : ℕ → ℂ → E} {g : ℂ → E} {c : ℂ} {
     exact fb n (circleMap c r t) (circleMap_mem_sphere _ (by linarith) _)
   · apply MeasureTheory.ae_of_all; intro t _
     exact Summable.mul_left _ bs
-  · simp only [intervalIntegrable_const]
+  · simp only [_root_.intervalIntegrable_const]
   · apply MeasureTheory.ae_of_all; intro t _
     apply HasSum.const_smul
     exact h (circleMap c r t) (circleMap_mem_sphere _ (by linarith) _)

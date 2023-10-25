@@ -56,7 +56,7 @@ theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : 
   have ge : ∀ (p : ℂ × S) (m : p ∈ s), ∀ᶠ q : ℂ × T in 𝓝 (p.1, f p.1 p.2),
       g q.1 q.2 = (i p m).g q.1 q.2 := by
     intro ⟨c, z⟩ m; simp only
-    have n := nontrivialHolomorphicAt_of_mfderiv_ne_zero (fa _ m).in2 (nc _ m); simp only at n
+    have n := nontrivialHolomorphicAt_of_mfderiv_ne_zero (fa _ m).along_snd (nc _ m); simp only at n
     simp only [n.nhds_eq_map_nhds_param (fa _ m), Filter.eventually_map]
     apply (i _ m).left_inv.mp; apply (so.eventually_mem m).mp
     apply eventually_of_forall; intro ⟨e, w⟩ wm gf
@@ -120,7 +120,7 @@ theorem weak_global_complex_inverse_fun_open {f : S → T} [Nonempty S] {s : Set
     intro ⟨c, z⟩ ⟨_, zs⟩; exact (fa z zs).comp_of_eq holomorphicAt_snd rfl
   rcases global_complex_inverse_fun_open fa' nc' inj' (isOpen_univ.prod so) with ⟨g, ga, gf⟩
   use g 0; constructor
-  · intro z ⟨w, m⟩; refine' (ga ⟨0, z⟩ ⟨⟨0, w⟩, ⟨mem_univ _, m.1⟩, _⟩).in2
+  · intro z ⟨w, m⟩; refine' (ga ⟨0, z⟩ ⟨⟨0, w⟩, ⟨mem_univ _, m.1⟩, _⟩).along_snd
     simp only [Prod.ext_iff, eq_self_iff_true, true_and_iff]; exact m.2
   · intro z m; exact gf ⟨0, z⟩ ⟨mem_univ _, m⟩
 

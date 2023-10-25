@@ -288,70 +288,29 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
     Nat.one_ne_zero, not_false_iff] at f
   ring_nf at f ⊢; exact f
 
-/-- The volume of the complex closed ball is `π r^2` -/
-theorem Complex.volume_closedBall {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
-    volume (closedBall c r) = ENNReal.ofReal (π * r ^ 2) := by
-  by_cases rp' : r > 0
-  · exact invert_toReal (by bound) (Complex.volume_closedBall' rp)
-  · simp only [gt_iff_lt, not_lt] at rp'
-    simp only [le_antisymm rp' rp, Metric.closedBall_zero, measure_singleton, ne_eq, zero_pow',
-      mul_zero, ENNReal.ofReal_zero]
-
-/-- The volume of the complex open ball is `π r^2` -/
-theorem Complex.volume_ball' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
-    (volume (ball c r)).toReal = π * r ^ 2 := by
-  by_cases r0 : r = 0
-  · simp only [r0, Metric.ball_zero, OuterMeasure.empty', ENNReal.zero_toReal, ne_eq, zero_pow',
-      mul_zero]
-  have rs := lt_of_le_of_ne rp (Ne.symm r0)
-  have hi' : volume (ball c r) ≤ volume (closedBall c r) :=
-    measure_mono Metric.ball_subset_closedBall
-  have hi := ENNReal.toReal_mono (by simp [Complex.volume_closedBall rp]) hi'
-  have lo : (volume (ball c r)).toReal ≥ (volume (closedBall c r)).toReal := by
-    simp [Complex.volume_closedBall' rp]
-    apply le_of_forall_ge_of_dense (a₁ := π * r ^ 2) (a₂ := (volume (ball c r)).toReal)
-    intro a ar; by_cases an : a < 0; exact _root_.trans an.le (by simp); simp at an
-    set s := Real.sqrt (a / π)
-    have sp : s ≥ 0 := Real.sqrt_nonneg _
-    have sr : s < r := by
-      calc s
-        _ = Real.sqrt (a / π) := rfl
-        _ < Real.sqrt (π * r^2 / π) := by bound
-        _ = Real.sqrt (π / π * r^2) := by ring_nf
-        _ = Real.sqrt (r ^ 2) := by field_simp [Real.pi_pos.ne']
-        _ = r := Real.sqrt_sq (by bound)
-    have e : a = (volume (closedBall c s)).toReal := by
-      rw [Complex.volume_closedBall' sp]; symm
-      have app : a / π ≥ 0 := by bound
-      calc π * s ^ 2
-        _ = π * Real.sqrt (a / π) ^ 2 := rfl
-        _ = π * (a / π) := by rw [Real.sq_sqrt (by bound)]
-        _ = π / π * a := by ring
-        _ = a := by field_simp [Real.pi_pos.ne']
-    rw [e]; apply ENNReal.toReal_mono
-    · rw [← lt_top_iff_ne_top]; refine' lt_of_le_of_lt hi' _; simp [Complex.volume_closedBall rp]
-    · apply measure_mono (Metric.closedBall_subset_ball sr)
-  have e := le_antisymm hi lo; rw [e]
-  exact Complex.volume_closedBall' rp
-
-/-- The volume of the complex open ball is `π r^2` -/
-theorem Complex.volume_ball {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
-    volume (ball c r) = ENNReal.ofReal (π * r ^ 2) := by
-  by_cases rp' : r > 0
-  · exact invert_toReal (by bound) (Complex.volume_ball' rp)
-  · simp at rp'; simp [le_antisymm rp' rp]
-
 /-- `closedBall` with positive radius has positive, nonzero volume -/
 theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (closedBall c r) :=
   { measurable := measurableSet_closedBall
-    finite := by simp only [Complex.volume_closedBall rp.le, ENNReal.ofReal_lt_top]
-    pos := by simp only [Complex.volume_closedBall rp.le, gt_iff_lt, ENNReal.ofReal_pos]; bound }
+    finite := by
+      simp only [Complex.volume_closedBall]
+      apply ENNReal.mul_lt_top
+      · simp only
+      · simp only [ne_eq, ENNReal.pow_eq_top_iff, ENNReal.ofReal_ne_top, and_true, not_false_eq_true]
+    pos := by
+      simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
+        ENNReal.coe_pos]
+      use NNReal.pi_pos
+      apply ENNReal.pow_pos
+      bound }
 
 /-- `closedBall` with positive radius has positive volume near each point -/
 theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet (closedBall c r) := by
   apply LocalVolume.closure_interior
   · intro x r rp
-    simp only [Complex.volume_ball rp.le, gt_iff_lt, ENNReal.ofReal_pos]
+    simp only [Complex.volume_ball, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
+      ENNReal.coe_pos]
+    use NNReal.pi_pos
+    apply ENNReal.pow_pos
     bound
   · have rz := rp.ne'
     simp only [interior_closedBall c rz, closure_ball c rz, subset_refl]

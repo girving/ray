@@ -122,7 +122,7 @@ theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
   simp only [f, ← coe_zero, lift_coe', f', zero_pow d_pos, zero_add]
 
 theorem analytic_f' : AnalyticOn ℂ (uncurry (f' d)) univ := fun _ _ ↦
-  (analyticAt_snd.pow _).add analyticAt_fst
+  ((analyticAt_snd _).pow _).add (analyticAt_fst _)
 
 theorem deriv_f' {z : ℂ} : deriv (f' d c) z = d * z ^ (d - 1) := by
   have h : HasDerivAt (f' d c) (d * z ^ (d - 1) + 0) z :=
@@ -192,7 +192,8 @@ theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
   apply (analyticAt_const.add (analyticAt_const.mul ((analyticAt_id _ _).pow _))).inv
-  simp only [zero_pow d_pos, MulZeroClass.mul_zero]; norm_num
+  simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow d_pos, mul_zero, add_zero,
+    one_ne_zero, not_false_eq_true]
 
 theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
   funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
@@ -248,7 +249,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     rw [one_div]; exact inv_le_inv_of_le (by norm_num) (le_trans (by norm_num) (le_max_left _ _))
   exact
     { d2 := two_le_d
-      fa0 := (s.fla c).in2
+      fa0 := (s.fla c).along_snd
       fd := fd_f
       fc := fc_f
       o := by rw [← ht]; exact isOpen_lt Complex.continuous_abs continuous_const
@@ -289,7 +290,7 @@ instance onePreimageF : OnePreimage (superF d) where
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
-  · simp only [Critical, mfderiv, (holomorphicF (c, z)).in2.mdifferentiableAt, if_pos,
+  · simp only [Critical, mfderiv, (holomorphicF (c, z)).along_snd.mdifferentiableAt, if_pos,
       ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
       RiemannSphere.extChartAt_coe, coeLocalEquiv_symm_apply, toComplex_coe, coe_eq_zero,
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
@@ -1122,7 +1123,7 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (cb : exp 48 ≤ abs c) (cz : abs
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz]
   have a0 : HolomorphicOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
     intro z m
-    refine' (s.bottcher_holomorphicOn _ _).in2.comp (holomorphic_inv.comp holomorphic_coe _)
+    refine' (s.bottcher_holomorphicOn _ _).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
     simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
     rw [inv_coe z0]; apply largePost cb

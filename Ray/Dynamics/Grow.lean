@@ -186,8 +186,8 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
   rcases x with ⟨c, x⟩; contrapose x0; simp only [not_not] at x0 ⊢
   replace x0 : mfderiv I I (fun y ↦ s.bottcherNearIter n c (r c y)) x = 0 := by
     rw [←Function.comp_def,
-      mfderiv_comp x (s.bottcherNearIter_holomorphic e.self_of_nhds.near).in2.mdifferentiableAt
-        e.self_of_nhds.holo.in2.mdifferentiableAt,
+      mfderiv_comp x (s.bottcherNearIter_holomorphic e.self_of_nhds.near).along_snd.mdifferentiableAt
+        e.self_of_nhds.holo.along_snd.mdifferentiableAt,
       x0, ContinuousLinearMap.zero_comp]
   have loc : (fun y ↦ s.bottcherNearIter n c (r c y)) =ᶠ[𝓝 x] fun y ↦ y ^ d ^ n :=
     ((continuousAt_const.prod continuousAt_id).eventually e).mp
@@ -254,7 +254,7 @@ theorem Grow.open (g : Grow s c p n r) : ∃ p', p < p' ∧ ∀ᶠ c' in 𝓝 c,
   use q, pq
   have m : ∀ᶠ c' in 𝓝 c, (c', r c' 0) ∈ s.near := by
     refine' (continuousAt_id.prod _).eventually_mem s.isOpen_near _
-    exact (g.eqn.filter_mono (nhds_le_nhdsSet (mem_domain c g.nonneg))).self_of_nhds.holo.in1.continuousAt
+    exact (g.eqn.filter_mono (nhds_le_nhdsSet (mem_domain c g.nonneg))).self_of_nhds.holo.along_fst.continuousAt
     simp only [id, g.zero, s.mem_near c]
   apply m.mp
   apply ((continuousAt_id.prod continuousAt_const).eventually g.start.eventually_nhds).mp
@@ -309,7 +309,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   rcases ez with ⟨z, cp⟩
   have pz : s.potential c z = abs x := by
     refine'
-      eq_of_nhds_neBot (cp.map (Continuous.potential s).in2.continuousAt (Filter.tendsto_map' _))
+      eq_of_nhds_neBot (cp.map (Continuous.potential s).along_snd.continuousAt (Filter.tendsto_map' _))
     have e : ∀ y, y ∈ t → (s.potential c ∘ r c) y = abs y := by
       intro y m; simp only [Function.comp]; exact (g.eqn.self_of_nhdsSet (c, y) ⟨rfl, m⟩).potential
     exact tendsto_nhdsWithin_congr (fun t m ↦ (e t m).symm)
@@ -321,7 +321,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   generalize hb : s.bottcherNearIter n = b
   have bz : b c z = x ^ d ^ n := by
     refine' eq_of_nhds_neBot (cp.map _ (Filter.tendsto_map' _))
-    rw [← hb]; exact (s.bottcherNearIter_holomorphic m).in2.continuousAt
+    rw [← hb]; exact (s.bottcherNearIter_holomorphic m).along_snd.continuousAt
     have e : ∀ y, y ∈ t → (b c ∘ r c) y = y ^ d ^ n := by
       intro y m; simp only [Function.comp, ← hb, ← hn]; exact (g.eqn.self_of_nhdsSet (c, y) ⟨rfl, m⟩).eqn
     exact tendsto_nhdsWithin_congr (fun t m ↦ (e t m).symm) (continuous_pow _).continuousWithinAt
@@ -345,11 +345,11 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   · -- We frequently match r, by local injectivity of b
     have ne : MapClusterPt (z, z) (𝓝[t] x) fun y ↦ (r c y, i c (y ^ d ^ n)) := by
       apply cp.prod; refine' Filter.Tendsto.mono_left _ nhdsWithin_le_nhds
-      have ic := ian.in2.continuousAt
+      have ic := ian.along_snd.continuousAt
       simp only [ContinuousAt, ←bz] at ic; rw [ib.self_of_nhds] at ic
       exact ic
     have inj := (@Filter.Eventually.frequently _ _ ne _
-            (Filter.Eventually.filter_mono inf_le_left (ba.in2.local_inj nc))).filter_mono
+            (Filter.Eventually.filter_mono inf_le_left (ba.along_snd.local_inj nc))).filter_mono
         inf_le_right
     simp only [Filter.frequently_map, frequently_nhdsWithin_iff] at inj
     apply inj.mp

@@ -70,14 +70,14 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
     (un : u ∈ 𝓝 c) (ef : ∀ d, d ∈ u → ∀ w, w ∈ sphere z r → e ≤ ‖f d w - f d z‖) :
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
-    refine' fun d m ↦ (nontrivial_local_of_global (fa.in2.mono _) rp ep (ef d m)).nonconst
+    refine' fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono _) rp ep (ef d m)).nonconst
     simp only [← closedBall_prod_same, mem_prod_eq, setOf_mem_eq, iff_true_iff.mpr m,
       true_and_iff, subset_refl]
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
     intro d du; refine' DiffContOnCl.ball_subset_image_closedBall _ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
     rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOn.differentiableOn
-    refine' fa.comp (analyticOn_const.prod analyticOn_id) _
+    refine' fa.comp (analyticOn_const.prod (analyticOn_id _)) _
     intro w wr; simp only [closure_ball _ rp.ne'] at wr
     simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and_iff, du]
   rcases Metric.continuousAt_iff.mp
@@ -143,7 +143,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
   -- Get a lower bound of f c '' sphere z r, then extend to a neighborhood of c
   have fc : ContinuousOn (fun w ↦ ‖f c w - f c z‖) (sphere z r) := by
     apply ContinuousOn.norm; refine' ContinuousOn.sub _ continuousOn_const
-    apply fa.in2.continuousOn.mono; intro x xs; apply rs
+    apply fa.along_snd.continuousOn.mono; intro x xs; apply rs
     simp only [← closedBall_prod_same, mem_prod_eq]
     use Metric.mem_closedBall_self rp.le, Metric.sphere_subset_closedBall xs
   rcases (isCompact_sphere _ _).exists_isMinOn (NormedSpace.sphere_nonempty.mpr rp.le) fc with

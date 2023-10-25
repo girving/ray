@@ -145,8 +145,8 @@ def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : LocalHom
   toLocalEquiv := s.equivSlice c
   open_source := s.isOpen_ext.snd_preimage c
   open_target := s.isOpen_post.snd_preimage c
-  continuous_toFun _ m := (s.ray_holomorphic m).in2.continuousAt.continuousWithinAt
-  continuous_invFun _ m := (s.bottcher_holomorphicOn _ m).in2.continuousAt.continuousWithinAt
+  continuous_toFun _ m := (s.ray_holomorphic m).along_snd.continuousAt.continuousWithinAt
+  continuous_invFun _ m := (s.bottcher_holomorphicOn _ m).along_snd.continuousAt.continuousWithinAt
 
 /-- `s.post` is connected -/
 theorem Super.post_connected (s : Super f d a) [OnePreimage s] : IsConnected s.post := by
@@ -180,11 +180,11 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     intro c z m
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d
     · refine'
-        (HolomorphicOn.eq_of_locally_eq _ (fun z m ↦ (s.bottcher_holomorphicOn (c, z) m).in2.pow)
+        (HolomorphicOn.eq_of_locally_eq _ (fun z m ↦ (s.bottcher_holomorphicOn (c, z) m).along_snd.pow)
           (s.post_slice_connected c).isPreconnected ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
-      exact fun z m ↦ (s.bottcher_holomorphicOn _ (s.stays_post m)).in2.comp (s.fa _).in2
+      exact fun z m ↦ (s.bottcher_holomorphicOn _ (s.stays_post m)).along_snd.comp (s.fa _).along_snd
     have e := s.bottcher_eq_bottcherNear c
-    have fc := (s.fa (c, a)).in2.continuousAt; simp only [ContinuousAt, s.f0] at fc
+    have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
     refine' eventually_of_forall fun w m e0 e1 ↦ _; simp only at m e0 e1

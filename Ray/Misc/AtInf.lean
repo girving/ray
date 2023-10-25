@@ -1,6 +1,7 @@
 -- at_inf filter for convergence to infinity
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.Normed.Group.Basic
+import Mathlib.Order.Directed
 import Mathlib.Order.Filter.Basic
 import Mathlib.Topology.MetricSpace.Basic
 import Ray.Misc.Topology
@@ -23,7 +24,7 @@ def atInf {X : Type} [Norm X] : Filter X :=
 /-- A basis for `atInf` -/
 theorem atInf_basis {X : Type} [Norm X] :
     (@atInf X _).HasBasis (fun _ : ℝ ↦ True) fun r ↦ {x | r < ‖x‖} := by
-  apply Filter.hasBasis_iInf_principal; apply directed_of_sup
+  apply Filter.hasBasis_iInf_principal; apply directed_of_isDirected_le
   intro a b ab; simp only [ge_iff_le, le_eq_subset, setOf_subset_setOf]; intro x h; linarith
 
 instance atInf_neBot : (@atInf ℂ _).NeBot := by

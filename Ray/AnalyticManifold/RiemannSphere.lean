@@ -572,8 +572,8 @@ theorem holomorphicLift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOn ℂ (uncurry
   apply osgoodManifold (continuous_lift' fa.continuous fi)
   · intro x z; induction z using OnePoint.rec
     · simp only [uncurry, lift_inf']; exact holomorphicAt_const
-    · exact (holomorphic_coe _).comp ((fa _ (mem_univ _)).in1.holomorphicAt _ _)
-  · intro x z; refine holomorphic_lift (fun _ _ ↦ (fa _ (mem_univ _)).in2) ?_ z
+    · exact (holomorphic_coe _).comp ((fa _ (mem_univ ⟨_,_⟩)).along_fst.holomorphicAt _ _)
+  · intro x z; refine holomorphic_lift (fun _ _ ↦ (fa _ (mem_univ ⟨_,_⟩)).along_snd) ?_ z
     exact (fi x).comp (tendsto_const_nhds.prod_mk Filter.tendsto_id)
 
 /-- `𝕊` is path connected -/

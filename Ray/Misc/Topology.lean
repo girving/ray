@@ -18,11 +18,6 @@ open Set
 open scoped Real NNReal Topology Filter
 noncomputable section
 
-/-- `IsOpen s → s ∈ 𝓝ˢ s` -/
-theorem IsOpen.mem_nhdsSet_self {X : Type*} [TopologicalSpace X] {s : Set X} (o : IsOpen s) :
-    s ∈ 𝓝ˢ s :=
-  o.mem_nhdsSet.mpr Subset.rfl
-
 /-- Turn `s ⊆ setOf p` back into a clean forall -/
 theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x :=
   Iff.rfl
@@ -31,11 +26,6 @@ theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔
 theorem eventually_nhdsSet_iff {X : Type} [TopologicalSpace X] {s : Set X} {p : X → Prop} :
     (∀ᶠ x in 𝓝ˢ s, p x) ↔ ∃ t, IsOpen t ∧ s ⊆ t ∧ ∀ x, x ∈ t → p x := by
   simp only [Filter.eventually_iff, mem_nhdsSet_iff_exists, subset_setOf]
-
-/-- A proposition is true `∀ᶠ in 𝓝ˢ` if it is eventually true near each point in the set -/
-theorem eventually_nhdsSet_iff_forall {X : Type} [TopologicalSpace X] {s : Set X} {p : X → Prop} :
-    (∀ᶠ x in 𝓝ˢ s, p x) ↔ ∀ x, x ∈ s → ∀ᶠ y in 𝓝 x, p y := by
-  simp only [Filter.eventually_iff, mem_nhdsSet_iff_forall, subset_setOf]
 
 /-- Continuous functions on compact sets are bounded above -/
 theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s : Set X}
@@ -152,12 +142,12 @@ theorem ContinuousAt.comp₂_continuousWithinAt_of_eq {A B C D : Type} [Topologi
   rw [← e] at fc; exact fc.comp₂_continuousWithinAt gc hc
 
 /-- Curried continuous functions are continuous in the first argument -/
-theorem Continuous.in1 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
+theorem Continuous.along_fst {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
     {f : A × B → C} (fc : Continuous f) {b : B} : Continuous fun a ↦ f (a, b) :=
   fc.comp (continuous_id.prod_mk continuous_const)
 
 /-- Curried continuous functions are continuous in the second argument -/
-theorem Continuous.in2 {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
+theorem Continuous.along_snd {A B C : Type} [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C]
     {f : A × B → C} (fc : Continuous f) {a : A} : Continuous fun b ↦ f (a, b) :=
   fc.comp (continuous_const.prod_mk continuous_id)
 
@@ -216,7 +206,7 @@ theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
 theorem IsClosedMap.fst {A B : Type} [TopologicalSpace A] [TopologicalSpace B] [CompactSpace B] :
     IsClosedMap fun p : A × B ↦ p.1 :=
   -- The file where we prove `isClosedMap_snd_of_compactSpace` in `Mathlib`
-  -- doesn't import `Homeomorph`;
+  -- doesn't import `Homeomorph`
   -- probably, we should reorder imports to make `Homeomorph` available very early
   isClosedMap_snd_of_compactSpace.comp (Homeomorph.prodComm _ _).isClosedMap
 
@@ -242,10 +232,10 @@ lemma IsPreconnected.iUnion_of_pairwise_exists_isPreconnected {ι X : Type*} [To
     {s : ι → Set X} (hsc : ∀ i, IsPreconnected (s i))
     (h : Pairwise fun i j ↦ (s i).Nonempty → (s j).Nonempty →
       ∃ u, u ⊆ ⋃ i, s i ∧ (s i ∩ u).Nonempty ∧ (u ∩ s j).Nonempty ∧ IsPreconnected u) :
-    IsPreconnected (⋃ i, s i) :=
-  IsPreconnected.sUnion_of_pairwise_exists_isPreconnected (forall_range_iff.2 hsc) <| by
-    rintro _ ⟨i, rfl⟩ _ ⟨j, rfl⟩ hij
-    exact h (ne_of_apply_ne s hij)
+    IsPreconnected (⋃ i, s i) := by
+  apply IsPreconnected.sUnion_of_pairwise_exists_isPreconnected (forall_range_iff.2 hsc)
+  rintro _ ⟨i, rfl⟩ _ ⟨j, rfl⟩ hij
+  exact h (ne_of_apply_ne s hij)
 
 /-- Open preconnected sets form a basis for `𝓝ˢ t` in any locally connected space,
     if `t` is preconnected -/
@@ -347,18 +337,6 @@ theorem locally_injective_on_compact {X Y : Type} [TopologicalSpace X] [Topologi
       replace yf := yf ym
       simp only [mem_preimage] at xf yf
       exact (disjoint_iff_forall_ne.mp uxy xf yf).symm
-
-lemma Filter.frequently_iff_neBot {α : Type*} {l : Filter α} {p : α → Prop} :
-    (∃ᶠ x in l, p x) ↔ NeBot (l ⊓ 𝓟 {x | p x}) := by
-  rw [neBot_iff, Ne.def, inf_principal_eq_bot]; rfl
-
-lemma Filter.frequently_mem_iff_neBot {α : Type*} {l : Filter α} {s : Set α} :
-    (∃ᶠ x in l, x ∈ s) ↔ NeBot (l ⊓ 𝓟 s) :=
-  frequently_iff_neBot
-
-lemma Filter.disjoint_prod {α β : Type*} {la la' : Filter α} {lb lb' : Filter β} :
-    Disjoint (la ×ˢ lb) (la' ×ˢ lb') ↔ Disjoint la la' ∨ Disjoint lb lb' := by
-  simp only [disjoint_iff, prod_inf_prod, prod_eq_bot]
 
 open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product

@@ -938,6 +938,9 @@ theorem SubharmonicOn.neg {f : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f 
         apply Filter.eventually_of_forall
         intro z zs; simp only [Pi.zero_apply, Right.nonneg_neg_iff]; exact fn z (cs zs) }
 
+lemma NNReal.pi_eq_ofReal_pi : (NNReal.pi : ENNReal) = .ofReal π := by
+  rw [←NNReal.coe_real_pi, ENNReal.ofReal_coe_nnreal]
+
 /-- Hartogs's lemma, superharmonic `ℝ≥0∞` case: superharmonic functions that are bounded below
     and liminf bounded pointwise are liminf bounded uniformly.
 
@@ -1021,7 +1024,8 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
     haveI n := NiceVolume.closedBall z r1p
     (ENNReal.mul_lt_mul_right n.ne_zero n.ne_top).mpr ec
   have fatou := le_liminf.simple.mp (_root_.trans im fatou') (e * volume (closedBall z r1)) vec
-  rw [Complex.volume_closedBall r1p.le] at fatou
+  rw [Complex.volume_closedBall, NNReal.pi_eq_ofReal_pi, ←ENNReal.ofReal_pow r1p.le,
+    ←ENNReal.ofReal_mul Real.pi_nonneg] at fatou
   clear fatou' im fc vec
   -- Within radius r2-r1, Fatou's lemma implies local Hartogs's
   use closedBall z (r2 - r1),

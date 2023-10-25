@@ -217,7 +217,7 @@ theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi
 
 /-- Sets where each point is near positive volume -/
 def LocalVolumeSet (s : Set X) :=
-  ∀ x r, x ∈ s → r > 0 → volume (s ∩ ball x r) > 0
+  ∀ x r, x ∈ s → 0 < r → 0 < volume (s ∩ ball x r)
 
 /-- Sets in the closure of their interior have local volume -/
 theorem LocalVolume.closure_interior (s : Set X) (bp : ∀ (x : X) (r), r > 0 → volume (ball x r) > 0)

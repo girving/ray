@@ -45,7 +45,7 @@ theorem HolomorphicAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
   have n : NontrivialHolomorphicAt (g c) (f c z) := by
     have e : (c, z) = (c, g c (f c z)) := by rw [gf.self_of_nhds]
     rw [e] at fa
-    refine' (NontrivialHolomorphicAt.anti _ fa.in2 ga.in2).2
+    refine' (NontrivialHolomorphicAt.anti _ fa.along_snd ga.along_snd).2
     refine' (nontrivialHolomorphicAt_id _).congr _
     refine' ((continuousAt_const.prod continuousAt_id).eventually fg).mp (eventually_of_forall _)
     exact fun _ e ↦ e.symm

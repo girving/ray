@@ -100,7 +100,7 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
     LocalEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toLocalEquiv_coe_symm,
     Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
     LocalHomeomorph.map_source, mem_chart_source, and_self_iff]
-  exact (analyticAt_snd.add analyticAt_const).holomorphicAt _ _
+  exact ((analyticAt_snd _).add analyticAt_const).holomorphicAt _ _
 
 /-- `(f c)^[k]` is holomorphic -/
 theorem Super.holomorphicAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
@@ -149,8 +149,8 @@ theorem Super.fl0 (s : Super f d a) {c : ℂ} : s.fl c 0 = 0 := by
 /-- `0` is a critical point for `fl` -/
 theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   simp only [Critical, mfderiv_eq_fderiv, Super.fl]
-  have p := (s.fla c).in2.leading_approx
-  simp only [sub_zero, Algebra.id.smul_eq_mul, Super.fl, s.fd, s.fc, mul_one] at p
+  have p := (s.fla c).along_snd.leading_approx
+  simp only [sub_zero, Algebra.id.smul_eq_mul, Super.fl, s.fd, s.fc, mul_one, uncurry] at p
   generalize hg : _root_.fl f a c = g; rw [hg] at p
   have g0 : g 0 = 0 := by rw [← hg]; exact s.fl0
   apply HasFDerivAt.fderiv
@@ -190,11 +190,11 @@ theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
 
 /-- `f c` is nontrivial at `a` -/
 theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialHolomorphicAt (f c) a := by
-  refine' ⟨(s.fa _).in2, _⟩; simp only [s.f0]
+  refine' ⟨(s.fa _).along_snd, _⟩; simp only [s.f0]
   have n : ∃ᶠ w in 𝓝 (0 : ℂ), s.fl c w ≠ 0 := by
-    have e := (nontrivialHolomorphicAt_of_order (s.fla c).in2 ?_).nonconst
-    simp only [s.fl0] at e; exact e
-    simp only [Super.fl, s.fd]; exact s.d0
+    have e := (nontrivialHolomorphicAt_of_order (s.fla c).along_snd ?_).nonconst
+    · simp only [s.fl0, uncurry] at e; exact e
+    · simp only [Super.fl, s.fd, uncurry]; exact s.d0
   contrapose n
   simp only [Filter.not_frequently, not_not, Super.fl, fl, Function.comp, sub_eq_zero] at n ⊢
   have gc : ContinuousAt (fun x ↦ (extChartAt I a).symm (x + extChartAt I a a)) 0 := by
@@ -273,7 +273,7 @@ theorem Super.superAtC (s : Super f d a) : SuperAtC s.fl d univ :=
       { d2 := s.d2
         fd := s.fd _
         fc := s.fc _
-        fa0 := (s.fla c).in2 } }
+        fa0 := (s.fla c).along_snd } }
 
 /-- `Super → SuperNearC` in charts for a suitable set -/
 theorem Super.exists_superNearC (s : Super f d a) : ∃ t, t ⊆ s.fls ∧ SuperNearC s.fl d univ t := by
@@ -575,7 +575,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
   have dg : DifferentiableAt ℂ g (extChartAt I a z) := by
     rw [← hg]; apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
     simp only [s.f0]
-    apply (HolomorphicAt.extChartAt _).comp; apply (s.fa _).in2.comp
+    apply (HolomorphicAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
     exact HolomorphicAt.extChartAt_symm (LocalEquiv.map_source _ zm)
     simp only [LocalEquiv.left_inv _ zm, s.f0]; exact ezm
   have d0 : ∀ z, DifferentiableAt ℂ (fun z ↦ z - extChartAt I a a) z := fun z ↦
@@ -605,7 +605,7 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
 theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
     ∀ᶠ n in atTop, mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0 :=
   (s.basin_attracts m).eventually
-    (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).in2
+    (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c))
 
 /-- `s.bottcherNearIter` is noncritical given noncriticality of the two parts -/
@@ -613,7 +613,7 @@ theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
     (b0 : mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0) (f0 : ¬Precritical (f c) z) :
     mfderiv I I (s.bottcherNearIter n c) z ≠ 0 := by
   apply mderiv_comp_ne_zero' b0; contrapose f0
-  simp only [not_not] at f0 ⊢; exact critical_iter s.fa.in2 f0
+  simp only [not_not] at f0 ⊢; exact critical_iter s.fa.along_snd f0
 
 /-- `f c^[n]` is nontrivial at `a` -/
 theorem Super.iter_nontrivial_a (s : Super f d a) :
@@ -628,6 +628,6 @@ theorem Super.bottcherNearIter_nontrivial_a (s : Super f d a) :
   haveI b : NontrivialHolomorphicAt (s.bottcherNear c) ((f c)^[n] a) := by
     simp only [s.iter_a]
     exact nontrivialHolomorphicAt_of_mfderiv_ne_zero
-      (s.bottcherNear_holomorphic _ (s.mem_near c)).in2
+      (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c)
   b.comp s.iter_nontrivial_a

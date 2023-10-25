@@ -161,5 +161,6 @@ theorem fast_series_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ}
     (a1 : a < 1) (h : ∀ n, AnalyticOn ℂ (f n) s) (hf : ∀ n z, z ∈ s → abs (f n z) ≤ c * a ^ n) :
     ∃ g : ℂ → ℂ, AnalyticOn ℂ g s ∧ HasSumOn f g s := by
   use tsumOn f; constructor
-  · exact uniform_analytic_lim o (AnalyticOn.sum h) (fast_series_converge_uniformly_on a0 a1 hf)
+  · exact uniform_analytic_lim o (fun N ↦ N.analyticOn_sum fun _ _ ↦ h _)
+      (fast_series_converge_uniformly_on a0 a1 hf)
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)

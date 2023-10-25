@@ -73,17 +73,17 @@ theorem analyticGroupoid_prod {E A : Type} [NormedAddCommGroup E] [NormedSpace �
     ModelWithCorners.prod_symm_apply]
   constructor
   · apply AnalyticOn.prod
-    · apply fa.1.comp analyticOn_fst; intro (x,y) m
+    · apply fa.1.comp (analyticOn_fst _); intro (x,y) m
       simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
       rcases m with ⟨⟨a,b⟩,⟨ma,_⟩,ex,_⟩; exact ⟨a,ma,ex⟩
-    · apply ga.1.comp analyticOn_snd; intro (x,y) m
+    · apply ga.1.comp (analyticOn_snd _); intro (x,y) m
       simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
       rcases m with ⟨⟨a,b⟩,⟨_,mb⟩,_,ey⟩; exact ⟨b,mb,ey⟩
   · apply AnalyticOn.prod
-    · apply fa.2.comp analyticOn_fst; intro (x,y) m
+    · apply fa.2.comp (analyticOn_fst _); intro (x,y) m
       simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
       rcases m with ⟨⟨a,b⟩,⟨ma,_⟩,ex,_⟩; exact ⟨a,ma,ex⟩
-    · apply ga.2.comp analyticOn_snd; intro (x,y) m
+    · apply ga.2.comp (analyticOn_snd _); intro (x,y) m
       simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
       rcases m with ⟨⟨a,b⟩,⟨_,mb⟩,_,ey⟩; exact ⟨b,mb,ey⟩
 
@@ -159,7 +159,7 @@ theorem extChartAt_self_analytic {E : Type} [NormedAddCommGroup E] [NormedSpace 
       LocalHomeomorph.symm_toLocalEquiv, LocalEquiv.trans_source, LocalEquiv.symm_source,
       LocalHomeomorph.coe_coe_symm]
     exact f.preimage_open_of_open_symm f.open_source
-  · exact analyticOn_id
+  · exact analyticOn_id _
   · intro x m
     simp only [modelWithCornersSelf_coe, id, image_id', LocalHomeomorph.trans_toLocalEquiv,
       LocalHomeomorph.symm_toLocalEquiv, LocalEquiv.trans_source, LocalEquiv.symm_source,
@@ -344,28 +344,28 @@ theorem holomorphicAt_const {x : M} {c : N} : HolomorphicAt I J (fun _ ↦ c) x 
 theorem holomorphic_const {c : N} : Holomorphic I J fun _ : M ↦ c := fun _ ↦ holomorphicAt_const
 
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
-theorem HolomorphicAt.in1 [I.Boundaryless] {f : M → N → O} {x : M} {y : N}
+theorem HolomorphicAt.along_fst [I.Boundaryless] {f : M → N → O} {x : M} {y : N}
     (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt I K (fun x ↦ f x y) x :=
   HolomorphicAt.comp₂ fa holomorphicAt_id holomorphicAt_const
 
 /-- Curried holomorphic functions are holomorphic in the second coordinate -/
-theorem HolomorphicAt.in2 [J.Boundaryless] {f : M → N → O} {x : M} {y : N}
+theorem HolomorphicAt.along_snd [J.Boundaryless] {f : M → N → O} {x : M} {y : N}
     (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt J K (fun y ↦ f x y) y :=
   HolomorphicAt.comp₂ fa holomorphicAt_const holomorphicAt_id
 
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
-theorem Holomorphic.in1 [I.Boundaryless] {f : M → N → O} (fa : Holomorphic (I.prod J) K (uncurry f))
-    {y : N} : Holomorphic I K fun x ↦ f x y := fun _ ↦ (fa _).in1
+theorem Holomorphic.along_fst [I.Boundaryless] {f : M → N → O} (fa : Holomorphic (I.prod J) K (uncurry f))
+    {y : N} : Holomorphic I K fun x ↦ f x y := fun _ ↦ (fa _).along_fst
 
 /-- Curried holomorphic functions are holomorphic in the second coordinate -/
-theorem Holomorphic.in2 [J.Boundaryless] {f : M → N → O} {x : M}
+theorem Holomorphic.along_snd [J.Boundaryless] {f : M → N → O} {x : M}
     (fa : Holomorphic (I.prod J) K (uncurry f)) : Holomorphic J K fun y ↦ f x y := fun _ ↦
-  (fa _).in2
+  (fa _).along_snd
 
 /-- `fst` is holomorphic -/
 theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     HolomorphicAt (I.prod J) I (fun p : M × N ↦ p.fst) x := by
-  rw [holomorphicAt_iff]; use continuousAt_fst; refine analyticAt_fst.congr ?_
+  rw [holomorphicAt_iff]; use continuousAt_fst; refine (analyticAt_fst _).congr ?_
   refine' ((extChartAt_open_target _ x).eventually_mem (mem_extChartAt_target _ _)).mp
     (eventually_of_forall fun y m ↦ _)
   rw [extChartAt_prod] at m
@@ -376,7 +376,7 @@ theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
 /-- `snd` is holomorphic -/
 theorem holomorphicAt_snd [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     HolomorphicAt (I.prod J) J (fun p : M × N ↦ p.snd) x := by
-  rw [holomorphicAt_iff]; use continuousAt_snd; refine' analyticAt_snd.congr _
+  rw [holomorphicAt_iff]; use continuousAt_snd; refine (analyticAt_snd _).congr ?_
   refine' ((extChartAt_open_target _ x).eventually_mem (mem_extChartAt_target _ _)).mp
     (eventually_of_forall fun y m ↦ _)
   rw [extChartAt_prod] at m
@@ -447,21 +447,21 @@ theorem HolomorphicAt.add {f g : M → 𝕜} {x : M}
     (ga : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) g x) :
     HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x + g x) x := by
   have e : (fun x ↦ f x + g x) = (fun p : 𝕜 × 𝕜 ↦ p.1 + p.2) ∘ fun x ↦ (f x, g x) := rfl
-  rw [e]; exact ((analyticAt_fst.add analyticAt_snd).holomorphicAt _ _).comp (fa.prod ga)
+  rw [e]; exact (((analyticAt_fst _).add (analyticAt_snd _)).holomorphicAt _ _).comp (fa.prod ga)
 
 /-- Subtraction is holomorphic -/
 theorem HolomorphicAt.sub {f g : M → 𝕜} {x : M}
     (fa : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) f x)
     (ga : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) g x) :
     HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x - g x) x :=
-  ((analyticAt_fst.sub analyticAt_snd).holomorphicAt _ _).comp (fa.prod ga)
+  (((analyticAt_fst _).sub (analyticAt_snd _)).holomorphicAt _ _).comp (fa.prod ga)
 
 /-- Multiplication is holomorphic -/
 theorem HolomorphicAt.mul {f g : M → 𝕜} {x : M}
     (fa : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) f x)
     (ga : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) g x) :
     HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x * g x) x :=
-  ((analyticAt_fst.mul analyticAt_snd).holomorphicAt _ _).comp (fa.prod ga)
+  (((analyticAt_fst _).mul (analyticAt_snd _)).holomorphicAt _ _).comp (fa.prod ga)
 
 /-- Inverse is holomorphic away from zeros -/
 theorem HolomorphicAt.inv {f : M → 𝕜} {x : M} (fa : HolomorphicAt I (modelWithCornersSelf 𝕜 𝕜) f x)
@@ -489,7 +489,8 @@ theorem HolomorphicAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace �
     (ga : HolomorphicAt I (modelWithCornersSelf ℂ ℂ) g x) (a : 0 < (f x).re ∨ (f x).im ≠ 0) :
     HolomorphicAt I (modelWithCornersSelf ℂ ℂ) (fun x ↦ f x ^ g x) x := by
   have e : (fun x ↦ f x ^ g x) = (fun p : ℂ × ℂ ↦ p.1 ^ p.2) ∘ fun x ↦ (f x, g x) := rfl
-  rw [e]; refine ((analyticAt_fst.cpow analyticAt_snd ?_).holomorphicAt _ _).comp (fa.prod ga)
+  rw [e]
+  refine (((analyticAt_fst _).cpow (analyticAt_snd _) ?_).holomorphicAt _ _).comp (fa.prod ga)
   exact a
 
 /-- Holomorphic functions are smooth -/

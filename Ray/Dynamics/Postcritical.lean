@@ -50,7 +50,7 @@ theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
 
 /-- `s.ps c` is compact -/
 theorem Super.compact_ps (s : Super f d a) [OnePreimage s] : IsCompact (s.ps c) := by
-  have pc : Continuous (s.potential c) := (Continuous.potential s).in2
+  have pc : Continuous (s.potential c) := (Continuous.potential s).along_snd
   have c1 : IsCompact {(1 : ℝ)} := isCompact_singleton
   convert c1.union ((s.isClosed_critical_not_a.snd_preimage c).isCompact.image pc)
   apply Set.ext; intro p
@@ -204,10 +204,10 @@ theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z)
     by_cases p0 : s.potential c z = 0
     · rw [s.potential_eq_zero_of_onePreimage] at p0
       rw [p0]; exact s.bottcherNearIter_nontrivial_a
-    · exact nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic r').in2
+    · exact nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic r').along_snd
           (s.bottcherNearIter_mfderiv_ne_zero mc (p.not_precritical p0))
   replace h := h.nonconst
-  refine' ⟨(s.bottcherNearIter_holomorphic r).in2, _⟩
+  refine' ⟨(s.bottcherNearIter_holomorphic r).along_snd, _⟩
   contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
   rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
   have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
@@ -225,7 +225,7 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] (p : Pos
   rcases s.nice_nz p.basin z (le_refl _) with ⟨near, nc⟩
   set f : S → ℂ := s.bottcherNearIter (s.nz c z) c
   have o : 𝓝 (f z) = Filter.map f (𝓝 z) :=
-    (nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic near).in2
+    (nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic near).along_snd
         (s.bottcherNearIter_mfderiv_ne_zero (nc _ (le_refl _))
           (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
   have e : ∃ᶠ x : ℂ in 𝓝 (f z), abs x < abs (f z) := by
