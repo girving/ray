@@ -359,18 +359,25 @@ theorem locally_injective_on_compact {X Y : Type} [TopologicalSpace X] [Topologi
       simp only [mem_preimage] at xf yf
       exact (disjoint_iff_forall_ne.mp uxy xf yf).symm
 
+lemma Filter.frequently_iff_neBot {α : Type*} {l : Filter α} {p : α → Prop} :
+    (∃ᶠ x in l, p x) ↔ NeBot (l ⊓ 𝓟 {x | p x}) := by
+  rw [neBot_iff, Ne.def, inf_principal_eq_bot]; rfl
+
+lemma Filter.frequently_mem_iff_neBot {α : Type*} {l : Filter α} {s : Set α} :
+    (∃ᶠ x in l, x ∈ s) ↔ NeBot (l ⊓ 𝓟 s) :=
+  frequently_iff_neBot
+
+lemma Filter.disjoint_prod {α β : Type*} {la la' : Filter α} {lb lb' : Filter β} :
+    Disjoint (la ×ˢ lb) (la' ×ˢ lb') ↔ Disjoint la la' ∨ Disjoint lb lb' := by
+  simp only [disjoint_iff, prod_inf_prod, prod_eq_bot]
+
+open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product
     filter -/
 theorem Prod.frequently {A B : Type} {f : Filter A} {g : Filter B} {p : A → Prop} {q : B → Prop} :
     (∃ᶠ x : A × B in f ×ˢ g, p x.1 ∧ q x.2) ↔ (∃ᶠ a in f, p a) ∧ ∃ᶠ b in g, q b := by
-  constructor
-  · exact fun h ↦ ⟨Filter.tendsto_fst.frequently (h.mono fun _ ↦ And.left),
-      Filter.tendsto_snd.frequently (h.mono fun _ ↦ And.right)⟩
-  · intro ⟨u, v⟩; simp only [Filter.frequently_iff] at u v ⊢; intro s m
-    rcases Filter.mem_prod_iff.mp m with ⟨s0, m0, s1, m1, sub⟩
-    rcases u m0 with ⟨a, am, ap⟩
-    rcases v m1 with ⟨b, bm, bq⟩
-    exact ⟨⟨a, b⟩, sub (mk_mem_prod am bm), ap, bq⟩
+  simp only [frequently_iff_neBot, ← prod_neBot, ← prod_inf_prod, prod_principal_principal]
+  rfl
 
 /-- The product of `MapClusterPt` and `Tendsto` is `MapClusterPt` -/
 theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace C]
@@ -397,14 +404,6 @@ theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (
 /-- In a metric space, `sphere ⊆ ball` -/
 theorem Metric.sphere_subset_ball {X : Type*} [PseudoMetricSpace X] {z : X} {a b : ℝ} (ab : a < b) :
     sphere z a ⊆ ball z b := fun _ _ ↦ by simp_all
-
-lemma Filter.frequently_iff_neBot {α : Type*} {l : Filter α} {p : α → Prop} :
-    (∃ᶠ x in l, p x) ↔ NeBot (l ⊓ 𝓟 {x | p x}) := by
-  rw [neBot_iff, Ne.def, inf_principal_eq_bot]; rfl
-
-lemma Filter.frequently_mem_iff_neBot {α : Type*} {l : Filter α} {s : Set α} :
-    (∃ᶠ x in l, x ∈ s) ↔ NeBot (l ⊓ 𝓟 s) :=
-  frequently_iff_neBot
 
 lemma frequently_lt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[<] x).NeBot] :
     ∃ᶠ y in 𝓝 x, y < x :=
