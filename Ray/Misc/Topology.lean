@@ -15,7 +15,7 @@ open Metric (ball closedBall sphere mem_sphere mem_ball)
 open Filter (atTop Tendsto eventually_of_forall)
 open OrderDual (ofDual toDual)
 open Set
-open scoped Real NNReal Topology
+open scoped Real NNReal Topology Filter
 noncomputable section
 
 /-- `IsOpen s → s ∈ 𝓝ˢ s` -/
@@ -405,17 +405,27 @@ theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (
 theorem Metric.sphere_subset_ball {X : Type*} [PseudoMetricSpace X] {z : X} {a b : ℝ} (ab : a < b) :
     sphere z a ⊆ ball z b := fun _ _ ↦ by simp_all
 
+lemma Filter.frequently_iff_neBot {α : Type*} {l : Filter α} {p : α → Prop} :
+    (∃ᶠ x in l, p x) ↔ NeBot (l ⊓ 𝓟 {x | p x}) := by
+  rw [neBot_iff, Ne.def, inf_principal_eq_bot]; rfl
+
+lemma Filter.frequently_mem_iff_neBot {α : Type*} {l : Filter α} {s : Set α} :
+    (∃ᶠ x in l, x ∈ s) ↔ NeBot (l ⊓ 𝓟 s) :=
+  frequently_iff_neBot
+
+lemma frequently_lt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[<] x).NeBot] :
+    ∃ᶠ y in 𝓝 x, y < x :=
+  Filter.frequently_iff_neBot.2 ‹_›
+
+lemma frequently_gt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[>] x).NeBot] :
+    ∃ᶠ y in 𝓝 x, x < y :=
+  Filter.frequently_iff_neBot.2 ‹_›
+
 /-- Near any real, there are frequently smaller reals -/
-theorem Real.frequently_smaller (x : ℝ) : ∃ᶠ y in 𝓝 x, y < x := by
-  rw [(nhds_basis_Ioo x).frequently_iff]
-  intro ⟨a, b⟩ ⟨ax, xb⟩; use(a + x) / 2; simp only [mem_Ioo]
-  exact ⟨⟨by linarith, by linarith⟩, by linarith⟩
+theorem Real.frequently_smaller (x : ℝ) : ∃ᶠ y in 𝓝 x, y < x := frequently_lt_nhds x
 
 /-- Near any real, there are frequently larger reals -/
-theorem Real.frequently_larger (x : ℝ) : ∃ᶠ y in 𝓝 x, x < y := by
-  rw [(nhds_basis_Ioo x).frequently_iff]
-  intro ⟨a, b⟩ ⟨ax, xb⟩; use(x + b) / 2; simp only [mem_Ioo]
-  exact ⟨⟨by linarith, by linarith⟩, by linarith⟩
+theorem Real.frequently_larger (x : ℝ) : ∃ᶠ y in 𝓝 x, x < y := frequently_gt_nhds x
 
 /-- A set is closed if the closure doesn't add new points -/
 theorem isClosed_iff_closure_diff {X : Type} [TopologicalSpace X] {s : Set X} :
