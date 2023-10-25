@@ -226,69 +226,62 @@ theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
 
 /-- `fst` is a closed map if `B` is compact -/
 theorem IsClosedMap.fst {A B : Type} [TopologicalSpace A] [TopologicalSpace B] [CompactSpace B] :
-    IsClosedMap fun p : A × B ↦ p.1 := by
-  intro s h; simp only [← isOpen_compl_iff, isOpen_iff_eventually] at h ⊢; intro x m
-  simp only [mem_compl_iff, mem_image, Prod.exists, exists_and_right, exists_eq_right,
-    not_exists] at m ⊢
-  generalize hp : (fun t : Set B ↦ ∀ᶠ x' in 𝓝 x, ∀ y, y ∈ t → (x', y) ∉ s) = p
-  suffices q : p univ; rw [←hp] at q
-  exact q.mp (eventually_of_forall fun x' i y ↦ i y (mem_univ y))
-  refine' isCompact_univ.induction_on _ _ _ _
-  · simp_rw [← hp, not_mem_empty, false_imp_iff, imp_true_iff, Filter.eventually_true]
-  · intro u v uv pv; rw [← hp] at pv ⊢
-    exact pv.mp (eventually_of_forall fun x' pv y yu ↦ pv y (uv yu))
-  · intro u v pu pv; rw [← hp] at pu pv ⊢
-    refine' pu.mp (pv.mp (eventually_of_forall fun x' pv pu y yuv ↦ _))
-    cases' (mem_union _ _ _).mp yuv with yu yv; exact pu y yu; exact pv y yv
-  · intro y _; specialize h (x, y) (m y)
-    rcases(Filter.HasBasis.prod_nhds (nhds_basis_opens x) (nhds_basis_opens y)).eventually_iff.mp
-        h with
-      ⟨⟨ta, tb⟩, ⟨⟨xta, ota⟩, ⟨ytb, otb⟩⟩, h⟩
-    simp only [nhdsWithin_univ, ← hp, eventually_nhds_iff]
-    refine' ⟨tb, otb.mem_nhds ytb, ta, _, ota, xta⟩
-    intro x' xta' y' ytb'; exact h (mk_mem_prod xta' ytb')
+    IsClosedMap fun p : A × B ↦ p.1 :=
+  -- The file where we prove `isClosedMap_snd_of_compactSpace` in `Mathlib`
+  -- doesn't import `Homeomorph`;
+  -- probably, we should reorder imports to make `Homeomorph` available very early
+  isClosedMap_snd_of_compactSpace.comp (Homeomorph.prodComm _ _).isClosedMap
 
-/-- Open connected sets form a basis for `𝓝ˢ t` in any locally connected space,
-    if `t` is connected -/
-theorem local_connected_nhdsSet {X : Type} [TopologicalSpace X] [lc : LocallyConnectedSpace X]
-    {s t : Set X} (tc : IsConnected t) (st : s ∈ 𝓝ˢ t) :
-    ∃ c, IsOpen c ∧ t ⊆ c ∧ c ⊆ s ∧ IsConnected c := by
-  have h' : ∀ x : t, ∃ c, IsOpen c ∧ x.val ∈ c ∧ c ⊆ s ∧ IsConnected c := by
-    intro ⟨x, m⟩
-    rcases locallyConnectedSpace_iff_open_connected_subsets.mp lc x s
-        (mem_nhdsSet_iff_forall.mp st _ m) with
-      ⟨c, cs, oc, xc, cc⟩
-    use c
-  generalize hc : (fun x : t ↦ Classical.choose (h' x)) = c
-  have h : ∀ x : t, IsOpen (c x) ∧ x.val ∈ c x ∧ c x ⊆ s ∧ IsConnected (c x) := by
-    rw [←hc]; intro x; exact Classical.choose_spec (h' x)
-  clear hc h'
-  rcases tc.nonempty with ⟨b, bt⟩
-  use⋃ x, c x; refine' ⟨_, _, _, _, _⟩; · exact isOpen_iUnion fun x ↦ (h x).1
-  · exact fun x m ↦ mem_iUnion.mpr ⟨⟨x, m⟩, (h ⟨x, m⟩).2.1⟩
-  · exact iUnion_subset fun x ↦ (h x).2.2.1
-  · use b; exact mem_iUnion_of_mem ⟨b, bt⟩ (h ⟨b, bt⟩).2.1
-  · have e : (⋃ x, c x) = ⋃ x, c x ∪ t := by
-      apply le_antisymm; exact iUnion_mono fun x ↦ subset_union_left _ _
-      intro x m; simp only [iUnion_coe_set, mem_iUnion, mem_union] at m
-      rcases m with ⟨y, m, xt | xc⟩
-      exact mem_iUnion_of_mem ⟨y, m⟩ xt
-      exact mem_iUnion_of_mem _ (h ⟨_, xc⟩).2.1
-    rw [e]
-    apply isPreconnected_iUnion; rw [Set.nonempty_iInter]; use b, fun x ↦ subset_union_right _ _ bt
-    refine' fun x ↦
-      IsPreconnected.union x.val (h x).2.1 x.property (h x).2.2.2.isPreconnected tc.isPreconnected
+lemma IsPreconnected.sUnion_of_pairwise_exists_isPreconnected {X : Type*} [TopologicalSpace X]
+    {S : Set (Set X)} (hSc : ∀ s ∈ S, IsPreconnected s)
+    (h : S.Pairwise fun s t ↦ s.Nonempty → t.Nonempty →
+      ∃ u, u ⊆ ⋃₀ S ∧ (s ∩ u).Nonempty ∧ (u ∩ t).Nonempty ∧ IsPreconnected u) :
+    IsPreconnected (⋃₀ S) := by
+  refine isPreconnected_of_forall_pair fun x hx y hy ↦ ?_
+  rcases mem_sUnion.1 hx with ⟨s, hs, hxs⟩
+  rcases mem_sUnion.1 hy with ⟨t, ht, hyt⟩
+  rcases eq_or_ne s t with rfl | hst
+  · exact ⟨s, subset_sUnion_of_mem hs, hxs, hyt, hSc s hs⟩
+  · rcases h hs ht hst ⟨x, hxs⟩ ⟨y, hyt⟩ with ⟨u, huS, hsu, hut, hu⟩
+    refine ⟨s ∪ u ∪ t, ?_, ?_, ?_, ?_⟩
+    · simp [*, subset_sUnion_of_mem]
+    · simp [*]
+    · simp [*]
+    · refine ((hSc s hs).union' hsu hu).union' (hut.mono ?_) (hSc t ht)
+      exact inter_subset_inter_left _ (subset_union_right _ _)
+
+lemma IsPreconnected.iUnion_of_pairwise_exists_isPreconnected {ι X : Type*} [TopologicalSpace X]
+    {s : ι → Set X} (hsc : ∀ i, IsPreconnected (s i))
+    (h : Pairwise fun i j ↦ (s i).Nonempty → (s j).Nonempty →
+      ∃ u, u ⊆ ⋃ i, s i ∧ (s i ∩ u).Nonempty ∧ (u ∩ s j).Nonempty ∧ IsPreconnected u) :
+    IsPreconnected (⋃ i, s i) :=
+  IsPreconnected.sUnion_of_pairwise_exists_isPreconnected (forall_range_iff.2 hsc) <| by
+    rintro _ ⟨i, rfl⟩ _ ⟨j, rfl⟩ hij
+    exact h (ne_of_apply_ne s hij)
 
 /-- Open preconnected sets form a basis for `𝓝ˢ t` in any locally connected space,
     if `t` is preconnected -/
 theorem local_preconnected_nhdsSet {X : Type} [TopologicalSpace X] [lc : LocallyConnectedSpace X]
     {s t : Set X} (tc : IsPreconnected t) (st : s ∈ 𝓝ˢ t) :
     ∃ c, IsOpen c ∧ t ⊆ c ∧ c ⊆ s ∧ IsPreconnected c := by
-  by_cases h : t.Nonempty
-  · rcases local_connected_nhdsSet ⟨h, tc⟩ st with ⟨c, co, tc, cs, cc⟩
-    use c, co, tc, cs, cc.isPreconnected
-  · simp only [not_nonempty_iff_eq_empty] at h; use∅
-    simp only [h, isOpen_empty, empty_subset, true_and_iff, isPreconnected_empty]
+  rw [← subset_interior_iff_mem_nhdsSet] at st
+  have hsub : t ⊆ ⋃ x : t, connectedComponentIn (interior s) x := fun x hx ↦
+    mem_iUnion.2 ⟨⟨x, hx⟩, mem_connectedComponentIn (st hx)⟩
+  refine ⟨_, isOpen_iUnion fun _ ↦ isOpen_interior.connectedComponentIn, hsub,
+    iUnion_subset fun x ↦ ?_, ?_⟩
+  · exact (connectedComponentIn_subset _ _).trans interior_subset
+  · apply IsPreconnected.iUnion_of_pairwise_exists_isPreconnected
+    · exact fun _ ↦ isPreconnected_connectedComponentIn
+    · exact fun x y _ _ _ ↦ ⟨t, hsub, ⟨x, mem_connectedComponentIn (st x.2), x.2⟩,
+        ⟨y, y.2, mem_connectedComponentIn (st y.2)⟩, tc⟩
+
+/-- Open connected sets form a basis for `𝓝ˢ t` in any locally connected space,
+    if `t` is connected -/
+theorem local_connected_nhdsSet {X : Type} [TopologicalSpace X] [LocallyConnectedSpace X]
+    {s t : Set X} (tc : IsConnected t) (st : s ∈ 𝓝ˢ t) :
+    ∃ c, IsOpen c ∧ t ⊆ c ∧ c ⊆ s ∧ IsConnected c :=
+  let ⟨c, hco, htc, hcs, hc⟩ := local_preconnected_nhdsSet tc.2 st
+  ⟨c, hco, htc, hcs, tc.1.mono htc, hc⟩
 
 /-- Lower semicontinuity composes with continuity -/
 theorem LowerSemicontinuousAt.comp {X Y Z : Type} [TopologicalSpace X] [TopologicalSpace Y]
