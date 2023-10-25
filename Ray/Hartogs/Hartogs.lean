@@ -252,7 +252,7 @@ theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0)
         (mem_interior.mpr ⟨ball c0 re, _, Metric.isOpen_ball, Metric.mem_ball_self (lt_min rp ep)⟩)
     rw [Set.subset_def]; intro z0 z0s; rw [Set.mem_iUnion]
     have z0s' := esub (mem_open_closed z0s)
-    rcases (h.on1 z0s').continuousOn.bounded_norm (isCompact_closedBall _ _) with ⟨b, _, fb⟩
+    rcases (h.on1 z0s').continuousOn.norm.bounded (isCompact_closedBall _ _) with ⟨b, _, fb⟩
     use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
     refine' ⟨mem_open_closed z0s, _⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
@@ -440,7 +440,7 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
     have rh : r0 / 2 < r0 := by linarith [u.r0p]
     exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
     exact Metric.closedBall_subset_ball (by linarith [u.r1p])
-  rcases fc.bounded_norm (IsCompact.prod (isCompact_sphere _ _) (isCompact_closedBall _ _)) with
+  rcases fc.norm.bounded (IsCompact.prod (isCompact_sphere _ _) (isCompact_closedBall _ _)) with
     ⟨b, bp, fb⟩
   use b + 1, (r0 / 2)⁻¹, lt_of_le_of_lt bp (lt_add_one _), inv_pos.mpr (half_pos u.r0p)
   intro n z1 z1s

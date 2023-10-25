@@ -42,12 +42,6 @@ theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s 
     (fc : ContinuousOn f s) (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → f x ≤ b := by
   simpa using (sc.bddAbove_image fc).exists_ge 0
 
-/-- Continuous functions on compact sets have bounded norm -/
-theorem ContinuousOn.bounded_norm {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
-    {f : X → Y} {s : Set X} (fc : ContinuousOn f s) (sc : IsCompact s) :
-    ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → ‖f x‖ ≤ b :=
-  fc.norm.bounded sc
-
 /-- Uniform cauchy sequences are cauchy sequences at points -/
 theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) :
@@ -63,9 +57,9 @@ theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
 theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) (fc : ∀ n, ContinuousOn (f n) s)
     (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ n x, x ∈ s → ‖f n x‖ ≤ b := by
-  set c := fun n ↦ Classical.choose ((fc n).bounded_norm sc)
+  set c := fun n ↦ Classical.choose ((fc n).norm.bounded sc)
   have cs : ∀ n, 0 ≤ c n ∧ ∀ x, x ∈ s → ‖f n x‖ ≤ c n := fun n ↦
-    Classical.choose_spec ((fc n).bounded_norm sc)
+    Classical.choose_spec ((fc n).norm.bounded sc)
   rw [Metric.uniformCauchySeqOn_iff] at u
   rcases u 1 (by norm_num) with ⟨N, H⟩; clear u
   set bs := Finset.image c (Finset.range (N + 1))
@@ -118,8 +112,8 @@ theorem continuousAt_iff_tendsto_nhdsWithin {A B : Type} [TopologicalSpace A] [T
     This is `IsOpen.eventually_mem`, but assuming only `ContinuousAt`. -/
 theorem ContinuousAt.eventually_mem {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (o : IsOpen s) (m : f x ∈ s) :
-    ∀ᶠ y in 𝓝 x, f y ∈ s :=
-  fc (o.mem_nhds m)
+    ∀ᶠ y in 𝓝 x, f y ∈ s := by
+  exact fc (o.mem_nhds m)
 
 /-- If `f x ∈ s` for `s ∈ 𝓝 (f x)` and `f` continuous at `z`, `∈` holds locally -/
 theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
@@ -190,12 +184,6 @@ theorem tendsto_of_cluster_pt_unique {A B : Type} [TopologicalSpace B]
     [CompactSpace B] {l : Filter A} {f : A → B} {y : B}
     (u : ∀ x, MapClusterPt x l f → x = y) : Tendsto f l (𝓝 y) :=
   le_nhds_of_clusterPt_unique u
-
-/-- Continuous images of compact closures are closures of images -/
-theorem Continuous.image_compact_closure {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    [T2Space B] {f : A → B} {s : Set A} (fc : Continuous f) (sc : IsCompact (closure s)) :
-    f '' closure s = closure (f '' s) :=
-  image_closure_of_isCompact sc fc.continuousOn
 
 /-- The reverse direction of `IsClosed.Icc_subset_of_forall_mem_nhdsWithin` -/
 theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
@@ -287,7 +275,8 @@ theorem local_connected_nhdsSet {X : Type} [TopologicalSpace X] [LocallyConnecte
 theorem LowerSemicontinuousAt.comp {X Y Z : Type} [TopologicalSpace X] [TopologicalSpace Y]
     [LinearOrder Z] {f : Y → Z} {g : X → Y} {x : X}
     (fc : LowerSemicontinuousAt f (g x)) (gc : ContinuousAt g x) :
-    LowerSemicontinuousAt (fun x ↦ f (g x)) x := fun _ lt ↦ gc.eventually (fc _ lt)
+    LowerSemicontinuousAt (fun x ↦ f (g x)) x :=
+  fun _ lt ↦ gc.eventually (fc _ lt)
 
 /-- Lower semicontinuity composes with continuity -/
 theorem LowerSemicontinuous.comp {X Y Z : Type} [TopologicalSpace X] [TopologicalSpace Y]
@@ -412,12 +401,6 @@ lemma frequently_lt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [
 lemma frequently_gt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[>] x).NeBot] :
     ∃ᶠ y in 𝓝 x, x < y :=
   Filter.frequently_iff_neBot.2 ‹_›
-
-/-- Near any real, there are frequently smaller reals -/
-theorem Real.frequently_smaller (x : ℝ) : ∃ᶠ y in 𝓝 x, y < x := frequently_lt_nhds x
-
-/-- Near any real, there are frequently larger reals -/
-theorem Real.frequently_larger (x : ℝ) : ∃ᶠ y in 𝓝 x, x < y := frequently_gt_nhds x
 
 /-- A set is closed if the closure doesn't add new points -/
 theorem isClosed_iff_closure_diff {X : Type} [TopologicalSpace X] {s : Set X} :

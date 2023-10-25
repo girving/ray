@@ -84,7 +84,7 @@ theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedF
 theorem atInf_le_cocompact {X : Type} [NormedAddCommGroup X] : @atInf X _ ≤ Filter.cocompact X := by
   rw [Filter.le_def]; intro s m
   rcases Filter.mem_cocompact.mp m with ⟨t, tc, ts⟩
-  rcases continuousOn_id.bounded_norm tc with ⟨r, _, rh⟩
+  rcases continuousOn_id.norm.bounded tc with ⟨r, _, rh⟩
   rw [mem_atInf_iff]; use r
   intro x m; apply ts; contrapose m
   simp only [mem_compl_iff, not_not_mem] at m

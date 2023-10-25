@@ -235,7 +235,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
     replace h : ∀ᶠ b in 𝓝 a, f (p.extend b) ∉ s :=
       (fc.comp p.continuous_extend).continuousAt.eventually_mem sc.isOpen_compl h
     simp only [← hu, mem_inter_iff, mem_iInter₂, mem_Iic] at tu ⊢
-    rcases (a.frequently_smaller.and_eventually h).exists with ⟨c, ca, cs⟩
+    rcases ((frequently_lt_nhds a).and_eventually h).exists with ⟨c, ca, cs⟩
     exact lt_of_le_of_lt (tu.2 c cs) ca
   by_cases t1 : t = 1
   · use p.symm; intro a; simp only [p.symm_apply, Function.comp, mem_preimage]

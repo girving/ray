@@ -194,7 +194,7 @@ theorem cauchy1_hasSum {f : ℂ → E} {c w : ℂ} {r : ℝ} (rp : r > 0) (fc : 
 theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : r > 0) (cs : IsCompact s)
     (fc : ContinuousOn (uncurry f) (s ×ˢ sphere c1 r)) :
     ContinuousOn (fun z0 ↦ ∮ z1 in C(c1, r), f z0 z1) s := by
-  rcases fc.bounded_norm (IsCompact.prod cs (isCompact_sphere _ _)) with ⟨b, _, bh⟩
+  rcases fc.norm.bounded (IsCompact.prod cs (isCompact_sphere _ _)) with ⟨b, _, bh⟩
   intro z1 z1s
   have fb : ∀ᶠ x : ℂ in 𝓝[s] z1, ∀ᵐ t : ℝ, t ∈ Set.uIoc 0 (2 * π) →
       ‖deriv (circleMap c1 r) t • (fun z1 : ℂ ↦ f x z1) (circleMap c1 r t)‖ ≤ r * b := by
@@ -578,7 +578,7 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedA
   intro c cs
   rcases Metric.isOpen_iff.mp o c cs with ⟨r, rp, rs⟩
   have rs : closedBall c (r / 2) ⊆ s := le_trans (Metric.closedBall_subset_ball (by linarith)) rs
-  rcases (ContinuousOn.mono fc rs).bounded_norm (isCompact_closedBall _ _) with ⟨b, bp, bh⟩
+  rcases (ContinuousOn.mono fc rs).norm.bounded (isCompact_closedBall _ _) with ⟨b, bp, bh⟩
   have h : Separate f c.fst c.snd (r / 2) b s :=
     { rp := by linarith
       so := o
