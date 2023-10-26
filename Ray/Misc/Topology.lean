@@ -154,20 +154,9 @@ theorem Continuous.along_snd {A B C : Type} [TopologicalSpace A] [TopologicalSpa
 /-- In a compact space, uniqueness of limit points implies convergence -/
 theorem le_nhds_of_clusterPt_unique {A : Type} [TopologicalSpace A] [CompactSpace A] {l : Filter A}
     {y : A} (u : ∀ x, ClusterPt x l → x = y) : l ≤ 𝓝 y := by
-  contrapose u; simp only [not_forall, exists_prop]
-  rcases Filter.not_tendsto_iff_exists_frequently_nmem.mp u with ⟨s, sl, h⟩; clear u
-  rcases mem_nhds_iff.mp sl with ⟨t, ts, ot, yt⟩; clear sl
-  have ne : (l ⊓ Filter.principal (tᶜ)).NeBot := by
-    rw [Filter.inf_principal_neBot_iff]; intro u ul
-    rcases Filter.frequently_iff.mp h ul with ⟨x, xu, xs⟩
-    use x; rw [Set.mem_inter_iff, Set.mem_compl_iff]; use xu, Set.not_mem_subset ts xs
-  rcases@cluster_point_of_compact _ _ _ _ ne with ⟨x, ⟨cp⟩⟩
-  simp only [ClusterPt, Filter.neBot_iff, ← bot_lt_iff_ne_bot, ← inf_assoc] at cp ⊢
-  use x, lt_of_lt_of_le cp inf_le_left
-  simp only [@inf_comm _ _ _ l, inf_assoc] at cp
-  have xt := lt_of_lt_of_le cp inf_le_right
-  simp only [bot_lt_iff_ne_bot, ← mem_closure_iff_nhds_neBot, ot.isClosed_compl.closure_eq] at xt
-  contrapose xt; simp only [not_not] at xt; simp only [Set.not_mem_compl_iff, xt, yt]
+  refine Filter.le_iff_ultrafilter.2 fun f hf ↦ ?_
+  obtain rfl : f.lim = y := u _ ((ClusterPt.of_le_nhds f.le_nhds_lim).mono hf)
+  exact f.le_nhds_lim
 
 /-- In a compact space, uniqueness of limit points implies convergence -/
 theorem tendsto_of_cluster_pt_unique {A B : Type} [TopologicalSpace B]
