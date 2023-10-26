@@ -263,69 +263,26 @@ theorem LowerSemicontinuous.comp {X Y Z : Type} [TopologicalSpace X] [Topologica
     (fc : LowerSemicontinuous f) (gc : Continuous g) : LowerSemicontinuous fun x ↦ f (g x) :=
   fun x ↦ (fc (g x)).comp gc.continuousAt
 
+lemma Filter.Tendsto.eventually_ne_tendsto {α X : Type*} [TopologicalSpace X] [T2Space X]
+    {l : Filter α} {f g : α → X} {x y : X} (hx : Tendsto f l (𝓝 x)) (hy : Tendsto g l (𝓝 y))
+    (hne : x ≠ y) : ∀ᶠ a in l, f a ≠ g a :=
+  (hx.prod_mk_nhds hy).eventually <| isClosed_diagonal.isOpen_compl.mem_nhds hne
+
 /-- Continuous functions locally injective near a compact set are injective on a neighborhood -/
 theorem locally_injective_on_compact {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
     [T2Space Y] {f : X → Y} {s : Set X} (fc : ∀ x, x ∈ s → ContinuousAt f x) (sc : IsCompact s)
     (inj : InjOn f s) (loc : ∀ x, x ∈ s → ∃ u, u ∈ 𝓝 x ∧ InjOn f u) :
     ∃ t, IsOpen t ∧ s ⊆ t ∧ InjOn f t := by
-  -- We work by two-level compact induction on injectivity.  For the outer level, we ask that a
-  -- neighborhood of a subset of s is distinct from a neighborhood of all of s.
-  generalize hh : (fun u : Set X ↦ ∃ t,
-    IsOpen t ∧ u ⊆ t ∧ ∀ᶠ x in 𝓝ˢ s, ∀ y, y ∈ t → f x = f y → x = y) = h
-  suffices hs : h s
-  · rw [← hh] at hs; rcases hs with ⟨t0, o0, st0, h⟩
-    simp only [Filter.eventually_iff, mem_nhdsSet_iff_exists] at h
-    rcases h with ⟨t1, o1, st1, h⟩
-    use t0 ∩ t1, o0.inter o1, subset_inter st0 st1
-    intro x xm y ym
-    exact h (inter_subset_right _ _ xm) y (inter_subset_left _ _ ym)
-  apply @IsCompact.induction_on _ _ _ sc h
-  · rw [←hh]; use ∅
-    simp only [empty_subset, and_true_iff, isOpen_empty, mem_empty_iff_false, IsEmpty.forall_iff,
-      imp_true_iff, Filter.eventually_true, true_and_iff]
-  · rw [← hh]; intro u0 u1 u01 h; rcases h with ⟨t, o, ut, h⟩; use t, o, _root_.trans u01 ut, h
-  · rw [← hh]; intro u0 u1 h0 h1; rcases h0 with ⟨t0, o0, ut0, h0⟩; rcases h1 with ⟨t1, o1, ut1, h1⟩
-    use t0 ∪ t1, o0.union o1, union_subset_union ut0 ut1
-    refine' h0.mp (h1.mp (eventually_of_forall fun x h1 h0 y m ↦ _))
-    cases' m with m m; exact h0 _ m; exact h1 _ m
-  -- For the inner level, we build up the set of points w.r.t. some neighborhood of x is injective
-  rw [← hh]
-  clear hh; intro x m; simp only
-  generalize hg : (fun u : Set X ↦
-    ∃ t : Set X, IsOpen t ∧ x ∈ t ∧ ∀ᶠ x in 𝓝ˢ u, ∀ y, y ∈ t → f x = f y → x = y) = g
-  suffices gs : g s
-  · rw [← hg] at gs; rcases gs with ⟨t, o, m, g⟩
-    use t, nhdsWithin_le_nhds (o.mem_nhds m), t, o, subset_refl _, g
-  apply @IsCompact.induction_on _ _ _ sc g
-  · rw [← hg]; use univ
-    simp only [isOpen_univ, mem_univ, nhdsSet_empty, Filter.eventually_bot, and_self_iff]
-  · rw [← hg]; clear hg; simp only; intro s0 s1 s01 g; rcases g with ⟨t, o, m, g⟩
-    use t, o, m, Filter.Eventually.filter_mono (nhdsSet_mono s01) g
-  · rw [← hg]; clear hg; simp only; intro s0 s1 g0 g1
-    rcases g0 with ⟨t0, o0, m0, g0⟩; rcases g1 with ⟨t1, o1, m1, g1⟩
-    use t0 ∩ t1, o0.inter o1, mem_inter m0 m1
-    simp only [nhdsSet_union, Filter.eventually_sup]; constructor
-    exact g0.mp (eventually_of_forall fun x i y m ↦ i _ (inter_subset_left _ _ m))
-    exact g1.mp (eventually_of_forall fun x i y m ↦ i _ (inter_subset_right _ _ m))
-  · rw [← hg]; clear hg; simp only; intro y ym
-    by_cases xy : x = y
-    · -- We're injective near (x,x) by loc, which ensures an injective neighborhood of each x
-      rw [← xy]; rcases loc x m with ⟨u, un, ui⟩
-      rcases mem_nhds_iff.mp un with ⟨v, vu, vo, xv⟩
-      use v, nhdsWithin_le_nhds (vo.mem_nhds xv), v, vo, xv
-      apply Filter.eventually_of_mem (vo.mem_nhdsSet.mpr (subset_refl _))
-      exact ui.mono vu
-    · -- We're injective near (x,y) for x ≠ y by continuity and injectivity on s
-      rcases t2_separation (inj.ne m ym xy) with ⟨ux, uy, uxo, uyo, xu, yu, uxy⟩
-      rcases mem_nhds_iff.mp (tendsto_nhds.mp (fc _ m) ux uxo xu) with ⟨tx, xf, xo, xt⟩
-      rcases mem_nhds_iff.mp (tendsto_nhds.mp (fc _ ym) uy uyo yu) with ⟨ty, yf, yo, yt⟩
-      use ty, nhdsWithin_le_nhds (yo.mem_nhds yt), tx, xo, xt
-      apply Filter.eventually_of_mem (yo.mem_nhdsSet.mpr (subset_refl _))
-      intro y ym x xm e; contrapose e
-      replace xf := xf xm
-      replace yf := yf ym
-      simp only [mem_preimage] at xf yf
-      exact (disjoint_iff_forall_ne.mp uxy xf yf).symm
+  have : ∀ x ∈ s ×ˢ s, ∀ᶠ y in 𝓝 x, f y.1 = f y.2 → y.1 = y.2 := fun (x, y) ⟨hx, hy⟩ ↦ by
+    rcases eq_or_ne x y with rfl | hne
+    · rcases loc x hx with ⟨u, hu, hf⟩
+      exact Filter.mem_of_superset (prod_mem_nhds hu hu) <| forall_prod_set.2 hf
+    · suffices ∀ᶠ z in 𝓝 (x, y), f z.1 ≠ f z.2 from this.mono fun _ hne h ↦ absurd h hne
+      refine (fc x hx).prod_map' (fc y hy) <| isClosed_diagonal.isOpen_compl.mem_nhds ?_
+      exact inj.ne hx hy hne
+  rw [← eventually_nhdsSet_iff_forall, sc.nhdsSet_prod_eq sc] at this
+  rcases (hasBasis_nhdsSet _).prod_self.eventually_iff.1 this with ⟨u, ⟨huo, hsu⟩, hu⟩
+  exact ⟨u, huo, hsu, forall_prod_set.1 hu⟩
 
 open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product
