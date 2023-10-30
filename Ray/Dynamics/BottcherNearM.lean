@@ -218,7 +218,7 @@ theorem Super.fr_prop (s : Super f d a) (c : ℂ) :
       ∀ p : ℂ × S, p ∈ (extChartAt II (c, a)).source →
         extChartAt II (c, a) p ∈ ball (extChartAt II (c, a) (c, a)) r →
           f p.1 p.2 ∈ (extChartAt I a).source := by
-  rcases(s.fla c).ball with ⟨r0, r0p, fla⟩
+  rcases(s.fla c).exists_ball_analyticOn with ⟨r0, r0p, fla⟩
   rcases eventually_nhds_iff.mp (s.stays_in_chart c) with ⟨t, tp, ot, ta⟩
   set ch := extChartAt II (c, a)
   set s := ch.target ∩ ch.symm ⁻¹' t

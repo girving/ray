@@ -428,7 +428,7 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
     have da : AnalyticAt ℂ d z := by rw [← hd, ← hz]; exact (fa _ xs).2.sub (ga _ xs).2
     clear hd ex ex' xt t e fa ga f g xs hz x sp
     -- Forget about manifolds
-    rcases da.ball with ⟨r, rp, da⟩
+    rcases da.exists_ball_analyticOn with ⟨r, rp, da⟩
     rcases Filter.frequently_iff.mp d0 (isOpen_ball.mem_nhds (mem_ball_self rp)) with ⟨z0, m0, ze⟩
     refine' eventually_nhds_iff.mpr ⟨_, _, isOpen_ball, mem_ball_self rp⟩
     exact da.eqOn_zero_of_preconnected_of_eventuallyEq_zero (convex_ball _ _).isPreconnected m0 ze

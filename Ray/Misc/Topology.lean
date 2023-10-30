@@ -22,11 +22,6 @@ noncomputable section
 theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x :=
   Iff.rfl
 
-/-- A proposition is true `∀ᶠ in 𝓝ˢ` if it is true on a larger open set -/
-theorem eventually_nhdsSet_iff {X : Type} [TopologicalSpace X] {s : Set X} {p : X → Prop} :
-    (∀ᶠ x in 𝓝ˢ s, p x) ↔ ∃ t, IsOpen t ∧ s ⊆ t ∧ ∀ x, x ∈ t → p x := by
-  simp only [Filter.eventually_iff, mem_nhdsSet_iff_exists, subset_setOf]
-
 /-- Continuous functions on compact sets are bounded above -/
 theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s : Set X}
     (fc : ContinuousOn f s) (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → f x ≤ b := by
@@ -151,19 +146,6 @@ theorem Continuous.along_snd {A B C : Type} [TopologicalSpace A] [TopologicalSpa
     {f : A × B → C} (fc : Continuous f) {a : A} : Continuous fun b ↦ f (a, b) :=
   fc.comp (continuous_const.prod_mk continuous_id)
 
-/-- In a compact space, uniqueness of limit points implies convergence -/
-theorem le_nhds_of_clusterPt_unique {A : Type} [TopologicalSpace A] [CompactSpace A] {l : Filter A}
-    {y : A} (u : ∀ x, ClusterPt x l → x = y) : l ≤ 𝓝 y := by
-  refine Filter.le_iff_ultrafilter.2 fun f hf ↦ ?_
-  obtain rfl : f.lim = y := u _ ((ClusterPt.of_le_nhds f.le_nhds_lim).mono hf)
-  exact f.le_nhds_lim
-
-/-- In a compact space, uniqueness of limit points implies convergence -/
-theorem tendsto_of_cluster_pt_unique {A B : Type} [TopologicalSpace B]
-    [CompactSpace B] {l : Filter A} {f : A → B} {y : B}
-    (u : ∀ x, MapClusterPt x l f → x = y) : Tendsto f l (𝓝 y) :=
-  le_nhds_of_clusterPt_unique u
-
 /-- The reverse direction of `IsClosed.Icc_subset_of_forall_mem_nhdsWithin` -/
 theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
     [ConditionallyCompleteLinearOrder X] [TopologicalSpace X] [OrderTopology X] [DenselyOrdered X]
@@ -190,14 +172,6 @@ theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
   intro x m; simp only [Set.mem_Icc] at m; specialize @rev (toDual x)
   simp only [Set.dual_Icc, Set.mem_preimage, Set.mem_Icc, and_imp, OrderDual.ofDual_toDual] at rev
   exact rev m.1 m.2
-
-/-- `fst` is a closed map if `B` is compact -/
-theorem IsClosedMap.fst {A B : Type} [TopologicalSpace A] [TopologicalSpace B] [CompactSpace B] :
-    IsClosedMap fun p : A × B ↦ p.1 :=
-  -- The file where we prove `isClosedMap_snd_of_compactSpace` in `Mathlib`
-  -- doesn't import `Homeomorph`
-  -- probably, we should reorder imports to make `Homeomorph` available very early
-  isClosedMap_snd_of_compactSpace.comp (Homeomorph.prodComm _ _).isClosedMap
 
 lemma IsPreconnected.sUnion_of_pairwise_exists_isPreconnected {X : Type*} [TopologicalSpace X]
     {S : Set (Set X)} (hSc : ∀ s ∈ S, IsPreconnected s)
@@ -263,27 +237,6 @@ theorem LowerSemicontinuous.comp {X Y Z : Type} [TopologicalSpace X] [Topologica
     (fc : LowerSemicontinuous f) (gc : Continuous g) : LowerSemicontinuous fun x ↦ f (g x) :=
   fun x ↦ (fc (g x)).comp gc.continuousAt
 
-lemma Filter.Tendsto.eventually_ne_tendsto {α X : Type*} [TopologicalSpace X] [T2Space X]
-    {l : Filter α} {f g : α → X} {x y : X} (hx : Tendsto f l (𝓝 x)) (hy : Tendsto g l (𝓝 y))
-    (hne : x ≠ y) : ∀ᶠ a in l, f a ≠ g a :=
-  (hx.prod_mk_nhds hy).eventually <| isClosed_diagonal.isOpen_compl.mem_nhds hne
-
-/-- Continuous functions locally injective near a compact set are injective on a neighborhood -/
-theorem locally_injective_on_compact {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
-    [T2Space Y] {f : X → Y} {s : Set X} (fc : ∀ x, x ∈ s → ContinuousAt f x) (sc : IsCompact s)
-    (inj : InjOn f s) (loc : ∀ x, x ∈ s → ∃ u, u ∈ 𝓝 x ∧ InjOn f u) :
-    ∃ t, IsOpen t ∧ s ⊆ t ∧ InjOn f t := by
-  have : ∀ x ∈ s ×ˢ s, ∀ᶠ y in 𝓝 x, f y.1 = f y.2 → y.1 = y.2 := fun (x, y) ⟨hx, hy⟩ ↦ by
-    rcases eq_or_ne x y with rfl | hne
-    · rcases loc x hx with ⟨u, hu, hf⟩
-      exact Filter.mem_of_superset (prod_mem_nhds hu hu) <| forall_prod_set.2 hf
-    · suffices ∀ᶠ z in 𝓝 (x, y), f z.1 ≠ f z.2 from this.mono fun _ hne h ↦ absurd h hne
-      refine (fc x hx).prod_map' (fc y hy) <| isClosed_diagonal.isOpen_compl.mem_nhds ?_
-      exact inj.ne hx hy hne
-  rw [← eventually_nhdsSet_iff_forall, sc.nhdsSet_prod_eq sc] at this
-  rcases (hasBasis_nhdsSet _).prod_self.eventually_iff.1 this with ⟨u, ⟨huo, hsu⟩, hu⟩
-  exact ⟨u, huo, hsu, forall_prod_set.1 hu⟩
-
 open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product
     filter -/
@@ -313,23 +266,6 @@ theorem Filter.Tendsto.exists_lt {X : Type} [LinearOrder X] [TopologicalSpace X]
 theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (h : x ≠ y) :
     ∀ᶠ q : X × X in 𝓝 (x, y), q.1 ≠ q.2 :=
   (isOpen_ne_fun continuous_fst continuous_snd).mem_nhds h
-
-/-- In a metric space, `sphere ⊆ ball` -/
-theorem Metric.sphere_subset_ball {X : Type*} [PseudoMetricSpace X] {z : X} {a b : ℝ} (ab : a < b) :
-    sphere z a ⊆ ball z b := fun _ _ ↦ by simp_all
-
-lemma frequently_lt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[<] x).NeBot] :
-    ∃ᶠ y in 𝓝 x, y < x :=
-  Filter.frequently_iff_neBot.2 ‹_›
-
-lemma frequently_gt_nhds {X : Type*} [Preorder X] [TopologicalSpace X] (x : X) [(𝓝[>] x).NeBot] :
-    ∃ᶠ y in 𝓝 x, x < y :=
-  Filter.frequently_iff_neBot.2 ‹_›
-
-/-- A set is closed if the closure doesn't add new points -/
-theorem isClosed_iff_closure_diff {X : Type} [TopologicalSpace X] {s : Set X} :
-    IsClosed s ↔ closure s \ s = ∅ := by
-  rw [diff_eq_empty, closure_subset_iff_isClosed]
 
 /-- The `⊥` filter has no cluster_pts -/
 theorem ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := fun h ↦

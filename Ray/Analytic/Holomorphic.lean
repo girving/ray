@@ -52,7 +52,7 @@ theorem differentiable_iff_analytic {f : ℂ → E} {s : Set ℂ} (o : IsOpen s)
 theorem analyticAt_iff_eventually_differentiableAt {f : ℂ → E} {c : ℂ} :
     AnalyticAt ℂ f c ↔ ∀ᶠ z in 𝓝 c, DifferentiableAt ℂ f z := by
   constructor
-  · intro fa; rcases fa.ball with ⟨r, rp, fa⟩
+  · intro fa; rcases fa.exists_ball_analyticOn with ⟨r, rp, fa⟩
     exact fa.differentiableOn.eventually_differentiableAt (Metric.ball_mem_nhds _ rp)
   · intro d; rcases Metric.eventually_nhds_iff.mp d with ⟨r, rp, d⟩
     have dr : DifferentiableOn ℂ f (ball c r) := by

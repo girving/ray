@@ -249,7 +249,7 @@ theorem Grow.open (g : Grow s c p n r) : ∃ p', p < p' ∧ ∀ᶠ c' in 𝓝 c,
   rcases Filter.mem_prod_iff.mp e with ⟨a', an, b', bn, sub⟩
   simp only [subset_setOf] at sub
   rcases eventually_nhds_iff.mp (nhdsSet_singleton.subst an) with ⟨a, aa, ao, am⟩
-  rcases eventually_nhdsSet_iff.mp bn with ⟨b, bo, bp, bb⟩
+  rcases eventually_nhdsSet_iff_exists.mp bn with ⟨b, bo, bp, bb⟩
   rcases domain_open' bp bo with ⟨q, pq, qb⟩
   use q, pq
   have m : ∀ᶠ c' in 𝓝 c, (c', r c' 0) ∈ s.near := by
@@ -265,7 +265,7 @@ theorem Grow.open (g : Grow s c p n r) : ∃ p', p < p' ∧ ∀ᶠ c' in 𝓝 c,
       zero := by have e := start.self_of_nhds; simp only [id, s.bottcherNear_eq_zero m] at e; exact e
       start
       eqn := by
-        refine' eventually_nhdsSet_iff.mpr ⟨a ×ˢ b, ao.prod bo, _, _⟩
+        refine' eventually_nhdsSet_iff_exists.mpr ⟨a ×ˢ b, ao.prod bo, _, _⟩
         exact prod_mono (singleton_subset_iff.mpr am') qb
         intro x ⟨cm, xm⟩; exact sub x ⟨aa _ cm, bb _ xm⟩ }
 
@@ -641,7 +641,7 @@ theorem Super.has_ray (s : Super f d a) [OnePreimage s] :
     clear qlo qq' pq' q'
     rcases eventually_nhds_iff.mp gh with ⟨t0, gh, ot0, ct0⟩
     rcases eventually_nhds_iff.mp (s.lowerSemicontinuous_p _ _ qs) with ⟨t1, lo, ot1, ct1⟩
-    refine eventually_nhdsSet_iff.mpr
+    refine eventually_nhdsSet_iff_exists.mpr
         ⟨(t0 ∩ t1) ×ˢ ball 0 q, (ot0.inter ot1).prod isOpen_ball, ?_, ?_⟩
     · exact prod_mono (singleton_subset_iff.mpr ⟨ct0, ct1⟩) (Metric.closedBall_subset_ball pq)
     · intro ⟨e, x⟩ ⟨⟨et0, et1⟩, xq⟩; simp only [uncurry] at et0 et1 xq ⊢

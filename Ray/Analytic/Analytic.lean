@@ -37,16 +37,6 @@ variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F
 variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
 variable {H : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
 
-/-- Analytic at a point means analytic in a small ball -/
-theorem AnalyticAt.ball {f : E → F} {z : E} (fa : AnalyticAt 𝕜 f z) :
-    ∃ r : ℝ, 0 < r ∧ AnalyticOn 𝕜 f (ball z r) :=
-  Metric.isOpen_iff.mp (isOpen_analyticAt _ _) _ fa
-
-/-- `f * g` is analytic -/
-theorem AnalyticOn.mul [CompleteSpace 𝕜] {f g : E → 𝕜} {s : Set E}
-    (fa : AnalyticOn 𝕜 f s) (ga : AnalyticOn 𝕜 g s) : AnalyticOn 𝕜 (fun x ↦ f x * g x) s :=
-  fun x m ↦ (fa x m).mul (ga x m)
-
 /-- The order of a zero at a point.
     We define this in terms of the function alone so that expressions involving order can
     depend only on `f`. -/

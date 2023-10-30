@@ -30,7 +30,7 @@ theorem closure_inter_subset_compl {s u v : Set X} (vo : IsOpen v) (d : Disjoint
 
 theorem isClosed_closed_inter {s u v : Set X} (sc : IsClosed s) (vo : IsOpen v) (d : Disjoint u v)
     (suv : s ⊆ u ∪ v) : IsClosed (s ∩ u) := by
-  rw [isClosed_iff_closure_diff]; by_contra h; simp only [← Ne.def, ← nonempty_iff_ne_empty] at h
+  rw [←closure_subset_iff_isClosed, ←diff_eq_empty]; by_contra h; simp only [← Ne.def, ← nonempty_iff_ne_empty] at h
   rcases h with ⟨x, h⟩; simp only [mem_diff, mem_inter_iff, not_and] at h
   have sus : closure (s ∩ u) ⊆ s := by
     nth_rw 2 [← sc.closure_eq]; apply closure_mono; apply inter_subset_left

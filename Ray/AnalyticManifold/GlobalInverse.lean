@@ -80,8 +80,7 @@ theorem global_complex_inverse_fun_compact {f : ℂ → S → T} [Nonempty S] [T
         ∀ᶠ p : ℂ × S in 𝓝ˢ s, g p.1 (f p.1 p.2) = p.2 := by
   -- Enlarge s while preserving injectivity
   have t : ∃ t, IsOpen t ∧ s ⊆ t ∧ InjOn (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) t := by
-    apply locally_injective_on_compact
-      (fun _ m ↦ continuousAt_fst.prod (fa _ m).continuousAt) sc inj
+    apply inj.exists_isOpen_superset sc (fun _ m ↦ continuousAt_fst.prod (fa _ m).continuousAt)
     intro ⟨c, z⟩ m; rcases complex_inverse_fun (fa _ m) (nc _ m) with ⟨g, _, gf, _⟩
     rcases eventually_nhds_iff.mp gf with ⟨t, gf, o, m⟩
     use t, o.mem_nhds m; intro ⟨c0, z0⟩ m0 ⟨c1, z1⟩ m1 e

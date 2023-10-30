@@ -99,7 +99,7 @@ theorem SuperAt.fg (s : SuperAt f d) (z : ℂ) : f z = z ^ d * g f d z := by
 /-- `g` is analytic where `f` is -/
 theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     AnalyticAt ℂ (g f d) c := by
-  rcases fa.ball with ⟨r, rp, fa⟩
+  rcases fa.exists_ball_analyticOn with ⟨r, rp, fa⟩
   have o : IsOpen (ball c r) := isOpen_ball
   generalize ht : ball c r = t
   rw [ht] at fa o
@@ -180,7 +180,7 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
 /-- `SuperAt → SuperNear`, automatic radius version: given `SuperAt`, we can find a ball where the
     smallness conditions needed for `SuperNear` hold. -/
 theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t := by
-  rcases s.fa0.ball with ⟨r0, r0p, fa⟩
+  rcases s.fa0.exists_ball_analyticOn with ⟨r0, r0p, fa⟩
   rcases Metric.continuousAt_iff.mp (s.ga_of_fa (fa 0 (mem_ball_self r0p))).continuousAt (1 / 4)
       (by norm_num) with
     ⟨r1, r1p, gs⟩
@@ -576,7 +576,7 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
       ∃ r, r > 0 ∧ ball c r ⊆ u ∧ ball (c, 0) r ⊆ w ∧
         SuperNearC f d (ball c r) (ball (c, 0) r) := by
     intro c m
-    rcases(s.fa m).ball with ⟨r0, r0p, fa⟩
+    rcases(s.fa m).exists_ball_analyticOn with ⟨r0, r0p, fa⟩
     rcases Metric.isOpen_iff.mp s.o c m with ⟨r1, r1p, rc⟩
     set r2 := min r0 r1
     have fa := fa.mono (Metric.ball_subset_ball (min_le_left r0 r1))

@@ -1193,8 +1193,8 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (cb : exp 48 ≤ abs 
       _ ≥ 1 - 1 / 2 := by linarith
       _ ≥ 0 := by norm_num
   · have dn : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ (1 / 2 : ℝ) ^ (n + 1) := by
-      simp only [one_div, Complex.abs.map_neg, map_inv₀, Nat.cast_pow, Complex.abs_of_nat, inv_pow,
-        Complex.abs.map_pow]
+      simp only [Nat.cast_pow, one_div, map_neg_eq_map, map_inv₀, map_pow, Complex.abs_cast_nat,
+        inv_pow]
       bound
     have d1 : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ 1 := le_trans dn (by bound)
     refine le_trans (pow_small ?_ d1) ?_
