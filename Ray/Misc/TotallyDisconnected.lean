@@ -66,7 +66,7 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
     have e : R = range (uncurry dist) := by
       apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry]; rfl
     rw [e]; exact countable_range _
-  refine' ⟨_⟩; apply isTotallyDisconnected_of_clopen_set; intro x y xy
+  refine' ⟨_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
   rw [← dist_pos] at xy
   have h : ¬Ioo 0 (dist x y) ⊆ R := by by_contra h; exact not_countable_Ioo xy (rc.mono h)
   simp only [not_subset, mem_Ioo] at h; rcases h with ⟨r, ⟨rp, rxy⟩, rr⟩

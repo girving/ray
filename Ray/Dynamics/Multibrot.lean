@@ -155,14 +155,14 @@ theorem holomorphicF : Holomorphic II I (uncurry (f d)) :=
 
 theorem writtenInExtChartAt_coe_f {z : ℂ} : writtenInExtChartAt I I (z : 𝕊) (f d c) = f' d c := by
   simp only [writtenInExtChartAt, f, Function.comp, lift_coe', RiemannSphere.extChartAt_coe,
-    LocalEquiv.symm_symm, coeLocalEquiv_apply, coeLocalEquiv_symm_apply, toComplex_coe]
+    PartialEquiv.symm_symm, coePartialEquiv_apply, coePartialEquiv_symm_apply, toComplex_coe]
 
 theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
   funext c z
   simp only [fl, RiemannSphere.extChartAt_inf, Function.comp, invEquiv_apply,
-    LocalEquiv.trans_apply, Equiv.toLocalEquiv_apply, LocalEquiv.coe_trans_symm,
-    coeLocalEquiv_symm_apply, LocalEquiv.symm_symm, coeLocalEquiv_apply,
-    Equiv.toLocalEquiv_symm_apply, invEquiv_symm, inv_inf, toComplex_zero, add_zero, sub_zero]
+    PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, PartialEquiv.coe_trans_symm,
+    coePartialEquiv_symm_apply, PartialEquiv.symm_symm, coePartialEquiv_apply,
+    Equiv.toPartialEquiv_symm_apply, invEquiv_symm, inv_inf, toComplex_zero, add_zero, sub_zero]
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', f, lift_inf', inv_inf, toComplex_zero, zero_pow d_pos,
       zero_div]
@@ -234,7 +234,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     trans abs c * (max 16 (abs c / 2))⁻¹ ^ d; bound
     rw [inv_pow, mul_inv_le_iff]; swap; bound
     rw [mul_one_div]; rw [le_div_iff, mul_comm]; swap; norm_num
-    refine' le_trans _ (pow_le_pow (le_max_of_le_left (by norm_num)) two_le_d)
+    refine' le_trans _ (pow_le_pow_right (le_max_of_le_left (by norm_num)) two_le_d)
     by_cases cb : abs c / 2 ≤ 16
     rw [max_eq_left cb, pow_two]; linarith
     rw [max_eq_right (not_le.mp cb).le, pow_two]; nlinarith
@@ -284,7 +284,7 @@ instance onePreimageF : OnePreimage (superF d) where
   eq_a := by
     intro c z; induction z using OnePoint.rec
     · simp only [eq_self_iff_true, imp_true_iff]
-    · simp only [f, lift_coe', coe_eq_inf_iff]
+    · simp only [f, lift_coe', OnePoint.coe_ne_infty, IsEmpty.forall_iff]
 
 /-- `0, ∞` are the only critical points of `f` -/
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
@@ -292,7 +292,7 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
   · simp only [(superF d).critical_a, or_true]
   · simp only [Critical, mfderiv, (holomorphicF (c, z)).along_snd.mdifferentiableAt, if_pos,
       ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
-      RiemannSphere.extChartAt_coe, coeLocalEquiv_symm_apply, toComplex_coe, coe_eq_zero,
+      RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply, toComplex_coe, coe_eq_zero,
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
       one_mul, ContinuousLinearMap.zero_apply, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero,
@@ -383,7 +383,7 @@ theorem multibrot_le_two (m : c ∈ multibrot d) : abs c ≤ 2 := by
   have s1' : 1 ≤ s - 1 := by linarith
   have a : ∀ z : ℂ, 1 ≤ abs z → abs z ^ 2 - s ≤ abs (f' d c z) := by
     intro z z1; simp only [f']; refine le_trans (sub_le_sub_right ?_ _) (Complex.abs.le_add _ _)
-    simp only [Complex.abs.map_pow]; exact pow_le_pow z1 two_le_d
+    simp only [Complex.abs.map_pow]; exact pow_le_pow_right z1 two_le_d
   have b : ∀ n, s * (s - 1) ^ n ≤ abs ((f' d c)^[n] c) := by
     intro n; induction' n with n h
     · simp only [pow_zero, mul_one, Function.iterate_zero_apply, le_refl]
@@ -396,7 +396,7 @@ theorem multibrot_le_two (m : c ∈ multibrot d) : abs c ≤ 2 := by
           _ ≥ s ^ 2 * (s - 1) ^ (n * 2) - s * (s - 1) ^ (n * 2) := by bound
           _ = s * ((s - 1) ^ 1 * (s - 1) ^ (n * 2)) := by ring
           _ = s * (s - 1) ^ (1 + n * 2) := by rw [pow_add]
-          _ ≥ s * (s - 1) ^ (1 + n * 1) := by bound [pow_le_pow]
+          _ ≥ s * (s - 1) ^ (1 + n * 1) := by bound [pow_le_pow_right]
           _ = s * (s - 1) ^ (n + 1) := by ring_nf
       · bound
       · exact le_trans (Left.one_le_mul_of_le_of_le s1 (one_le_pow_of_one_le s1' _) (by linarith)) h
@@ -461,10 +461,10 @@ theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < abs ((f' d c)^[n] c)) : c ∉
         _ = abs (z ^ d + c) := rfl
         _ ≥ abs (z ^ d) - abs c := by bound
         _ = abs z ^ d - abs c := by rw [Complex.abs.map_pow]
-        _ ≥ (s * (s - 1) ^ k) ^ d - 2 := by bound [pow_le_pow_of_le_left]
-        _ ≥ (s * (s - 1) ^ k) ^ 2 - 2 := by bound [pow_le_pow, two_le_d]
+        _ ≥ (s * (s - 1) ^ k) ^ d - 2 := by bound [pow_le_pow_left]
+        _ ≥ (s * (s - 1) ^ k) ^ 2 - 2 := by bound [pow_le_pow_right, two_le_d]
         _ = s ^ 2 * (s - 1) ^ (k * 2) - 2 * 1 := by rw [mul_pow, pow_mul, mul_one]
-        _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound [pow_le_pow, one_le_pow_of_one_le]
+        _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound [pow_le_pow_right, one_le_pow_of_one_le]
         _ = s * ((s - 1) ^ k * (s - 1)) := by ring
         _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ']
   simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
@@ -520,10 +520,10 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
     have e : (f d c)^[n] ↑c = ((g^[n] c⁻¹ : ℂ) : 𝕊)⁻¹ := by rw [← h, inv_inv]
     simp only [Function.iterate_succ_apply', e]
     generalize hz : g^[n] c⁻¹ = z
-    simp only [← hg, fl, extChartAt_inf, LocalEquiv.trans_apply, Equiv.toLocalEquiv_apply,
-      invEquiv_apply, inv_inf, coeLocalEquiv_symm_apply, toComplex_zero, sub_zero,
-      Function.comp, add_zero, LocalEquiv.coe_trans_symm, LocalEquiv.symm_symm,
-      coeLocalEquiv_apply, Equiv.toLocalEquiv_symm_apply, invEquiv_symm]
+    simp only [← hg, fl, extChartAt_inf, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply,
+      invEquiv_apply, inv_inf, coePartialEquiv_symm_apply, toComplex_zero, sub_zero,
+      Function.comp, add_zero, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm,
+      coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm]
     rw [coe_toComplex]
     simp only [Ne.def, inv_eq_inf, ← hz, ← h, inv_inv, ← Function.iterate_succ_apply' (f d c)]
     apply nz
@@ -532,8 +532,8 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
   simp only [multibrot_basin', not_not] at b
   have attracts := (s.basin_attracts b).eventually (s.bottcher_eq_bottcherNear c)
   rcases (attracts.and (s.basin_stays b)).exists with ⟨n, eq, _⟩; clear attracts b
-  simp only [Super.bottcherNear, extChartAt_inf, LocalEquiv.trans_apply,
-    coeLocalEquiv_symm_apply, Equiv.toLocalEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
+  simp only [Super.bottcherNear, extChartAt_inf, PartialEquiv.trans_apply,
+    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
     sub_zero, Super.fl, hg, iter, toComplex_coe] at eq
   -- Translate our bound across n iterations
   have e0 : s.bottcher c ((f d c)^[n] ↑c) = bottcher' d c ^ d ^ n := s.bottcher_eqn_iter n
@@ -542,7 +542,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
   rw [e0, e1] at eq; clear e0 e1 iter
   have ae : abs (bottcher' d c) = abs (bottcherNear g d c⁻¹) := by
     apply (pow_left_inj (Complex.abs.nonneg _) (Complex.abs.nonneg _)
-      (pow_pos d_pos n : 0 < d ^ n)).mp
+      (pow_ne_zero n d_ne_zero : d^n ≠ 0)).mp
     simp only [← Complex.abs.map_pow, eq]
   rw [ae, ← hg]; exact bottcherNear_le (superNearF d c) ct
 
@@ -720,12 +720,12 @@ theorem iter_large (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (cb : 3 ≤ abs c) (cz
       _ = abs w ^ d - abs c := by rw [Complex.abs.map_pow]
       _ ≥ ((2:ℝ) ^ n * abs z) ^ d - abs c := by bound
       _ = (2:ℝ) ^ (n*d) * abs z ^ d - abs c := by rw [mul_pow, pow_mul]
-      _ ≥ (2:ℝ) ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow z1 two_le_d]
+      _ ≥ (2:ℝ) ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
       _ = (2:ℝ) ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
       _ ≥ (2:ℝ) ^ (n*d) * (3 * abs z) - abs c := by bound
       _ = (2:ℝ) ^ (n*d) * 2 * abs z + ((2:ℝ) ^ (n * d) * abs z - abs c) := by ring
       _ = (2:ℝ) ^ (n*d + 1) * abs z + ((2:ℝ) ^ (n * d) * abs z - abs c) := by rw [pow_succ']
-      _ ≥ (2:ℝ) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow]
+      _ ≥ (2:ℝ) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
       _ = (2:ℝ) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
       _ ≥ (2:ℝ) ^ (n + 1) * abs z := by bound
 
@@ -747,8 +747,8 @@ theorem f_approx {c z : ℂ} (cb : 3 ≤ abs c) (cz : abs c ≤ abs z) :
   have z0' : 0 < abs z := lt_of_lt_of_le (by norm_num) z3
   have zd : 3 ≤ abs z ^ (d - 1) := by
     calc abs z ^ (d - 1)
-      _ ≥ (3:ℝ) ^ (d - 1) := by bound [pow_mono z1]
-      _ ≥ (3:ℝ) ^ 1 := by bound [pow_le_pow _ d_minus_one_ge_one]
+      _ ≥ (3:ℝ) ^ (d - 1) := by bound [pow_right_mono z1]
+      _ ≥ (3:ℝ) ^ 1 := by bound [pow_le_pow_right _ d_minus_one_ge_one]
       _ = 3 := by norm_num
   have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp (z0'.ne')
   have zd0 : z ^ d ≠ 0 := pow_ne_zero _ z0
@@ -757,7 +757,7 @@ theorem f_approx {c z : ℂ} (cb : 3 ≤ abs c) (cz : abs c ≤ abs z) :
     calc abs (z ^ d + c)
       _ ≥ abs (z ^ d) - abs c := by bound
       _ = abs z ^ d - abs c := by rw [Complex.abs.map_pow]
-      _ ≥ abs z ^ 2 - abs z := by bound [pow_le_pow _ two_le_d]
+      _ ≥ abs z ^ 2 - abs z := by bound [pow_le_pow_right _ two_le_d]
       _ = abs z * (abs z - 1) := by ring
       _ ≥ 3 * (3 - 1) := by bound
       _ > 0 := by norm_num
@@ -896,8 +896,8 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   specialize @h z⁻¹ zir
   simp only [map_inv₀, inv_inv, ← Complex.abs.map_mul, sub_mul, inv_mul_cancel z0,
     mul_comm z _] at h
-  simp only [Super.bottcherNear, extChartAt_inf, LocalEquiv.trans_apply,
-    coeLocalEquiv_symm_apply, Equiv.toLocalEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
+  simp only [Super.bottcherNear, extChartAt_inf, PartialEquiv.trans_apply,
+    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
     sub_zero, inv_coe z0, toComplex_coe]
   exact h
 
@@ -941,7 +941,7 @@ theorem tendsto_potential (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c3 : 3 ≤ abs
     replace h := h.mul_const (s.potential c z)
     simp only [div_mul_cancel _ p0, one_mul, ← f_f'_iter, s.potential_eqn_iter,
       Real.mul_rpow (Complex.abs.nonneg _) (pow_nonneg s.potential_nonneg _),
-      Real.pow_nat_rpow_nat_inv s.potential_nonneg (pow_ne_zero _ d_ne_zero),
+      Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero _ d_ne_zero),
       Real.rpow_neg (pow_nonneg s.potential_nonneg _), ← div_eq_mul_inv] at h
     exact h
   simp only [← s.abs_bottcher, ← Complex.abs.map_mul, mul_comm _ (s.bottcher _ _)]
@@ -1065,8 +1065,8 @@ theorem largePost {c z : ℂ} (cb : exp 48 ≤ abs c) (cz : abs c ≤ abs z) :
   have lc : 0 < log (abs c) := lt_of_lt_of_le (by norm_num) lcb
   simp only [Postcritical, multibrot_p]
   set s := superF d
-  rw [← Real.pow_nat_rpow_nat_inv s.potential_nonneg d0.ne', ←
-    Real.pow_nat_rpow_nat_inv (s.potential_nonneg : 0 ≤ s.potential c 0) d0.ne']
+  rw [← Real.pow_rpow_inv_natCast s.potential_nonneg d0.ne', ←
+    Real.pow_rpow_inv_natCast (s.potential_nonneg : 0 ≤ s.potential c 0) d0.ne']
   simp only [← s.potential_eqn]; refine Real.rpow_lt_rpow s.potential_nonneg ?_ (by bound)
   generalize hw : f' d c z = w
   have e : f d c z = w := by rw [f, lift_coe', hw]
@@ -1077,13 +1077,13 @@ theorem largePost {c z : ℂ} (cb : exp 48 ≤ abs c) (cz : abs c ≤ abs z) :
     calc abs (z ^ d + c)
       _ ≥ abs (z ^ d) - abs c := by bound
       _ = abs z ^ d - abs c := by rw [Complex.abs.map_pow]
-      _ ≥ abs z ^ 2 - abs c := by bound [pow_le_pow z1 two_le_d]
+      _ ≥ abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
       _ ≥ abs c ^ 2 - abs c := by bound
       _ = abs c * abs c - abs c := by rw [pow_two]
       _ ≥ 5 * abs c - abs c := by bound
       _ = 4 * abs c := by ring
   have cw : abs c ≤ abs w := le_trans (by linarith) cw2
-  have lcw : log (abs c) ≤ log (abs w) := (Real.log_le_log c0 (lt_of_lt_of_le c0 cw)).mpr cw
+  have lcw : log (abs c) ≤ log (abs w) := (Real.log_le_log_iff c0 (lt_of_lt_of_le c0 cw)).mpr cw
   have pw := sub_le_iff_le_add.mp (abs_le.mp (potential_approx d c4 cw)).2
   have pc := le_sub_iff_add_le.mp (abs_le.mp (potential_approx d c4 (le_refl _))).1
   refine' lt_of_le_of_lt pw (lt_of_lt_of_le _ pc)
@@ -1193,7 +1193,7 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (cb : exp 48 ≤ abs 
       _ ≥ 1 - 1 / 2 := by linarith
       _ ≥ 0 := by norm_num
   · have dn : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ (1 / 2 : ℝ) ^ (n + 1) := by
-      simp only [Nat.cast_pow, one_div, map_neg_eq_map, map_inv₀, map_pow, Complex.abs_cast_nat,
+      simp only [Nat.cast_pow, one_div, map_neg_eq_map, map_inv₀, map_pow, Complex.abs_natCast,
         inv_pow]
       bound
     have d1 : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ 1 := le_trans dn (by bound)
@@ -1214,7 +1214,6 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (cb : exp 48 �
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
     rw [one_div]; apply inv_le_inv_of_le; norm_num
     exact le_trans (by norm_num) (le_trans c16.le cz)
-  nth_rw 1 [← mul_one z⁻¹]
   simp only [bottcher_eq_bottcherNear_z cb cz, bottcherNear, Complex.abs.map_mul, ← mul_sub_one,
     pow_two, ← mul_assoc, map_inv₀, mul_comm (abs z)⁻¹]
   refine mul_le_mul_of_nonneg_right ?_ (inv_nonneg.mpr (Complex.abs.nonneg _))
@@ -1237,8 +1236,9 @@ theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] {c : ℂ} (cb : exp 48 ≤ ab
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
 theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)⁻¹) 1 0 := by
-  simp only [HasDerivAt, HasDerivAtFilter, bottcher, HasFDerivAtFilter, coe_zero, inv_zero',
-    fill_inf, sub_zero, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
+  rw [HasDerivAt, HasDerivAtFilter, bottcher, hasFDerivAtFilter_iff_isLittleO, coe_zero, inv_zero',
+    fill_inf]
+  simp only [sub_zero, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
     smul_eq_mul, mul_one]
   rw [Asymptotics.isLittleO_iff]
   intro k k0; rw [Metric.eventually_nhds_iff]
@@ -1261,9 +1261,9 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
 theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
   simp only [mfderiv, (bottcherHolomorphic d _ multibrotExt_inf).mdifferentiableAt, if_pos,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp,
-    LocalEquiv.refl_coe, id, LocalEquiv.trans_apply, Equiv.toLocalEquiv_apply, invEquiv_apply,
-    inv_inf, coeLocalEquiv_symm_apply, toComplex_zero, LocalEquiv.coe_trans_symm,
-    LocalEquiv.symm_symm, coeLocalEquiv_apply, Equiv.toLocalEquiv_symm_apply, invEquiv_symm,
+    PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
+    inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
+    PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
   rw [Ne.def, ContinuousLinearMap.ext_iff, not_forall]; use 1
@@ -1410,7 +1410,7 @@ theorem ray_surj (d : ℕ) [Fact (2 ≤ d)] : ray d '' ball 0 1 = multibrotExt d
   · intro m; use c, m, ray_bottcher m
 
 /-- `bottcher d` as an (analytic) homeomorphism from `multibrotExt d` to `ball 0 1` -/
-def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : LocalHomeomorph 𝕊 ℂ where
+def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : PartialHomeomorph 𝕊 ℂ where
   toFun := bottcher d
   invFun := ray d
   source := multibrotExt d
@@ -1421,5 +1421,5 @@ def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : LocalHomeomorph 𝕊 ℂ whe
   right_inv' z m := bottcher_ray m
   open_source := isOpen_multibrotExt
   open_target := isOpen_ball
-  continuous_toFun := (bottcherHolomorphic d).continuousOn
-  continuous_invFun := (rayHolomorphic d).continuousOn
+  continuousOn_toFun := (bottcherHolomorphic d).continuousOn
+  continuousOn_invFun := (rayHolomorphic d).continuousOn

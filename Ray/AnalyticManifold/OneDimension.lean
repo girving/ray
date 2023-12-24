@@ -229,7 +229,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
   have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
     apply ((extChartAt_open_target I z).eventually_mem (mem_extChartAt_target I z)).mp
     refine' eventually_of_forall fun w m ↦ _
-    simp only [id, LocalEquiv.right_inv _ m]
+    simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne.def, ContinuousLinearMap.ext_iff, not_forall,
     ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply]
   use 1, one_ne_zero
@@ -297,7 +297,7 @@ theorem HolomorphicAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
   apply (HolomorphicAt.extChartAt (mem_extChartAt_source I (f c z))).comp_of_eq
   apply fa.comp₂_of_eq holomorphicAt_fst
   apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq holomorphicAt_snd
-  repeat' simp only [LocalEquiv.left_inv _ (mem_extChartAt_source I z)]
+  repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source I z)]
 
 /-- `inChart` preserves critical points locally -/
 theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
@@ -308,19 +308,17 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     (mem_extChartAt_source I (f c z))).mp
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
   refine' fa.eventually.mp (eventually_of_forall _); intro ⟨e, w⟩ fa m fm
-  simp only [extChartAt_prod, LocalEquiv.prod_source, extChartAt_eq_refl, LocalEquiv.refl_source,
+  simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
     mem_prod, mem_univ, true_and_iff] at m
   simp only [uncurry] at fm
-  have m' := LocalEquiv.map_source _ m
+  have m' := PartialEquiv.map_source _ m
   simp only [← mfderiv_eq_zero_iff_deriv_eq_zero]
-  simp only [inChart]
   have cd : HolomorphicAt I I (extChartAt I (f c z)) (f e w) := HolomorphicAt.extChartAt fm
   have fd : HolomorphicAt I I (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
     simp only [Function.comp]
     exact HolomorphicAt.comp_of_eq fa.along_snd (HolomorphicAt.extChartAt_symm m')
-      (LocalEquiv.right_inv _ m)
-  have ce : (fun w ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm w))) =
-      extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
+      (PartialEquiv.right_inv _ m)
+  have ce : inChart f c z e = extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
   rw [ce, mfderiv_comp_of_eq cd.mdifferentiableAt fd.mdifferentiableAt ?blah,
     mfderiv_comp_of_eq fa.along_snd.mdifferentiableAt
       (HolomorphicAt.extChartAt_symm m').mdifferentiableAt]
@@ -330,8 +328,8 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     constructor
     · intro h; left; exact h
     · intro h; cases' h with h h; exact h; simpa only using extChartAt_symm_mderiv_ne_zero' m' h
-  · exact LocalEquiv.left_inv _ m
-  · simp only [Function.comp, LocalEquiv.left_inv _ m]
+  · exact PartialEquiv.left_inv _ m
+  · simp only [Function.comp, PartialEquiv.left_inv _ m]
 
 /-- `mfderiv` is nonzero near where it is nonzero (parameterized version) -/
 theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
@@ -384,7 +382,7 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
       f ((extChartAt II p).symm q) ∈ (extChartAt I (f p)).source := by
     refine ContinuousAt.eventually_mem (fc.continuousAt.comp (continuousAt_extChartAt_symm II p))
         (isOpen_extChartAt_source I (f p)) ?_
-    rw [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
+    simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
     apply mem_extChartAt_source
   apply ((extChartAt_open_target II p).eventually_mem (mem_extChartAt_target II p)).mp
   refine' fm.mp (eventually_of_forall fun q fm m ↦ ⟨_, _, _⟩)
@@ -393,12 +391,12 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
   · apply HolomorphicAt.analyticAt I I
     refine' (HolomorphicAt.extChartAt fm).comp_of_eq _ rfl
     rw [extChartAt_prod] at m
-    simp only [Function.comp, extChartAt_prod, LocalEquiv.prod_symm, LocalEquiv.prod_coe,
-      LocalEquiv.prod_target, mem_prod_eq] at m ⊢
+    simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
+      PartialEquiv.prod_target, mem_prod_eq] at m ⊢
     exact (f0 _ _).comp (HolomorphicAt.extChartAt_symm m.1)
   · apply HolomorphicAt.analyticAt I I
     refine' (HolomorphicAt.extChartAt fm).comp_of_eq _ rfl
     rw [extChartAt_prod] at m
-    simp only [Function.comp, extChartAt_prod, LocalEquiv.prod_symm, LocalEquiv.prod_coe,
-      LocalEquiv.prod_target, mem_prod_eq] at m ⊢
+    simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
+      PartialEquiv.prod_target, mem_prod_eq] at m ⊢
     exact (f1 _ _).comp (HolomorphicAt.extChartAt_symm m.2)

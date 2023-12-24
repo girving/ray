@@ -111,7 +111,7 @@ theorem Super.bottcher_eq_bottcherNear (s : Super f d a) [OnePreimage s] (c : �
   simp only [s.bottcher_ray m]; exact e.symm
 
 /-- `s.ext` and `s.post` are (analytically) bijective -/
-def Super.equiv (s : Super f d a) [OnePreimage s] : LocalEquiv (ℂ × ℂ) (ℂ × S) where
+def Super.equiv (s : Super f d a) [OnePreimage s] : PartialEquiv (ℂ × ℂ) (ℂ × S) where
   toFun := fun y : ℂ × ℂ ↦ (y.1, s.ray y.1 y.2)
   invFun := fun y : ℂ × S ↦ (y.1, s.bottcher y.1 y.2)
   source := s.ext
@@ -122,15 +122,15 @@ def Super.equiv (s : Super f d a) [OnePreimage s] : LocalEquiv (ℂ × ℂ) (ℂ
   right_inv' := by intro ⟨c, z⟩ m; simp only [s.ray_bottcher m]
 
 /-- `s.ext` and `s.post` are (analytically) homeomorphic -/
-def Super.homeomorph (s : Super f d a) [OnePreimage s] : LocalHomeomorph (ℂ × ℂ) (ℂ × S) where
-  toLocalEquiv := s.equiv
+def Super.homeomorph (s : Super f d a) [OnePreimage s] : PartialHomeomorph (ℂ × ℂ) (ℂ × S) where
+  toPartialEquiv := s.equiv
   open_source := s.isOpen_ext
   open_target := s.isOpen_post
-  continuous_toFun := continuousOn_fst.prod s.ray_holomorphicOn.continuousOn
-  continuous_invFun := continuousOn_fst.prod s.bottcher_holomorphicOn.continuousOn
+  continuousOn_toFun := continuousOn_fst.prod s.ray_holomorphicOn.continuousOn
+  continuousOn_invFun := continuousOn_fst.prod s.bottcher_holomorphicOn.continuousOn
 
 /-- `c`-slices of `s.ext` and `s.post` are (analytically) bijective -/
-def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : LocalEquiv ℂ S where
+def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialEquiv ℂ S where
   toFun := s.ray c
   invFun := s.bottcher c
   source := {x | (c, x) ∈ s.ext}
@@ -141,12 +141,12 @@ def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : LocalEquiv �
   right_inv' _ m := by simp only [s.ray_bottcher m]
 
 /-- `c`-slices of `s.ext` and `s.post` are (analytically) homeomorphic -/
-def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : LocalHomeomorph ℂ S where
-  toLocalEquiv := s.equivSlice c
+def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialHomeomorph ℂ S where
+  toPartialEquiv := s.equivSlice c
   open_source := s.isOpen_ext.snd_preimage c
   open_target := s.isOpen_post.snd_preimage c
-  continuous_toFun _ m := (s.ray_holomorphic m).along_snd.continuousAt.continuousWithinAt
-  continuous_invFun _ m := (s.bottcher_holomorphicOn _ m).along_snd.continuousAt.continuousWithinAt
+  continuousOn_toFun _ m := (s.ray_holomorphic m).along_snd.continuousAt.continuousWithinAt
+  continuousOn_invFun _ m := (s.bottcher_holomorphicOn _ m).along_snd.continuousAt.continuousWithinAt
 
 /-- `s.post` is connected -/
 theorem Super.post_connected (s : Super f d a) [OnePreimage s] : IsConnected s.post := by
@@ -232,9 +232,9 @@ theorem Super.abs_bottcher (s : Super f d a) [OnePreimage s] :
     intro c z m; rcases s.ray_surj m with ⟨x, m, e⟩; rw [← e, s.bottcher_ray m, s.ray_potential m]
   by_cases m : (c, z) ∈ s.basin
   · rcases s.basin_post m with ⟨n, p⟩
-    rw [← Real.pow_nat_rpow_nat_inv (Complex.abs.nonneg _) (pow_ne_zero n s.d0), ←
+    rw [← Real.pow_rpow_inv_natCast (Complex.abs.nonneg _) (pow_ne_zero n s.d0), ←
       Complex.abs.map_pow, ← s.bottcher_eqn_iter n, base p, s.potential_eqn_iter,
-      Real.pow_nat_rpow_nat_inv s.potential_nonneg (pow_ne_zero n s.d0)]
+      Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero n s.d0)]
   · have m' := m; simp only [Super.basin, not_exists, mem_setOf] at m'
     simp only [s.bottcher_not_basin m, Complex.abs.map_one, s.potential_eq_one m']
 

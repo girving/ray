@@ -201,7 +201,7 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
     refine' eventually_nhds_iff.mpr ⟨(_root_.extChartAt I z).source,
       fun x m gm fm ↦ _, isOpen_extChartAt_source _ _, mem_extChartAt_source I z⟩
     simp only at fm gm; rw [← fg] at gm
-    simp only [← fg, LocalEquiv.left_inv _ m, LocalEquiv.left_inv _ fm, LocalEquiv.left_inv _ gm]
+    simp only [← fg, PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm, PartialEquiv.left_inv _ gm]
   · right; clear fa ga
     simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at e ⊢
     replace e := (continuousAt_extChartAt I z).eventually e
@@ -210,9 +210,9 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
     apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
     refine' e.mp (eventually_of_forall _); clear e
     intro x h xm gm fm xz; rw [← fg] at gm
-    simp only [← fg, LocalEquiv.left_inv _ xm] at h
-    specialize h ((LocalEquiv.injOn _).ne xm (mem_extChartAt_source _ _) xz)
-    rwa [← (LocalEquiv.injOn _).ne_iff fm gm]
+    simp only [← fg, PartialEquiv.left_inv _ xm] at h
+    specialize h ((PartialEquiv.injOn _).ne xm (mem_extChartAt_source _ _) xz)
+    rwa [← (PartialEquiv.injOn _).ne_iff fm gm]
 
 /-- Locally constant functions are constant on preconnected sets -/
 theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
@@ -315,10 +315,10 @@ theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ 
   rcases mem_nhds_iff.mp sz with ⟨t, ts, ot, zt⟩
   set u := (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t
   have uo : IsOpen u :=
-    (continuousOn_extChartAt_symm I z).preimage_open_of_open (extChartAt_open_target _ _) ot
+    (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (extChartAt_open_target _ _) ot
   have zu : extChartAt I z z ∈ u := by
     simp only [mem_inter_iff, mem_extChartAt_target, true_and_iff, mem_preimage,
-      LocalEquiv.left_inv _ (mem_extChartAt_source I z), zt]
+      PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt]
   rcases Metric.isOpen_iff.mp uo _ zu with ⟨r, rp, ru⟩
   generalize ha : extChartAt I z z + r / 2 = a
   have au : a ∈ u := by
@@ -326,8 +326,8 @@ theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ 
     simp only [map_div₀, Complex.abs_ofReal, abs_of_pos rp, Complex.abs_two]; exact half_lt_self rp
   use(extChartAt I z).symm a; simp only [mem_inter_iff, mem_preimage] at au
   use ts au.2
-  rw [← (LocalEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
-  rw [LocalEquiv.right_inv _ au.1, ← ha]
+  rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
+  rw [PartialEquiv.right_inv _ au.1, ← ha]
   simp only [Ne.def, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero, bit0_eq_zero,
     one_ne_zero, or_false_iff, rp.ne', not_false_iff]; norm_num
 

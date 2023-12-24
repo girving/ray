@@ -178,7 +178,7 @@ theorem Grow.congr {r0 r1 : ℂ → ℂ → S} (g : Grow s c p n r0)
 /-- `s.potential (r x) = abs x`, if `Eqn s n r x` -/
 theorem Eqn.potential {x : ℂ × ℂ} (e : Eqn s n r x) : s.potential x.1 (r x.1 x.2) = abs x.2 := by
   simp only [s.potential_eq e.near, Super.potential', e.eqn, Complex.abs.map_pow, ← Nat.cast_pow,
-    Real.pow_nat_rpow_nat_inv (Complex.abs.nonneg _) (pow_ne_zero _ s.d0)]
+    Real.pow_rpow_inv_natCast (Complex.abs.nonneg _) (pow_ne_zero _ s.d0)]
 
 /-- `Eqn` implies that `s.bottcherNearIter` is noncritical -/
 theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (x0 : x.2 ≠ 0) :

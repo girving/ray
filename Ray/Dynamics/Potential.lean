@@ -494,7 +494,7 @@ theorem Super.has_nice_n (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op 
   · intro k nk; refine' lt_of_le_of_lt _ pq; simp only [s.potential_eqn_iter]
     have dn := (Nat.lt_pow_self s.d1 k).le
     apply _root_.trans (pow_le_pow_of_le_one s.potential_nonneg s.potential_le_one dn)
-    refine' _root_.trans (pow_le_pow_of_le_left s.potential_nonneg m _) _
+    refine' _root_.trans (pow_le_pow_left s.potential_nonneg m _) _
     exact pow_le_pow_of_le_one (_root_.trans s.potential_nonneg m) p1.le nk
   use(h _ (qt (m n (le_refl _)))).1, fun k nk ↦ (h _ (qt (m k nk))).2
 

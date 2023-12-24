@@ -3,6 +3,7 @@ import Mathlib.MeasureTheory.Constructions.Prod.Integral
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
+import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Ray.Tactic.Bound
 import Ray.Misc.Measure
 import Ray.Misc.Prod
@@ -294,12 +295,12 @@ theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (clo
     finite := by
       simp only [Complex.volume_closedBall]
       apply ENNReal.mul_lt_top
-      · simp only
-      · simp only [ne_eq, ENNReal.pow_eq_top_iff, ENNReal.ofReal_ne_top, and_true, not_false_eq_true]
+      · simp only [ne_eq, ENNReal.pow_eq_top_iff, ENNReal.ofReal_ne_top, OfNat.ofNat_ne_zero,
+          not_false_eq_true, and_true]
+      · simp only [ne_eq, ENNReal.coe_ne_top, not_false_eq_true]
     pos := by
       simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
-        ENNReal.coe_pos]
-      use NNReal.pi_pos
+        ENNReal.coe_pos, NNReal.pi_pos, and_true]
       apply ENNReal.pow_pos
       bound }
 
@@ -308,8 +309,7 @@ theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet
   apply LocalVolume.closure_interior
   · intro x r rp
     simp only [Complex.volume_ball, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
-      ENNReal.coe_pos]
-    use NNReal.pi_pos
+      ENNReal.coe_pos, NNReal.pi_pos, and_true]
     apply ENNReal.pow_pos
     bound
   · have rz := rp.ne'

@@ -4,9 +4,7 @@ import Mathlib.Algebra.Algebra.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.NormedSpace.Basic
-import Mathlib.Analysis.NormedSpace.Multilinear
 import Mathlib.Data.Complex.Basic
-import Mathlib.Topology.Algebra.Module.Multilinear
 import Ray.Tactic.Bound
 
 /-!
@@ -38,25 +36,23 @@ theorem ContinuousMultilinearMap.toFun_eq_coe {R A B : Type} [Semiring R] [AddCo
 def fstCmmap (R : Type) (A B : Type) [Semiring R] [AddCommMonoid A] [Module R A]
     [TopologicalSpace A] [AddCommMonoid B] [Module R B] [TopologicalSpace B] :
     ContinuousMultilinearMap R (fun _ : Fin 1 ↦ A × B) A :=
-  (ContinuousLinearMap.fst R A B).compContinuousMultilinearMap
-    (ContinuousMultilinearMap.ofSubsingleton R (A × B) (0 : Fin 1))
+  ContinuousMultilinearMap.ofSubsingleton R (A × B) A (0 : Fin 1) (ContinuousLinearMap.fst R A B)
 
 /-- `snd` as a `ContinuousMultilinearMap` -/
 def sndCmmap (R : Type) (A B : Type) [Semiring R] [AddCommMonoid A] [Module R A]
     [TopologicalSpace A] [AddCommMonoid B] [Module R B] [TopologicalSpace B] :
     ContinuousMultilinearMap R (fun _ : Fin 1 ↦ A × B) B :=
-  (ContinuousLinearMap.snd R A B).compContinuousMultilinearMap
-    (ContinuousMultilinearMap.ofSubsingleton R (A × B) (0 : Fin 1))
+  ContinuousMultilinearMap.ofSubsingleton R (A × B) B (0 : Fin 1) (ContinuousLinearMap.snd R A B)
 
 theorem fstCmmap_apply [AddCommMonoid A] [Module R A] [TopologicalSpace A] [AddCommMonoid B]
     [Module R B] [TopologicalSpace B] (a : A) (b : B) : (fstCmmap R A B fun _ ↦ (a, b)) = a := by
-  simp only [fstCmmap, ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp,
-    ContinuousMultilinearMap.ofSubsingleton_apply, ContinuousLinearMap.coe_fst']
+  simp only [fstCmmap, ContinuousMultilinearMap.ofSubsingleton_apply_apply,
+    ContinuousLinearMap.coe_fst']
 
 theorem sndCmmap_apply [AddCommMonoid A] [Module R A] [TopologicalSpace A] [AddCommMonoid B]
     [Module R B] [TopologicalSpace B] (a : A) (b : B) : (sndCmmap R A B fun _ ↦ (a, b)) = b := by
-  simp only [sndCmmap, ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp,
-    ContinuousMultilinearMap.ofSubsingleton_apply, ContinuousLinearMap.coe_snd']
+  simp only [sndCmmap, ContinuousMultilinearMap.ofSubsingleton_apply_apply,
+    ContinuousLinearMap.coe_snd']
 
 theorem fstCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [NormedRing B]
     [NormedAlgebra 𝕜 B] [NormOneClass B] : ‖fstCmmap 𝕜 A B‖ = 1 := by
@@ -111,7 +107,7 @@ theorem update_nz_succ (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) (
   · rw [Function.update_noteq ki]
     rw [Function.update_noteq _]
     by_contra h
-    simp only [h, Fin.succ_pred _, ne_self_iff_false] at ki
+    simp only [h, Fin.succ_pred, not_true_eq_false] at ki
 
 /-- Raw cons of two continuous multilinear maps -/
 def smulCmmapFn [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [NormedAddCommGroup B]

@@ -45,10 +45,10 @@ theorem exist_root_of_unity {d : ℕ} (d2 : 2 ≤ d) : ∃ a : ℂ, a ≠ 1 ∧ 
   simp only [Ne.def, Subtype.mk_eq_mk, mem_rootsOfUnity, PNat.mk_coe] at am bm ab
   by_cases a1 : a = 1
   · use b; rw [a1] at ab; constructor
-    · simp only [Ne.def, Units.val_eq_one, Ne.symm ab]
+    · simp only [ne_eq, Units.val_eq_one, Ne.symm ab, not_false_eq_true]
     · rw [← Units.val_pow_eq_pow_val, bm, Units.val_one]
   · use a; constructor
-    · simp only [Ne.def, Units.val_eq_one, a1]
+    · simp only [ne_eq, Units.val_eq_one, a1, not_false_eq_true]
     · rw [← Units.val_pow_eq_pow_val, am, Units.val_one]
 
 /-- Case `c = 0, f 0 = 0`, when `f` has a monic, superattracting fixpoint at 0.  Every
@@ -178,11 +178,11 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
   generalize hg : (fun z ↦ extChartAt I (f c) (f ((extChartAt I c).symm z))) = g
   have dg : mfderiv I I g (extChartAt I c c) = 0 := by
     have fd : MDifferentiableAt I I f ((extChartAt I c).symm (extChartAt I c c)) := by
-      rw [LocalEquiv.left_inv]; exact fa.mdifferentiableAt; apply mem_extChartAt_source
+      rw [PartialEquiv.left_inv]; exact fa.mdifferentiableAt; apply mem_extChartAt_source
     rw [← hg, ←Function.comp_def, mfderiv_comp _ (HolomorphicAt.extChartAt _).mdifferentiableAt _,
       ←Function.comp_def, mfderiv_comp _ fd (HolomorphicAt.extChartAt_symm _).mdifferentiableAt,
-      LocalEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
-    apply mem_extChartAt_source; apply mem_extChartAt_target; rw [LocalEquiv.left_inv]
+      PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
+    apply mem_extChartAt_source; apply mem_extChartAt_target; rw [PartialEquiv.left_inv]
     apply mem_extChartAt_source; apply mem_extChartAt_source
     exact MDifferentiableAt.comp _ fd
       (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt
@@ -196,7 +196,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
     apply (ha.holomorphicAt I I).comp_of_eq
       (HolomorphicAt.extChartAt (mem_extChartAt_source I c)) rfl
     exact h0
-  · simp only [h0, LocalEquiv.left_inv _ (mem_extChartAt_source I c)]
+  · simp only [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I c)]
   · rw [eventually_nhdsWithin_iff] at e ⊢
     apply ((continuousAt_extChartAt I c).eventually e).mp
     apply ((isOpen_extChartAt_source I c).eventually_mem (mem_extChartAt_source I c)).mp
@@ -211,20 +211,20 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
       refine' ContinuousAt.eventually_mem _ (isOpen_extChartAt_source I _) _
       apply fa.1.comp_of_eq; apply (continuousAt_extChartAt_symm I _).comp_of_eq
       apply ha.continuousAt.comp_of_eq; exact continuousAt_extChartAt I _
-      rfl; exact h0; rw [h0, LocalEquiv.left_inv _ (mem_extChartAt_source I _)]
-      rw [h0, LocalEquiv.left_inv _ (mem_extChartAt_source I _)]; exact mem_extChartAt_source I _
+      rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
+      rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]; exact mem_extChartAt_source I _
     refine' m1.mp (m2.mp (m3.mp (eventually_of_forall _)))
     simp only [mem_compl_singleton_iff]
     intro z m3 m2 m1 m0 even zc
-    rcases even ((LocalEquiv.injOn _).ne m0 (mem_extChartAt_source I c) zc) with ⟨hz, gh⟩
+    rcases even ((PartialEquiv.injOn _).ne m0 (mem_extChartAt_source I c) zc) with ⟨hz, gh⟩
     constructor
-    · nth_rw 2 [← LocalEquiv.left_inv _ m0]
-      rw [(LocalEquiv.injOn _).ne_iff]; exact hz
-      rw [LocalEquiv.symm_source]; exact m1
-      rw [LocalEquiv.symm_source]; exact LocalEquiv.map_source _ m0
+    · nth_rw 2 [← PartialEquiv.left_inv _ m0]
+      rw [(PartialEquiv.injOn _).ne_iff]; exact hz
+      rw [PartialEquiv.symm_source]; exact m1
+      rw [PartialEquiv.symm_source]; exact PartialEquiv.map_source _ m0
     · simp only [← hg] at gh
-      rw [LocalEquiv.left_inv _ m0] at gh
-      rw [(LocalEquiv.injOn _).eq_iff m3 m2] at gh; exact gh
+      rw [PartialEquiv.left_inv _ m0] at gh
+      rw [(PartialEquiv.injOn _).eq_iff m3 m2] at gh; exact gh
 
 /-- Injectivity on an open set implies nonzero derivative (manifold version) -/
 theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s) {c : S}

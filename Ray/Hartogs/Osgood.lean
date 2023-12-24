@@ -3,7 +3,6 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.InnerProductSpace.EuclideanDist
 import Mathlib.Analysis.Normed.Field.InfiniteSum
 import Mathlib.Analysis.Normed.Group.Basic
-import Mathlib.Analysis.NormedSpace.Multilinear
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
@@ -13,7 +12,6 @@ import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-import Mathlib.Topology.Algebra.Module.Multilinear
 import Mathlib.Topology.Basic
 import Ray.Analytic.Analytic
 import Ray.Tactic.Bound
@@ -479,7 +477,7 @@ theorem cauchy2_radius (h : Separate f c0 c1 r b s) : ENNReal.ofReal r ≤ (seri
     intro n; trans (↑n + 1) * b * r⁻¹ ^ n * (t:ℝ)^n
     · bound [series2_norm h n]
     · rw [mul_assoc ((↑n + 1) * b) _ _, ← mul_pow, inv_mul_eq_div]
-  refine' summable_of_nonneg_of_le lo hi _
+  refine .of_nonneg_of_le lo hi ?_
   simp_rw [mul_comm _ b, mul_assoc b _ _]; apply Summable.mul_left b
   have trn : ‖↑t / r‖ < 1 := by simp; rw [abs_of_pos h.rp, div_lt_one h.rp]; assumption
   simp_rw [right_distrib _ _ _, one_mul]
@@ -508,7 +506,7 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
     · rw [pow_add, div_eq_mul_inv, div_eq_mul_inv, inv_pow, inv_pow]; ring_nf; rfl
   have sf : Summable f := by
     simp only [Metric.mem_ball, dist_zero_right, Complex.norm_eq_abs] at w0m w1m
-    refine' summable_of_norm_bounded _ _ fb
+    refine .of_norm_bounded _ ?_ fb
     simp_rw [mul_assoc]; apply Summable.mul_left; simp_rw [mul_comm ((abs w0 / r) ^ _) _]
     apply Summable.mul_of_nonneg
     · exact summable_geometric_of_lt_1 (by bound [h.rp]) ((div_lt_one h.rp).mpr w1m)
@@ -523,13 +521,13 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
 theorem HasSum.antidiagonal_of_2d {f : ℕ × ℕ → E} {a : E} (h : HasSum f a) :
     HasSum (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) a := by
   generalize hg : (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) = g
-  rw [←Finset.Nat.sigmaAntidiagonalEquivProd.hasSum_iff] at h
-  have fg : ∀ n, HasSum (fun d : Finset.Nat.antidiagonal n ↦
-      (f ∘ Finset.Nat.sigmaAntidiagonalEquivProd) ⟨n, d⟩) (g n) := by
-    intro n; simp only [Function.comp_apply, Finset.Nat.sigmaAntidiagonalEquivProd_apply]
-    have fs := hasSum_fintype fun d : ↥(Finset.Nat.antidiagonal n) ↦ f ↑d
+  rw [←Finset.sigmaAntidiagonalEquivProd.hasSum_iff] at h
+  have fg : ∀ n, HasSum (fun d : Finset.antidiagonal n ↦
+      (f ∘ Finset.sigmaAntidiagonalEquivProd) ⟨n, d⟩) (g n) := by
+    intro n; simp only [Function.comp_apply, Finset.sigmaAntidiagonalEquivProd_apply]
+    have fs := hasSum_fintype fun d : ↥(Finset.antidiagonal n) ↦ f ↑d
     -- simp at fs,
-    have e : (Finset.univ.sum fun d : ↥(Finset.Nat.antidiagonal n) ↦ f ↑d) = g n := by
+    have e : (Finset.univ.sum fun d : ↥(Finset.antidiagonal n) ↦ f ↑d) = g n := by
       rw [Finset.sum_coe_sort, Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk, ← hg]
     rwa [← e]
   exact HasSum.sigma h fg

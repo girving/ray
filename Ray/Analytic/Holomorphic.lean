@@ -87,11 +87,9 @@ theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ �
     [NormedSpace ℂ E] [CompleteSpace E] {n : ℕ∞} (n1 : 1 ≤ n) :
     ContDiffAt ℂ n f x ↔ AnalyticAt ℂ f x := by
   constructor
-  · intro d; rcases d.contDiffOn n1 with ⟨u, un, um, d⟩
-    simp only [Set.mem_univ, Set.insert_eq_of_mem, Set.subset_univ] at un um
-    rw [nhdsWithin_univ] at un
+  · intro d; rcases d.contDiffOn n1 with ⟨u, un, d⟩
     rcases mem_nhds_iff.mp un with ⟨v, uv, vo, vx⟩
-    refine' (differentiable_iff_analytic2 vo).mp _ _ vx
+    refine (differentiable_iff_analytic2 vo).mp ?_ _ vx
     exact (d.mono uv).differentiableOn (by norm_num)
   · intro a; exact a.contDiffAt.of_le le_top
 

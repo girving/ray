@@ -50,7 +50,7 @@ theorem le_of_maxLog_le {b x y : ℝ} (m : maxLog b x ≤ y) : x ≤ y.exp := by
 /-- `maxLog` is increasing -/
 theorem monotone_maxLog (b : ℝ) : Monotone fun x ↦ maxLog b x := by
   simp_rw [maxLog]; intro x y xy
-  simp only [ge_iff_le]; rw [Real.log_le_log max_exp_pos max_exp_pos]
+  simp only [ge_iff_le]; rw [Real.log_le_log_iff max_exp_pos max_exp_pos]
   apply max_le_max (le_refl _) xy
 
 /-- `maxLog` is continuous -/
@@ -74,7 +74,7 @@ theorem LipschitzOnWith.log (b : ℝ) : LipschitzOnWith (-b).exp.toNNReal Real.l
     have xp : x > 0 := lt_of_lt_of_le yp xy
     have yi : y⁻¹ ≤ (-b).exp := by rw [Real.exp_neg]; bound
     rw [abs_of_nonneg (sub_nonneg.mpr xy)]
-    rw [abs_of_nonneg (sub_nonneg.mpr ((Real.log_le_log yp xp).mpr xy))]
+    rw [abs_of_nonneg (sub_nonneg.mpr ((Real.log_le_log_iff yp xp).mpr xy))]
     rw [← Real.log_div xp.ne' yp.ne']
     rw [Real.log_le_iff_le_exp (div_pos xp yp)]
     trans (y⁻¹ * (x - y)).exp; swap; bound

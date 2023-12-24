@@ -194,8 +194,8 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
     (mem_extChartAt_source I (f z))).mp
   refine' eventually_of_forall fun w fm m fn ↦ _
   simp only at fm m fn
-  rw [LocalEquiv.left_inv _ m, LocalEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
-  exact ((LocalEquiv.injOn _).eq_iff fm (mem_extChartAt_source _ _)).mp fn
+  rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
+  exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _ _)).mp fn
 
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
@@ -216,7 +216,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
     --   𝓝 (f z) ≤ map f (𝓝 z)                             -- Congruence
     simp only [← extChartAt_map_nhds' I z, Filter.map_map] at h
     replace h := @Filter.map_mono _ _ (extChartAt I (f z)).symm _ _ h
-    simp only [← hg] at h; rw [LocalEquiv.left_inv _ (mem_extChartAt_source I z)] at h
+    simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at h
     simp only [extChartAt_symm_map_nhds' I (f z), Filter.map_map, Function.comp] at h
     have e : (fun w ↦ (extChartAt I (f z)).symm
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
@@ -224,7 +224,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
       apply (n.holomorphicAt.continuousAt.eventually_mem (isOpen_extChartAt_source I (f z))
         (mem_extChartAt_source I (f z))).mp
       refine' eventually_of_forall fun w fm m ↦ _
-      simp only [LocalEquiv.left_inv _ m, LocalEquiv.left_inv _ fm]
+      simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
 
 /-- Special case of `Filter.prod_map_map_eq` where the first map is `id` -/
@@ -248,7 +248,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c 
   simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map, Filter.prod_map_id_map_eq,
     Function.comp] at h
   replace h := @Filter.map_mono _ _ (fun p : ℂ × ℂ ↦ (p.1, (extChartAt I (f c z)).symm p.2)) _ _ h
-  simp only [← hg] at h; rw [LocalEquiv.left_inv _ (mem_extChartAt_source I z)] at h
+  simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at h
   have pe := Filter.prod_map_id_map_eq (f := 𝓝 c) (g := 𝓝 (extChartAt I (f c z) (f c z)))
     (m := fun x ↦ (extChartAt I (f c z)).symm x)
   rw [extChartAt_symm_map_nhds', ←nhds_prod_eq] at pe
@@ -258,5 +258,5 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c 
   apply (fa.continuousAt.eventually_mem (isOpen_extChartAt_source I (f c z))
     (mem_extChartAt_source I (f c z))).mp
   apply eventually_of_forall; intro ⟨e, w⟩ fm m
-  simp only [Function.comp, uncurry, extChartAt_prod, LocalEquiv.prod_source, mem_prod_eq] at fm m
-  simp only [Function.comp, LocalEquiv.left_inv _ m.2, LocalEquiv.left_inv _ fm]
+  simp only [Function.comp, uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
+  simp only [Function.comp, PartialEquiv.left_inv _ m.2, PartialEquiv.left_inv _ fm]

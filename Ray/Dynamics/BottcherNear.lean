@@ -323,7 +323,7 @@ theorem term_converges (s : SuperNear f d t) :
   intro n zt; rw [term]
   trans 4 * abs (g f d (f^[n] z) - 1) * abs (1 / d ^ (n + 1) : ℂ)
   · apply pow_small; · exact le_trans (s.gs (s.mapsTo n zt)) (by norm_num)
-    · simp only [one_div, map_inv₀, Complex.abs_pow, Complex.abs_cast_nat, Nat.cast_pow]
+    · simp only [one_div, map_inv₀, Complex.abs_pow, Complex.abs_natCast, Nat.cast_pow]
       apply inv_le_one
       have hd : 1 ≤ (d : ℝ) := le_trans (by norm_num) s.dr2
       exact one_le_pow_of_one_le hd _
@@ -690,7 +690,7 @@ theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :
     · exact Complex.continuous_abs.continuousAt.comp (continuousAt_snd.mul ga.deriv2.continuousAt)
     · exact Complex.continuous_abs.continuousAt.comp (continuousAt_const.mul ga.continuousAt)
     · simp only [g0, MulZeroClass.zero_mul, Complex.abs.map_zero, Complex.abs.map_mul,
-        Complex.abs_cast_nat, Complex.abs.map_one, mul_one, Nat.cast_pos]
+        Complex.abs_natCast, Complex.abs.map_one, mul_one, Nat.cast_pos]
       exact (s.s m).dp
   apply small.mp
   apply (s.o.eventually_mem (s.s m).t0).mp

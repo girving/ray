@@ -14,6 +14,7 @@ import Mathlib.Tactic.SolveByElim
 import Ray.Misc.AbsoluteValue
 import Ray.Tactic.BoundRules
 import Std.Tactic.LabelAttr
+import Std.Util.Cache
 
 /-!
 ## The `bound` tactic
@@ -87,7 +88,6 @@ lemma Real.pi_nonneg : 0 ≤ (Real.pi:ℝ) := Real.pi_pos.le
 lemma ENNReal.ofReal_pos_of_pos {p : ℝ} (h : 0 < p) : 0 < ENNReal.ofReal p := by
   rwa [ENNReal.ofReal_pos]
 lemma Real.one_lt_exp_of_pos {x : ℝ} (x0 : 0 < x) : 1 < Real.exp x := by rwa [Real.one_lt_exp_iff]
-lemma Real.exp_nonneg {x : ℝ} : 0 ≤ Real.exp x := (Real.exp_pos _).le
 lemma Nat.cast_pos_of_pos {R : Type} [OrderedSemiring R] [Nontrivial R] {n : ℕ} (n0 : 0 < n) :
     0 < (n : R) := by rwa [Nat.cast_pos]
 lemma le_self_pow_of_pos {R : Type} [OrderedSemiring R] {a : R} {m : ℕ} (ha : 1 ≤ a) (h : 0 < m) :
@@ -104,7 +104,7 @@ attribute [bound_rules] sq_nonneg mul_pos mul_nonneg div_pos div_nonneg pow_pos 
   Int.ceil_lt_add_one Real.sqrt_pos_of_pos ENNReal.ofReal_pos_of_pos Real.log_pos
   Real.rpow_nonneg_of_nonneg
 -- ≤
-attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_of_le_left Real.rpow_le_rpow
+attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_left Real.rpow_le_rpow
   div_le_div_of_le_of_nonneg div_le_div mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right
   mul_le_mul div_le_one_of_le mul_inv_le_one_of_le mul_inv_le_one_of_nonneg_of_le div_le_self
   le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le Real.exp_le_exp_of_le le_abs_self
@@ -115,7 +115,7 @@ attribute [bound_rules] dist_triangle AbsoluteValue.le_add AbsoluteValue.le_sub 
   AbsoluteValue.sub_le' AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le
 -- <
 attribute [bound_rules] mul_lt_mul_left_of_pos_of_lt mul_lt_mul_right_of_pos_of_lt
-  div_lt_div_of_lt_left div_lt_div_of_lt pow_lt_pow_of_lt_left Real.rpow_lt_rpow div_lt_self
+  div_lt_div_of_lt_left div_lt_div_of_lt pow_lt_pow_left Real.rpow_lt_rpow div_lt_self
   add_lt_add_left add_lt_add_right one_lt_div_of_pos_of_lt div_lt_one_of_pos_of_lt
   NNReal.coe_lt_coe_of_lt sub_lt_sub_left sub_lt_sub_right Real.sqrt_lt_sqrt neg_lt_neg
   Nat.cast_pos_of_pos
@@ -135,17 +135,21 @@ instance : ToFormat Lemma where
     | .expr e => format e
     | .syn e _ => format e
 
+/-- Configuration for our `DiscrTree` -/
+def discrTreeConfig : WhnfCoreConfig := {}
+
 /-- Cache a `DiscrTree` of bound lemmas.  Ideally this would update if new lemmas are added
     to `bound_rules`, but for now it does not.
 
     Example of how to make it update: https://github.com/leanprover-community/mathlib4/blob/9fbca06f59749829b28b94be963b5592d591dc6a/Mathlib/Tactic/Relation/Rfl.lean#L20-L26
     -/
-def boundDiscrTree : IO (Mathlib.Tactic.Cache (DiscrTree Lemma true)) := Mathlib.Tactic.Cache.mk do
+def boundDiscrTree : IO (Std.Tactic.Cache (DiscrTree Lemma)) := Std.Tactic.Cache.mk do
   let mut tree := DiscrTree.empty
   for rule in (←Std.Tactic.LabelAttr.labelled "bound_rules").reverse do
     tree ← withNewMCtxDepth do withReducible do
       let (_, _, type) ← forallMetaTelescope (←getConstInfo rule).type
-      return tree.insertCore (←DiscrTree.mkPath type) (.syn (mkIdent rule) false)
+      return tree.insertCore (←DiscrTree.mkPath type discrTreeConfig) (.syn (mkIdent rule) false)
+        discrTreeConfig
   return tree
 
 /-- Check if a name is an inequality operator -/
@@ -162,26 +166,26 @@ def Lean.Expr.isIneq : Expr → Bool
   | _ => false
 
 /-- Insert a type into our discrimination tree, adjusting <,≥,> for generality -/
-def insertLemma (tree : DiscrTree Lemma true) (type : Expr) (lem : Lemma) :
-    TacticM (DiscrTree Lemma true) := do
+def insertLemma (tree : DiscrTree Lemma) (type : Expr) (lem : Lemma) :
+    TacticM (DiscrTree Lemma) := do
   let type ← withReducible (whnf type)
   match type with
   | .app (.app (.app (.app (.const n l) α) i) x) y => do
     let mut tree := tree
     if n == ``LT.lt || n == ``LE.le then
-      tree ← tree.insert type lem
+      tree ← tree.insert type lem discrTreeConfig
     else if n == ``GT.gt || n == ``GE.ge then
       let r := if n == ``GT.gt then ``LT.lt else ``LE.le  -- Swap ≥,> to ≤,<
-      tree ← tree.insert (Lean.mkApp4 (.const r l) α i y x) lem
+      tree ← tree.insert (Lean.mkApp4 (.const r l) α i y x) lem discrTreeConfig
     if n == ``LT.lt || n == ``GT.gt then  -- Record le_of_lt version as well
       match lem with
       | .expr e => do
         let e ← call' ``le_of_lt e
-        tree ← tree.insert (←inferType e) (.expr e)
+        tree ← tree.insert (←inferType e) (.expr e) discrTreeConfig
       | .syn e _ => do
         let (x,y) := if n == `LT.lt then (x,y) else (y,x)
         let i ← mkFreshExprMVar (some (.app (.const ``LE l) α))
-        tree ← tree.insert (Lean.mkApp4 (.const ``LE.le l) α i x y) (.syn e true)
+        tree ← tree.insert (Lean.mkApp4 (.const ``LE.le l) α i x y) (.syn e true) discrTreeConfig
     return tree
   | _ => return tree
 
@@ -212,7 +216,7 @@ def bound (lemmas : Array Syntax) : TacticM Unit := Tactic.withMainContext do
     let s ← saveState
     let t ← g.getType
     -- Loop over matches in reverse order
-    for v in (←tree.getMatch t).reverse do match v with
+    for v in (←tree.getMatch t discrTreeConfig).reverse do match v with
       | .expr e =>
         g.assign e
         Tactic.setGoals []
@@ -303,7 +307,7 @@ lemma test_div_left (hc : c ≥ 0) (h : a ≤ b) : a / c ≤ b / c := by bound
 lemma test_div_right (ha : a ≥ 0) (hc : c > 0) (h : b ≥ c) : a / b ≤ a / c := by bound
 lemma test_coe (x y : ℝ≥0) (h : x < y) : (x : ℝ) < y := by bound
 lemma test_dist : dist a c ≤ dist a b + dist b c := by bound
-lemma test_log (x y : ℝ) (x0 : 0 < x) (h : x ≤ y) : x.log ≤ y.log := by bound [Real.log_le_log']
+lemma test_log (x y : ℝ) (x0 : 0 < x) (h : x ≤ y) : x.log ≤ y.log := by bound [Real.log_le_log]
 end bound_tests
 
 -- This breaks without appropriate g.withContext use

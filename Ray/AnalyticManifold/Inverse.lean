@@ -1,3 +1,4 @@
+import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
 import Mathlib.Geometry.Manifold.MFDeriv
 import Ray.AnalyticManifold.AnalyticManifold
 import Ray.AnalyticManifold.OneDimension
@@ -46,7 +47,7 @@ variable {f : ℂ → S → T} {c : ℂ} {z : S}
 @[nolint unusedArguments] def Cinv.fz' (_ : Cinv f c z) : ℂ := extChartAt I (f c z) (f c z)
 
 lemma Cinv.zz (i : Cinv f c z) : (extChartAt I z).symm (c, i.z').snd = z := by
-  simp only [Prod.snd, Cinv.z', LocalEquiv.left_inv _ (mem_extChartAt_source _ _)]
+  simp only [Prod.snd, Cinv.z', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
 
 /-- `f` in coordinates -/
 @[nolint unusedArguments] def Cinv.f' (_ : Cinv f c z) : ℂ × ℂ → ℂ := fun x ↦
@@ -57,9 +58,9 @@ def Cinv.h (i : Cinv f c z) : ℂ × ℂ → ℂ × ℂ := fun x ↦ (x.1, i.f' 
 
 -- f' and h are analytic
 theorem Cinv.fa' (i : Cinv f c z) : AnalyticAt ℂ i.f' (c, i.z') := by
-  simp only [Cinv.f']; have fa := i.fa
-  simp only [holomorphicAt_iff, uncurry, extChartAt_prod, Function.comp, LocalEquiv.prod_coe_symm,
-    LocalEquiv.prod_coe] at fa
+  have fa := i.fa
+  simp only [holomorphicAt_iff, uncurry, extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm,
+    PartialEquiv.prod_coe] at fa
   exact fa.2
 theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := (analyticAt_fst _).prod i.fa'
 
@@ -185,9 +186,9 @@ def Cinv.dhe (i : Cinv f c z) : (ℂ × ℂ) ≃L[ℂ] ℂ × ℂ :=
 lemma Cinv.has_dhe (i : Cinv f c z) : HasFDerivAt i.h (i.dhe : ℂ × ℂ →L[ℂ] ℂ × ℂ) (c, i.z') :=
   hasMFDerivAt_iff_hasFDerivAt'.mp i.has_dh
 
-/-- `h` as a `LocalHomeomorph` -/
+/-- `h` as a `PartialHomeomorph` -/
 def Cinv.he (i : Cinv f c z) :=
-  ContDiffAt.toLocalHomeomorph i.h i.ha.contDiffAt i.has_dhe le_top
+  ContDiffAt.toPartialHomeomorph i.h i.ha.contDiffAt i.has_dhe le_top
 
 /-- `h` inverts at the point -/
 theorem Cinv.inv_at (i : Cinv f c z) :
@@ -195,7 +196,7 @@ theorem Cinv.inv_at (i : Cinv f c z) :
   have a := ContDiffAt.localInverse_apply_image i.ha.contDiffAt i.has_dhe le_top
   have e : ContDiffAt.localInverse i.ha.contDiffAt i.has_dhe le_top = i.he.symm := rfl
   rw [e] at a; clear e
-  simp only [Cinv.z', Cinv.h, Cinv.f', LocalEquiv.left_inv _ (mem_extChartAt_source _ _)] at a
+  simp only [Cinv.z', Cinv.h, Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)] at a
   rw [a]
 
 /-- Our inverse function! -/
@@ -206,28 +207,28 @@ def Cinv.g (i : Cinv f c z) : ℂ → T → S := fun b w ↦
 theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g x.1 (f x.1 x.2) = x.2 := by
   set t : Set (ℂ × S) := (extChartAt II (c, z)).source ∩ extChartAt II (c, z) ⁻¹' i.he.source
   have o : IsOpen t :=
-    (continuousOn_extChartAt _ _).preimage_open_of_open (isOpen_extChartAt_source _ _)
+    (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
       i.he.open_source
   have m : (c, z) ∈ t := by
     simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff]
-    exact ContDiffAt.mem_toLocalHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
+    exact ContDiffAt.mem_toPartialHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
   apply Filter.eventuallyEq_of_mem (o.mem_nhds m); intro x m
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
-    LocalEquiv.prod_source, LocalEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
-    LocalEquiv.prod_coe, LocalEquiv.refl_coe, id] at m
+    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
+    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
   have inv := i.he.left_inv m.2
   simp only [Cinv.g]
   generalize hq : i.he.symm = q; rw [hq] at inv
-  rw [Cinv.he, ContDiffAt.toLocalHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
-  simp only [Cinv.h, Cinv.f', LocalEquiv.left_inv _ m.1] at inv
-  simp only [inv, LocalEquiv.left_inv _ m.1]
+  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
+  simp only [Cinv.h, Cinv.f', PartialEquiv.left_inv _ m.1] at inv
+  simp only [inv, PartialEquiv.left_inv _ m.1]
 
 /-- `h⁻¹` passes through its first argument -/
 theorem Cinv.inv_fst (i : Cinv f c z) : ∀ x, x ∈ i.he.target → (i.he.symm x).1 = x.1 := by
   intro x m
   have e : i.he (i.he.symm x) = x := i.he.right_inv m
   generalize hq : i.he.symm x = q; rw [hq] at e
-  rw [Cinv.he, ContDiffAt.toLocalHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top, Cinv.h] at e
+  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top, Cinv.h] at e
   rw [← e]
 
 /-- `g` is a local right inverse -/
@@ -236,17 +237,17 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   set t : Set (ℂ × T) :=
     (extChartAt II (c, f c z)).source ∩ extChartAt II (c, f c z) ⁻¹' i.he.target
   have o : IsOpen t :=
-    (continuousOn_extChartAt _ _).preimage_open_of_open (isOpen_extChartAt_source _ _)
+    (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
       i.he.open_target
-  have m' : (c, extChartAt I (f c z) (f c z)) ∈ i.he.toLocalEquiv.target := by
-    have m := ContDiffAt.image_mem_toLocalHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
+  have m' : (c, extChartAt I (f c z) (f c z)) ∈ i.he.toPartialEquiv.target := by
+    have m := ContDiffAt.image_mem_toPartialHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
     have e : i.h (c, i.z') = (c, extChartAt I (f c z) (f c z)) := by
-      simp only [Cinv.h, Cinv.z', Cinv.f', LocalEquiv.left_inv _ (mem_extChartAt_source _ _)]
+      simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
     rw [e] at m; exact m
   have m : (c, f c z) ∈ t := by
     simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff,
-      extChartAt_prod, LocalEquiv.prod_coe, extChartAt_eq_refl, LocalEquiv.refl_coe, id,
-      LocalEquiv.prod_source, prod_mk_mem_set_prod_eq, LocalEquiv.refl_source, mem_univ]
+      extChartAt_prod, PartialEquiv.prod_coe, extChartAt_eq_refl, PartialEquiv.refl_coe, id,
+      PartialEquiv.prod_source, prod_mk_mem_set_prod_eq, PartialEquiv.refl_source, mem_univ]
   have fm : ∀ᶠ x : ℂ × T in 𝓝 (c, f c z),
       f x.1 ((extChartAt I z).symm (i.he.symm (x.1, extChartAt I (f c z) x.2)).2) ∈
         (extChartAt I (f c z)).source := by
@@ -255,28 +256,28 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       · refine' ContinuousAt.comp _ _
         simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _
         apply continuousAt_snd.comp
-        · refine' (LocalHomeomorph.continuousAt i.he.symm _).comp _
+        · refine' (PartialHomeomorph.continuousAt i.he.symm _).comp _
           · simp only [m', (he i).symm_source]
           · apply continuousAt_fst.prod
             apply (continuousAt_extChartAt I _).comp_of_eq
             · exact continuousAt_snd
             · rfl
-      · simp only [i.inv_at, LocalEquiv.left_inv _ (mem_extChartAt_source _ _),
-          LocalEquiv.invFun_as_coe]
-    · simp only [i.inv_at, LocalEquiv.left_inv _ (mem_extChartAt_source _ _)]
+      · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _),
+          PartialEquiv.invFun_as_coe]
+    · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
       apply mem_extChartAt_source
   refine' fm.mp (Filter.eventually_of_mem (o.mem_nhds m) _); intro x m mf
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
-    LocalEquiv.prod_source, LocalEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
-    LocalEquiv.prod_coe, LocalEquiv.refl_coe, id] at m
+    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
+    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
   have inv := i.he.right_inv m.2
   simp only [Cinv.g]
   generalize hq : i.he.symm = q; rw [hq] at inv mf
-  rw [Cinv.he, ContDiffAt.toLocalHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
+  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
   have q1 : (q (x.1, extChartAt I (f c z) x.2)).1 = x.1 := by simp only [← hq, i.inv_fst _ m.2]
   simp only [Cinv.h, Cinv.f', Prod.eq_iff_fst_eq_snd_eq, q1] at inv
-  nth_rw 2 [← LocalEquiv.left_inv _ m.1]; nth_rw 2 [← inv.2]
-  refine' (LocalEquiv.left_inv _ mf).symm
+  nth_rw 2 [← PartialEquiv.left_inv _ m.1]; nth_rw 2 [← inv.2]
+  refine' (PartialEquiv.left_inv _ mf).symm
 
 theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.symm (c, i.fz') := by
   apply AnalyticAt.holomorphicAt
@@ -289,7 +290,6 @@ theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.sym
 
 /-- Our inverse `g` is holomorphic -/
 theorem Cinv.ga (i : Cinv f c z) : HolomorphicAt II I (uncurry i.g) (c, f c z) := by
-  simp only [Cinv.g, uncurry]
   apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq
   refine' holomorphicAt_snd.comp (i.he_symm_holomorphic.comp_of_eq _ _)
   apply holomorphicAt_fst.prod

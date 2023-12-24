@@ -30,7 +30,7 @@ theorem atInf_basis {X : Type} [Norm X] :
 instance atInf_neBot : (@atInf ℂ _).NeBot := by
   rw [atInf_basis.neBot_iff]; intro r; simp only [true_imp_iff]
   rcases exists_nat_gt r with ⟨w,h⟩; refine ⟨w,?_⟩
-  simp only [Complex.norm_eq_abs, mem_setOf_eq, Complex.abs_cast_nat]; exact h
+  simp only [Complex.norm_eq_abs, mem_setOf_eq, Complex.abs_natCast]; exact h
 
 /-- Characterization of `→ atInf` convergence -/
 theorem tendsto_atInf {X Y : Type} [Norm Y] {f : X → Y} {l : Filter X} :

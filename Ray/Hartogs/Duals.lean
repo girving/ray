@@ -23,7 +23,6 @@ open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere)
 open Set (range univ)
-open TopologicalSpace (SecondCountableTopology)
 open scoped Real NNReal ENNReal Topology ComplexConjugate
 
 noncomputable section

@@ -47,7 +47,6 @@ open Function (uncurry)
 open MeasureTheory
 open Metric (ball closedBall sphere)
 open Set (Ioc Icc univ)
-open TopologicalSpace (SecondCountableTopology)
 open scoped Real NNReal ENNReal Topology ComplexConjugate
 noncomputable section
 
@@ -297,7 +296,7 @@ theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : 
       have ha : AnalyticAt ℂ h c := by
         rw [← hh]
         apply (analyticAt_const.mul (fa c (interior_subset cs))).log
-        simp only; field_simp [Complex.abs.ne_zero_iff.mp anz]
+        field_simp [Complex.abs.ne_zero_iff.mp anz]
       rcases Metric.isOpen_iff.mp (isOpen_analyticAt ℂ h) c ha with ⟨r0, r0p, r0a⟩
       rcases Metric.continuousAt_iff.mp fac (abs (f c) - b.exp) (sub_pos.mpr bf) with
         ⟨r1, r1p, r1h⟩
@@ -347,7 +346,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   have us : u ∈ s := by
     refine IsClosed.mem_of_ge_of_forall_exists_gt ?_ s0 u0.le ?_
     · rw [← hs]; rw [Set.inter_comm]
-      refine' ContinuousOn.preimage_closed_of_closed _ isClosed_Icc isClosed_singleton
+      refine' ContinuousOn.preimage_isClosed_of_isClosed _ isClosed_Icc isClosed_singleton
       apply fs.cont.comp (Continuous.continuousOn _) _
       · exact continuous_const.add (Continuous.mul Complex.continuous_ofReal continuous_const)
       · intro t ts; simp only [Set.mem_Icc] at ts
@@ -530,7 +529,7 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
     (rp : r > 0) : ∀ f, f ∈ closure s → Extendable f c r := by
   intro F Fe
   have fu : FrechetUrysohnSpace C(Real.Angle, ℂ) := by
-    apply @TopologicalSpace.FirstCountableTopology.frechetUrysohnSpace
+    apply @FirstCountableTopology.frechetUrysohnSpace
   rw [← seqClosure_eq_closure] at Fe
   rcases Fe with ⟨f, fs, fF⟩
   simp only [ContinuousMap.tendsto_iff_tendstoLocallyUniformly,
@@ -1025,12 +1024,12 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
     (ENNReal.mul_lt_mul_right n.ne_zero n.ne_top).mpr ec
   have fatou := le_liminf.simple.mp (_root_.trans im fatou') (e * volume (closedBall z r1)) vec
   rw [Complex.volume_closedBall, NNReal.pi_eq_ofReal_pi, ←ENNReal.ofReal_pow r1p.le,
-    ←ENNReal.ofReal_mul Real.pi_nonneg] at fatou
+    ←ENNReal.ofReal_mul' Real.pi_nonneg, mul_comm _ π] at fatou
   clear fatou' im fc vec
   -- Within radius r2-r1, Fatou's lemma implies local Hartogs's
   use closedBall z (r2 - r1),
     mem_nhdsWithin_of_mem_nhds (Metric.closedBall_mem_nhds _ (by bound))
-  refine' fatou.mp (Filter.eventually_of_forall _)
+  refine fatou.mp (Filter.eventually_of_forall ?_)
   intro n fn w ws
   calc d
     _ = e * (ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹) := by rw [rde]

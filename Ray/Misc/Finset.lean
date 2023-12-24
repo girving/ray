@@ -1,4 +1,5 @@
 import Mathlib.Data.Complex.Basic
+import Mathlib.Data.Complex.Abs
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Order.Filter.AtTopBot
@@ -56,7 +57,7 @@ theorem push_range : Set.range push = {N : Finset ℕ | 0 ∈ N} := by
 theorem push_comap_atTop : Filter.comap push atTop = atTop := by
   apply Filter.comap_embedding_atTop
   exact @push_le_push
-  intro N; exists pop N; rw [push_pop]; simp; exact Finset.subset_insert _ _
+  intro N; exists pop N; rw [push_pop]; simp
 
 /-- `f ∘ push` converges `atTop` iff `f` does -/
 theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :

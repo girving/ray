@@ -21,19 +21,6 @@ theorem convexOn_max : ConvexOn ℝ univ (fun p : ℝ × ℝ ↦ max p.1 p.2) :=
   apply ConvexOn.sup; · use convex_univ; intros; simp
   · use convex_univ; intros; simp
 
-/-- `↔` version of `partialSups_le` -/
-theorem partialSups_le_iff (s : ℕ → ℝ) (n : ℕ) (x : ℝ) :
-    partialSups s n ≤ x ↔ ∀ k, k ≤ n → s k ≤ x := by
-  refine' ⟨_, partialSups_le _ _ _⟩
-  induction' n with n h
-  · simp only [partialSups_zero, Nat.zero_eq, le_zero_iff, forall_eq, imp_self]
-  · simp only [partialSups_succ, sup_le_iff, and_imp]
-    intro px sx k kn
-    by_cases kn' : k ≤ n; exact h px k kn'
-    simp only [not_le] at kn'
-    have e : k = n + 1 := by rw [Nat.succ_eq_add_one] at kn; linarith
-    rw [e]; exact sx
-
 /-- `partialSups` is continuous -/
 theorem ContinuousOn.partialSups {A : Type} [TopologicalSpace A] {f : ℕ → A → ℝ} {s : Set A}
     (fc : ∀ n, ContinuousOn (f n) s) (n : ℕ) :

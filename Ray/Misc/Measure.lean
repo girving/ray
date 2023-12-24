@@ -17,7 +17,6 @@ open Function (curry uncurry)
 open MeasureTheory
 open Metric (ball closedBall sphere)
 open Set (Ioc Icc)
-open TopologicalSpace (SecondCountableTopology)
 open scoped Real ENNReal Topology
 noncomputable section
 

@@ -1,11 +1,9 @@
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 import Mathlib.Analysis.Complex.Schwarz
 import Mathlib.Analysis.Normed.Group.Basic
-import Mathlib.Analysis.NormedSpace.Multilinear
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-import Mathlib.Topology.Algebra.Module.Multilinear
 import Mathlib.Topology.MetricSpace.Baire
 import Ray.Analytic.Analytic
 import Ray.Misc.Bounds
@@ -56,7 +54,6 @@ open MeasureTheory.MeasureSpace (volume)
 open Metric (ball closedBall sphere isOpen_ball)
 open Prod (swap)
 open Set (univ)
-open TopologicalSpace (SecondCountableTopology)
 open scoped Real NNReal ENNReal Topology
 noncomputable section
 
@@ -224,7 +221,7 @@ theorem ContinuousOn.isClosed_le {A B : Type} [TopologicalSpace A] [TopologicalS
   have e : {x | f x ≤ g x} = fg ⁻¹' t := by
     apply Set.ext; intro x; simp only [Set.preimage_setOf_eq]
   rw [e]
-  exact ContinuousOn.preimage_closed_of_closed (ContinuousOn.prod fc gc) sc
+  exact ContinuousOn.preimage_isClosed_of_isClosed (ContinuousOn.prod fc gc) sc
     OrderClosedTopology.isClosed_le'
 
 /-- If `f` is separately analytic on a polydisk, it is analytic on a subpolydisk that is full in
@@ -661,7 +658,7 @@ theorem unevenLog_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r
   rw [Real.exp_nat_mul]
   trans (r1 * (max 1 c * a)) ^ n; simp only [mul_pow]; bound [u.r1p]
   trans max 1 c ^ 1; simp only [pow_one, le_max_iff, le_refl, or_true_iff]
-  exact pow_le_pow (le_max_left 1 c) np
+  exact pow_le_pow_right (le_max_left 1 c) np
   bound [le_exp_maxLog, u.r1p, le_max_of_le_right cp.le]
 
 /-- Nonuniform bound on `unevenTerm` in terms of `unevenLog` -/

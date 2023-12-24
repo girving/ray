@@ -402,7 +402,7 @@ theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
 
 /-- `e^(1/4) ≤ 4/3` -/
 theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by
-  rw [←Real.exp_one_rpow, one_div, ←@Real.pow_nat_rpow_nat_inv (4/3) (by norm_num) 4 (by norm_num)]
+  rw [←Real.exp_one_rpow, one_div, ←@Real.pow_rpow_inv_natCast (4/3) 4 (by norm_num) (by norm_num)]
   refine' Real.rpow_lt_rpow (Real.exp_pos _).le _ (by norm_num)
   exact _root_.trans Real.exp_one_lt_d9 (by norm_num)
 
