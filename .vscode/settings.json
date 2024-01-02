@@ -7,4 +7,8 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
+  "editor.semanticTokenColorCustomizations": {
+    "enabled": true,
+    "rules": {"leanSorryLike": "#FF0000"}
+  }
 }
