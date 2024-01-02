@@ -1,3 +1,5 @@
+import Ray.Approx.Interval
+import Ray.Approx.Box
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot
