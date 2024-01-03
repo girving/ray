@@ -54,6 +54,10 @@ instance : Add (Interval s) where
 instance : Sub (Interval s) where
   sub x y := ⟨x.lo - y.hi, x.hi - y.lo⟩
 
+/-- Interval intersection -/
+instance : Inter (Interval s) where
+  inter x y := ⟨max x.lo y.lo, min x.hi y.hi⟩
+
 -- Bounds properties of interval arithmetic
 lemma Interval.add_def {x y : Interval s} : x + y = ⟨x.lo + y.lo, x.hi + y.hi⟩ := rfl
 lemma Interval.sub_def {x y : Interval s} : x - y = ⟨x.lo - y.hi, x.hi - y.lo⟩ := rfl
@@ -107,6 +111,20 @@ instance : ApproxSub (Interval s) ℝ where
 
 /-- `Interval` approximates `ℝ` as an additive group -/
 instance : ApproxAddGroup (Interval s) ℝ where
+
+/-- `Interval.inter` respects `approx` -/
+lemma Interval.approx_inter {x y : Interval s} : approx x ∩ approx y ⊆ approx (x ∩ y) := by
+  intro a ⟨ax,ay⟩
+  simp only [approx, mem_ite_univ_left, mem_Icc, Inter.inter, Fixed.max_eq_nan, Fixed.min_eq_nan,
+    Fixed.val_min, le_min_iff] at ax ay ⊢
+  by_cases n : x.lo = nan ∨ x.hi = nan ∨ y.lo = nan ∨ y.hi = nan
+  · rcases n with n | n | n | n; repeat simp [n]
+  simp only [not_or] at n
+  rcases n with ⟨n0,n1,n2,n3⟩
+  simp only [n0, n1, or_self, not_false_eq_true, forall_true_left, n2, n3, Fixed.val_max n0 n2,
+    max_le_iff] at ax ay ⊢
+  refine ⟨⟨?_,?_⟩,?_,?_⟩
+  repeat linarith
 
 /-!
 ### Interval multiplication
