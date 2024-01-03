@@ -70,6 +70,11 @@ def Box.mul (z : Box s) (w : Box t) (u : Int64) : Box u :=
 instance : Mul (Box s) where
   mul z w := z.mul w s
 
+/-- `Box` squaring (tighter than `z.mul z`) -/
+def Box.sqr (z : Box s) (u : Int64 := s) : Box u :=
+  let w := z.re.mul z.im u
+  ⟨z.re.sqr u - z.im.sqr u, w + w⟩
+
 -- Bounds properties of `Box` arithmetic
 lemma Box.neg_def {z : Box s} : -z = ⟨-z.re, -z.im⟩ := rfl
 lemma Box.add_def {z w : Box s} : z + w = ⟨z.re + w.re, z.im + w.im⟩ := rfl
@@ -131,3 +136,22 @@ instance : ApproxMul (Box s) ℂ where
 
 /-- `Box` approximates `ℂ` as a ring -/
 instance : ApproxRing (Box s) ℂ where
+
+/-- `Box` squaring approximates `ℂ` -/
+lemma Box.approx_sqr (z : Box s) (u : Int64 := s) :
+    (fun z ↦ z^2) '' approx z ⊆ approx (z.sqr u) := by
+  simp only [Box.instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
+  rintro w ⟨r,i,rz,iz,e⟩
+  refine ⟨r^2 - i^2, 2*r*i, ?_, ?_, ?_⟩
+  · apply approx_sub
+    rw [Set.mem_sub]
+    exact ⟨r^2, i^2,
+            Interval.approx_sqr _ _ (mem_image_of_mem _ rz),
+            Interval.approx_sqr _ _ (mem_image_of_mem _ iz), rfl⟩
+  · rw [mul_assoc, two_mul]
+    apply approx_add
+    rw [Set.mem_add]
+    have ri := Interval.approx_mul _ _ u (mem_image2_of_mem rz iz)
+    exact ⟨r*i, r*i, ri, ri, rfl⟩
+  · simpa only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
+      mul_comm _ r] using e

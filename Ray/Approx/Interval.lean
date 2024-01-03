@@ -289,3 +289,69 @@ instance : ApproxMul (Interval s) ℝ where
 
 /-- `Interval` approximates `ℝ` as a ring -/
 instance : ApproxRing (Interval s) ℝ where
+
+/-!
+### Interval squaring
+-/
+
+/-- Tighter than `Interval.mul x x u` -/
+def Interval.sqr (x : Interval s) (u : Int64 := s) : Interval u :=
+  bif x == 0 then 0
+  else bif x.lo == nan || x.hi == nan then ⟨nan,nan⟩
+  else bif x.lo.n.isNeg != x.hi.n.isNeg then  -- x has mixed sign
+    ⟨0, max (x.lo.mul x.lo u true) (x.hi.mul x.hi u true)⟩
+  else bif x.lo.n.isNeg then ⟨x.hi.mul x.hi u false, x.lo.mul x.lo u true⟩
+  else ⟨x.lo.mul x.lo u false, x.hi.mul x.hi u true⟩
+
+/-- Rewrite `Icc^2 ⊆ Icc` in terms of inequalities -/
+lemma sqr_Icc_subset_Icc {a b x y : ℝ} :
+    (fun x ↦ x^2) '' Icc a b ⊆ Icc x y ↔ ∀ u, a ≤ u → u ≤ b → x ≤ u^2 ∧ u^2 ≤ y := by
+  simp only [subset_def, mem_image, mem_Icc, forall_exists_index, and_imp]
+  constructor
+  · intro h u au ub; exact h _ u au ub rfl
+  · intro h u v av vb vu; rw [←vu]; exact h v av vb
+
+/-- `Interval.sqr` respects `approx` -/
+lemma Interval.approx_sqr (x : Interval s) (u : Int64) :
+    (fun x ↦ x^2) '' approx x ⊆ approx (x.sqr u) := by
+  -- Record Fixed.mul bounds
+  generalize mll0 : x.lo.mul x.lo u false = ll0
+  generalize mll1 : x.lo.mul x.lo u true = ll1
+  generalize mhh0 : x.hi.mul x.hi u false = hh0
+  generalize mhh1 : x.hi.mul x.hi u true = hh1
+  have ill0 : ll0 ≠ nan → ll0.val ≤ x.lo.val * x.lo.val := by rw [←mll0]; exact Fixed.mul_le
+  have ill1 : ll1 ≠ nan → x.lo.val * x.lo.val ≤ ll1.val := by rw [←mll1]; exact Fixed.le_mul
+  have ihh0 : hh0 ≠ nan → hh0.val ≤ x.hi.val * x.hi.val := by rw [←mhh0]; exact Fixed.mul_le
+  have ihh1 : hh1 ≠ nan → x.hi.val * x.hi.val ≤ hh1.val := by rw [←mhh1]; exact Fixed.le_mul
+  -- Handle special cases
+  simp only [sqr, bif_eq_if, Bool.or_eq_true, beq_iff_eq]
+  by_cases x0 : x = 0; · simp [x0]
+  simp only [x0, or_self, ite_false]
+  clear x0
+  by_cases n : x.lo = nan ∨ x.hi = nan ∨ approx x = ∅
+  · rcases n with n | n | n; repeat simp [n]
+  simp only [not_or, ←nonempty_iff_ne_empty] at n
+  rcases n with ⟨n0,n1,nx⟩
+  simp only [n0, n1, or_self, ite_false]
+  -- Split on signs
+  rcases Interval.sign_cases nx n1 with ⟨xls,xhs⟩ | ⟨xls,xhs⟩ | ⟨xls,xhs⟩
+  all_goals simp only [xls, xhs, n0, n1, bne_self_eq_false, Bool.false_and, if_false, not_or,
+    Bool.xor_false, Bool.and_self, ite_true, Bool.and_false, ite_false, approx, false_or,
+    Fixed.max_eq_nan, subset_if_univ_iff, and_imp, mll0, mhh0, mll1, mhh1, sqr_Icc_subset_Icc]
+  all_goals simp only [←Fixed.val_lt_zero, ←Fixed.val_nonneg] at xls xhs
+  all_goals clear mll0 mhh0 mll1 mhh1 nx
+  -- Dispatch everything with nlinarith
+  · intro nhh0 nll1 u lu uh
+    specialize ihh0 nhh0; specialize ill1 nll1
+    exact ⟨by nlinarith, by nlinarith⟩
+  · intro nll0 nhh1 u lu uh
+    specialize ill0 nll0; specialize ihh1 nhh1
+    exact ⟨by nlinarith, by nlinarith⟩
+  · intro _ nll1 nhh1 u lu uh
+    specialize ill1 nll1; specialize ihh1 nhh1
+    simp only [Fixed.val_zero, Fixed.val_max nll1 nhh1, le_max_iff]
+    constructor
+    · nlinarith
+    · by_cases us : u < 0
+      · left; nlinarith
+      · right; nlinarith
