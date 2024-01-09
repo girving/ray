@@ -228,8 +228,8 @@ theorem AnalyticOn.circle_mean_eq {f : ℂ → H} {c : ℂ} {r : ℝ} (fa : Anal
     rw [← smul_smul, IsUnit.smul_left_cancel (Ne.isUnit Complex.I_ne_zero)] at h
     rw [intervalIntegral.integral_of_le Real.two_pi_pos.le] at h
     rw [average_eq, itau, h]
-    simp only [gt_iff_lt, zero_lt_two, zero_lt_mul_left, not_lt, ge_iff_le, MeasurableSet.univ,
-      Measure.restrict_apply, Set.univ_inter, Real.volume_Ioc, sub_zero, zero_le_mul_left]
+    simp only [gt_iff_lt, zero_lt_two, mul_pos_iff_of_pos_left, not_lt, ge_iff_le, MeasurableSet.univ,
+      Measure.restrict_apply, Set.univ_inter, Real.volume_Ioc, sub_zero, mul_nonneg_iff_of_pos_left]
     rw [ENNReal.toReal_ofReal Real.two_pi_pos.le]
     rw [← smul_assoc, Complex.real_smul]; field_simp [Real.pi_ne_zero]
   · intro z zs; rw [Set.diff_empty] at zs
@@ -440,7 +440,7 @@ theorem uniform_harmonic_lim {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set �
       simp_rw [average_eq] at m ⊢
       have se : itau =ᵐ[volume] Icc 0 (2 * π) := Ioc_ae_eq_Icc
       simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
-        set_integral_congr_set_ae se, ge_iff_le, gt_iff_lt, zero_lt_two, zero_le_mul_left,
+        set_integral_congr_set_ae se, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
         not_le] at m ⊢
       generalize hv : (volume itau).toReal = v; simp_rw [hv] at m ⊢; clear hv
       have cc : Icc 0 (2 * π) ⊆ circleMap c r ⁻¹' s := by
@@ -456,7 +456,7 @@ theorem uniform_harmonic_lim {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set �
       have ti' := fu.integral_tendsto fc isCompact_Icc
       have ti := ti'.const_smul v⁻¹; clear ti'
       have ci := u.tendsto_at (cs (Metric.mem_closedBall_self (by linarith)))
-      simp only [←m, ge_iff_le, gt_iff_lt, zero_lt_two, zero_le_mul_left, not_le,
+      simp only [←m, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left, not_le,
         Function.comp_apply] at ti ⊢
       exact tendsto_nhds_unique ci ti }
 
@@ -774,7 +774,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     simp only [uncurry, Set.Icc_prod_Icc]
     refine' fs.cont.comp (Continuous.continuousOn (by continuity)) _
     intro (a,b) ts
-    simp only [ge_iff_le, Prod.mk_le_mk, gt_iff_lt, zero_lt_two, zero_le_mul_left, not_and, not_le,
+    simp only [ge_iff_le, Prod.mk_le_mk, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left, not_and, not_le,
       Prod.mk_lt_mk, Set.mem_Icc] at ts
     simp only [Metric.mem_closedBall, Complex.dist_eq, circleMap_sub_center, abs_circleMap_zero,
       abs_of_nonneg ts.1.1, ts.2.1]

@@ -123,7 +123,7 @@ def square (r : ℝ) : Set (ℝ × ℝ) :=
   Set.Ioc 0 r ×ˢ Ioc 0 (2 * π)
 
 theorem square.rp {r : ℝ} {x : ℝ × ℝ} : x ∈ square r → x.1 > 0 := by
-  simp only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, zero_lt_mul_left, Set.mem_prod,
+  simp only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left, Set.mem_prod,
     Set.mem_Ioc, and_imp]
   intro h _ _ _; assumption
 
@@ -155,7 +155,7 @@ theorem square_eq {c : ℂ} {r : ℝ} :
         simp only [Complex.dist_eq, mem_sphere_iff_norm, Complex.norm_eq_abs, Complex.abs.map_sub]
       rcases circleMap_Ioc zz with ⟨t, ts, tz⟩
       use (dist c z, t)
-      simpa only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, zero_lt_mul_left, Set.mem_prod,
+      simpa only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left, Set.mem_prod,
         Set.mem_Ioc, dist_pos, ne_eq, Ne.symm zr.2, not_false_eq_true, zr, and_self, true_and,
         tz.symm, and_true] using ts
   have im := Set.image_comp Complex.measurableEquivRealProd (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2)

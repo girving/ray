@@ -446,10 +446,8 @@ lemma UInt64.eq_split (x : UInt64) :
   constructor
   · exact (Nat.div_add_mod' _ _).symm
   · ext
-    · rw [UInt64.eq_iff_toNat_eq]
-      simp only [toNat_split_1, toNat_cast, size_eq_pow, Nat.isUnit_iff, mod_32_mod_64]
-    · rw [UInt64.eq_iff_toNat_eq]
-      simp only [toNat_split_2, toNat_cast]
+    · simp only [toNat_split_1, toNat_cast, size_eq_pow, Nat.isUnit_iff, mod_32_mod_64]
+    · simp only [toNat_split_2, toNat_cast]
       rw [Nat.mod_eq_of_lt]
       apply Nat.div_lt_of_lt_mul
       exact lt_trans (UInt64.lt_size _) (by norm_num)

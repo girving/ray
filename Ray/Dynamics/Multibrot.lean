@@ -162,10 +162,11 @@ theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
   simp only [fl, RiemannSphere.extChartAt_inf, Function.comp, invEquiv_apply,
     PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, PartialEquiv.coe_trans_symm,
     coePartialEquiv_symm_apply, PartialEquiv.symm_symm, coePartialEquiv_apply,
-    Equiv.toPartialEquiv_symm_apply, invEquiv_symm, inv_inf, toComplex_zero, add_zero, sub_zero]
+    Equiv.toPartialEquiv_symm_apply, invEquiv_symm, RiemannSphere.inv_inf, toComplex_zero,
+    add_zero, sub_zero]
   by_cases z0 : z = 0
-  · simp only [z0, coe_zero, inv_zero', f, lift_inf', inv_inf, toComplex_zero, zero_pow d_pos,
-      zero_div]
+  · simp only [z0, coe_zero, inv_zero', f, lift_inf', RiemannSphere.inv_inf, toComplex_zero,
+      zero_pow d_pos, zero_div]
   simp only [f, f', inv_coe z0, lift_coe', inv_pow]
   have zd := pow_ne_zero d z0
   by_cases h : (z ^ d)⁻¹ + c = 0
@@ -521,7 +522,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
     simp only [Function.iterate_succ_apply', e]
     generalize hz : g^[n] c⁻¹ = z
     simp only [← hg, fl, extChartAt_inf, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply,
-      invEquiv_apply, inv_inf, coePartialEquiv_symm_apply, toComplex_zero, sub_zero,
+      invEquiv_apply, RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, sub_zero,
       Function.comp, add_zero, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm,
       coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm]
     rw [coe_toComplex]
@@ -533,8 +534,8 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
   have attracts := (s.basin_attracts b).eventually (s.bottcher_eq_bottcherNear c)
   rcases (attracts.and (s.basin_stays b)).exists with ⟨n, eq, _⟩; clear attracts b
   simp only [Super.bottcherNear, extChartAt_inf, PartialEquiv.trans_apply,
-    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
-    sub_zero, Super.fl, hg, iter, toComplex_coe] at eq
+    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, RiemannSphere.inv_inf,
+    toComplex_zero, sub_zero, Super.fl, hg, iter, toComplex_coe] at eq
   -- Translate our bound across n iterations
   have e0 : s.bottcher c ((f d c)^[n] ↑c) = bottcher' d c ^ d ^ n := s.bottcher_eqn_iter n
   have e1 : bottcherNear g d (g^[n] c⁻¹) = bottcherNear g d c⁻¹ ^ d ^ n := by
@@ -897,8 +898,8 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   simp only [map_inv₀, inv_inv, ← Complex.abs.map_mul, sub_mul, inv_mul_cancel z0,
     mul_comm z _] at h
   simp only [Super.bottcherNear, extChartAt_inf, PartialEquiv.trans_apply,
-    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, inv_inf, toComplex_zero,
-    sub_zero, inv_coe z0, toComplex_coe]
+    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, RiemannSphere.inv_inf,
+    toComplex_zero, sub_zero, inv_coe z0, toComplex_coe]
   exact h
 
 /-- `s.potential c z ~ 1/abs z` for large `z` -/
@@ -1138,8 +1139,9 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (cb : exp 48 ≤ abs c) (cz : abs
   refine' (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected _).self_of_nhdsSet
   use 0, mem_closedBall_self (by bound)
   have e : ∀ᶠ z in 𝓝 0, bottcherNear (fl (f d) ∞ c) d z = s.bottcherNear c (z : 𝕊)⁻¹ := by
-    simp only [Super.bottcherNear, extChartAt_inf_apply, inv_inv, toComplex_coe, inv_inf,
-      toComplex_zero, sub_zero, Super.fl, eq_self_iff_true, Filter.eventually_true]
+    simp only [Super.bottcherNear, extChartAt_inf_apply, inv_inv, toComplex_coe,
+      RiemannSphere.inv_inf, toComplex_zero, sub_zero, Super.fl, eq_self_iff_true,
+      Filter.eventually_true]
   refine' Filter.EventuallyEq.trans _ (Filter.EventuallyEq.symm e)
   have i : Tendsto (fun z : ℂ ↦ (z : 𝕊)⁻¹) (𝓝 0) (𝓝 ∞) := by
     have h : ContinuousAt (fun z : ℂ ↦ (z : 𝕊)⁻¹) 0 :=
@@ -1262,7 +1264,7 @@ theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
   simp only [mfderiv, (bottcherHolomorphic d _ multibrotExt_inf).mdifferentiableAt, if_pos,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
-    inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
+    RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [bottcher_hasDerivAt_one.hasFDerivAt.fderiv]

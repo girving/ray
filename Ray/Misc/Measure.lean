@@ -147,22 +147,20 @@ def itau := Ioc 0 (2 * π)
 
 -- Lemmas about Itau
 theorem itau_volume : volume itau = ENNReal.ofReal (2 * π) := by
-  simp only [itau, gt_iff_lt, zero_lt_two, zero_lt_mul_left, not_lt, ge_iff_le, Real.volume_Ioc,
-    sub_zero]
+  simp only [itau, Real.volume_Ioc, sub_zero]
 theorem itau_real_volume : (volume itau).toReal = 2 * π := by
-  simp only [itau_volume, gt_iff_lt, zero_lt_two, zero_le_mul_left,
-    ENNReal.toReal_ofReal Real.two_pi_pos.le]
+  simp only [itau_volume, ENNReal.toReal_ofReal Real.two_pi_pos.le]
 theorem NiceVolume.itau : NiceVolume itau :=
-  { measurable := by simp only [_root_.itau, gt_iff_lt, zero_lt_two, zero_lt_mul_left, not_lt,
+  { measurable := by simp only [_root_.itau, gt_iff_lt, zero_lt_two, mul_pos_iff_of_pos_left, not_lt,
       ge_iff_le, measurableSet_Ioc]
     finite := by simp only [itau_volume, ENNReal.ofReal_lt_top]
-    pos := by simp only [itau_volume, gt_iff_lt, ENNReal.ofReal_pos, zero_lt_two, zero_lt_mul_left,
-      Real.pi_pos] }
+    pos := by simp only [itau_volume, gt_iff_lt, ENNReal.ofReal_pos, zero_lt_two,
+      mul_pos_iff_of_pos_left, Real.pi_pos] }
 theorem measurableSet_itau : MeasurableSet itau := by
-  simp only [itau, gt_iff_lt, zero_lt_two, zero_lt_mul_left, not_lt, ge_iff_le, measurableSet_Ioc]
+  simp only [itau, measurableSet_Ioc]
 theorem tau_mem_itau : 2*π ∈ itau := by
-  simp only [itau, gt_iff_lt, zero_lt_two, zero_lt_mul_left, Real.pi_pos, not_true, ge_iff_le,
-    Set.mem_Ioc, le_refl, and_self]
+  simp only [itau, Set.mem_Ioc, gt_iff_lt, zero_lt_two, mul_pos_iff_of_pos_left, Real.pi_pos,
+    le_refl, and_self]
 
 /-- Continuous functions are integrable on spheres -/
 theorem ContinuousOn.integrableOn_sphere {f : ℂ → E} {c : ℂ} {r : ℝ}
@@ -237,8 +235,8 @@ theorem LocalVolume.closure_interior (s : Set X) (bp : ∀ (x : X) (r), r > 0 �
 theorem LocalVolume.Ioc {a b : ℝ} : LocalVolumeSet (Set.Ioc a b) := by
   apply LocalVolume.closure_interior
   · intro x r rp
-    simp only [Real.volume_ball, gt_iff_lt, ENNReal.ofReal_pos, zero_lt_mul_left, zero_lt_bit0,
-      zero_lt_one]
+    simp only [Real.volume_ball, gt_iff_lt, ENNReal.ofReal_pos, mul_pos_iff_of_pos_left,
+      zero_lt_bit0, zero_lt_one]
     bound
   · by_cases ab : a = b; · simp only [ab, Set.Ioc_self, Set.empty_subset]
     simp only [interior_Ioc, closure_Ioo ab, Set.Ioc_subset_Icc_self]

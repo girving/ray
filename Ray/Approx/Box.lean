@@ -141,17 +141,16 @@ instance : ApproxRing (Box s) ℂ where
 lemma Box.approx_sqr (z : Box s) (u : Int64 := s) :
     (fun z ↦ z^2) '' approx z ⊆ approx (z.sqr u) := by
   simp only [Box.instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
-  rintro w ⟨r,i,rz,iz,e⟩
-  refine ⟨r^2 - i^2, 2*r*i, ?_, ?_, ?_⟩
+  rintro w ⟨r,rz,i,iz,e⟩
+  refine ⟨r^2 - i^2, ?_, 2*r*i, ?_, ?_⟩
   · apply approx_sub
     rw [Set.mem_sub]
-    exact ⟨r^2, i^2,
-            Interval.approx_sqr _ _ (mem_image_of_mem _ rz),
-            Interval.approx_sqr _ _ (mem_image_of_mem _ iz), rfl⟩
+    exact ⟨r^2, Interval.approx_sqr _ _ (mem_image_of_mem _ rz),
+           i^2, Interval.approx_sqr _ _ (mem_image_of_mem _ iz), rfl⟩
   · rw [mul_assoc, two_mul]
     apply approx_add
     rw [Set.mem_add]
     have ri := Interval.approx_mul _ _ u (mem_image2_of_mem rz iz)
-    exact ⟨r*i, r*i, ri, ri, rfl⟩
+    exact ⟨r*i, ri, r*i, ri, rfl⟩
   · simpa only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
       mul_comm _ r] using e

@@ -86,8 +86,8 @@ lemma UInt128.eq_iff_toNat_eq (x y : UInt128) : x = y ↔ x.toNat = y.toNat := b
   constructor
   · intro h; rw [h]
   · intro h; ext
-    · rw [UInt64.eq_iff_toNat_eq, ←UInt128.toNat_mod_pow_eq_lo x, ←UInt128.toNat_mod_pow_eq_lo y, h]
-    · rw [UInt64.eq_iff_toNat_eq, ←UInt128.toNat_div_pow_eq_hi x, ←UInt128.toNat_div_pow_eq_hi y, h]
+    · rw [←UInt128.toNat_mod_pow_eq_lo x, ←UInt128.toNat_mod_pow_eq_lo y, h]
+    · rw [←UInt128.toNat_div_pow_eq_hi x, ←UInt128.toNat_div_pow_eq_hi y, h]
 
 def UInt128.blt (x y : UInt128) : Bool :=
   x.hi < y.hi || (x.hi == y.hi && x.lo < y.lo)
