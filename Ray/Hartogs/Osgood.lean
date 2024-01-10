@@ -50,9 +50,6 @@ For a quick refresher on why the Cauchy power series works, for `c = 0`:
       = Σ_n w^n (2πi)⁻¹ ∫_C dz  z⁻¹^n * z⁻¹ * f z
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs exp I log)
 open Filter (atTop)
 open Function (curry uncurry)

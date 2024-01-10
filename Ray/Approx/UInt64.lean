@@ -10,9 +10,6 @@ import Std.Data.Nat.Lemmas
 ## `UInt64` lemmas
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Qq
 
 attribute [pp_dot] UInt64.toNat
@@ -340,8 +337,8 @@ noncomputable instance : Coe UInt64 (ZMod UInt64.size) where
   simp only [toZMod, toNat, natCast_def, Fin.coe_ofNat_eq_mod, ZMod.nat_cast_mod]
 
 @[simp] lemma UInt64.toZMod_shiftLeft32 (x : UInt64) :
-    (x <<< 32 : ZMod UInt64.size) = x * (2 : ZMod _)^32 := by
-  have e : (2^32)^2 = UInt64.size := rfl
+    (x <<< 32 : ZMod UInt64.size) = x * (2 : ZMod UInt64.size)^32 := by
+  have e : (2^32)^2 = UInt64.size := by rfl
   rw [toZMod, UInt64.toNat_shiftLeft32, ←Nat.mod_mul_eq_mul_mod, e]
   simp only [ZMod.nat_cast_mod, Nat.cast_mul, toZMod_toNat, Nat.cast_pow, Nat.cast_ofNat]
 

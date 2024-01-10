@@ -9,9 +9,6 @@ import Ray.Approx.Bool
 ## `ℕ` facts
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 lemma Nat.add_sub_eq_sub_sub {m n k : ℕ} (nk : n ≤ k) : m + n - k = m - (k - n) := by
   rw [←Nat.sub_add_cancel nk]
   generalize k - n = a

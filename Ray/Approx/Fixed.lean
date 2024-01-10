@@ -9,9 +9,6 @@ import Ray.Approx.UInt128
 ## 64-bit fixed point numbers
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Pointwise
 open Set
 open scoped Real

@@ -32,9 +32,6 @@ References:
 2. Lean 4 metaprogramming book: https://github.com/leanprover-community/lean4-metaprogramming-book
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs)
 open Parser
 open Lean Elab Meta Term Mathlib.Tactic Mathlib.Meta Syntax

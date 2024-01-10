@@ -15,9 +15,6 @@ We rewrite integration over the closed disk in polar coordinates, so that we can
 disk integrals to `intervalIntegral`s of `circleIntegral`s.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs arg exp I)
 open LinearMap (toMatrix_apply)
 open MeasureTheory

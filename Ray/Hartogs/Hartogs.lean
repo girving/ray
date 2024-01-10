@@ -44,9 +44,6 @@ References:
 2. https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs exp I log)
 open Filter (atTop eventually_of_forall)
 open Function (curry uncurry)

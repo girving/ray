@@ -26,9 +26,6 @@ unparameterized version, and specificaly our underlying workhorse is
 extentions of the flat versions lifted to charts.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (abs)
 open Filter (Tendsto eventually_of_forall)

@@ -20,9 +20,6 @@ import Ray.Misc.Topology
 ## Facts about analytic functions (general field case)
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Filter (atTop eventually_of_forall)
 open Function (curry uncurry)

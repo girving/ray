@@ -14,9 +14,6 @@ import Ray.Tactic.Bound
 ## Assorted bound lemmas
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (abs exp log I)
 open Filter (atTop)

@@ -21,9 +21,6 @@ contained within the chart, and (2) the local theory of `BottcherNear.lean` appl
 iteration sends `s.near` to `s.near`.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (exp log abs cpow)
 open Filter (Tendsto atTop eventually_of_forall)

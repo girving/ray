@@ -53,9 +53,6 @@ some example effective results that we prove:
 9. `bottcher d` is monic at `∞` (has derivative 1 there)
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs)
 open Filter (eventually_of_forall Tendsto atTop)
 open Function (uncurry)
@@ -1194,15 +1191,15 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (cb : exp 48 ≤ abs 
       _ ≥ 1 - abs (c * w ^ d) := by bound [Complex.abs_re_le_abs]
       _ ≥ 1 - 1 / 2 := by linarith
       _ ≥ 0 := by norm_num
-  · have dn : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ (1 / 2 : ℝ) ^ (n + 1) := by
+  · have dn : abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ))) ≤ (1 / 2 : ℝ) ^ (n + 1) := by
       simp only [Nat.cast_pow, one_div, map_neg_eq_map, map_inv₀, map_pow, Complex.abs_natCast,
         inv_pow]
       bound
-    have d1 : abs (-(1 / (d ^ (n + 1) : ℂ))) ≤ 1 := le_trans dn (by bound)
+    have d1 : abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ))) ≤ 1 := le_trans dn (by bound)
     refine le_trans (pow_small ?_ d1) ?_
     · rw [add_sub_cancel']; exact cw2
     · rw [add_sub_cancel']
-      calc 4 * abs (c * w ^ d) * abs (-(1 / (d ^ (n + 1) : ℂ)))
+      calc 4 * abs (c * w ^ d) * abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ)))
         _ ≤ 4 * (abs z)⁻¹ * (1/2 : ℝ) ^ (n + 1) := by bound
         _ ≤ 2 * (1/2 : ℝ) ^ n * (abs z)⁻¹ := by
           simp only [pow_succ, ←mul_assoc, mul_comm _ (1/2:ℝ)]; norm_num

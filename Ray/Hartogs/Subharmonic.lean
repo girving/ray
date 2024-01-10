@@ -38,9 +38,6 @@ subharmonic functions that are bounded above and limsup bounded pointwise are li
 uniformly.  This is the key piece of measure theory needed for Hartogs' theorem.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs exp I log)
 open Filter (Tendsto liminf limsup atTop)
 open Function (uncurry)

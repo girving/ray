@@ -23,9 +23,6 @@ import Ray.Tactic.Bound
 We show that uniformly convergence sequences of analytic functions have analytic limits.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs I)
 open Filter (atTop)
 open MeasureTheory.MeasureSpace (volume)
@@ -105,7 +102,7 @@ theorem cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w 
         Complex.dist_eq, zr, le_refl]
     have zs := h z zb
     calc abs w ^ n / ↑r ^ n * (r⁻¹ * abs (f z))
-      _ = abs w ^ n * r⁻¹ ^ n * (r⁻¹ * abs (f z)) := by
+      _ = abs w ^ n * (r⁻¹ ^ n : ℝ≥0) * (r⁻¹ * abs (f z)) := by
         rw [div_eq_mul_inv, ← inv_pow, NNReal.coe_pow, NNReal.coe_inv]
       _ ≤ abs w ^ n * r⁻¹ ^ n * (r⁻¹ * d) := by bound
       _ = abs w ^ n * r⁻¹ ^ n * d * r⁻¹ := by ring
