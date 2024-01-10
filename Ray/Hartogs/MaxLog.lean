@@ -96,7 +96,7 @@ theorem LipschitzOnWith.log (b : ℝ) : LipschitzOnWith (-b).exp.toNNReal Real.l
 theorem LipschitzWith.maxLog (b : ℝ) : LipschitzWith (-b).exp.toNNReal (maxLog b) := by
   rw [← lipschitzOn_univ]
   have h := (LipschitzOnWith.log b).comp ((LipschitzWith.id.const_max b.exp).lipschitzOnWith univ)
-    (by simp only [id_eq, ge_iff_le, Set.maps_univ_to, Set.mem_Ici, le_max_iff, le_refl, true_or,
+    (by simp only [id_eq, Set.mapsTo_univ_iff, Set.mem_Ici, le_max_iff, le_refl, true_or,
       forall_const])
   have e : Real.log ∘ max (Real.exp b) = _root_.maxLog b := by funext x; simp [_root_.maxLog]
   simpa only [e, mul_one, id_eq, ge_iff_le, lipschitzOn_univ] using h
