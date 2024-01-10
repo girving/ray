@@ -28,9 +28,6 @@ One wart: we require not only that `f c` has a zero of order `d ≥ 2`, but also
 formulas, but is probably better to remove.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (exp log abs cpow)
 open Filter (Tendsto atTop)
@@ -230,7 +227,7 @@ Ignoring multiple values when taking `d`th roots, we can derive the infinite pro
 
 /-- Terms in our infinite product -/
 def term (f : ℂ → ℂ) (d n : ℕ) (z : ℂ) :=
-  g f d (f^[n] z) ^ (1 / d ^ (n + 1) : ℂ)
+  g f d (f^[n] z) ^ (1 / (d ^ (n + 1) : ℕ) : ℂ)
 
 /-- With `term` in hand, we can define Böttcher coordinates -/
 def bottcherNear (f : ℂ → ℂ) (d : ℕ) (z : ℂ) :=
@@ -321,7 +318,7 @@ theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ (term f d n)
 theorem term_converges (s : SuperNear f d t) :
     ∀ n, z ∈ t → abs (term f d n z - 1) ≤ 1/2 * (1/2 : ℝ) ^ n := by
   intro n zt; rw [term]
-  trans 4 * abs (g f d (f^[n] z) - 1) * abs (1 / d ^ (n + 1) : ℂ)
+  trans 4 * abs (g f d (f^[n] z) - 1) * abs (1 / (d ^ (n + 1) : ℕ) : ℂ)
   · apply pow_small; · exact le_trans (s.gs (s.mapsTo n zt)) (by norm_num)
     · simp only [one_div, map_inv₀, Complex.abs_pow, Complex.abs_natCast, Nat.cast_pow]
       apply inv_le_one
@@ -331,7 +328,7 @@ theorem term_converges (s : SuperNear f d t) :
     have ps : abs (1 / (d:ℂ) ^ (n + 1) : ℂ) ≤ 1/2 * (1/2 : ℝ) ^ n := by
       have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ _ _).symm
       rw [nn]; simp; apply inv_le_inv_of_le; bound; bound [s.dr2]
-    calc (4:ℝ) * abs (g f d (f^[n] z) - 1) * abs ((1:ℂ) / d ^ (n + 1) : ℂ)
+    calc (4:ℝ) * abs (g f d (f^[n] z) - 1) * abs ((1:ℂ) / (d ^ (n + 1) : ℕ) : ℂ)
       _ = (4:ℝ) * abs (g f d (f^[n] z) - 1) * abs ((1:ℂ) / (d:ℂ) ^ (n + 1) : ℂ) := by
         rw [Nat.cast_pow]
       _ ≤ 4 * (1 / 4) * (1 / 2 * (1 / 2 : ℝ) ^ n) := by bound

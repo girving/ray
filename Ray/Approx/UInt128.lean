@@ -6,9 +6,6 @@ import Ray.Approx.UInt64
 ## `UInt128`: 128-bit integers
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 
 /-!
@@ -127,14 +124,14 @@ def UInt128.succ (x : UInt128) : UInt128 :=
     hi := x.hi + bif lo == 0 then 1 else 0 }
 
 lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat = x.toNat+1 := by
-  have e : (2:UInt64)^64 = 0 := rfl
+  have e : (2:UInt64)^64 = 0 := by rfl
   by_cases ll : x.lo = (2:UInt64)^64-1
   · simp only [succ, ll, e, zero_sub, add_left_neg, beq_self_eq_true, cond_true]
     by_cases hh : x.hi = (2:UInt64)^64-1
     · simp only [toNat, hh, ll, ge_iff_le, ne_eq] at h; contrapose h; decide
     · simp only [UInt64.eq_iff_toNat_eq] at hh
       simp only [toNat, UInt64.toNat_add_one hh, add_mul, one_mul, UInt64.toNat_zero, add_zero, ll]
-      have c : (UInt64.toNat ((2:UInt64) ^ 64 - 1) : ℤ) = (2:ℤ)^64-1 := rfl
+      have c : (UInt64.toNat ((2:UInt64) ^ 64 - 1) : ℤ) = (2:ℤ)^64-1 := by rfl
       zify; rw [c]; ring
   · simp only [UInt64.eq_iff_toNat_eq] at ll
     simp only [toNat, succ, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq, UInt64.toNat_add_one ll,

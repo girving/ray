@@ -8,9 +8,6 @@ import Ray.Approx.UInt64
 Arithmetic wraps, so beware (not really, our uses are formally checked).
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Set
 
 /-- 64-bit two's complement integers -/
@@ -25,7 +22,7 @@ def Int64.min : Int64 := ⟨1 <<< 63⟩
 
 /-- The `ℤ` that an `Int64` represents -/
 @[coe] def Int64.toInt (x : Int64) : ℤ :=
-  x.n.toNat - bif x.isNeg then 2^64 else 0
+  (x.n.toNat : ℤ) - (((bif x.isNeg then 2^64 else 0) : ℕ) : ℤ)
 
 /-- The `ℤ` that an `Int64` represents -/
 instance : Coe Int64 ℤ where
@@ -119,7 +116,7 @@ lemma Int64.blt_eq_decide_lt (x y : Int64) : x.blt y = decide (x < y) := by
 -- Consequences of the sign bit being true or false
 lemma Int64.coe_of_nonneg {x : Int64} (h : ¬x.isNeg) : (x : ℤ) = x.n.toNat := by
   simp only [Bool.not_eq_true] at h; simp only [h, cond_false, Nat.cast_zero, sub_zero, Int64.toInt]
-lemma Int64.coe_of_neg {x : Int64} (h : x.isNeg) : (x : ℤ) = x.n.toNat - 2^64 := by
+lemma Int64.coe_of_neg {x : Int64} (h : x.isNeg) : (x : ℤ) = x.n.toNat - ((2^64 : ℕ) : ℤ) := by
   simp only [h, cond_true, Nat.cast_zero, sub_zero, Int64.toInt]
 
 /-- The ordering is consistent with `ℤ` -/
@@ -182,8 +179,8 @@ lemma Int64.isNeg_neg {x : Int64} (x0 : x ≠ 0) (xn : x ≠ .min) : (-x).isNeg 
 
 /-- Equality is consistent with `ℤ` -/
 @[simp] lemma Int64.coe_eq_coe (x y : Int64) : (x : ℤ) = (y : ℤ) ↔ x = y := by
-  have e : 1 <<< 63 % UInt64.size = 2^63 := rfl
-  have n : (2:ℤ)^64 = ((2^64 : ℕ) : ℤ) := rfl
+  have e : 1 <<< 63 % UInt64.size = 2^63 := by rfl
+  have n : (2:ℤ)^64 = ((2^64 : ℕ) : ℤ) := by rfl
   have xl : x.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
   have yl : y.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
   simp only [toInt, isNeg, UInt64.le_iff_toNat_le, UInt64.toNat_cast, e, Bool.cond_decide,
@@ -295,13 +292,13 @@ instance : LinearOrder Int64 where
 
 /-- `Int64.min` is the smallest element -/
 @[simp] lemma Int64.min_le (x : Int64) : .min ≤ x := by
-  have cm : (min : ℤ) = -(2:ℤ)^63 := rfl
-  have e : ((1 <<< 63 : ℕ) : UInt64).toNat = 2^63 := rfl
+  have cm : (min : ℤ) = -(2:ℤ)^63 := by rfl
+  have e : ((1 <<< 63 : ℕ) : UInt64).toNat = 2^63 := by rfl
   simp only [←Int64.coe_le_coe, cm]
   simp only [Int64.toInt, bif_eq_if, isNeg, UInt64.le_iff_toNat_le, e, decide_eq_true_eq]
   split_ifs with h
   · simp only [Nat.cast_pow, Nat.cast_ofNat, neg_le_sub_iff_le_add, ge_iff_le]
-    have e : ((2^63 : ℕ) : ℤ) = (2:ℤ)^63 := rfl
+    have e : ((2^63 : ℕ) : ℤ) = (2:ℤ)^63 := by rfl
     have le : (2:ℤ) ^ 63 ≤ (x.n.toNat : ℤ) := by simpa only [←e, Nat.cast_le]
     exact le_trans (by norm_num) (add_le_add_right le _)
   · simp only [CharP.cast_eq_zero, sub_zero, ge_iff_le]
@@ -336,6 +333,7 @@ lemma Int64.isNeg_eq {x : Int64} : x.isNeg = decide (x < 0) := by
 /-!
 ### Order operations: min, abs
 -/
+
 
 /-- `Int64` `min` -/
 instance : Min Int64 where

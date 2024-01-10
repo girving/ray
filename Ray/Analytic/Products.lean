@@ -22,9 +22,6 @@ We define convergence of infinite products, and show that uniform limits of prod
 analytic functions are analytic.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs exp log)
 open Filter (atTop)
 open Metric (ball closedBall sphere)

@@ -18,9 +18,6 @@ We still haven't defined Böttcher coordinates except near `a`, but their existe
 from bijectivity of `s.ray`; see `Bottcher.lean`.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (abs)
 open Filter (Tendsto atTop eventually_of_forall)

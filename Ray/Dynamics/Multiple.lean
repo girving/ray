@@ -20,9 +20,6 @@ The proof proceeds in w.l.o.g. stages, reducing first from manifolds to `ℂ →
 the point to `0` and standardizing the leading coefficient to be 1.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (exp log abs cpow)
 open Filter (eventually_of_forall Tendsto atTop)
 open Function (curry uncurry)

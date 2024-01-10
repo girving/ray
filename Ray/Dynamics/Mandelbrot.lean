@@ -11,9 +11,6 @@ The rest of our proof works via `AnalyticManifold`s and other machinery.  Here w
 3. Thus, the Mandelbrot set and its complement are connected
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs)
 open Filter (Tendsto atTop)
 open RiemannSphere

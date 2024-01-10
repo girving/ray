@@ -34,9 +34,6 @@ Other things we show:
 4. A variety of other small things
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open ChartedSpace (chartAt)
 open Filter (eventually_of_forall)
 open Function (uncurry)

@@ -20,9 +20,6 @@ such that the defining equation always holds.  In particular, this means that
 since for higher potentials we choose roots arbitrarily.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Complex (abs)
 open Filter (Tendsto atTop eventually_of_forall)

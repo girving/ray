@@ -22,9 +22,6 @@ import Ray.Misc.Topology
 ## Basics about complex analytic (holomorphic) functions
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Complex (abs exp I log)
 open Filter (atTop)
 open Metric (ball closedBall sphere isOpen_ball)

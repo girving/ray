@@ -18,9 +18,6 @@ but this may require a lot of machinery to cover manifolds in particular: the nL
 the existence of Riemannian metrics.
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 open Classical
 open Metric (ball isOpen_ball mem_ball mem_ball_self)
 open Set

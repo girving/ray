@@ -4,9 +4,6 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 ## `Complex.pow` and `pow` interact nicely
 -/
 
--- Remove once https://github.com/leanprover/lean4/issues/2220 is fixed
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
-
 theorem pow_mul_nat {z w : ℂ} {n : ℕ} : (z ^ w) ^ n = z ^ (w * n) := by
   by_cases z0 : z = 0
   · rw [z0]
