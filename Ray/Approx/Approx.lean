@@ -1,7 +1,9 @@
 import Mathlib.Algebra.Field.Defs
+import Mathlib.Data.Set.Intervals.OrdConnected
 import Mathlib.Data.Set.NAry
 import Mathlib.Data.Set.Pointwise.Basic
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.Monotonicity.Basic
 
 /-!
 ## Approximate arithmetic typeclasses
@@ -14,29 +16,29 @@ variable {R A : Type}
 
 /-- `A` approximates `R`, in that we can map `A → Set R` -/
 class Approx (A : Type) (R : outParam Type) where
-  approx : A → Set R
+  approx (x : A) : Set R
 
 export Approx (approx)
 
 /-- `-A` is conservative -/
 class ApproxNeg (A R : Type) [Neg R] [Neg A] [Approx A R] where
-  approx_neg : ∀ x : A, -approx x ⊆ approx (-x)
+  approx_neg (x : A) : -approx x ⊆ approx (-x)
 
 /-- `A + A` is conservative -/
 class ApproxAdd (A R : Type) [Add R] [Add A] [Approx A R] where
-  approx_add : ∀ x y : A, approx x + approx y ⊆ approx (x + y)
+  approx_add (x y : A) : approx x + approx y ⊆ approx (x + y)
 
 /-- `A - A` is conservative -/
 class ApproxSub (A R : Type) [Sub R] [Sub A] [Approx A R] where
-  approx_sub : ∀ x y : A, approx x - approx y ⊆ approx (x - y)
+  approx_sub (x y : A) : approx x - approx y ⊆ approx (x - y)
 
 /-- `A * A` is conservative -/
 class ApproxMul (A R : Type) [Mul R] [Mul A] [Approx A R] where
-  approx_mul : ∀ x y : A, approx x * approx y ⊆ approx (x * y)
+  approx_mul (x y : A) : approx x * approx y ⊆ approx (x * y)
 
 /-- `A / A` is conservative -/
 class ApproxDiv (A R : Type) [Div R] [Div A] [Approx A R] where
-  approx_div : ∀ x y : A, approx x / approx y ⊆ approx (x / y)
+  approx_div (x y : A) : approx x / approx y ⊆ approx (x / y)
 
 /-- `A` approximates the additive group `R` -/
 class ApproxAddGroup (A : Type) (R : outParam Type) [AddGroup R] extends
@@ -55,6 +57,15 @@ export ApproxAdd (approx_add)
 export ApproxSub (approx_sub)
 export ApproxMul (approx_mul)
 export ApproxDiv (approx_div)
+
+/-!
+## Typeclass for `nan`
+-/
+
+class Nan (A : Type) where
+  nan : A
+
+export Nan (nan)
 
 /-!
 ### Rounding utilities
@@ -89,3 +100,77 @@ lemma rounds_neg [OrderedAddCommGroup I] : rounds (-s) up = -(rounds s !up) := b
 @[simp] lemma mem_rounds_singleton {x y : I} :
     x ∈ rounds {y} up ↔ (if up then y ≤ x else x ≤ y) := by
   simp only [rounds, mem_singleton_iff, exists_eq_left, mem_setOf_eq]
+
+/-!
+## `mono` machinery
+-/
+
+-- Make `mono` handle `s ⊆ s`
+attribute [mono] subset_refl
+
+@[mono] lemma subset_approx_neg [Neg R] [Neg A] [Approx A R] [ApproxNeg A R] {a : Set R} (x : A)
+    (ax : a ⊆ approx x) : -a ⊆ approx (-x) := by
+  refine subset_trans ?_ (approx_neg x)
+  intro b m; exact ax m
+
+@[mono] lemma subset_approx_add [Add R] [Add A] [Approx A R] [ApproxAdd A R] {a b : Set R} {x y : A}
+    (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a + b ⊆ approx (x + y) :=
+  subset_trans (add_subset_add ax yb) (approx_add x y)
+
+@[mono] lemma subset_approx_sub [Sub R] [Sub A] [Approx A R] [ApproxSub A R] {a b : Set R} {x y : A}
+    (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a - b ⊆ approx (x - y) :=
+  subset_trans (sub_subset_sub ax yb) (approx_sub x y)
+
+@[mono] lemma subset_approx_mul [Mul R] [Mul A] [Approx A R] [ApproxMul A R] {a b : Set R} {x y : A}
+    (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a * b ⊆ approx (x * y) :=
+  subset_trans (mul_subset_mul ax yb) (approx_mul x y)
+
+@[mono] lemma subset_approx_div [Div R] [Div A] [Approx A R] [ApproxDiv A R] {a b : Set R} {x y : A}
+    (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a / b ⊆ approx (x / y) :=
+  subset_trans (div_subset_div ax yb) (approx_div x y)
+
+@[mono] lemma mem_approx_neg [InvolutiveNeg R] [Neg A] [Approx A R] [ApproxNeg A R] {a : R} {x : A}
+    (ax : a ∈ approx x) : -a ∈ approx (-x) := by
+  apply approx_neg x; simpa only [mem_neg, neg_neg]
+
+@[mono] lemma mem_approx_add [Add R] [Add A] [Approx A R] [ApproxAdd A R] {a b : R} {x y : A}
+    (ax : a ∈ approx x) (yb : b ∈ approx y) : a + b ∈ approx (x + y) := by
+  apply subset_approx_add (singleton_subset_iff.mpr ax) (singleton_subset_iff.mpr yb)
+  simp only [add_singleton, image_singleton, mem_singleton_iff]
+
+@[mono] lemma mem_approx_sub [Sub R] [Sub A] [Approx A R] [ApproxSub A R] {a b : R} {x y : A}
+    (ax : a ∈ approx x) (yb : b ∈ approx y) : a - b ∈ approx (x - y) := by
+  apply subset_approx_sub (singleton_subset_iff.mpr ax) (singleton_subset_iff.mpr yb)
+  simp only [sub_singleton, image_singleton, mem_singleton_iff]
+
+@[mono] lemma mem_approx_mul [Mul R] [Mul A] [Approx A R] [ApproxMul A R] {a b : R} {x y : A}
+    (ax : a ∈ approx x) (yb : b ∈ approx y) : a * b ∈ approx (x * y) := by
+  apply subset_approx_mul (singleton_subset_iff.mpr ax) (singleton_subset_iff.mpr yb)
+  simp only [mul_singleton, image_singleton, mem_singleton_iff]
+
+@[mono] lemma mem_approx_div [Div R] [Div A] [Approx A R] [ApproxDiv A R] {a b : R} {x y : A}
+    (ax : a ∈ approx x) (yb : b ∈ approx y) : a / b ∈ approx (x / y) := by
+  apply subset_approx_div (singleton_subset_iff.mpr ax) (singleton_subset_iff.mpr yb)
+  simp only [div_singleton, image_singleton, mem_singleton_iff]
+
+/-- Test `mono` for `⊆ approx`-/
+lemma approx_mono_subset_test [Field R] [ApproxField A R] (x y z : A) :
+    approx x + approx y * -approx z ⊆ approx (x + y * -z) := by mono
+
+/-- Test `mono` for `∈ approx`-/
+lemma approx_mono_mem_test [Field R] [ApproxField A R] (a b c : R) (x y z : A)
+    (am : a ∈ approx x) (bm : b ∈ approx y) (cm : c ∈ approx z) :
+    a + b * -c ∈ approx (x + y * -z) := by mono
+
+/-!
+## Convexity of `approx`
+-/
+
+/-- `A` has a convex `approx` -/
+class ApproxConnected (A R : Type) [Approx A R] [Preorder R] where
+  connected (x : A) : OrdConnected (approx x)
+
+/-- `Icc ⊆ approx` if the endpoints are included -/
+@[mono] lemma Icc_subset_approx [Approx A R] [Preorder R] [ApproxConnected A R] {a b : R} {x : A}
+    (ax : a ∈ approx x) (bx : b ∈ approx x) : Icc a b ⊆ approx x :=
+  (ApproxConnected.connected _).out ax bx

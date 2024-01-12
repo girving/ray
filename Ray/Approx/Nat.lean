@@ -10,15 +10,7 @@ import Ray.Approx.Bool
 -/
 
 lemma Nat.add_sub_eq_sub_sub {m n k : ℕ} (nk : n ≤ k) : m + n - k = m - (k - n) := by
-  rw [←Nat.sub_add_cancel nk]
-  generalize k - n = a
-  simp only [ge_iff_le, add_le_add_iff_right, add_le_iff_nonpos_left, nonpos_iff_eq_zero,
-    add_tsub_cancel_right]
-  induction' a with a h
-  · simp only [zero_eq, zero_add, ge_iff_le, add_le_iff_nonpos_left, nonpos_iff_eq_zero,
-      add_tsub_cancel_right, tsub_zero]
-  · rw [Nat.succ_eq_add_one, Nat.add_assoc, add_comm 1 n, ←Nat.add_assoc, ←Nat.sub_sub, h,
-      Nat.sub_sub]
+  omega
 
 lemma Nat.add_sub_lt_left {m n k : ℕ} (m0 : m ≠ 0) : m + n - k < m ↔ n < k := by
   by_cases nk : n < k
@@ -164,13 +156,10 @@ lemma Nat.land_eq_mod {n k : ℕ} : n &&& (2^k-1) = n % 2^k := by
       · simp only [and_pow_two_is_mod, testBit_mod_two_pow, succ_lt_succ_iff]
 
 lemma Nat.add_lt_add' {a b c d : ℕ} (ac : a < c) (bd : b ≤ d) : a + b < c + d := by
-  rw [←Nat.add_one_le_iff] at ac ⊢
-  rw [add_comm, ←add_assoc, add_comm _ a]
-  exact add_le_add ac bd
+  omega
 
 lemma Nat.add_lt_add'' {a b c d : ℕ} (ac : a ≤ c) (bd : b < d) : a + b < c + d := by
-  rw [add_comm a, add_comm c]
-  exact Nat.add_lt_add' bd ac
+  omega
 
 lemma Nat.mod_mul_eq_mul_mod' (a n m : ℕ) (m0 : m ≠ 0) : a * n % (m * n) = a % m * n := by
   by_cases n0 : n = 0
@@ -314,8 +303,7 @@ lemma Nat.div_eq_zero_of_lt {m n : ℕ} (h : m < n) : m / n = 0 := by
   · simp only [n0, Nat.div_zero]
   · rwa [Nat.div_eq_zero_iff (Nat.pos_iff_ne_zero.mpr n0)]
 
-lemma Nat.sub_le_sub {a b c d : ℕ} (ab : a ≤ c) (db : d ≤ b) : a - b ≤ c - d :=
-  le_trans (Nat.sub_le_sub_left db a) (Nat.sub_le_sub_right ab d)
+lemma Nat.sub_le_sub {a b c d : ℕ} (ab : a ≤ c) (db : d ≤ b) : a - b ≤ c - d := by omega
 
 lemma Nat.cast_div_le_div_add_one {𝕜 : Type} [LinearOrderedField 𝕜] [FloorRing 𝕜] {a b : ℕ} :
     (a : 𝕜) / b ≤ (a / b : ℕ) + 1 := by
@@ -325,8 +313,24 @@ lemma Nat.cast_div_le_div_add_one {𝕜 : Type} [LinearOrderedField 𝕜] [Floor
     refine le_trans (Nat.ceil_le_floor_add_one _) ?_
     rw [Nat.floor_div_eq_div]
 
-lemma Nat.sub_sub_assoc {a b c : ℕ} (h : c ≤ b) : a + c - b = a - (b - c) := by
-  nth_rw 1 [←Nat.sub_add_cancel h]
-  apply Nat.add_sub_add_right
+lemma Nat.sub_sub_assoc {a b c : ℕ} (h : c ≤ b) : a + c - b = a - (b - c) := by omega
+
+lemma Nat.le_add_div_mul {n k : ℕ} (k0 : 0 < k) : n ≤ (n + k - 1) / k * k := by
+  rw [←Nat.div_add_mod n k]
+  generalize n / k = a
+  generalize hb : n % k = b
+  have bk0 : 0 < b + k := by omega
+  simp only [mul_comm k _, add_assoc, Nat.add_sub_assoc bk0, Nat.add_div k0,
+    Nat.mul_div_cancel _ k0, mul_mod_left, zero_add, ge_iff_le, ←not_lt (b := k), Nat.mod_lt _ k0, not_true,
+    if_false, add_zero, add_mul, add_le_add_iff_left]
+  by_cases b0 : b = 0
+  · simp only [b0, zero_add, _root_.zero_le]
+  · trans k
+    · rw [←hb]; exact (Nat.mod_lt _ k0).le
+    · apply Nat.le_mul_of_pos_left
+      refine Nat.div_pos ?_ k0
+      omega
+
+@[simp] lemma Nat.log2_zero : Nat.log2 0 = 0 := rfl
 
 attribute [simp] Nat.testBit_mod_two_pow

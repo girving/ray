@@ -59,9 +59,16 @@ instance : Add (Box s) where
 instance : Sub (Box s) where
   sub x y := ⟨x.re - y.re, x.im - y.im⟩
 
+/-- Complex conjugation -/
+def Box.conj (z : Box s) : Box s := ⟨z.re, -z.im⟩
+
 /-- `Box` inhomogenous multiplication -/
 def Box.mul (z : Box s) (w : Box t) (u : Int64) : Box u :=
   ⟨z.re.mul w.re u - z.im.mul w.im u, z.re.mul w.im u + z.im.mul w.re u⟩
+
+/-- `Interval * Box` -/
+def Interval.mul_box (x : Interval s) (z : Box t) (u : Int64) : Box u :=
+  ⟨x.mul z.re u, x.mul z.im u⟩
 
 /-- `Box` homogenous multiplication -/
 instance : Mul (Box s) where
@@ -71,6 +78,10 @@ instance : Mul (Box s) where
 def Box.sqr (z : Box s) (u : Int64 := s) : Box u :=
   let w := z.re.mul z.im u
   ⟨z.re.sqr u - z.im.sqr u, w + w⟩
+
+/-- `Box` square magnitude -/
+def Box.sqr_mag (z : Box s) (u : Int64) : Interval u :=
+  z.re.sqr u + z.im.sqr u
 
 -- Bounds properties of `Box` arithmetic
 lemma Box.neg_def {z : Box s} : -z = ⟨-z.re, -z.im⟩ := rfl
@@ -112,20 +123,28 @@ instance : ApproxSub (Box s) ℂ where
 instance : ApproxAddGroup (Box s) ℂ where
 
 /-- `Box` multiplication approximates `ℂ` (inhomogenous case) -/
-lemma Box.approx_mul (z : Box s) (w : Box t) (u : Int64) :
+@[mono] lemma Box.approx_mul (z : Box s) (w : Box t) (u : Int64) :
     approx z * approx w ⊆ approx (z.mul w u) := by
   simp only [Box.instApprox, mul_subset_iff, Box.mem_image2_iff, and_imp, Complex.mul_re,
     Complex.mul_im, Box.mul]
   intro a ar ai b br bi
-  constructor
-  · apply approx_sub
-    apply sub_mem_sub
-    · exact Interval.approx_mul _ _ _ (mul_mem_mul ar br)
-    · exact Interval.approx_mul _ _ _ (mul_mem_mul ai bi)
-  · apply approx_add
-    apply add_mem_add
-    · exact Interval.approx_mul _ _ _ (mul_mem_mul ar bi)
-    · exact Interval.approx_mul _ _ _ (mul_mem_mul ai br)
+  exact ⟨by mono, by mono⟩
+
+/-- `Interval * Box` multiplication approximates `ℂ` (inhomogenous case) -/
+@[mono] lemma Interval.approx_mul_box (x : Interval s) (z : Box t) (u : Int64) :
+    (Complex.ofReal '' approx x) * approx z ⊆ approx (x.mul_box z u) := by
+  simp only [Box.instApprox, mul_subset_iff, Box.mem_image2_iff, and_imp, Complex.mul_re,
+    Complex.mul_im, Interval.mul_box]
+  intro a ⟨t,tx,ta⟩ b br bi
+  simp only [← ta, Complex.ofReal_eq_coe, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero,
+    add_zero]
+  exact ⟨by mono, by mono⟩
+
+/-- `mono` friendly version of `Interval.approx_mul_box` -/
+@[mono] lemma Interval.subset_approx_mul_box {p : Set ℝ} {q : Set ℂ} {x : Interval s} {z : Box t}
+    {u : Int64} (px : p ⊆ approx x) (qz : q ⊆ approx z) :
+    (Complex.ofReal '' p) * q ⊆ approx (x.mul_box z u) :=
+  subset_trans (mul_subset_mul (image_mono px) qz) (Interval.approx_mul_box _ _ _)
 
 /-- `Box` multiplication approximates `ℂ` (homogenous case) -/
 instance : ApproxMul (Box s) ℂ where
@@ -135,7 +154,7 @@ instance : ApproxMul (Box s) ℂ where
 instance : ApproxRing (Box s) ℂ where
 
 /-- `Box` squaring approximates `ℂ` -/
-lemma Box.approx_sqr (z : Box s) (u : Int64 := s) :
+@[mono] lemma Box.approx_sqr (z : Box s) (u : Int64 := s) :
     (fun z ↦ z^2) '' approx z ⊆ approx (z.sqr u) := by
   simp only [Box.instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
   rintro w ⟨r,rz,i,iz,e⟩

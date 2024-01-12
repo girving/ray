@@ -1,6 +1,7 @@
 import Mathlib.Data.Set.Pointwise.Basic
 import Mathlib.Data.Set.Pointwise.Interval
 import Ray.Approx.Fixed
+import Ray.Approx.Real
 
 open Classical
 open Pointwise
@@ -20,6 +21,10 @@ structure Interval (s : Int64) where
   hi : Fixed s
   deriving DecidableEq, BEq
 
+/-- The most common `Interval` nan.  Not the only one! -/
+instance : Nan (Interval s) where
+  nan := ⟨nan,nan⟩
+
 /-- `Interval` has nice equality -/
 instance : LawfulBEq (Interval s) where
   eq_of_beq {x y} e := by
@@ -31,33 +36,58 @@ instance : LawfulBEq (Interval s) where
     have e : (x == x) = (x.lo == x.lo && x.hi == x.hi) := rfl
     simp only [e, beq_self_eq_true, Bool.and_self]
 
+/-- Intervals are equal iff their components are equal -/
+lemma Interval.ext_iff {x y : Interval s} : x = y ↔ x.lo = y.lo ∧ x.hi = y.hi := by
+  induction x; induction y; simp only [mk.injEq]
+
 /-- `Interval` approximates `ℝ` -/
 instance : Approx (Interval s) ℝ where
   approx x := if x.lo = nan ∨ x.hi = nan then univ else Icc x.lo.val x.hi.val
 
-/-- Interval zero -/
+/-- Zero -/
 instance : Zero (Interval s) where
   zero := ⟨0,0⟩
 
-/-- Interval negation -/
+/-- Negation -/
 instance : Neg (Interval s) where
   neg x := ⟨-x.hi, -x.lo⟩
 
-/-- Interval addition -/
+/-- Addition -/
 instance : Add (Interval s) where
   add x y := ⟨x.lo + y.lo, x.hi + y.hi⟩
 
-/-- Interval subtraction -/
+/-- Subtraction -/
 instance : Sub (Interval s) where
   sub x y := ⟨x.lo - y.hi, x.hi - y.lo⟩
 
-/-- Interval intersection -/
+/-- Intersection -/
 instance : Inter (Interval s) where
   inter x y := ⟨max x.lo y.lo, min x.hi y.hi⟩
 
+/-- Union -/
+instance : Union (Interval s) where
+  union x y := ⟨min x.lo y.lo, max x.hi y.hi⟩
+
+/-- `Fixed s` converts to `Interval s` -/
+@[coe] def Fixed.toInterval (x : Fixed s) : Interval s := ⟨x,x⟩
+
+/-- `Fixed s` converts to `Interval s` -/
+instance : Coe (Fixed s) (Interval s) where
+  coe x := x.toInterval
+
+/-- Clamp a `Fixed` to be within an `Interval` -/
+@[pp_dot] def Interval.clamp (x : Interval s) (y : Fixed s) : Fixed s :=
+  ⟨max x.lo.n (min x.hi.n y.n)⟩
+
 -- Bounds properties of interval arithmetic
+lemma Interval.nan_def : (nan : Interval s) = ⟨nan,nan⟩ := rfl
+lemma Interval.neg_def {x : Interval s} : -x = ⟨-x.hi, -x.lo⟩ := rfl
 lemma Interval.add_def {x y : Interval s} : x + y = ⟨x.lo + y.lo, x.hi + y.hi⟩ := rfl
 lemma Interval.sub_def {x y : Interval s} : x - y = ⟨x.lo - y.hi, x.hi - y.lo⟩ := rfl
+lemma Interval.inter_def {x y : Interval s} : x ∩ y = ⟨max x.lo y.lo, min x.hi y.hi⟩ := rfl
+lemma Interval.union_def {x y : Interval s} : x ∪ y = ⟨min x.lo y.lo, max x.hi y.hi⟩ := rfl
+@[simp] lemma Interval.lo_nan : (nan : Interval s).lo = nan := rfl
+@[simp] lemma Interval.hi_nan : (nan : Interval s).hi = nan := rfl
 @[simp] lemma Interval.lo_neg {x : Interval s} : (-x).lo = -x.hi := rfl
 @[simp] lemma Interval.hi_neg {x : Interval s} : (-x).hi = -x.lo := rfl
 @[simp] lemma Interval.lo_zero : (0 : Interval s).lo = 0 := rfl
@@ -65,8 +95,22 @@ lemma Interval.sub_def {x y : Interval s} : x - y = ⟨x.lo - y.hi, x.hi - y.lo�
 @[simp] lemma Interval.approx_zero : approx (0 : Interval s) = {0} := by
   simp only [approx, lo_zero, Fixed.val_zero, ite_false, hi_zero, Ici_inter_Iic, Icc_self,
     Fixed.zero_ne_nan, false_or]
-@[simp] lemma Interval.approx_nan : approx ({lo := nan, hi := nan} : Interval s) = univ := by
-  simp only [approx, ite_true, inter_self, true_or]
+@[simp] lemma Interval.approx_nan : approx (nan : Interval s) = univ := by
+  simp only [approx, nan, ite_true, inter_self, true_or]
+@[simp] lemma Interval.approx_of_lo_nan {x : Interval s} (h : x.lo = nan) : approx x = univ := by
+  simp only [approx, h, true_or, ite_true]
+@[simp] lemma Interval.approx_of_hi_nan {x : Interval s} (h : x.hi = nan) : approx x = univ := by
+  simp only [approx, h, or_true, ite_true]
+@[simp] lemma Interval.lo_fixed {x : Fixed s} : (x : Interval s).lo = x := rfl
+@[simp] lemma Interval.hi_fixed {x : Fixed s} : (x : Interval s).hi = x := rfl
+@[simp] lemma Interval.union_nan {x : Interval s} : x ∪ nan = nan := by
+  simp only [nan_def, union_def, Fixed.min_nan, Fixed.max_nan]
+@[simp] lemma Interval.nan_union {x : Interval s} : nan ∪ x = nan := by
+  simp only [nan_def, union_def, Fixed.nan_min, Fixed.nan_max]
+
+/-- We print `Interval s` as an approximate floating point interval -/
+instance : Repr (Interval s) where
+  reprPrec x _ := "[" ++ repr x.lo ++ "," ++ repr x.hi ++ "]"
 
 /-- `x - y = x + (-y)` -/
 lemma Interval.sub_eq_add_neg (x y : Interval s) : x - y = x + (-y) := by
@@ -94,7 +138,7 @@ instance : ApproxAdd (Interval s) ℝ where
     split_ifs with h
     · rcases h with h | h; repeat simp only [h, subset_univ]
     simp only [not_or] at h
-    simp only [Fixed.val_add_of_ne_nan h.1, Fixed.val_add_of_ne_nan h.2]
+    simp only [Fixed.val_add h.1, Fixed.val_add h.2]
     apply Set.Icc_add_Icc_subset
 
 /-- `Interval.sub` respects `approx` -/
@@ -108,6 +152,14 @@ instance : ApproxSub (Interval s) ℝ where
 
 /-- `Interval` approximates `ℝ` as an additive group -/
 instance : ApproxAddGroup (Interval s) ℝ where
+
+/-- `Interval` `approx` is `OrdConncted` -/
+instance : ApproxConnected (Interval s) ℝ where
+  connected x := by
+    simp only [approx]
+    split_ifs
+    · exact ordConnected_univ
+    · exact ordConnected_Icc
 
 /-- `Interval.inter` respects `approx` -/
 lemma Interval.approx_inter {x y : Interval s} : approx x ∩ approx y ⊆ approx (x ∩ y) := by
@@ -123,14 +175,203 @@ lemma Interval.approx_inter {x y : Interval s} : approx x ∩ approx y ⊆ appro
   refine ⟨⟨?_,?_⟩,?_,?_⟩
   repeat linarith
 
+/-- `Interval.union` is commutative -/
+lemma Interval.union_comm {x y : Interval s} : x ∪ y = y ∪ x := by
+  simp only [Union.union, Interval.ext_iff, Fixed.min_comm, Fixed.max_comm]
+
+/-- `Interval.union` respects `approx` -/
+lemma Interval.approx_union_left {x y : Interval s} : approx x ⊆ approx (x ∪ y) := by
+  intro a ax
+  simp only [approx, mem_if_univ_iff, Union.union, Fixed.min_eq_nan, Fixed.max_eq_nan] at ax ⊢
+  by_cases n : x.lo = nan ∨ x.hi = nan ∨ y.lo = nan ∨ y.hi = nan
+  · rcases n with n | n | n | n; repeat simp [n]
+  simp only [not_or] at n
+  rcases n with ⟨n0,n1,n2,n3⟩
+  simp only [n0, n1, or_self, not_false_eq_true, mem_Icc, forall_true_left, n2, n3, Fixed.val_min,
+    min_le_iff, Fixed.val_max n1 n3, le_max_iff] at ax ⊢
+  simp only [ax.1, true_or, ax.2, and_self]
+
+/-- `Interval.union` respects `approx` -/
+lemma Interval.approx_union_right {x y : Interval s} : approx y ⊆ approx (x ∪ y) := by
+  rw [Interval.union_comm]; exact approx_union_left
+
+/-- `Interval.union` respects `approx` -/
+lemma Interval.approx_union {x y : Interval s} : approx x ∪ approx y ⊆ approx (x ∪ y) :=
+  union_subset approx_union_left approx_union_right
+
+/-- `mono` version of `Interval.approx_inter` -/
+@[mono] lemma Interval.subset_approx_inter {s : Set ℝ} {x y : Interval t}
+    (sx : s ⊆ approx x) (sy : s ⊆ approx y) : s ⊆ approx (x ∩ y) :=
+  subset_trans (subset_inter sx sy) Interval.approx_inter
+
+/-- If an `Interval` is nonempty, the expected inequality usually holds -/
+lemma Interval.le_of_nonempty {x : Interval s} (a : (approx x).Nonempty) (hn : x.hi ≠ nan) :
+    x.lo.val ≤ x.hi.val := by
+  rcases a with ⟨a,h⟩
+  simp only [approx, hn, or_false] at h
+  by_cases ln : x.lo = nan
+  · simp only [Fixed.val, ln, nan, mul_le_mul_right two_zpow_pos, Int.cast_le, Int64.coe_le_coe,
+    Int64.min_le]
+  simp only [ln, ite_false, mem_Icc] at h
+  linarith
+
+/-- `Interval.clamp` respects `approx` -/
+lemma Interval.approx_clamp {x : Interval s} {y : Fixed s} (xn : (approx x).Nonempty) :
+    (x.clamp y).val ∈ approx x := by
+  by_cases n : x.lo = nan ∨ x.hi = nan
+  · rcases n with n | n; repeat simp [approx, n]
+  rcases not_or.mp n with ⟨ln,hn⟩
+  have le := Interval.le_of_nonempty xn hn
+  simp only [Fixed.val, gt_iff_lt, two_zpow_pos, mul_le_mul_right, Int.cast_le,
+    Int64.coe_le_coe] at le
+  simp only [Fixed.val, clamp, approx, ln, hn, or_self, ite_false, mem_Icc, gt_iff_lt, two_zpow_pos,
+    mul_le_mul_right, Int.cast_le, Int64.coe_le_coe, le_max_iff, le_refl, le_min_iff, le, true_and,
+    true_or, max_le_iff, min_le_iff, and_self]
+
+/-!
+### Utility lemmas
+-/
+
+/-- Either `approx = ∅` or `x.lo ≤ x.hi` (if we're not nan) -/
+lemma Interval.sign_cases {x : Interval s} (a : (approx x).Nonempty) (hn : x.hi ≠ nan) :
+    (x.lo.n.isNeg ∧ x.hi.n.isNeg) ∨ (x.lo.n.isNeg = false ∧ x.hi.n.isNeg = false) ∨
+    (x.lo.n.isNeg ∧ x.hi.n.isNeg = false) := by
+  by_cases ln : x.lo = nan
+  · simp only [ln, Fixed.isNeg_nan, true_and, false_and, false_or, Bool.eq_false_or_eq_true]
+  · rcases a with ⟨a,h⟩
+    simp only [approx, ln, ite_false, hn, mem_inter_iff, mem_Ici, mem_Iic] at h
+    replace h := le_trans h.1 h.2
+    simp only [Fixed.val, mul_le_mul_right two_zpow_pos, Int.cast_le, Int64.coe_le_coe] at h
+    simp only [Int64.isNeg_eq, decide_eq_true_eq, decide_eq_false_iff_not, not_lt]
+    by_cases ls : x.lo.n < 0
+    all_goals by_cases hs : x.hi.n < 0
+    all_goals simp_all
+    have h := lt_of_le_of_lt (le_trans ls h) hs
+    simp only [lt_self_iff_false] at h
+
+/-!
+### Interval absolute value
+-/
+
+/-- Absolute value -/
+instance Interval.instAbs : Abs (Interval s) where
+  abs x :=
+    let a := abs x.lo
+    let b := abs x.hi
+    ⟨bif x.lo.n.isNeg != x.hi.n.isNeg then 0 else min a b, max a b⟩
+
+/-- `abs` respects `approx` -/
+lemma Interval.approx_abs {x : Interval s} : abs '' approx x ⊆ approx |x| := by
+  by_cases n : x.lo = nan ∨ x.hi = nan ∨ approx x = ∅
+  · rcases n with n | n | n
+    · simp only [approx, n, true_or, ite_true, image_univ, instAbs, Fixed.isNeg_nan, Bool.true_xor,
+        Fixed.abs_nan, Bool.cond_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true, subset_univ]
+    · simp only [approx, n, or_true, ite_true, image_univ, instAbs, Fixed.isNeg_nan, Bool.xor_true,
+        Fixed.abs_nan, Bool.cond_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, subset_univ]
+    · simp only [n, image_empty, empty_subset]
+  simp only [not_or, ←nonempty_iff_ne_empty] at n
+  rcases n with ⟨nl,nh,nx⟩
+  simp only [approx, nl, nh, or_self, ite_false, instAbs, bif_eq_if, bne_iff_ne, ne_eq, ite_not,
+    Fixed.max_eq_nan, Fixed.abs_eq_nan, or_false, subset_if_univ_iff]
+  simp only [subset_def, mem_Icc, Fixed.val_max (Fixed.abs_ne_nan.mpr nl) (Fixed.abs_ne_nan.mpr nh),
+    le_max_iff, apply_ite (f := fun x ↦ Fixed.val x), Fixed.val_zero, Fixed.val_min,
+    Fixed.val_abs nl, Fixed.val_abs nh, mem_image]
+  rcases sign_cases nx nh with ⟨ls,hs⟩ | ⟨ls,hs⟩ | ⟨ls,hs⟩
+  all_goals simp only [ls, hs, if_true, if_false, Fixed.zero_ne_nan, not_false_iff, true_implies]
+  all_goals simp only [←Fixed.val_lt_zero, ←Fixed.val_nonneg] at ls hs
+  · intro _ a ⟨b,⟨lb,bh⟩,ba⟩; simp only [min_le_iff, abs_of_neg ls, abs_of_neg hs, ←ba]
+    rcases nonpos_or_nonneg b with bs | bs
+    · simp only [abs_of_nonpos bs]; exact ⟨Or.inr (by linarith), Or.inl (by linarith)⟩
+    · simp only [abs_of_nonneg bs]; exact ⟨Or.inr (by linarith), Or.inl (by linarith)⟩
+  · intro _ a ⟨b,⟨lb,bh⟩,ba⟩; simp only [min_le_iff, abs_of_nonneg ls, abs_of_nonneg hs, ←ba]
+    rcases nonpos_or_nonneg b with bs | bs
+    · simp only [abs_of_nonpos bs]; exact ⟨Or.inl (by linarith), Or.inl (by linarith)⟩
+    · simp only [abs_of_nonneg bs]; exact ⟨Or.inl (by linarith), Or.inr (by linarith)⟩
+  · intro a ⟨b,⟨lb,bh⟩,ba⟩; simp only [min_le_iff, abs_of_neg ls, abs_of_nonneg hs, ←ba]
+    rcases nonpos_or_nonneg b with bs | bs
+    · simp only [abs_of_nonpos bs]; exact ⟨by linarith, Or.inl (by linarith)⟩
+    · simp only [abs_of_nonneg bs]; exact ⟨by linarith, Or.inr (by linarith)⟩
+
+/-- `abs` preserves nonnegative intervals -/
+lemma Interval.abs_of_nonneg {x : Interval s} (h : 0 ≤ x.lo.val)
+    (ax : (approx x).Nonempty) : approx |x| = approx x := by
+  by_cases n : x.lo = nan ∨ x.hi = nan
+  · rcases n with n | n; repeat simp [instAbs, n]
+  rcases not_or.mp n with ⟨n0,n1⟩
+  have lh := le_of_nonempty ax n1
+  have h' := le_trans h lh
+  simp only [approx, instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
+    ite_not, not_lt.mpr h, not_lt.mpr h', ite_true, Fixed.min_eq_nan, Fixed.abs_eq_nan, n0, n1,
+    or_self, Fixed.max_eq_nan, Fixed.val_min, Fixed.val_abs n0, _root_.abs_of_nonneg h,
+    Fixed.val_abs n1, _root_.abs_of_nonneg h', min_eq_left lh,
+    Fixed.val_max (Fixed.abs_ne_nan.mpr n0) (Fixed.abs_ne_nan.mpr n1), max_eq_right lh, ite_false]
+
+/-- `abs` negates nonpositive intervals -/
+lemma Interval.abs_of_nonpos {x : Interval s} (h : x.hi.val ≤ 0)
+    (ax : (approx x).Nonempty) : approx |x| = -approx x := by
+  by_cases n0 : x.lo = nan
+  · simp only [instAbs, n0, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+      Fixed.max_eq_nan, Fixed.abs_eq_nan, true_or, approx_of_hi_nan, approx_of_lo_nan, neg_univ]
+  by_cases n1 : x.hi = nan
+  · simp only [instAbs, n1, Fixed.isNeg_nan, Bool.xor_true, Fixed.abs_nan, Bool.cond_not,
+      Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true, approx_of_hi_nan, neg_univ]
+  have lh := le_of_nonempty ax n1
+  have h' := le_trans lh h
+  simp only [approx, instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
+    ite_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, n0, n1, or_self, or_false,
+    Fixed.val_max (Fixed.abs_ne_nan.mpr n0) (Fixed.abs_ne_nan.mpr n1), Fixed.val_abs n0,
+    _root_.abs_of_nonpos h', Fixed.val_abs n1, _root_.abs_of_nonpos h, ite_false, preimage_neg_Icc,
+    apply_ite (f := fun x ↦ x = nan), apply_ite (f := fun x : Fixed s ↦ x.val), Fixed.zero_ne_nan,
+    Fixed.min_eq_nan, Fixed.val_min, min_eq_right (neg_le_neg lh), Fixed.val_zero,
+    max_eq_left (neg_le_neg lh)]
+  by_cases h0 : x.hi.val = 0
+  · by_cases l0 : x.lo.val = 0
+    · simp only [l0, lt_self_iff_false, h0, ite_self, neg_zero, Icc_self, ite_false]
+    · simp only [h0, lt_self_iff_false, iff_false, not_lt, not_le.mpr (Ne.lt_of_le l0 h'), ite_self,
+        neg_zero, ite_false]
+  · replace h0 := Ne.lt_of_le h0 h
+    simp only [lt_of_le_of_lt lh h0, h0, ite_self, ite_true, ite_false]
+
+/-- `|x|.lo` is nonneg if inputs are not `nan` -/
+lemma Interval.abs_nonneg {x : Interval s} (n0 : x.lo ≠ nan) (n1 : x.hi ≠ nan) :
+    0 ≤ |x|.lo.val := by
+  simp only [instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not,
+    apply_ite (f := fun x : Fixed s ↦ 0 ≤ x.val), Fixed.val_min, le_min_iff, Fixed.val_zero,
+    le_refl, Fixed.val_abs n0, Fixed.val_abs n1, _root_.abs_nonneg, true_and, ite_self]
+
+/-- `|x|.lo` is pos if inputs are not `nan` or `0` and have the same sign -/
+lemma Interval.abs_pos {x : Interval s} (n0 : x.lo ≠ nan) (n1 : x.hi ≠ nan)
+    (l0 : x.lo ≠ 0) (h0 : x.hi ≠ 0) (lh : x.lo.val < 0 ↔ x.hi.val < 0) : 0 < |x|.lo.val := by
+  refine Ne.lt_of_le (Ne.symm ?_) (Interval.abs_nonneg n0 n1)
+  contrapose l0
+  simp only [instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not, lh,
+    ite_true, Fixed.val_min, Fixed.val_abs n0, Fixed.val_abs n1, not_not,
+    ←Fixed.val_eq_zero_iff] at l0 ⊢
+  have nonpos : |x.lo.val| ≤ 0 := by
+    cases' min_le_iff.mp (le_of_eq l0) with h h
+    · exact h
+    · exfalso
+      rw [←Fixed.val_ne_zero_iff, Ne.def, ←abs_eq_zero] at h0
+      exact not_le.mpr (Ne.lt_of_le h0 h) (_root_.abs_nonneg _)
+  exact abs_eq_zero.mp (le_antisymm nonpos (_root_.abs_nonneg _))
+
+/-- `|x|` propagates `nan` from `lo` to `hi` -/
+lemma Interval.abs_eq_nan_of_lo {x : Interval s} (n : x.lo = nan) : |x|.hi = nan := by
+  simp only [instAbs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+    Fixed.max_eq_nan, Fixed.abs_eq_nan, true_or]
+
+/-- `|x|` propagates `nan` from `hi` to `hi` -/
+lemma Interval.abs_eq_nan_of_hi {x : Interval s} (n : x.hi = nan) : |x|.hi = nan := by
+  simp only [instAbs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+    Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true]
+
 /-!
 ### Interval multiplication
 -/
 
 /-- Multiply, changing `s` -/
-def Interval.mul (x : Interval s) (y : Interval t) (u : Int64) : Interval u :=
-  bif x == 0 || y == 0 then 0
-  else bif x.lo == nan || x.hi == nan || y.lo == nan || y.hi == nan then ⟨nan,nan⟩
+@[pp_dot] def Interval.mul (x : Interval s) (y : Interval t) (u : Int64) : Interval u :=
+  bif x.lo == nan || x.hi == nan || y.lo == nan || y.hi == nan then nan
   else bif x.lo.n.isNeg != x.hi.n.isNeg && y.lo.n.isNeg != x.hi.n.isNeg then  -- x,y have mixed sign
     ⟨min (x.lo.mul y.hi u false) (x.hi.mul y.lo u false),
      max (x.lo.mul y.lo u true) (x.hi.mul y.hi u true)⟩
@@ -149,37 +390,6 @@ def Interval.mul (x : Interval s) (y : Interval t) (u : Int64) : Interval u :=
 /-- By default, multiplying intervals preserves `s` -/
 instance : Mul (Interval s) where
   mul (x y : Interval s) := x.mul y s
-
-/-- Either `approx = ∅` or `x.lo ≤ x.hi` (if we're not nan) -/
-lemma Interval.sign_cases {x : Interval s} (a : (approx x).Nonempty) (hn : x.hi ≠ nan) :
-    (x.lo.n.isNeg ∧ x.hi.n.isNeg) ∨ (x.lo.n.isNeg = false ∧ x.hi.n.isNeg = false) ∨
-    (x.lo.n.isNeg ∧ x.hi.n.isNeg = false) := by
-  by_cases ln : x.lo = nan
-  · simp only [ln, Fixed.isNeg_nan, true_and, false_and, false_or, Bool.eq_false_or_eq_true]
-  · rcases a with ⟨a,h⟩
-    simp only [approx, ln, ite_false, hn, mem_inter_iff, mem_Ici, mem_Iic] at h
-    replace h := le_trans h.1 h.2
-    simp only [Fixed.val, mul_le_mul_right (zpow_pos_of_pos (by norm_num : 0 < (2 : ℝ)) _),
-      Int.cast_le, Int64.coe_le_coe] at h
-    simp only [Int64.isNeg_eq, decide_eq_true_eq, decide_eq_false_iff_not, not_lt]
-    by_cases ls : x.lo.n < 0
-    all_goals by_cases hs : x.hi.n < 0
-    all_goals simp_all
-    have h := lt_of_le_of_lt (le_trans ls h) hs
-    simp only [lt_self_iff_false] at h
-
-/-- Simplify to case assuming not `nan` -/
-lemma subset_if_univ_iff {t u : Set ℝ} {p : Prop} {dp : Decidable p} :
-    t ⊆ @ite _ p dp univ u ↔ ¬p → t ⊆ u := by
-  by_cases n : p
-  repeat simp only [n, ite_true, ite_false, subset_univ, not_true_eq_false, IsEmpty.forall_iff,
-    not_false_eq_true, forall_true_left]
-
-/-- Reals are either `≤ 0` or `≥ 0` -/
-lemma nonpos_or_nonneg (x : ℝ) : x ≤ 0 ∨ 0 ≤ x := by
-  by_cases p : 0 ≤ x
-  · right; assumption
-  · left; linarith
 
 set_option maxHeartbeats 10000000 in
 /-- Rewrite `Icc * Icc ⊆ Icc` in terms of inequalities -/
@@ -211,10 +421,6 @@ lemma Interval.approx_mul (x : Interval s) (y : Interval t) (u : Int64) :
     approx x * approx y ⊆ approx (x.mul y u) := by
   -- Handle special cases
   simp only [image2_mul, mul, bif_eq_if, Bool.or_eq_true, beq_iff_eq]
-  by_cases x0 : x = 0; · simp [x0]
-  by_cases y0 : y = 0; · simp [y0]
-  simp only [x0, y0, or_self, ite_false]
-  clear x0 y0
   by_cases n : x.lo = nan ∨ x.hi = nan ∨ y.lo = nan ∨ y.hi = nan ∨ approx x = ∅ ∨ approx y = ∅
   · rcases n with n | n | n | n | n | n; repeat simp [n]
   simp only [not_or, ←nonempty_iff_ne_empty] at n
@@ -305,14 +511,163 @@ instance : ApproxMul (Interval s) ℝ where
 /-- `Interval` approximates `ℝ` as a ring -/
 instance : ApproxRing (Interval s) ℝ where
 
+/-- `Interval.approx_mul` in `mono` form, `⊆` version -/
+@[mono] lemma Interval.subset_approx_mul {a b : Set ℝ} {x : Interval s} {y : Interval t} {u : Int64}
+    (as : a ⊆ approx x) (bs : b ⊆ approx y) : a * b ⊆ approx (x.mul y u) :=
+  subset_trans (mul_subset_mul as bs) (Interval.approx_mul x y _)
+
+/-- `Interval.approx_mul` in `mono` form, `∈` version -/
+@[mono] lemma Interval.mem_approx_mul {a b : ℝ} {x : Interval s} {y : Interval t} {u : Int64}
+    (am : a ∈ approx x) (bm : b ∈ approx y) : a * b ∈ approx (x.mul y u) :=
+  Interval.subset_approx_mul (singleton_subset_iff.mpr am) (singleton_subset_iff.mpr bm)
+    (mul_mem_mul rfl rfl)
+
+/-- `Interval.mul` propagates `lo = nan` -/
+@[simp] lemma Interval.mul_nan_lo {x : Interval s} {y : Interval t} {u : Int64} (yn : y.lo = nan) :
+    x.mul y u = nan := by
+  simp only [mul, yn, beq_self_eq_true, Bool.or_true, Bool.true_or, Fixed.isNeg_nan, Bool.true_xor,
+    Fixed.mul_nan, cond_true]
+
+/-- `Interval.mul` propagates `hi = nan` -/
+@[simp] lemma Interval.mul_nan_hi {x : Interval s} {y : Interval t} {u : Int64} (yn : y.hi = nan) :
+    x.mul y u = nan := by
+  simp only [mul, yn, beq_self_eq_true, Bool.or_true, Bool.true_or, Fixed.isNeg_nan, Bool.true_xor,
+    Fixed.mul_nan, cond_true]
+
+/-- `Interval.mul` propagates `lo = nan` -/
+@[simp] lemma Interval.nan_mul_lo {x : Interval s} {y : Interval t} {u : Int64} (xn : x.lo = nan) :
+    x.mul y u = nan := by
+  simp only [mul, xn, beq_self_eq_true, Bool.or_true, Bool.true_or, Fixed.isNeg_nan, Bool.true_xor,
+    Fixed.mul_nan, cond_true]
+
+/-- `Interval.mul` propagates `hi = nan` -/
+@[simp] lemma Interval.nan_mul_hi {x : Interval s} {y : Interval t} {u : Int64} (xn : x.hi = nan) :
+    x.mul y u = nan := by
+  simp only [mul, xn, beq_self_eq_true, Bool.or_true, Bool.true_or, Fixed.isNeg_nan, Bool.true_xor,
+    Fixed.mul_nan, cond_true]
+
+/-- `Interval.mul` arguments are `≠ nan` if the result is -/
+lemma Interval.ne_nan_of_mul {x : Interval s} {y : Interval t} {u : Int64}
+    (n : (x.mul y u).lo ≠ nan) : x.lo ≠ nan ∧ x.hi ≠ nan ∧ y.lo ≠ nan ∧ y.hi ≠ nan := by
+  contrapose n
+  simp only [not_and_or, not_not] at n ⊢
+  rcases n with n | n | n | n
+  · rwa [Interval.nan_mul_lo, nan_def]
+  · rwa [Interval.nan_mul_hi, nan_def]
+  · rwa [Interval.mul_nan_lo, nan_def]
+  · rwa [Interval.mul_nan_hi, nan_def]
+
+/-!
+### `Fixed * Fixed`, but conservative
+-/
+
+/-- Multiply two `Fixed`s, producing an `Interval -/
+def Interval.fixed_mul_fixed (x : Fixed s) (y : Fixed t) (u : Int64) : Interval u :=
+  ⟨x.mul y u false, x.mul y u true⟩
+
+/-- `Interval.fixed_mul_fixed` respects `approx` -/
+lemma Interval.approx_fixed_mul_fixed (x : Fixed s) (y : Fixed t) (u : Int64) :
+    approx x * approx y ⊆ approx (Interval.fixed_mul_fixed x y u) := by
+  intro a m
+  simp only [mem_mul, exists_and_left] at m
+  rcases m with ⟨b,bm,c,cm,bc⟩
+  simp only [approx, mem_ite_univ_left, mem_singleton_iff, mem_Icc,
+    Interval.fixed_mul_fixed] at bm cm ⊢
+  by_cases n : x = nan ∨ y = nan ∨ Fixed.mul x y u false = nan ∨ Fixed.mul x y u true = nan
+  · rcases n with n | n | n | n; repeat simp [n]
+  simp only [not_or, ←Ne.def] at n
+  rcases n with ⟨n0,n1,n2,n3⟩
+  simp only [n0, not_false_eq_true, forall_true_left, n1] at bm cm
+  simp only [n2, n3, or_self, not_false_eq_true, ← bc, bm, cm, forall_true_left]
+  exact ⟨Fixed.mul_le n2, Fixed.le_mul n3⟩
+
+/-- `Interval.approx_fixed_mul_fixed` in `mono` form, `⊆` version -/
+@[mono] lemma Interval.subset_approx_fixed_mul_fixed {a b : Set ℝ} {x : Fixed s} {y : Fixed t}
+    {u : Int64} (as : a ⊆ approx x) (bs : b ⊆ approx y) :
+    a * b ⊆ approx (Interval.fixed_mul_fixed x y u) :=
+  subset_trans (mul_subset_mul as bs) (Interval.approx_fixed_mul_fixed x y _)
+
+/-- `Interval.approx_fixed_mul_fixed` in `mono` form, `∈` version -/
+@[mono] lemma Interval.mem_approx_fixed_mul_fixed {a b : ℝ} {x : Fixed s} {y : Fixed t} {u : Int64}
+    (am : a ∈ approx x) (bm : b ∈ approx y) : a * b ∈ approx (Interval.fixed_mul_fixed x y u) :=
+  Interval.subset_approx_fixed_mul_fixed (singleton_subset_iff.mpr am) (singleton_subset_iff.mpr bm)
+    (mul_mem_mul rfl rfl)
+
+/-- `Interval.fixed_mul_fixed _ nan _ = nan` -/
+@[simp] lemma Interval.fixed_mul_fixed_nan_right {x : Fixed s} {u : Int64} :
+    Interval.fixed_mul_fixed x (nan : Fixed t) u = nan := by
+  simp only [fixed_mul_fixed, Fixed.mul_nan, nan_def]
+
+/-- `Interval.fixed_mul_fixed nan _ _ = nan` -/
+@[simp] lemma Interval.fixed_mul_fixed_nan_left {x : Fixed t} {u : Int64} :
+    Interval.fixed_mul_fixed (nan : Fixed s) x u = nan := by
+  simp only [fixed_mul_fixed, Fixed.nan_mul, nan_def]
+
+/-- `Interval.fixed_mul_fixed` arguments are `≠ nan` if the result is -/
+lemma Interval.ne_nan_of_fixed_mul_fixed {x : Fixed s} {y : Fixed t} {u : Int64}
+    (n : (Interval.fixed_mul_fixed x y u).lo ≠ nan) : x ≠ nan ∧ y ≠ nan := by
+  contrapose n
+  simp only [not_and_or, not_not] at n ⊢
+  rcases n with n | n; repeat simp [n]
+
+/-!
+### `Interval * Fixed`
+-/
+
+/-- Multiply times a `Fixed`, changing `s` -/
+@[pp_dot] def Interval.mul_fixed (x : Interval s) (y : Fixed t) (u : Int64) : Interval u :=
+  bif x.lo == nan || x.hi == nan || y == nan then nan else
+  let (a,b) := bif y.n.isNeg then (x.hi, x.lo) else (x.lo, x.hi)
+  ⟨a.mul y u false, b.mul y u true⟩
+
+/-- Diagonal comparison to 0 -/
+@[simp] lemma Interval.diagonal_eq_zero (x : Fixed s) : ((⟨x,x⟩ : Interval s) = 0) ↔ x == 0 := by
+  simp only [ext_iff, lo_zero, hi_zero, and_self, beq_iff_eq]
+
+/-- `Interval.mul_fixed` respects `approx` -/
+lemma Interval.approx_mul_fixed (x : Interval s) (y : Fixed t) (u : Int64) :
+    approx x * approx y ⊆ approx (x.mul_fixed y u) := by
+  -- Handle special cases
+  simp only [image2_mul, mul_fixed, bif_eq_if, Bool.or_eq_true, beq_iff_eq]
+  by_cases n : x.lo = nan ∨ x.hi = nan ∨ y = nan ∨ approx x = ∅
+  · rcases n with n | n | n | n; repeat simp [n]
+  simp only [not_or, ←nonempty_iff_ne_empty] at n
+  rcases n with ⟨n0,n1,n2,nx⟩
+  have xi : x.lo.val ≤ x.hi.val := by
+    simpa only [approx, n0, n1, or_self, ite_false, nonempty_Icc] using nx
+  simp only [n0, n1, n2, or_self, ite_false]
+  -- Record Fixed.mul bounds
+  generalize ml0 : Fixed.mul x.lo y u false = l0
+  generalize mh0 : Fixed.mul x.hi y u false = h0
+  generalize ml1 : Fixed.mul x.lo y u true = l1
+  generalize mh1 : Fixed.mul x.hi y u true = h1
+  have il0 : l0 ≠ nan → l0.val ≤ x.lo.val * y.val := by rw [←ml0]; exact Fixed.mul_le
+  have ih0 : h0 ≠ nan → h0.val ≤ x.hi.val * y.val := by rw [←mh0]; exact Fixed.mul_le
+  have il1 : l1 ≠ nan → x.lo.val * y.val ≤ l1.val := by rw [←ml1]; exact Fixed.le_mul
+  have ih1 : h1 ≠ nan → x.hi.val * y.val ≤ h1.val := by rw [←mh1]; exact Fixed.le_mul
+  -- Split on signs
+  by_cases ys : y.n.isNeg
+  all_goals simp only [ys, n0, n1, n2, ite_true, ite_false, approx, false_or, subset_if_univ_iff,
+    not_or, and_imp, ml0, mh0, ml1, mh1, mul_singleton]
+  all_goals simp only [←Fixed.val_lt_zero, ←Fixed.val_nonneg, not_lt] at ys
+  -- Handle each case
+  · intro mh0 ml1
+    have le : x.hi.val * y.val ≤ x.lo.val * y.val := by nlinarith
+    simp only [image_mul_right_Icc_of_neg ys, Icc_subset_Icc_iff le]
+    exact ⟨ih0 mh0, il1 ml1⟩
+  · intro ml0 mh1
+    have le : x.lo.val * y.val ≤ x.hi.val * y.val := by nlinarith
+    simp only [image_mul_right_Icc xi ys, Icc_subset_Icc_iff le]
+    exact ⟨il0 ml0, ih1 mh1⟩
+
 /-!
 ### Interval squaring
 -/
 
 /-- Tighter than `Interval.mul x x u` -/
-def Interval.sqr (x : Interval s) (u : Int64 := s) : Interval u :=
+@[pp_dot] def Interval.sqr (x : Interval s) (u : Int64 := s) : Interval u :=
   bif x == 0 then 0
-  else bif x.lo == nan || x.hi == nan then ⟨nan,nan⟩
+  else bif x.lo == nan || x.hi == nan then nan
   else bif x.lo.n.isNeg != x.hi.n.isNeg then  -- x has mixed sign
     ⟨0, max (x.lo.mul x.lo u true) (x.hi.mul x.hi u true)⟩
   else bif x.lo.n.isNeg then ⟨x.hi.mul x.hi u false, x.lo.mul x.lo u true⟩
@@ -370,3 +725,56 @@ lemma Interval.approx_sqr (x : Interval s) (u : Int64) :
     · by_cases us : u < 0
       · left; nlinarith
       · right; nlinarith
+
+/-!
+## Conversion from `ℕ`
+-/
+
+/-- `ℕ` converts to `Interval s` -/
+def Interval.ofNat (n : ℕ) : Interval s := ⟨.ofNat n false, .ofNat n true⟩
+
+/-- We use the general `.ofNat` routine for `1`, to handle overflow -/
+instance : One (Interval s) := ⟨.ofNat 1⟩
+
+lemma Interval.one_def : (1 : Interval s) = .ofNat 1 := rfl
+
+/-- Conversion from `ℕ` literals to `Interval s` -/
+instance {n : ℕ} [n.AtLeastTwo] : OfNat (Interval s) n := ⟨.ofNat n⟩
+
+/-- `.ofNat` is conservative -/
+lemma Interval.approx_ofNat (n : ℕ) : ↑n ∈ approx (.ofNat n : Interval s) := by
+  simp only [approx, ofNat, mem_ite_univ_left, mem_Icc]
+  by_cases g : (.ofNat n false : Fixed s) = nan ∨ (.ofNat n true : Fixed s) = nan
+  · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
+  · simp only [g, not_false_eq_true, forall_true_left]
+    simp only [not_or] at g
+    exact ⟨Fixed.ofNat_le g.1, Fixed.le_ofNat g.2⟩
+
+/-- `1 : Interval` is conservative -/
+@[mono] lemma Interval.approx_one : 1 ∈ approx (1 : Interval s) := by
+  rw [←Nat.cast_one]
+  apply Interval.approx_ofNat
+
+/-- `1 : Interval` is conservative, `⊆` version since this appears frequently -/
+@[mono] lemma Interval.subset_approx_one : {1} ⊆ approx (1 : Interval s) := by
+  simp only [singleton_subset_iff]; exact approx_one
+
+/-- `n.lo ≤ n` -/
+lemma Interval.ofNat_le (n : ℕ) : (.ofNat n : Interval s).lo.val ≤ n := by
+  simp only [ofNat]
+  by_cases n : (.ofNat n false : Fixed s) = nan
+  · simp only [n, Fixed.val_nan]
+    exact le_trans (neg_nonpos.mpr (zpow_nonneg (by norm_num) _)) (Nat.cast_nonneg _)
+  · exact le_trans (Fixed.ofNat_le n) (by norm_num)
+
+/-- `n ≤ n.hi` unless we're `nan` -/
+lemma Interval.le_ofNat (n : ℕ) (h : (.ofNat n : Interval s).hi ≠ nan) :
+    n ≤ (.ofNat n : Interval s).hi.val := Fixed.le_ofNat h
+
+/-- `1.lo ≤ 1` -/
+lemma Interval.one_le : (1 : Interval s).lo.val ≤ 1 := by
+  simpa only [Nat.cast_one] using Interval.ofNat_le 1 (s := s)
+
+/-- `1 ≤ 1.hi` unless we're `nan` -/
+lemma Interval.le_one (n : (1 : Interval s).hi ≠ nan) : 1 ≤ (1 : Interval s).hi.val :=
+  le_trans (by norm_num) (Fixed.le_ofNat n)

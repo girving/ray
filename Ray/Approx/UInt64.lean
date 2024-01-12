@@ -313,6 +313,13 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
 @[simp] lemma UInt64.cast_toNat (n : UInt64) : (n.toNat : UInt64) = n := by
   simp only [UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size]
 
+@[simp] lemma UInt64.toNat_log2 (n : UInt64) : n.log2.toNat = n.toNat.log2 := rfl
+
+@[simp] lemma UInt64.log2_lt_64 (n : UInt64) : n.toNat.log2 < 64 := by
+  by_cases n0 : n.toNat = 0
+  · simp only [n0, Nat.log2_zero, Nat.zero_lt_succ]
+  · simp only [Nat.log2_lt n0, toNat_lt_2_pow_64 n]
+
 /-!
 ### Conversion from `UInt64` to `ZMod`
 -/

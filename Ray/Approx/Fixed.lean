@@ -3,6 +3,7 @@ import Ray.Approx.Approx
 import Ray.Approx.Float
 import Ray.Approx.Int
 import Ray.Approx.Int64
+import Ray.Approx.Real
 import Ray.Approx.UInt128
 
 /-!
@@ -27,7 +28,8 @@ structure Fixed (s : Int64) where
   deriving DecidableEq, BEq
 
 /-- Sentinel value, indicating we don't know what the number is -/
-def nan : Fixed s := ⟨.min⟩
+instance : Nan (Fixed s) where
+  nan := ⟨.min⟩
 
 /-- Reduce `Fixed s` equality to `Int64` equality -/
 lemma Fixed.ext_iff (x y : Fixed s) : x = y ↔ x.n = y.n := by
@@ -85,15 +87,21 @@ lemma Fixed.neg_def (x : Fixed s) : -x = x.neg := rfl
   simp only [nan, neg_def, neg, Int64.neg_def, Int64.n_min, Nat.cast_pow, Nat.cast_ofNat, ext_iff]
   decide
 
+/-- The contrapose of `-nan = nan` -/
+@[simp] lemma Fixed.ne_nan_of_neg {x : Fixed s} (h : -x ≠ nan) : x ≠ nan := by
+  contrapose h
+  simp only [ne_eq, not_not] at h
+  simp only [h, neg_nan, ne_eq, not_true_eq_false, not_false_eq_true]
+
 /-- `Fixed` addition saturates to `nan` -/
-def Fixed.add (x y : Fixed s) :=
+@[irreducible] def Fixed.add (x y : Fixed s) :=
   let z : Fixed s := ⟨x.n + y.n⟩
   bif x == nan || y == nan || (x.n.isNeg == y.n.isNeg && x.n.isNeg != z.n.isNeg) then nan else z
 instance : Add (Fixed s) where add x y := x.add y
 lemma Fixed.add_def (x y : Fixed s) : x + y = x.add y := rfl
 
 /-- `Fixed` subtraction saturates to `nan` -/
-def Fixed.sub (x y : Fixed s) :=
+@[irreducible] def Fixed.sub (x y : Fixed s) :=
   let z : Fixed s := ⟨x.n - y.n⟩
   bif x == nan || y == nan || (x.n.isNeg != y.n.isNeg && x.n.isNeg != z.n.isNeg) then nan else z
 instance : Sub (Fixed s) where sub x y := x.sub y
@@ -103,7 +111,7 @@ lemma Fixed.sub_def (x y : Fixed s) : x - y = x.sub y := rfl
 lemma Fixed.add_as_eq (x y : Fixed s) : x + y = (
     let z : Fixed s := ⟨x.n + y.n⟩
     if x = nan ∨ y = nan ∨ (x.n.isNeg = y.n.isNeg ∧ x.n.isNeg ≠ z.n.isNeg) then nan else z) := by
-  simp only [Fixed.add_def, add, bif_eq_if]
+  rw [Fixed.add_def, add, bif_eq_if]
   simp only [bne, Bool.or_assoc, Bool.or_eq_true, beq_iff_eq, Bool.and_eq_true, Bool.not_eq_true',
     beq_eq_false_iff_ne, ne_eq]
 
@@ -136,8 +144,9 @@ lemma Fixed.isNeg_neg {x : Fixed s} (x0 : x.n ≠ 0) (xn : x ≠ nan) : (-x.n).i
 
 /-- `x - y = x + (-y)` -/
 lemma Fixed.sub_eq_add_neg (x y : Fixed s) : x - y = x + (-y) := by
-  simp only [sub_def, sub, Bool.cond_eq_ite, Bool.beq_eq_decide_eq', Bool.or_eq_true,
-    decide_eq_true_eq, Bool.and_eq_true, bne_iff_ne, ne_eq, add_def, add, neg_eq_nan]
+  rw [sub_def, sub, add_def, add]
+  simp only [Bool.cond_eq_ite, Bool.beq_eq_decide_eq', Bool.or_eq_true,
+    decide_eq_true_eq, Bool.and_eq_true, bne_iff_ne, ne_eq, neg_eq_nan]
   by_cases nx : x = nan
   · simp only [nx, true_or, ite_true]
   by_cases ny : y = nan
@@ -165,7 +174,8 @@ lemma Fixed.add_comm (x y : Fixed s) : x + y = y + x := by
 -- Addition and subtraction propagate nans
 @[simp] lemma Fixed.nan_add {x : Fixed s} : nan + x = nan := by
   simp only [add_def, add, beq_self_eq_true, Bool.true_or, cond_true]
-@[simp] lemma Fixed.add_nan {x : Fixed s} : x + nan = nan := by rw [Fixed.add_comm]; rfl
+@[simp] lemma Fixed.add_nan {x : Fixed s} : x + nan = nan := by
+  rw [Fixed.add_comm, Fixed.add_def, Fixed.add]; rfl
 @[simp] lemma Fixed.nan_sub {x : Fixed s} : nan - x = nan := by simp only [sub_eq_add_neg, nan_add]
 @[simp] lemma Fixed.sub_nan {x : Fixed s} : x - nan = nan := by
   simp only [sub_eq_add_neg, neg_nan, add_nan]
@@ -176,6 +186,13 @@ lemma Fixed.ne_nan_of_add {x y : Fixed s} (h : x + y ≠ nan) : x ≠ nan ∧ y 
   cases' h with h h
   · simp only [h, nan_add, ne_eq, not_true, not_false_eq_true]
   · simp only [h, add_nan, ne_eq, not_true, not_false_eq_true]
+
+/-- If `x - y ≠ nan`, neither `x` or `y` are `nan` -/
+lemma Fixed.ne_nan_of_sub {x y : Fixed s} (h : x - y ≠ nan) : x ≠ nan ∧ y ≠ nan := by
+  contrapose h; simp only [not_and_or, not_not] at h
+  cases' h with h h
+  · simp only [h, nan_sub, ne_eq, not_true, not_false_eq_true]
+  · simp only [h, sub_nan, ne_eq, not_true, not_false_eq_true]
 
 /-- `Fixed.val` commutes with negation, except at `nan` -/
 lemma Fixed.val_neg {x : Fixed s} (xn : x ≠ nan) : (-x).val = -x.val := by
@@ -196,13 +213,20 @@ lemma Fixed.val_add_ne {x y : Fixed s} (h : x.n.isNeg ≠ y.n.isNeg) :
 instance : Approx (Fixed s) ℝ where
   approx x := if x = nan then univ else {x.val}
 
-lemma Fixed.val_mem_approx {x : Fixed s} : x.val ∈ approx x := by
+@[simp] lemma Fixed.approx_nan : approx (nan : Fixed s) = univ := by
+  simp only [approx, nan, ite_true]
+
+@[mono] lemma Fixed.val_mem_approx {x : Fixed s} : x.val ∈ approx x := by
   simp only [approx]; split_ifs; repeat simp
 
 @[simp] lemma Fixed.approx_zero : approx (0 : Fixed s) = {0} := by
   simp only [approx, nan, ext_iff, zero_n, Int64.zero_def, Int64.ext_iff, Int64.n_min, Nat.cast_pow,
     Nat.cast_ofNat, val_zero, ite_eq_right_iff]
   intro h; contrapose h; decide
+
+/-- If we're not `nan`, `approx` is a singleton -/
+@[simp] lemma Fixed.approx_eq_singleton {x : Fixed s} (n : x ≠ nan) : approx x = {x.val} := by
+  simp only [approx, n, ite_false]
 
 /-- `Fixed` negation respects `approx` -/
 instance : ApproxNeg (Fixed s) ℝ where
@@ -248,7 +272,7 @@ instance : ApproxAdd (Fixed s) ℝ where
                 mem_ite_univ_left, mem_singleton_iff, implies_true]
 
 /-- `Fixed.val` commutes with add if the result isn't `nan` -/
-lemma Fixed.val_add_of_ne_nan {x y : Fixed s} (n : x + y ≠ nan) : (x + y).val = x.val + y.val := by
+lemma Fixed.val_add {x y : Fixed s} (n : x + y ≠ nan) : (x + y).val = x.val + y.val := by
   have h := image2_subset_iff.mp (approx_add x y) x.val val_mem_approx y.val val_mem_approx
   simp only [approx, n, ite_false, mem_singleton_iff] at h
   rw [h]
@@ -260,7 +284,7 @@ instance : ApproxSub (Fixed s) ℝ where
     exact subset_trans (add_subset_add_left (approx_neg _)) (approx_add x (-y))
 
 /-- `Fixed.val` commutes with sub if the result isn't `nan` -/
-lemma Fixed.val_sub_of_ne_nan {x y : Fixed s} (n : x - y ≠ nan) : (x - y).val = x.val - y.val := by
+lemma Fixed.val_sub {x y : Fixed s} (n : x - y ≠ nan) : (x - y).val = x.val - y.val := by
   have h := image2_subset_iff.mp (approx_sub x y) x.val val_mem_approx y.val val_mem_approx
   simp only [approx, n, ite_false, mem_singleton_iff] at h
   rw [h]
@@ -273,12 +297,33 @@ instance : ApproxAddGroup (Fixed s) ℝ where
 -/
 
 lemma Fixed.val_lt_zero {x : Fixed s} : x.val < 0 ↔ x.n.isNeg := by
-  have b : 0 < (2:ℝ)^(s:ℤ) := zpow_pos_of_pos (by norm_num) _
-  simp only [val, mul_neg_iff, Int.cast_pos, not_lt.mpr b.le, and_false, Int.cast_lt_zero,
-    Int64.coe_lt_zero_iff, b, and_true, false_or]
+  simp only [val, mul_neg_iff, Int.cast_pos, not_lt.mpr two_zpow_pos.le, and_false,
+    Int.cast_lt_zero, Int64.coe_lt_zero_iff, two_zpow_pos, and_true, false_or]
 
 lemma Fixed.val_nonneg {x : Fixed s} : 0 ≤ x.val ↔ x.n.isNeg = false := by
   rw [←not_iff_not]; simp only [not_le, val_lt_zero, Bool.not_eq_false]
+
+lemma Fixed.val_nonpos {x : Fixed s} : x.val ≤ 0 ↔ x.n ≤ 0 := by
+  simp only [val, mul_nonpos_iff, two_zpow_pos.le, and_true, not_le.mpr two_zpow_pos, and_false,
+    false_or, Int.cast_nonpos, Int64.coe_nonpos_iff]
+
+lemma Fixed.val_pos {x : Fixed s} : 0 < x.val ↔ 0 < x.n := by
+  simp only [val, two_zpow_pos, mul_pos_iff_of_pos_right, Int.cast_pos, Int64.coe_pos_iff]
+
+lemma Fixed.isNeg_eq {x : Fixed s} : x.n.isNeg = decide (x.val < 0) := by
+  by_cases n : x.n.isNeg
+  · simp only [n, true_eq_decide_iff]; rwa [val_lt_zero]
+  · simp only [Bool.not_eq_true] at n; simp only [n, false_eq_decide_iff, not_lt]; rwa [val_nonneg]
+
+/-- `x.val = 0` iff `x = 0` is -/
+lemma Fixed.val_eq_zero_iff {x : Fixed s} : x.val ≠ 0 ↔ x ≠ 0 := by
+  have z : (2:ℝ) ≠ 0 := by norm_num
+  simp only [val, ne_eq, mul_eq_zero, Int.cast_eq_zero, Int64.coe_eq_zero, zpow_ne_zero _ z,
+    or_false, ext_iff, zero_n]
+
+/-- `x.val` is nonzero iff `x` is -/
+lemma Fixed.val_ne_zero_iff {x : Fixed s} : x.val ≠ 0 ↔ x ≠ 0 := by
+  simp only [not_iff_not, val_eq_zero_iff]
 
 instance : Min (Fixed s) where
   min x y := ⟨min x.n y.n⟩
@@ -286,14 +331,33 @@ instance : Min (Fixed s) where
 instance : Max (Fixed s) where
   max x y := -min (-x) (-y)  -- Use `min` so that `nan` propagates
 
-@[pp_dot] def Fixed.abs (x : Fixed s) : Fixed s :=
-  ⟨⟨x.n.abs⟩⟩
+instance : Abs (Fixed s) where
+  abs x := ⟨⟨x.n.abs⟩⟩
 
-@[simp] lemma Fixed.abs_nan : (nan : Fixed s).abs = nan := by
+lemma Fixed.min_def {x y : Fixed s} : min x y = ⟨min x.n y.n⟩ := rfl
+lemma Fixed.max_def {x y : Fixed s} : max x y = -min (-x) (-y) := rfl
+lemma Fixed.abs_def {x : Fixed s} : |x| = ⟨⟨x.n.abs⟩⟩ := rfl
+
+@[simp] lemma Fixed.min_nan {x : Fixed s} : min x nan = nan := by
+  simp only [nan, min_def, ge_iff_le, Int64.min_le, min_eq_right]
+
+@[simp] lemma Fixed.nan_min {x : Fixed s} : min nan x = nan := by
+  simp only [nan, min_def, ge_iff_le, Int64.min_le, min_eq_left]
+
+@[simp] lemma Fixed.max_nan {x : Fixed s} : max x nan = nan := by
+  simp only [max_def, neg_nan, min_nan]
+
+@[simp] lemma Fixed.nan_max {x : Fixed s} : max nan x = nan := by
+  simp only [max_def, neg_nan, nan_min]
+
+@[simp] lemma Fixed.abs_nan : abs (nan : Fixed s) = nan := by
   simp only [abs, Int64.abs, ext_iff, Int64.ext_iff, nan]
   decide
 
-@[simp] lemma Fixed.abs_eq_nan {x : Fixed s} : x.abs = nan ↔ x = nan := by
+@[simp] lemma Fixed.abs_zero : abs (0 : Fixed s) = 0 := by
+  simp only [abs, zero_n, Int64.abs_zero]; rfl
+
+@[simp] lemma Fixed.abs_eq_nan {x : Fixed s} : abs x = nan ↔ x = nan := by
   simp only [abs, Int64.abs, nan, ext_iff, Int64.ext_iff, Int64.n_min, Nat.cast_pow, Nat.cast_ofNat,
     UInt64.eq_iff_toNat_eq, UInt64.toNat_2_pow_63]
   by_cases n : x.n.isNeg
@@ -308,22 +372,24 @@ instance : Max (Fixed s) where
       constructor; repeat { intro h; linarith }
   · simp only [n, cond_false]
 
-@[simp] lemma Fixed.isNeg_abs {x : Fixed s} : x.abs.n.isNeg = (x == nan) := by
-  have b : 0 < (2:ℝ)^(s:ℤ) := zpow_pos_of_pos (by norm_num) _
-  rw [Bool.eq_iff_iff, ← val_lt_zero, beq_iff_eq]
-  simp only [val, abs, mul_neg_iff, Int.cast_pos, not_lt.mpr b.le, and_false, Int.cast_lt_zero,
-    Int64.abs_lt_zero, b, and_true, false_or, nan, ext_iff]
+@[simp] lemma Fixed.abs_ne_nan {x : Fixed s} : abs x ≠ nan ↔ x ≠ nan := by
+  simp only [ne_eq, abs_eq_nan]
 
-lemma Fixed.val_abs {x : Fixed s} (n : x ≠ nan) : x.abs.val = |x.val| := by
+@[simp] lemma Fixed.isNeg_abs {x : Fixed s} : (abs x).n.isNeg = (x == nan) := by
+  rw [Bool.eq_iff_iff, ← val_lt_zero, beq_iff_eq]
+  simp only [val, abs, mul_neg_iff, Int.cast_pos, not_lt.mpr two_zpow_pos.le, and_false,
+    Int.cast_lt_zero, Int64.abs_lt_zero, two_zpow_pos, and_true, false_or, nan, ext_iff]
+
+lemma Fixed.val_abs {x : Fixed s} (n : x ≠ nan) : (abs x).val = |x.val| := by
   simp only [val, abs_mul, abs_zpow, abs_two, mul_eq_mul_right_iff]
   left
   simp only [nan, ne_eq, ext_iff] at n
-  simp only [abs, ←Int.cast_abs, Int.cast_inj, Int64.coe_abs' n]
+  simp only [abs_def, ←Int.cast_abs, Int.cast_inj, Int64.coe_abs' n]
 
-lemma Fixed.approx_abs_eq {x : Fixed s} (n : x ≠ nan) : approx x.abs = {|x.val|} := by
+lemma Fixed.approx_abs_eq {x : Fixed s} (n : x ≠ nan) : approx (abs x) = {|x.val|} := by
   simp only [approx, abs_eq_nan, n, Fixed.val_abs n, ite_false]
 
-lemma Fixed.approx_abs (x : Fixed s) : image (fun x ↦ |x|) (approx x) ⊆ approx x.abs := by
+lemma Fixed.approx_abs (x : Fixed s) : image (fun x ↦ |x|) (approx x) ⊆ approx (abs x) := by
   by_cases n : x = nan
   · simp only [approx, n, ite_true, image_univ, abs_nan, subset_univ]
   · simp only [approx, n, ite_false, image_singleton, abs_eq_nan, subset_singleton_iff,
@@ -349,14 +415,12 @@ lemma Fixed.approx_abs (x : Fixed s) : image (fun x ↦ |x|) (approx x) ⊆ appr
   simp only [max, neg_eq_nan, min_eq_nan]
 
 lemma Fixed.val_lt_val {x y : Fixed s} : x.val < y.val ↔ x.n < y.n := by
-  rw [val, val, mul_lt_mul_right]
-  · simp only [Int.cast_lt, Int64.coe_lt_coe]
-  · exact zpow_pos_of_pos (by norm_num) _
+  rw [val, val, mul_lt_mul_right two_zpow_pos]
+  simp only [Int.cast_lt, Int64.coe_lt_coe]
 
 lemma Fixed.val_le_val {x y : Fixed s} : x.val ≤ y.val ↔ x.n ≤ y.n := by
-  rw [val, val, mul_le_mul_right]
-  · simp only [Int.cast_le, Int64.coe_le_coe]
-  · exact zpow_pos_of_pos (by norm_num) _
+  rw [val, val, mul_le_mul_right two_zpow_pos]
+  simp only [Int.cast_le, Int64.coe_le_coe]
 
 @[simp] lemma Fixed.val_min {x y : Fixed s} : (min x y).val = min x.val y.val := by
   simp only [min, Int64.blt_eq_decide_lt, Bool.cond_decide]
@@ -369,6 +433,44 @@ lemma Fixed.val_max {x y : Fixed s} (nx : x ≠ nan) (ny : y ≠ nan) :
   have n : min (-x) (-y) ≠ nan := by
     simp only [ne_eq, min_eq_nan, neg_eq_nan, nx, ny, or_self, not_false_eq_true]
   simp only [max, val_neg n, val_min, val_neg nx, val_neg ny, min_neg_neg, neg_neg]
+
+lemma Fixed.min_comm {x y : Fixed s} : min x y = min y x := by
+  simp only [min, Int64.blt_eq_decide_lt, Bool.cond_decide]
+  split_ifs with l r r
+  · simp only [not_lt.mpr r.le] at l
+  · rfl
+  · rfl
+  · simp only [not_lt, Fixed.ext_iff] at l r ⊢
+    exact le_antisymm l r
+
+lemma Fixed.max_comm {x y : Fixed s} : max x y = max y x := by
+  simp only [max, min_comm]
+
+/-!
+### Order lemmas about `nan`
+-/
+
+/-- `nan.val` is very negative -/
+lemma Fixed.val_nan : (nan : Fixed s).val = -(2:ℝ) ^ (s + 63 : ℤ) := by
+  simp only [nan, val]
+  rw [Int64.coe_min']
+  have e : (2:ℝ) ^ (63 : ℕ) = (2:ℝ) ^ (63 : ℤ) := rfl
+  simp only [Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat, neg_mul, neg_inj, e]
+  rw [←zpow_add₀ (by norm_num), Int.add_comm]
+
+/-- `nan.val < 0` -/
+@[simp] lemma Fixed.val_nan_neg : (nan : Fixed s).val < 0 := by
+  simp only [val_nan, Left.neg_neg_iff, two_zpow_pos]
+
+/-- ¬`0 ≤ nan.val` -/
+@[simp] lemma Fixed.not_val_nan_nonneg : ¬0 ≤ (nan : Fixed s).val := not_le.mpr val_nan_neg
+
+/-- ¬`0 < nan.val` -/
+@[simp] lemma Fixed.not_val_nan_pos : ¬0 < (nan : Fixed s).val := not_lt.mpr val_nan_neg.le
+
+/-- Positive `Fixed`s are `≠ nan` -/
+lemma Fixed.ne_nan_of_pos {x : Fixed s} (h : 0 < x.val) : x ≠ nan := by
+  contrapose h; rw [not_not] at h; simp only [not_lt, h, val_nan_neg.le]
 
 /-!
 ### `Fixed` multiplication, rounding up or down
@@ -385,11 +487,11 @@ lemma Fixed.lt_of_of_raw_uint128_ne_nan {n : UInt128} {s : Int64}
     UInt64.le_iff_toNat_le, UInt64.toNat_2_pow_63, bif_eq_if, Bool.or_eq_true, bne_iff_ne, ne_eq,
     decide_eq_true_eq, ite_eq_left_iff, not_or, not_not, not_le, and_imp, not_forall, exists_prop,
     exists_and_left] at h
-  rw [UInt128.toNat, h.1]
+  rw [UInt128.toNat_def, h.1]
   simp only [UInt64.toNat_zero, zero_mul, zero_add, h.2.1]
 
 /-- Multiply two positive, non-nan `Fixed`s -/
-def Fixed.mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) : Fixed u :=
+@[irreducible] def Fixed.mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) : Fixed u :=
   let d : Fixed 0 := ⟨s⟩ + ⟨t⟩ - ⟨u⟩
   bif d == nan then nan else
   let z := mul128 x.n.n y.n.n
@@ -399,10 +501,10 @@ def Fixed.mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) : Fixed
   `z = x * y`
   `z.n * 2^u = x.n * y.n * 2^(s + t)`
   `z.n = x.n * y.n * 2^(s + t - u)` -/
-def Fixed.mul (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) : Fixed u :=
+@[irreducible] def Fixed.mul (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) : Fixed u :=
   bif x == nan || y == nan then nan else
   let p := x.n.isNeg != y.n.isNeg
-  let z := mul_of_pos x.abs y.abs u (up.xor p)
+  let z := mul_of_pos (abs x) (abs y) u (up.xor p)
   bif p then -z else z
 
 lemma Fixed.of_raw_uint128_val {n : UInt128} (h : (of_raw_uint128 n : Fixed s) ≠ nan) :
@@ -411,7 +513,7 @@ lemma Fixed.of_raw_uint128_val {n : UInt128} (h : (of_raw_uint128 n : Fixed s) �
     not_not, Bool.not_eq_true, and_imp, not_forall, exists_prop, exists_and_left] at h
   simp only [val, Int64.toInt, of_raw_uint128, h.1, bne_self_eq_false, h.2.1, Bool.or_self,
     bif_eq_if, ite_false, CharP.cast_eq_zero, sub_zero, Int.cast_ofNat, Nat.cast_ite, Nat.cast_pow,
-    Nat.cast_ofNat, UInt128.toReal, UInt128.toNat, UInt64.toNat_zero, zero_mul, zero_add]
+    Nat.cast_ofNat, UInt128.toReal, UInt128.toNat_def, UInt64.toNat_zero, zero_mul, zero_add]
 
 /-- If we're not `nan`, `shiftLeftSaturate` is nice -/
 lemma Fixed.toNat_shiftLeftSaturate_of_ne_nan {x : UInt128} {s : UInt64} {t : Int64}
@@ -434,7 +536,8 @@ lemma Fixed.approx_mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool
     approx x * approx y ⊆ rounds (approx (mul_of_pos x y u up)) !up := by
   have two0 : (2 : ℝ) ≠ 0 := by norm_num
   have twop : ∀ {x : ℤ}, (2:ℝ)^x ≠ 0 := fun {_} ↦ zpow_ne_zero _ (by norm_num)
-  simp only [image2_mul, mul_of_pos, bif_eq_if, beq_iff_eq, Bool.or_eq_true, bne_iff_ne, ne_eq]
+  rw [mul_of_pos]
+  simp only [image2_mul, bif_eq_if, beq_iff_eq, Bool.or_eq_true, bne_iff_ne, ne_eq]
   generalize hd : (⟨s⟩ + ⟨t⟩ - ⟨u⟩ : Fixed 0) = d
   generalize hw : (x.n.n.toNat : ℝ) * y.n.n.toNat = w
   have wa : (mul128 x.n.n y.n.n : ℝ) = w := by
@@ -447,7 +550,7 @@ lemma Fixed.approx_mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool
         simp only [←hd] at dn
         by_cases stn : (⟨s⟩ + ⟨t⟩ : Fixed 0) = nan
         · simp only [stn, nan_sub, not_true] at dn
-        · simp only [← hd, Fixed.val_sub_of_ne_nan dn, Fixed.val_add_of_ne_nan stn]
+        · simp only [← hd, Fixed.val_sub dn, Fixed.val_add stn]
           simp only [val, Int64.coe_zero, zpow_zero, mul_one]
       simpa only [val, Int64.coe_zero, zpow_zero, mul_one, ←Int.cast_add, ←Int.cast_sub,
         Int.cast_inj] using e
@@ -507,7 +610,7 @@ lemma Fixed.approx_mul_of_pos (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool
 /-- `Fixed.mul_of_pos` respects `approx` -/
 lemma Fixed.approx_mul_abs {x : Fixed s} {y : Fixed t} {u : Int64} {up : Bool}
     (xn : x ≠ nan) (yn : y ≠ nan) :
-    approx x.abs * approx y.abs ⊆ rounds (approx (mul_of_pos x.abs y.abs u up)) !up := by
+    approx (abs x) * approx (abs y) ⊆ rounds (approx (mul_of_pos (abs x) (abs y) u up)) !up := by
   apply approx_mul_of_pos
   · rw [Ne.def, abs_eq_nan]; exact xn
   · rw [Ne.def, abs_eq_nan]; exact yn
@@ -516,7 +619,7 @@ lemma Fixed.approx_mul_abs {x : Fixed s} {y : Fixed t} {u : Int64} {up : Bool}
 
  /-- If signs are equal, `*` is `abs * abs`-/
 lemma mul_of_isNeg_eq {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ nan)
-    (p : x.n.isNeg = y.n.isNeg) : approx x * approx y = approx x.abs * approx y.abs := by
+    (p : x.n.isNeg = y.n.isNeg) : approx x * approx y = approx (abs x) * approx (abs y) := by
   simp only [approx, xn, ite_false, yn, mul_singleton, image_singleton, Fixed.abs_eq_nan,
     Fixed.val_abs xn, Fixed.val_abs yn, singleton_eq_singleton_iff]
   have y0 := p.symm
@@ -530,7 +633,7 @@ lemma mul_of_isNeg_eq {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ n
 
  /-- If signs are different, `*` is `-(abs * abs)`-/
 lemma mul_of_isNeg_ne {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ nan)
-    (p : x.n.isNeg ≠ y.n.isNeg) : approx x * approx y = -(approx x.abs * approx y.abs) := by
+    (p : x.n.isNeg ≠ y.n.isNeg) : approx x * approx y = -(approx (abs x) * approx (abs y)) := by
   simp only [approx, xn, ite_false, yn, mul_singleton, image_singleton, Fixed.abs_eq_nan,
     Fixed.val_abs xn, Fixed.val_abs yn, neg_singleton, singleton_eq_singleton_iff]
   have y0 := p.symm
@@ -546,7 +649,8 @@ lemma mul_of_isNeg_ne {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ n
 /-- `Fixed.mul` respects `approx` -/
 lemma Fixed.approx_mul (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) :
     approx x * approx y ⊆ rounds (approx (x.mul y u up)) !up := by
-  simp only [mul, bif_eq_if, Bool.or_eq_true, beq_iff_eq, bne_iff_ne, ne_eq, ite_not, or_assoc]
+  rw [mul]
+  simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq, bne_iff_ne, ne_eq, ite_not, or_assoc]
   by_cases n : x = nan ∨ y = nan
   · simp only [approx, mul_ite, ite_mul, univ_mul_univ, singleton_mul, image_univ, mul_singleton,
       image_singleton, n, ite_true, rounds_univ, subset_univ]
@@ -593,3 +697,238 @@ lemma Fixed.le_mul {x : Fixed s} {y : Fixed t} {u : Int64} (n : Fixed.mul x y u 
   simp only [not_or] at m
   simpa only [approx, m.1, ite_false, m.2, mul_singleton, image_singleton, rounds, n,
     mem_singleton_iff, Bool.not_true, exists_eq_left, singleton_subset_iff, mem_setOf_eq] using h
+
+/-!
+## Conversion from `ℕ`, `Float`
+-/
+
+/-- Conversion from `ℕ` literals to `Fixed s`, rounding up or down -/
+@[irreducible] def Fixed.ofNat (n : ℕ) (up : Bool) : Fixed s :=
+  let t : ℤ := s
+  bif t < 0 then
+    let u := (-t).toNat
+    bif n != 0 && (63 ≤ u || 63-u ≤ n.log2) then nan
+    else ⟨n <<< u⟩
+  else
+    let u := t.toNat
+    let k := (bif up then n + (1 <<< u) - 1 else n) >>> u
+    bif k.log2 < 63 then ⟨k⟩ else nan
+
+/-- We use the general `.ofNat` routine even for `1`, to handle overflow,
+    rounding down arbitrarily -/
+instance : One (Fixed s) := ⟨.ofNat 1 false⟩
+
+/-- Conversion from `ℕ` literals to `Fixed s` -/
+instance {n : ℕ} [n.AtLeastTwo] : OfNat (Fixed s) n := ⟨.ofNat n false⟩
+
+/-- Convert a `Float` to `Fixed s` -/
+@[irreducible] def Fixed.ofFloat (x : Float) : Fixed s :=
+  let xs := x.abs.scaleB (-s)
+  bif xs ≤ 0.5 then 0 else
+  let y : Int64 := ⟨xs.toUInt64⟩
+  bif y == 0 || y.isNeg then nan else
+  ⟨bif x < 0 then -y else y⟩
+
+/-- `Fixed.ofNat` rounds the desired way -/
+lemma Fixed.approx_ofNat (n : ℕ) (up : Bool) :
+    ↑n ∈ rounds (approx (.ofNat n up : Fixed s)) !up := by
+  have t0 : (2:ℝ) ≠ 0 := by norm_num
+  by_cases nn : (.ofNat n up : Fixed s) = nan
+  · simp only [nn, approx_nan, rounds_univ, mem_univ]
+  rw [ofNat] at nn ⊢
+  simp only [bif_eq_if, decide_eq_true_eq, Bool.and_eq_true, bne_iff_ne, ne_eq,
+    Bool.or_eq_true] at nn ⊢
+  generalize ht : (s : ℤ) = t at nn
+  by_cases tn : t < 0
+  · simp only [tn, ite_true, ite_eq_left_iff, not_and, not_forall, exists_prop] at nn
+    by_cases n0 : n = 0
+    · simp [n0, ofNat, Fixed.val, tn, rounds, approx]
+      use 0
+      simp only [implies_true, le_refl, ite_self, and_self]
+    simp only [rounds, approx, tn, n0, not_false_eq_true, nn, and_false, ite_false, ite_true,
+      mem_singleton_iff, Bool.not_eq_true', exists_eq_left, mem_setOf_eq, Fixed.val, ht]
+    replace nn := nn.1
+    simp only [n0, not_false_eq_true, not_or, not_le, forall_true_left] at nn
+    simp only [Nat.shiftLeft_eq]
+    have lt : n * 2 ^ Int.toNat (-t) < 2^63 := by
+      have lt := (Nat.log2_lt n0).mp nn.2
+      refine lt_of_lt_of_le ((mul_lt_mul_right (pow_pos (by norm_num) _)).mpr lt) ?_
+      simp only [←pow_add, Nat.sub_add_cancel nn.1.le, le_refl]
+    have e : (Int.toNat (-t) : ℤ) = -t := Int.toNat_of_nonneg (by omega)
+    simp only [Int64.toInt_ofNat lt, Nat.cast_mul (α := ℤ), Int.cast_pow, Nat.cast_two,
+      Int.cast_mul, Int.cast_ofNat, Nat.cast_pow, Int.cast_two, mul_assoc]
+    simp only [←zpow_ofNat, ←zpow_add₀ t0, e, add_left_neg, zpow_zero, mul_one, le_refl, ite_self]
+  · have tp := not_lt.mp tn
+    have tz : (2:ℝ) ^ t = ↑(2 ^ t.toNat : ℕ) := by
+      generalize hu : t.toNat = u
+      have tu : (t : ℤ) = u := by rw [←hu]; exact (Int.toNat_of_nonneg tp).symm
+      simp only [tu, zpow_coe_nat, Int.toNat_ofNat, Nat.cast_pow, Nat.cast_ofNat]
+    simp only [tn, tsub_le_iff_right, ite_false, ite_eq_right_iff, not_forall, exists_prop] at nn
+    induction up
+    · simp only [ite_false] at nn
+      simp only [rounds, approx, tn, tsub_le_iff_right, ite_false, nn, ite_true, val._eq_1,
+        mem_singleton_iff, Bool.not_false, exists_eq_left, mem_setOf_eq, ge_iff_le]
+      replace nn := nn.1
+      simp only [Nat.shiftRight_eq_div_pow, ht] at nn ⊢
+      by_cases n0 : n / 2^t.toNat = 0
+      · simp only [n0, Nat.cast_zero, Int64.coe_zero, Int.cast_zero, zero_mul, Nat.cast_nonneg]
+      simp only [Nat.log2_lt n0] at nn
+      simp only [Int64.toInt_ofNat nn, tz, ←Nat.cast_mul, Int.cast_ofNat, Nat.cast_le]
+      apply Nat.div_mul_le_self
+    · simp only [ite_true] at nn
+      simp only [rounds, approx, tn, tsub_le_iff_right, ite_true, nn, ite_false, mem_singleton_iff,
+        Bool.not_true, exists_eq_left, mem_setOf_eq, ge_iff_le, Fixed.val, ht, tz]
+      simp only [Nat.shiftLeft_eq, one_mul, Nat.shiftRight_eq_div_pow] at nn ⊢
+      by_cases np : n = 0
+      · simp only [np, zero_add, Nat.two_pow_sub_one_div_two_pow, ge_iff_le,
+          le_refl, tsub_eq_zero_of_le, pow_zero, Nat.cast_zero, Int64.coe_zero, Int.cast_zero,
+          Nat.cast_ofNat, zero_mul]
+      rw [←Ne.def, ←Nat.pos_iff_ne_zero] at np
+      have n0'' : 0 < n + 2 ^ Int.toNat t - 1 := by
+        have le : 1 ≤ 2 ^ Int.toNat t := Nat.one_le_two_pow _
+        simp only [Nat.add_sub_assoc le]
+        exact lt_of_lt_of_le np (by omega)
+      by_cases zero : (n + 2 ^ Int.toNat t - 1) / 2 ^ Int.toNat t = 0
+      · simp only [zero, Nat.cast_zero, Int64.coe_zero, Int.cast_zero, zero_mul]
+        rw [←Nat.cast_zero, Nat.cast_le]
+        rw [Nat.div_eq_zero_iff (pow_pos (by norm_num) _)] at zero
+        omega
+      · simp only [Int64.toInt_ofNat ((Nat.log2_lt zero).mp nn.1), Int.cast_ofNat, ←Nat.cast_mul,
+          Nat.cast_le]
+        exact Nat.le_add_div_mul (Nat.pos_pow_of_pos _ (by norm_num))
+
+/-- `Fixed.approx_ofNat`, down version -/
+lemma Fixed.ofNat_le {n : ℕ} (h : (.ofNat n false : Fixed s) ≠ nan) :
+    (.ofNat n false : Fixed s).val ≤ n := by
+  simpa only [approx, h, ite_false, Bool.not_false, mem_rounds_singleton, ite_true] using
+    Fixed.approx_ofNat n false (s := s)
+
+/-- `Fixed.approx_ofNat`, up version -/
+lemma Fixed.le_ofNat {n : ℕ} (h : (.ofNat n true : Fixed s) ≠ nan) :
+    n ≤ (.ofNat n true : Fixed s).val := by
+  simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
+    Fixed.approx_ofNat n true (s := s)
+
+/-!
+### `2^n` and `log2`
+-/
+
+/-- Find `n` s.t. `2^n ≤ x.val < 2^(n+1)`, or `nan` -/
+@[irreducible, pp_dot] def Fixed.log2 (x : Fixed s) : Fixed 0 :=
+  bif x.n ≤ 0 then nan else ⟨⟨x.n.n.log2⟩⟩ + ⟨s⟩
+
+/-- `2^n : Fixed s`, rounded up or down -/
+@[irreducible] def Fixed.two_pow (n : Fixed 0) (up : Bool) : Fixed s :=
+  -- In the end, we'll have `⟨⟨x⟩⟩ : Fixed s` with `.val = x * 2^s`.
+  -- We want `x * 2^s = s^n`, so `x = 2^(n - s)`.
+  let k := n - ⟨s⟩
+  bif k == nan || 63 ≤ k.n then nan else
+  bif k.n.isNeg then bif up then ⟨1⟩ else 0 else
+  ⟨⟨1 <<< k.n.n⟩⟩
+
+/-- `x.log2` gives us a bracketing interval of two powers around `x.val` -/
+lemma Fixed.val_mem_log2 {x : Fixed s} (h : x.log2 ≠ nan) :
+    x.val ∈ Ico (2^(x.log2.n : ℤ)) (2^(x.log2.n + 1 : ℤ)) := by
+  rw [Fixed.log2] at h ⊢
+  have t0 : (2:ℝ) ≠ 0 := by norm_num
+  have tp : ∀ n : ℕ, (2:ℝ) ^ n = (2^n : ℕ) := fun n ↦ by rw [Nat.cast_pow, Nat.cast_two]
+  by_cases x0 : x.n ≤ 0
+  · simp only [x0, decide_True, bif_eq_if, ite_true, ne_eq, not_true_eq_false] at h
+  · simp only [val, x0, decide_False, cond_false, mem_Ico, ←div_le_iff two_zpow_pos,
+      ←lt_div_iff two_zpow_pos, ←zpow_sub₀ t0] at h ⊢
+    have v := Fixed.val_add h
+    simp only [val, Int64.coe_zero, zpow_zero, mul_one, ←Int.cast_add, Int.cast_inj] at v
+    simp only [v]; ring_nf
+    simp only [not_le] at x0
+    have xn : x.n.isNeg = false := by simp only [Int64.isNeg_eq, not_lt.mpr x0.le, decide_False]
+    rw [Int64.coe_log2, UInt64.toNat_log2, ←Nat.cast_one, ←Nat.cast_add, zpow_coe_nat, zpow_coe_nat,
+      Nat.add_comm, Int64.toReal_toInt xn, tp, tp, Nat.cast_le, Nat.cast_lt]
+    refine ⟨Nat.log2_self_le ?_, Nat.lt_log2_self⟩
+    simp only [←UInt64.ne_zero_iff_toNat_ne_zero, ←Int64.ne_zero_iff_n_ne_zero]
+    exact x0.ne'
+
+/-- `Fixed.two_pow` is correctly rounded -/
+lemma Fixed.approx_two_pow (n : Fixed 0) (up : Bool) :
+    2 ^ (n.n : ℤ) ∈ rounds (approx (.two_pow n up : Fixed s)) !up := by
+  generalize hk : n - ⟨s⟩ = k
+  rw [two_pow]
+  simp only [rounds, approx, bif_eq_if, hk, Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq,
+    ite_eq_left_iff, mem_ite_univ_left, not_forall, exists_prop, mem_singleton_iff, and_imp,
+    Bool.not_eq_true', mem_setOf_eq]
+  by_cases h : k = nan ∨ 63 ≤ k.n
+  · use 2 ^ (n.n : ℤ)
+    simp only [h, not_true_eq_false, ite_true, IsEmpty.forall_iff, le_refl, ite_self, and_self]
+  · simp only [h, not_false_eq_true, ite_false, forall_true_left]
+    simp only [not_or] at h
+    by_cases kn : k.n.isNeg = true
+    · simp only [kn, ite_true]
+      use (if up = true then ⟨1⟩ else 0 : Fixed s).val
+      refine ⟨fun _ ↦ rfl, ?_⟩
+      induction up
+      · simp only [ite_false, val_zero, two_zpow_pos.le, ite_true]
+      · simp only [ite_true, val, Int64.coe_one, Int.cast_one, one_mul, ite_false]
+        apply zpow_le_of_le (by norm_num)
+        simp only [← hk, not_le, isNeg_eq, decide_eq_true_eq] at h kn
+        simp only [Fixed.val_sub h.1, sub_neg] at kn
+        simp only [val, Int64.coe_zero, zpow_zero, mul_one, Int.cast_lt, Int64.coe_lt_coe] at kn
+        simp only [Int64.coe_le_coe, kn.le]
+    · use (⟨⟨1 <<< k.n.n⟩⟩ : Fixed s).val
+      simp only [Bool.not_eq_true] at kn
+      simp only [kn, ite_false, val, implies_true, true_and]
+      have k63 : k.n.n.toNat < 63 := by
+        have e : ((63 : Int64) : ℤ) = ((63 : ℕ) : ℤ) := rfl
+        simp only [not_le, ←Int64.coe_lt_coe, Int64.toInt_of_isNeg_eq_false kn, e,
+          Nat.cast_lt] at h
+        exact h.2
+      have k64 : k.n.n.toNat < 64 := by omega
+      have e1 : 1 % 2 ^ (64 - k.n.n.toNat) = 1 :=
+        Nat.mod_eq_of_lt (one_lt_pow (by norm_num) (by omega))
+      have lt : (⟨1 <<< k.n.n⟩ : Int64).n.toNat < 2 ^ 63 := by
+        simp only [UInt64.toNat_shiftLeft k64, UInt64.toNat_one, e1, one_mul]
+        exact pow_lt_pow_right (by norm_num) k63
+      have e : (2:ℝ) ^ k.n.n.toNat * 2 ^ (s : ℤ) = 2 ^ (n.n : ℤ) := by
+        rw [pow_mul_zpow (by norm_num)]; apply congr_arg₂ _ rfl
+        rw [←hk] at h
+        have v := Fixed.val_sub h.1
+        simp only [hk, val, Int64.toInt_of_isNeg_eq_false kn, Int64.coe_zero, zpow_zero,
+          mul_one, ←Int.cast_sub, Int.cast_inj] at v
+        linarith
+      simp only [Int64.toInt_eq_toNat_of_lt lt, UInt64.toNat_shiftLeft k64, UInt64.toNat_one, e1,
+        one_mul, Nat.cast_pow, Nat.cast_ofNat, Int.cast_pow, Int.int_cast_ofNat, e, le_refl,
+        ite_self]
+
+/-- `Fixed.log2 = nan` if we're nonpos -/
+@[simp] lemma Fixed.log2_eq_nan_of_nonpos {x : Fixed s} (x0 : x.val ≤ 0) : x.log2 = nan := by
+  simp only [val_nonpos] at x0
+  rw [log2]
+  simp only [x0, decide_True, cond_true]
+
+/-- `Fixed.log2` propagates `nan` -/
+@[simp] lemma Fixed.log2_nan : (nan : Fixed s).log2 = nan := by
+  rw [log2]
+  simp only [Bool.cond_decide, ite_eq_left_iff, not_le, ← val_pos, not_val_nan_pos,
+    IsEmpty.forall_iff]
+
+/-- `Fixed.two_pow` propagates `nan` -/
+@[simp] lemma Fixed.two_pow_nan {up : Bool} : (two_pow nan up : Fixed s) = nan := by
+  rw [two_pow]
+  simp only [nan_sub, beq_self_eq_true, Bool.true_or, isNeg_nan, cond_true]
+
+/-- `Fixed.two_pow ≠ nan` implies the argument `≠ nan` -/
+@[simp] lemma Fixed.ne_nan_of_two_pow {n : Fixed 0} {up : Bool}
+    (h : (two_pow n up : Fixed s) ≠ nan) : n ≠ nan := by
+  contrapose h
+  simp only [ne_eq, not_not] at h
+  simp only [h, two_pow_nan, ne_eq, not_true_eq_false, not_false_eq_true]
+
+/-- `Fixed.approx_two_pow`, down version -/
+lemma Fixed.two_pow_le {n : Fixed 0} (h : (.two_pow n false : Fixed s) ≠ nan) :
+    (.two_pow n false : Fixed s).val ≤ 2 ^ (n.n : ℤ) := by
+  simpa only [approx, h, ite_false, Bool.not_false, mem_rounds_singleton, ite_true] using
+    Fixed.approx_two_pow n false (s := s)
+
+/-- `Fixed.approx_ofNat`, up version -/
+lemma Fixed.le_two_pow {n : Fixed 0} (h : (.two_pow n true : Fixed s) ≠ nan) :
+    2 ^ (n.n : ℤ) ≤ (.two_pow n true : Fixed s).val := by
+  simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
+    Fixed.approx_two_pow n true (s := s)
