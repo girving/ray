@@ -5,7 +5,7 @@ import Ray.Render.Color
 /-!
 ## Pictures of the Mandelbrot set
 
-We define a variety (at least one?) of maps from `ℂ → Color`, illustrating the Mandelbrot set.
+We define some maps `ℂ → Color` which illustrate the Mandelbrot set.
 -/
 
 open Classical
