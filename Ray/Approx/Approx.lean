@@ -84,10 +84,10 @@ def rounds [LE R] (s : Set R) (up : Bool) : Set R :=
   ext x; simp only [rounds, mem_univ, true_and, mem_setOf_eq, iff_true]
   use x; simp only [ite_self]; rfl
 
-lemma rounds_mono (st : s ⊆ t) : rounds s up ⊆ rounds t up := by
+@[mono] lemma rounds_mono (st : s ⊆ t) : rounds s up ⊆ rounds t up := by
   intro x m; rcases m with ⟨y,m,h⟩; exact ⟨y, st m, h⟩
 
-lemma rounds_neg [OrderedAddCommGroup I] : rounds (-s) up = -(rounds s !up) := by
+@[simp] lemma rounds_neg [OrderedAddCommGroup I] : rounds (-s) up = -(rounds s !up) := by
   ext x
   simp only [rounds, mem_neg, mem_setOf_eq, Bool.not_eq_true']
   by_cases u : up

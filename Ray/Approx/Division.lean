@@ -1,6 +1,7 @@
 import Ray.Approx.Box
 import Ray.Approx.Floating
 import Ray.Approx.Interval
+import Std.Data.Rat.Basic
 
 open Pointwise
 
@@ -270,9 +271,20 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
   x.inv.x.mul_box z u
 
 /-- `Interval.div` is conservative -/
-@[mono] lemma Interval.approx_div {x : Interval s} {y : Interval t} {u : Int64} :
+lemma Interval.approx_div {x : Interval s} {y : Interval t} {u : Int64} :
     approx x / approx y ⊆ approx (x.div y u) := by
   rw [Interval.div, div_eq_inv_mul]; mono
+
+/-- `Interval.div` is conservative, `mono ⊆` version  -/
+@[mono] lemma Interval.subset_approx_div {p q : Set ℝ} {x : Interval s} {y : Interval t}
+    {u : Int64} (px : p ⊆ approx x) (qy : q ⊆ approx y) : p / q ⊆ approx (x.div y u) :=
+  subset_trans (div_subset_div px qy) Interval.approx_div
+
+/-- `Interval.div` is conservative, `mono ∈ version  -/
+@[mono] lemma Interval.mem_approx_div {p q : ℝ} {x : Interval s} {y : Interval t}
+    {u : Int64} (px : p ∈ approx x) (qy : q ∈ approx y) : p / q ∈ approx (x.div y u) := by
+  apply Interval.subset_approx_div (singleton_subset_iff.mpr px) (singleton_subset_iff.mpr qy)
+  simp only [div_singleton, image_singleton, mem_singleton_iff]
 
 /-- `Box / Interval` is conservative -/
 @[mono] lemma Box.approx_div_scalar {z : Box s} {x : Interval t} {u : Int64} :
@@ -286,6 +298,16 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
   constructor
   · simp only [FloatingInterval.approx_x]; mono
   · rw [Complex.ofReal_inv, e, inv_inv]
+
+/-- Conversion from `Q` -/
+@[irreducible] def Interval.ofRat (x : ℚ) : Interval s :=
+  (.ofInt x.num : Interval 0).div (.ofNat x.den : Interval 0) s
+
+/-- `Interval.ofRat` conversion is conservative -/
+@[mono] lemma Interval.approx_ofRat (x : ℚ) : ↑x ∈ approx (.ofRat x : Interval s) := by
+  nth_rw 1 [←Rat.num_div_den x]
+  rw [ofRat, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
+  mono
 
 /-!
 ### Unit tests

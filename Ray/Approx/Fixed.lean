@@ -133,6 +133,10 @@ instance : InvolutiveNeg (Fixed s) where
     · simp only [a, b]
 
 /-- Negation preserves `nan` -/
+@[simp] lemma Fixed.neg_ne_nan {x : Fixed s} : (-x) ≠ nan ↔ x ≠ nan := by
+  simp only [ne_eq, neg_eq_nan]
+
+ /-- Negation preserves `nan` -/
 @[simp] lemma Fixed.neg_beq_nan {x : Fixed s} : ((-x) == nan) = (x == nan) := by
   simp only [Bool.beq_eq_decide_eq', neg_eq_nan]
 
@@ -236,6 +240,13 @@ instance : ApproxNeg (Fixed s) ℝ where
     by_cases h : x = nan
     · simp only [h, ite_true, neg_univ, Fixed.neg_nan, subset_univ]
     · simp only [h, ite_false, neg_singleton, Fixed.val_neg h, subset_refl]
+
+/-- For `Fixed`, `-` and `approx` commute -/
+@[simp] lemma Fixed.approx_neg (x : Fixed s) : approx (-x) = -approx x := by
+  by_cases n : x = nan
+  · simp only [n, neg_nan, approx_nan, neg_univ]
+  · simp only [approx_eq_singleton (neg_ne_nan.mpr n), val_neg n, approx_eq_singleton n,
+    neg_singleton]
 
 /-- `Fixed` addition respects `approx` -/
 instance : ApproxAdd (Fixed s) ℝ where
@@ -661,7 +672,7 @@ lemma Fixed.approx_mul (x : Fixed s) (y : Fixed t) (u : Int64) (up : Bool) :
       exact approx_mul_abs n.1 n.2
     · have p' : x.n.isNeg != y.n.isNeg := by simpa only [bne_iff_ne, ne_eq]
       simp only [ne_eq, p, not_false_eq_true, mul_of_isNeg_ne n.1 n.2, p', Bool.xor_true, ite_false]
-      refine subset_trans ?_ (rounds_mono (approx_neg _))
+      refine subset_trans ?_ (rounds_mono (ApproxNeg.approx_neg _))
       simp only [rounds_neg, neg_subset_neg]
       exact approx_mul_abs n.1 n.2
 
@@ -699,7 +710,7 @@ lemma Fixed.le_mul {x : Fixed s} {y : Fixed t} {u : Int64} (n : Fixed.mul x y u 
     mem_singleton_iff, Bool.not_true, exists_eq_left, singleton_subset_iff, mem_setOf_eq] using h
 
 /-!
-## Conversion from `ℕ`, `Float`
+## Conversion from `ℕ`, `ℤ`, `Float`
 -/
 
 /-- Conversion from `ℕ` literals to `Fixed s`, rounding up or down -/
@@ -720,6 +731,10 @@ instance : One (Fixed s) := ⟨.ofNat 1 false⟩
 
 /-- Conversion from `ℕ` literals to `Fixed s` -/
 instance {n : ℕ} [n.AtLeastTwo] : OfNat (Fixed s) n := ⟨.ofNat n false⟩
+
+/-- Conversion from `ℤ` -/
+@[irreducible] def Fixed.ofInt (n : ℤ) (up : Bool) : Fixed s :=
+  bif n < 0 then -.ofNat (-n).toNat !up else .ofNat n.toNat up
 
 /-- Convert a `Float` to `Fixed s` -/
 @[irreducible] def Fixed.ofFloat (x : Float) : Fixed s :=
@@ -808,6 +823,35 @@ lemma Fixed.le_ofNat {n : ℕ} (h : (.ofNat n true : Fixed s) ≠ nan) :
     n ≤ (.ofNat n true : Fixed s).val := by
   simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
     Fixed.approx_ofNat n true (s := s)
+
+/-- `Fixed.ofInt` rounds the desired way -/
+lemma Fixed.approx_ofInt (n : ℤ) (up : Bool) :
+    ↑n ∈ rounds (approx (.ofInt n up : Fixed s)) !up := by
+  rw [Fixed.ofInt]
+  by_cases n0 : n < 0
+  · have e : (n : ℝ) = -↑(-n).toNat := by
+      have e : (n : ℝ) = -↑(-n) := by simp only [Int.cast_neg, neg_neg]
+      have le : 0 ≤ -n := by omega
+      rw [e, ←Int.toNat_of_nonneg le, neg_inj, Int.cast_ofNat]
+      rw [Int.toNat_of_nonneg le]
+    simpa only [e, n0, decide_True, cond_true, approx_neg, rounds_neg, Bool.not_not, mem_neg,
+      neg_neg] using approx_ofNat (-n).toNat (!up) (s := s)
+  · have e : (n : ℝ) = ↑n.toNat := by
+      rw [←Int.toNat_of_nonneg (not_lt.mp n0), Int.cast_ofNat]
+      simp only [Int.toNat_of_nonneg (not_lt.mp n0)]
+    simp only [e, n0, decide_False, cond_false, approx_ofNat]
+
+/-- `Fixed.approx_ofInt`, down version -/
+lemma Fixed.ofInt_le {n : ℤ} (h : (.ofInt n false : Fixed s) ≠ nan) :
+    (.ofInt n false : Fixed s).val ≤ n := by
+  simpa only [approx, h, ite_false, Bool.not_false, mem_rounds_singleton, ite_true] using
+    Fixed.approx_ofInt n false (s := s)
+
+/-- `Fixed.approx_ofInt`, up version -/
+lemma Fixed.le_ofInt {n : ℤ} (h : (.ofInt n true : Fixed s) ≠ nan) :
+    n ≤ (.ofInt n true : Fixed s).val := by
+  simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
+    Fixed.approx_ofInt n true (s := s)
 
 /-!
 ### `2^n` and `log2`

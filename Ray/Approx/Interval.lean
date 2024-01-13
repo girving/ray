@@ -731,7 +731,10 @@ lemma Interval.approx_sqr (x : Interval s) (u : Int64) :
 -/
 
 /-- `ℕ` converts to `Interval s` -/
-def Interval.ofNat (n : ℕ) : Interval s := ⟨.ofNat n false, .ofNat n true⟩
+@[irreducible] def Interval.ofNat (n : ℕ) : Interval s := ⟨.ofNat n false, .ofNat n true⟩
+
+/-- `ℤ` converts to `Interval s` -/
+@[irreducible] def Interval.ofInt (n : ℤ) : Interval s := ⟨.ofInt n false, .ofInt n true⟩
 
 /-- We use the general `.ofNat` routine for `1`, to handle overflow -/
 instance : One (Interval s) := ⟨.ofNat 1⟩
@@ -742,13 +745,22 @@ lemma Interval.one_def : (1 : Interval s) = .ofNat 1 := rfl
 instance {n : ℕ} [n.AtLeastTwo] : OfNat (Interval s) n := ⟨.ofNat n⟩
 
 /-- `.ofNat` is conservative -/
-lemma Interval.approx_ofNat (n : ℕ) : ↑n ∈ approx (.ofNat n : Interval s) := by
-  simp only [approx, ofNat, mem_ite_univ_left, mem_Icc]
+@[mono] lemma Interval.approx_ofNat (n : ℕ) : ↑n ∈ approx (.ofNat n : Interval s) := by
+  rw [ofNat]; simp only [approx, mem_ite_univ_left, mem_Icc]
   by_cases g : (.ofNat n false : Fixed s) = nan ∨ (.ofNat n true : Fixed s) = nan
   · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
   · simp only [g, not_false_eq_true, forall_true_left]
     simp only [not_or] at g
     exact ⟨Fixed.ofNat_le g.1, Fixed.le_ofNat g.2⟩
+
+/-- `.ofInt` is conservative -/
+@[mono] lemma Interval.approx_ofInt (n : ℤ) : ↑n ∈ approx (.ofInt n : Interval s) := by
+  rw [ofInt]; simp only [approx, mem_ite_univ_left, mem_Icc]
+  by_cases g : (.ofInt n false : Fixed s) = nan ∨ (.ofInt n true : Fixed s) = nan
+  · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
+  · simp only [g, not_false_eq_true, forall_true_left]
+    simp only [not_or] at g
+    exact ⟨Fixed.ofInt_le g.1, Fixed.le_ofInt g.2⟩
 
 /-- `1 : Interval` is conservative -/
 @[mono] lemma Interval.approx_one : 1 ∈ approx (1 : Interval s) := by
@@ -769,12 +781,14 @@ lemma Interval.ofNat_le (n : ℕ) : (.ofNat n : Interval s).lo.val ≤ n := by
 
 /-- `n ≤ n.hi` unless we're `nan` -/
 lemma Interval.le_ofNat (n : ℕ) (h : (.ofNat n : Interval s).hi ≠ nan) :
-    n ≤ (.ofNat n : Interval s).hi.val := Fixed.le_ofNat h
+    n ≤ (.ofNat n : Interval s).hi.val := by
+  rw [Interval.ofNat] at h ⊢; exact Fixed.le_ofNat h
 
 /-- `1.lo ≤ 1` -/
 lemma Interval.one_le : (1 : Interval s).lo.val ≤ 1 := by
   simpa only [Nat.cast_one] using Interval.ofNat_le 1 (s := s)
 
 /-- `1 ≤ 1.hi` unless we're `nan` -/
-lemma Interval.le_one (n : (1 : Interval s).hi ≠ nan) : 1 ≤ (1 : Interval s).hi.val :=
-  le_trans (by norm_num) (Fixed.le_ofNat n)
+lemma Interval.le_one (n : (1 : Interval s).hi ≠ nan) : 1 ≤ (1 : Interval s).hi.val := by
+  rw [Interval.one_def, Interval.ofNat] at n ⊢
+  refine le_trans (by norm_num) (Fixed.le_ofNat n)
