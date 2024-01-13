@@ -856,27 +856,6 @@ theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (c
     _ = ((2:ℝ) ^ n) ^ (d - 1) * abs z ^ (d - 1) := by rw [mul_pow]
     _ ≥ (2:ℝ) ^ n * abs z ^ (d - 1) := by bound [one_le_pow_of_one_le]
 
-/-- A non-log version of `iter_approx` -/
-theorem iter_bounds (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) (n : ℕ) :
-    abs z ^ ((d:ℝ) ^ n / exp (4 / (d * abs z ^ (d - 1)))) ≤ abs ((f' d c)^[n] z) ∧
-      abs ((f' d c)^[n] z) ≤ abs z ^ ((d:ℝ) ^ n * exp (4 / (d * abs z ^ (d - 1)))) := by
-  have z1 : 1 < abs z := lt_of_lt_of_le (by norm_num) z3
-  have z0 : 0 < abs z := lt_trans (by norm_num) z1
-  have d0 : 0 < (d : ℝ) := Nat.cast_pos.mpr d_pos
-  have f1 : 1 < abs ((f' d c)^[n] z) :=
-    lt_of_lt_of_le (one_lt_mul (one_le_pow_of_one_le one_le_two _) z1) (iter_large d z3 cz n)
-  have f0 : 0 < abs ((f' d c)^[n] z) := lt_trans zero_lt_one f1
-  have l0 : 0 < log (abs ((f' d c)^[n] z)) := Real.log_pos f1
-  rcases abs_le.mp (iter_approx d z3 cz n) with ⟨lo, hi⟩
-  simp only [sub_le_iff_le_add', le_sub_iff_add_le] at lo hi
-  simp only [neg_add_eq_sub, sub_add_eq_add_sub, Real.log_le_iff_le_exp l0,
-    Real.le_log_iff_exp_le l0, Real.log_le_iff_le_exp f0, Real.le_log_iff_exp_le f0, Real.exp_add,
-    Real.exp_sub, Real.exp_log (Real.log_pos z1), Real.exp_mul, Real.exp_log z0,
-    mul_comm _ (log (abs z)), mul_div_assoc] at lo hi
-  rw [← Real.exp_mul (↑n) (log ↑d), mul_comm (n:ℝ) _, Real.exp_mul (log ↑d) ↑n, Real.exp_log d0,
-    Real.rpow_nat_cast] at lo hi
-  use lo, hi
-
 /-- `s.bottcher c z ~ 1/z` for large `z` -/
 theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) atInf (𝓝 1) := by
