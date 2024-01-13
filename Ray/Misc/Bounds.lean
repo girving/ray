@@ -303,26 +303,37 @@ theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0
     _ ≤ c * abs w + e := by bound [h w wr, sc wz]
     _ ≤ c * abs z + e := by bound
 
-theorem log1p_small {z : ℂ} (zs : abs z ≤ 1/2) : abs (log (1 + z)) ≤ 2 * abs z := by
-  have rp : ( 1 / 2 : ℝ ) > 0 := by norm_num
-  have cp : ( 2 : ℝ ) > 0 := by norm_num
+theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : abs z ≤ r) :
+    abs (log (1 + z)) ≤ 1/(1 - r) * abs z := by
+  by_cases r0 : r ≤ 0
+  · have z0 := le_antisymm (le_trans zr r0) (Complex.abs.nonneg _)
+    simp only [map_eq_zero] at z0
+    simp only [z0, add_zero, Complex.log_one, map_zero, r0, sub_zero, ne_eq, one_ne_zero,
+      not_false_eq_true, div_self, mul_zero, le_refl]
+  simp only [not_le] at r0
   have fc : ContinuousAt (fun z ↦ log (1 + z)) z := by
     apply ContinuousAt.clog; apply ContinuousAt.add; exact continuousAt_const; exact continuousAt_id
     refine' near_one_avoids_negative_reals _
-    simp only [add_sub_cancel']; exact lt_of_le_of_lt zs (by bound)
-  apply weak_to_strong_small rp cp zs fc
+    simp only [add_sub_cancel', lt_of_le_of_lt zr r1]
+  apply weak_to_strong_small r0 (by bound) zr fc
   intro w wr
-  have ws := @weak_log1p_small w (1/2) (by bound) wr
-  have t : 1/(1 - 1/2) = (2 : ℝ) := by norm_num
-  rw [t] at ws; assumption
+  exact @weak_log1p_small w r (by bound) wr
+
+theorem log1p_small {z : ℂ} (zs : abs z ≤ 1/2) : abs (log (1 + z)) ≤ 2 * abs z :=
+  le_trans (log1p_small' (by norm_num) zs) (le_of_eq (by norm_num))
 
 /-- `log (1+x)` is small for small `x` -/
-theorem Real.log1p_small {x : ℝ} (xs : |x| ≤ 1 / 2) : |Real.log (1 + x)| ≤ 2 * |x| := by
+theorem Real.log1p_small' {x r : ℝ} (r1 : r < 1) (xr : |x| ≤ r) :
+    |Real.log (1 + x)| ≤ 1 / (1-r) * |x| := by
   set z := (x : ℂ)
   have zx : abs z = |x| := Complex.abs_ofReal _
-  simp only [← Complex.log_ofReal_re, ← zx] at xs ⊢
-  refine' _root_.trans (_root_.trans (Complex.abs_re_le_abs _) _) (_root_.log1p_small xs)
+  simp only [← Complex.log_ofReal_re, ← zx] at xr ⊢
+  refine' _root_.trans (_root_.trans (Complex.abs_re_le_abs _) _) (_root_.log1p_small' r1 xr)
   simp only [Complex.ofReal_add, Complex.ofReal_one, le_refl]
+
+/-- `log (1+x)` is small for small `x` -/
+theorem Real.log1p_small {x : ℝ} (xr : |x| ≤ 1/2) : |Real.log (1 + x)| ≤ 2 * |x| :=
+  le_trans (Real.log1p_small' (by norm_num) xr) (le_of_eq (by norm_num))
 
 /-- `log z` is small for `z ≈ 1` -/
 theorem log_small {z : ℂ} (zs : abs (z - 1) ≤ 1 / 2) : abs (log z) ≤ 2 * abs (z - 1) := by
