@@ -27,7 +27,11 @@ instance : Nan Color32 where
 /-- Approximation interval around a color channel -/
 def UInt8.approx (v : UInt8) : Set ℝ :=
   let x : ℝ := v.toNat
-  Icc ((x - 1) / 255) ((x + 1) / 255)
+  Icc (x / 256) ((x + 1) / 256)
+
+/-- Approximation midpoint for a color channel -/
+noncomputable def UInt8.color (v : UInt8) : ℝ :=
+  (v.toNat + 1/2) / 256
 
 /-- `Color32` has an approximation radius of `1/255` -/
 instance : Approx Color32 Color where
@@ -37,4 +41,4 @@ instance : Approx Color32 Color where
 
 /-- Roughly what `Color` a `Color32` corresponds to -/
 noncomputable def Color32.val (c : Color32) : Color :=
-  ![c.r.toNat / 255, c.g.toNat / 255, c.b.toNat / 255, c.a.toNat / 255]
+  ![c.r.color, c.g.color, c.b.color, c.a.color]
