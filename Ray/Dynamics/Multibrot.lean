@@ -47,9 +47,9 @@ some example effective results that we prove:
    `|log (log (abs ((f' d c)^[n] z))) - log (log (abs z)) - n * log d| ≤ 4 / (d * abs z ^ (d - 1))`
 5. `s.potential c z = 1/abs z + o(1/abs z)`: if `max 3 (abs c) ≤ abs z`, then
    `|s.potential c z - 1 / abs z| ≤ 12 / (d * abs z ^ (d - 1) * log (abs z))`
-6. If `exp 13 ≤ abs c ≤ abs z`, then `z` is postcritical (`(c,z) ∈ s.post`)
-7. If `exp 13 ≤ abs c ≤ abs z`, `s.bottcher = bottcherNear`, and thus the infinite produce holds
-8. If `exp 13 ≤ abs c ≤ abs z`, `abs (s.bottcher c z - z⁻¹) ≤ 16 * (abs z)⁻¹^2`
+6. If `exp 9 ≤ abs c ≤ abs z`, then `z` is postcritical (`(c,z) ∈ s.post`)
+7. If `exp 9 ≤ abs c ≤ abs z`, `s.bottcher = bottcherNear`, and thus the infinite produce holds
+8. If `exp 9 ≤ abs c ≤ abs z`, `abs (s.bottcher c z - z⁻¹) ≤ 16 * (abs z)⁻¹^2`
 9. `bottcher d` is monic at `∞` (has derivative 1 there)
 -/
 
@@ -765,8 +765,7 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
     have d1 : z^d = z^(d - 1 + 1) := by rw [Nat.sub_add_cancel d_ge_one]
     simp only [d1, map_div₀, Complex.abs.map_pow, pow_succ, Complex.abs.map_mul, div_mul_eq_div_div]
     bound
-  have czs : abs (c / z ^ d) ≤ 1 / 3 := by
-    apply le_trans cz (by bound)
+  have czs : abs (c / z ^ d) ≤ 1 / 3 := le_trans cz (by bound)
   have l0s : 1 ≤ log (abs z) := by
     rw [Real.le_log_iff_exp_le z0']; exact le_trans Real.exp_one_lt_3.le z3
   have l0 : 0 < log (abs z) := lt_of_lt_of_le (by norm_num) l0s
@@ -972,16 +971,30 @@ theorem tendsto_potential (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
     _ < 4 * (r / 4) := by linarith [(lt_min_iff.mp a1).2]
     _ = r := by ring
 
-/-- For large `c, z`, `s.potential = 1/abs z + o(1/abs z)` -/
+/-- `exp (2/3) ≤ 2` -/
+lemma exp_two_thirds_le : exp (2/3) ≤ 2 := by
+  have e : (2/3 : ℝ) = 1 * (2/3) := by norm_num
+  rw [e, Real.exp_mul, ←pow_le_pow_iff_left (n := 3) (by bound) (by norm_num) (by norm_num),
+    ←Real.rpow_mul_natCast (by bound), Nat.cast_ofNat, div_mul_cancel _ (by norm_num),
+    Real.rpow_two]
+  exact le_trans (pow_le_pow_left (by bound) Real.exp_one_lt_d9.le 2) (by norm_num)
+
+/-- `exp 9` is very big -/
+lemma le_exp_9 : 1000 ≤ exp 9 := by
+  have e : (9 : ℝ) = ↑(9 : ℕ) := by norm_num
+  rw [e, ←Real.exp_one_pow]
+  exact le_trans (by norm_num) (pow_le_pow_left (by norm_num) Real.exp_one_gt_d9.le _)
+
+/-- `s.potential = 1/abs z + o(1/abs z)` -/
 theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
-    |(superF d).potential c z - 1 / abs z| ≤ 12 / (↑d * abs z ^ (d - 1) * log (abs z)) := by
+    |(superF d).potential c z - 1 / abs z| ≤ 8 / (↑d * abs z ^ (d - 1) * log (abs z)) := by
   have d0 : 0 < d := d_pos
   have d2 : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
   have z0 : 0 < abs z := lt_of_lt_of_le (by norm_num) z3
   have z1 : 1 < abs z := lt_of_lt_of_le (by norm_num) z3
   have l2 : 0 < log (abs z) := Real.log_pos (by linarith)
   set s := superF d
-  generalize hb : 12 / (↑d * abs z ^ (d - 1) * log (abs z)) = b
+  generalize hb : 8 / (↑d * abs z ^ (d - 1) * log (abs z)) = b
   -- Swap out potential for an iterate approximate
   suffices h : ∀ᶠ n in atTop, |abs ((f' d c)^[n] z) ^ (-((d ^ n : ℕ) : ℝ)⁻¹) - 1 / abs z| ≤ b
   · apply le_of_forall_pos_lt_add; intro e ep
@@ -1008,20 +1021,20 @@ theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs 
     Real.log_div l0.ne' dn0.ne', div_eq_mul_inv, mul_comm, ← Real.log_rpow f0, hi] at h
   generalize hr : 4 / (↑d * abs z ^ (d - 1)) = r; rw [hr] at h
   have r0 : 0 < r := by rw [← hr]; bound
-  have r1 : r ≤ 1 := by
-    rw [← hr, div_le_one]; swap; bound
-    calc ↑d * abs z ^ (d - 1)
-      _ ≥ 2 * (3:ℝ) ^ (d - 1) := by bound
-      _ ≥ 2 * 3 := by bound [le_self_pow _ (d_minus_one_pos : 0 < d - 1).ne']
-      _ ≥ 4 := by norm_num
+  have r1 : r ≤ 2/3 := by
+    rw [← hr, div_le_iff]; swap; bound
+    calc 2/3 * (↑d * abs z ^ (d - 1))
+      _ ≥ 2/3 * (2 * (3:ℝ) ^ (d - 1)) := by bound
+      _ ≥ 2/3 * (2 * 3) := by bound [le_self_pow _ (d_minus_one_pos : 0 < d - 1).ne']
+      _ = 4 := by norm_num
   set t := closedBall (log (log (abs z))) r
   have yt : log (log (abs ((f' d c)^[n] z) ^ i)) ∈ t := by
     simp only [mem_closedBall, Real.dist_eq, h]
-  have bound : ∀ x, x ∈ t → ‖deriv (fun x ↦ exp (-exp x)) x‖ ≤ 3 / log (abs z) := by
+  have bound : ∀ x, x ∈ t → ‖deriv (fun x ↦ exp (-exp x)) x‖ ≤ 2 / log (abs z) := by
     intro x m; simp only [mem_closedBall, Real.dist_eq] at m
-    replace m : -x ≤ 1 - log (log (abs z)) := by linarith [(abs_le.mp m).1]
+    replace m : -x ≤ 2/3 - log (log (abs z)) := by linarith [(abs_le.mp m).1]
     refine le_trans (deriv_exp_neg_exp_le _) (le_trans (Real.exp_le_exp.mpr m) ?_)
-    simp only [Real.exp_sub, Real.exp_log l2]; bound [Real.exp_one_lt_3, l2]
+    simp only [Real.exp_sub, Real.exp_log l2]; bound [exp_two_thirds_le, l2]
   have m :=
     Convex.norm_image_sub_le_of_norm_deriv_le
       (fun x _ ↦ (hasDerivAt_exp_neg_exp x).differentiableAt) bound (convex_closedBall _ _)
@@ -1033,25 +1046,19 @@ theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs 
   rw [one_div]; refine le_trans m (le_of_eq ?_)
   rw [← hr, ← hb]; field_simp [l2.ne', z0.ne']; ring_nf
 
-/-- `exp 13` is very big -/
-lemma le_exp_13 : 1000 ≤ exp 13 := by
-  have e : (13 : ℝ) = ↑(13 : ℕ) := by norm_num
-  rw [e, ←Real.exp_one_pow]
-  exact le_trans (by norm_num) (pow_le_pow_left (by norm_num) Real.exp_one_gt_d9.le _)
-
 /-- For large `c`, large `z`'s are postcritical -/
-theorem largePost {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : abs c ≤ abs z) :
+theorem largePost {c z : ℂ} (c9 : exp 9 ≤ abs c) (cz : abs c ≤ abs z) :
     Postcritical (superF d) c z := by
   have d0 : 0 < d := d_pos
   have d1 : 0 < d-1 := d_minus_one_pos
   have d2 : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
-  have c1000 : 1000 ≤ abs c := le_trans le_exp_13 c13
+  have c1000 : 1000 ≤ abs c := le_trans le_exp_9 c9
   have c3 : 3 ≤ abs c := le_trans (by norm_num) c1000
   have c4 : 4 ≤ abs c := le_trans (by norm_num) c1000
   have c0 : 0 < abs c := by linarith
   have z3 : 3 ≤ abs z := le_trans (by norm_num) (le_trans c4 cz)
-  have lc13 : 13 ≤ log (abs c) := (Real.le_log_iff_exp_le c0).mpr c13
-  have lc : 0 < log (abs c) := lt_of_lt_of_le (by norm_num) lc13
+  have lc9 : 9 ≤ log (abs c) := (Real.le_log_iff_exp_le c0).mpr c9
+  have lc : 0 < log (abs c) := lt_of_lt_of_le (by norm_num) lc9
   simp only [Postcritical, multibrot_p]
   set s := superF d
   rw [← Real.pow_rpow_inv_natCast s.potential_nonneg d0.ne', ←
@@ -1080,32 +1087,32 @@ theorem largePost {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : abs c ≤ abs z) :
   have pw := sub_le_iff_le_add.mp (abs_le.mp (potential_approx d w3 cw)).2
   have pc := le_sub_iff_add_le.mp (abs_le.mp (potential_approx d c3 (le_refl _))).1
   refine lt_of_le_of_lt pw (lt_of_lt_of_le ?_ pc)
-  generalize hkc : 12 / (↑d * abs c ^ (d - 1) * log (abs c)) = kc
-  generalize hkw : 12 / (↑d * abs w ^ (d - 1) * log (abs w)) = kw
+  generalize hkc : 8 / (↑d * abs c ^ (d - 1) * log (abs c)) = kc
+  generalize hkw : 8 / (↑d * abs w ^ (d - 1) * log (abs w)) = kw
   rw [neg_add_eq_sub, lt_sub_iff_add_lt, add_comm _ kc, ← add_assoc]
   have kcw : kw ≤ kc := by rw [← hkc, ← hkw]; bound
-  have kcc : kc ≤ 1 / (13 / 6 * abs c) := by
+  have kcc : kc ≤ 1 / (9 / 4 * abs c) := by
     rw [← hkc]
     have c1 : 1 ≤ abs c := le_trans (by norm_num) c3
-    calc 12 / (↑d * abs c ^ (d - 1) * log (abs c))
-      _ ≤ 12 / (2 * abs c * 13) := by bound
-      _ = 12 / (13 * 2) / abs c := by rw [mul_comm _ (13 : ℝ), ← mul_assoc, ← div_div]
-      _ = 1 / (13 / 6) / abs c := by norm_num
-      _ = 1 / (13 / 6 * abs c) := by rw [div_div]
+    calc 8 / (↑d * abs c ^ (d - 1) * log (abs c))
+      _ ≤ 8 / (2 * abs c * 9) := by bound
+      _ = 8 / (9 * 2) / abs c := by rw [mul_comm _ (9 : ℝ), ← mul_assoc, ← div_div]
+      _ = 1 / (9 / 4) / abs c := by norm_num
+      _ = 1 / (9 / 4 * abs c) := by rw [div_div]
   calc kc + kw + 1 / abs w
     _ ≤ kc + kc + 1 / (999 * abs c) := by bound
     _ = 2 * kc + 1 / (999 * abs c) := by ring
-    _ ≤ 2 * (1 / (13 / 6 * abs c)) + 1 / (999 * abs c) := by linarith
-    _ = 2 / (13 / 6) / abs c + 1 / 999 / abs c := by field_simp
-    _ = (2 / (13 / 6) + 1 / 999) / abs c := by ring
+    _ ≤ 2 * (1 / (9 / 4 * abs c)) + 1 / (999 * abs c) := by linarith
+    _ = 2 / (9 / 4) / abs c + 1 / 999 / abs c := by field_simp
+    _ = (2 / (9 / 4) + 1 / 999) / abs c := by ring
     _ < 1 / abs c := (div_lt_div_right c0).mpr (by norm_num)
 
 /-- `s.bottcher = bottcherNear` for large `c,z`.
     This means that `s.bottcher` is given by the infinite product formula from `BottcherNear.lean`
     for large `c,z`. -/
-theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : abs c ≤ abs z) :
+theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c9 : exp 9 ≤ abs c) (cz : abs c ≤ abs z) :
     (superF d).bottcher c z = bottcherNear (fl (f d) ∞ c) d z⁻¹ := by
-  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_13 c13)
+  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_9 c9)
   have c0 : 0 < abs c := lt_trans (by norm_num) c16
   have z0 : 0 < abs z := lt_of_lt_of_le c0 cz
   set s := superF d
@@ -1119,7 +1126,7 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : ab
     refine' (s.bottcher_holomorphicOn _ _).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
     simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
-    rw [inv_coe z0]; apply largePost c13
+    rw [inv_coe z0]; apply largePost c9
     rwa [map_inv₀, le_inv c0]; exact Complex.abs.pos z0
   have a1 : HolomorphicOn I I (bottcherNear (fl (f d) ∞ c) d) t := by
     intro z m; apply AnalyticAt.holomorphicAt
@@ -1142,9 +1149,9 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : ab
   exact i.eventually (s.bottcher_eq_bottcherNear c)
 
 /-- `bottcher' = bottcherNear` for large `c` -/
-theorem bottcher_eq_bottcherNear {c : ℂ} (c13 : exp 13 ≤ abs c) :
+theorem bottcher_eq_bottcherNear {c : ℂ} (c9 : exp 9 ≤ abs c) :
     bottcher' d c = bottcherNear (fl (f d) ∞ c) d c⁻¹ :=
-  bottcher_eq_bottcherNear_z c13 (le_refl _)
+  bottcher_eq_bottcherNear_z c9 (le_refl _)
 
 /-- `z⁻¹` is in the `superNearC` region for large `c,z` -/
 theorem inv_mem_t {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z) :
@@ -1154,10 +1161,10 @@ theorem inv_mem_t {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z) :
   exact lt_of_lt_of_le (max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))) cz
 
 /-- Terms in the `bottcherNear` product are close to 1 -/
-theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c13 : exp 13 ≤ abs c) (cz : abs c ≤ abs z)
+theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c9 : exp 9 ≤ abs c) (cz : abs c ≤ abs z)
     (n : ℕ) : abs (term (fl (f d) ∞ c) d n z⁻¹ - 1) ≤ 2 * (1 / 2 : ℝ) ^ n * (abs z)⁻¹ := by
   set s := superF d
-  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_13 c13)
+  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_9 c9)
   have d2 : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
   have z0 : abs z ≠ 0 := (lt_of_lt_of_le (lt_trans (by norm_num) c16) cz).ne'
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
@@ -1201,14 +1208,14 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c13 : exp 13 ≤ abs
           simp only [mul_comm _ ((2:ℝ)^n)⁻¹, ←mul_assoc, le_refl]
 
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹^2)` -/
-theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c13 : exp 13 ≤ abs c)
+theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c9 : exp 9 ≤ abs c)
     (cz : abs c ≤ abs z) : abs ((superF d).bottcher c z - z⁻¹) ≤ (16:ℝ) * (abs z)⁻¹ ^ 2 := by
   set s := superF d
-  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_13 c13)
+  have c16 : 16 < abs c := lt_of_lt_of_le (by norm_num) (le_trans le_exp_9 c9)
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
     rw [one_div]; apply inv_le_inv_of_le; norm_num
     exact le_trans (by norm_num) (le_trans c16.le cz)
-  simp only [bottcher_eq_bottcherNear_z c13 cz, bottcherNear, Complex.abs.map_mul, ← mul_sub_one,
+  simp only [bottcher_eq_bottcherNear_z c9 cz, bottcherNear, Complex.abs.map_mul, ← mul_sub_one,
     pow_two, ← mul_assoc, map_inv₀, mul_comm (abs z)⁻¹]
   refine mul_le_mul_of_nonneg_right ?_ (inv_nonneg.mpr (Complex.abs.nonneg _))
   rcases term_prod_exists (superNearF d c) _ (inv_mem_t c16 cz) with ⟨p, h⟩
@@ -1217,16 +1224,16 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c13 : exp 13 �
   clear h; intro A; simp only [Function.comp]
   rw [(by norm_num : (16 : ℝ) = 4 * 4), mul_assoc]
   refine dist_prod_one_le_abs_sum ?_ (by linarith)
-  refine le_trans (Finset.sum_le_sum fun n _ ↦ term_approx d c13 cz n) ?_
+  refine le_trans (Finset.sum_le_sum fun n _ ↦ term_approx d c9 cz n) ?_
   simp only [mul_comm _ _⁻¹, ← mul_assoc, ← Finset.mul_sum]
   calc (abs z)⁻¹ * 2 * A.sum (fun n ↦ (1/2:ℝ)^n)
     _ ≤ (abs z)⁻¹ * 2 * (1 - 1 / 2)⁻¹ := by bound [partial_geometric_bound]
     _ = (abs z)⁻¹ * 4 := by ring
 
 /-- `bottcher' d c = c⁻¹ + O(c⁻¹^2)` -/
-theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] {c : ℂ} (c13 : exp 13 ≤ abs c) :
+theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] {c : ℂ} (c9 : exp 9 ≤ abs c) :
     abs (bottcher' d c - c⁻¹) ≤ 16 * (abs c)⁻¹ ^ 2 :=
-  bottcher_approx_z d c13 (le_refl _)
+  bottcher_approx_z d c9 (le_refl _)
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
 theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)⁻¹) 1 0 := by
@@ -1236,7 +1243,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
     smul_eq_mul, mul_one]
   rw [Asymptotics.isLittleO_iff]
   intro k k0; rw [Metric.eventually_nhds_iff]
-  refine ⟨min (exp 13)⁻¹ (k / 16), by bound, ?_⟩; intro z le
+  refine ⟨min (exp 9)⁻¹ (k / 16), by bound, ?_⟩; intro z le
   simp only [Complex.dist_eq, sub_zero, lt_min_iff] at le; simp only [Complex.norm_eq_abs]
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', fill_inf, sub_zero, Complex.abs.map_zero,
