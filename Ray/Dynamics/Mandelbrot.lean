@@ -1,5 +1,4 @@
-import Ray.Dynamics.Multibrot
-import Ray.Dynamics.MultibrotConnected
+import Ray.Dynamics.Multibrot.Connected
 
 /-!
 ## The Mandelbrot set and its complement are connected

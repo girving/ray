@@ -1,5 +1,5 @@
 import Ray.Misc.Connected
-import Ray.Dynamics.Multibrot
+import Ray.Dynamics.Multibrot.Isomorphism
 
 /-!
 ## The Multibrot set and its complement are connected
