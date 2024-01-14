@@ -36,7 +36,7 @@ Here are the main effective results that we prove:
 open Complex (abs)
 open Filter (eventually_of_forall Tendsto atTop)
 open Function (uncurry)
-open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
+open Metric (ball closedBall mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
 open Real (exp log)
 open RiemannSphere
 open Set
@@ -49,14 +49,70 @@ variable {c : ℂ}
 variable {d : ℕ} [Fact (2 ≤ d)]
 
 /-!
+## Bounds about `exp` and such
+-/
+
+/-- `exp (2/3) ≤ 2` -/
+lemma exp_two_thirds_le : exp (2/3) ≤ 2 := by
+  have e : (2/3 : ℝ) = 1 * (2/3) := by norm_num
+  rw [e, Real.exp_mul, ←pow_le_pow_iff_left (n := 3) (by bound) (by norm_num) (by norm_num),
+    ←Real.rpow_mul_natCast (by bound), Nat.cast_ofNat, div_mul_cancel _ (by norm_num),
+    Real.rpow_two]
+  exact le_trans (pow_le_pow_left (by bound) Real.exp_one_lt_d9.le 2) (by norm_num)
+
+/-- `exp 9` is very big -/
+lemma le_exp_9 : 1000 ≤ exp 9 := by
+  have e : (9 : ℝ) = ↑(9 : ℕ) := by norm_num
+  rw [e, ←Real.exp_one_pow]
+  exact le_trans (by norm_num) (pow_le_pow_left (by norm_num) Real.exp_one_gt_d9.le _)
+
+/-- We will use this function below to produce bounds on `s.potential` approximates -/
+def ene (x : ℝ) : ℝ := exp (-exp x)
+
+/-- The derivative of `ene` -/
+def dene (x : ℝ) : ℝ := -exp (x - exp x)
+
+/-- `d ene / dx = dene` -/
+lemma hasDerivAt_ene (x : ℝ) : HasDerivAt ene (dene x) x := by
+  have h : HasDerivAt (fun x ↦ exp (-exp x)) (exp (-exp x) * -exp x) x :=
+    HasDerivAt.exp (Real.hasDerivAt_exp x).neg
+  simp only [mul_neg, ← Real.exp_add, neg_add_eq_sub] at h; exact h
+
+/-- `d ene / dx = dene` -/
+lemma deriv_ene (x : ℝ) : deriv ene x = dene x := (hasDerivAt_ene x).deriv
+
+/-- Below we evaluate `dene x = exp (-exp x)` at a point of the form `log (log (abs z)) - k`.
+    The derivative simplifies in this case. -/
+lemma dene_eq (k : ℝ) {z : ℝ} (z1 : 1 < z) :
+    dene (log (log z) - k) = -exp (-k) * log z * z ^ (-exp (-k)) := by
+  have l0 : 0 < log z := Real.log_pos z1
+  simp only [dene, sub_eq_add_neg, Real.exp_add, Real.exp_log l0, mul_comm _ (exp (-k)), ←neg_mul]
+  apply congr_arg₂ _ rfl
+  rw [mul_comm, Real.exp_mul, Real.exp_log (by positivity)]
+
+/-- This is a weak bound, but it's all we use below -/
+lemma deriv_ene_le (x : ℝ) : ‖deriv ene x‖ ≤ exp (-x) := by
+  rw [deriv_ene]
+  simp only [Real.norm_eq_abs, abs_le]; constructor
+  · rw [dene, neg_le_neg_iff, Real.exp_le_exp]
+    suffices h : 2 * x ≤ exp x; linarith
+    by_cases x1 : x ≤ 1
+    exact le_trans (by linarith) (Real.add_one_le_exp _)
+    exact le_trans (by nlinarith) (Real.quadratic_le_exp_of_nonneg (by linarith))
+  · rw [dene, neg_le]
+    refine (lt_trans ?_ (Real.exp_pos _)).le
+    rw [neg_lt_zero]
+    apply Real.exp_pos
+
+/-!
 ## Effective bounds on iterates and Böttcher coordinates
 -/
 
 /-- A warmup exponential lower bound on iterates -/
 theorem iter_large (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) (n : ℕ) :
-    (2:ℝ)^n * abs z ≤ abs ((f' d c)^[n] z) := by
+   2^n * abs z ≤ abs ((f' d c)^[n] z) := by
   induction' n with n h
-  · simp only [pow_zero, one_mul, Function.iterate_zero_apply, le_refl]
+  · simp only [Nat.zero_eq, pow_zero, one_mul, Function.iterate_zero_apply, le_refl]
   · simp only [Function.iterate_succ_apply']
     generalize hw : (f' d c)^[n] z = w; rw [hw] at h; clear hw
     have z1 : 1 ≤ abs z := le_trans (by norm_num) z3
@@ -65,16 +121,16 @@ theorem iter_large (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz
     calc abs (w ^ d + c)
       _ ≥ abs (w ^ d) - abs c := by bound
       _ = abs w ^ d - abs c := by rw [Complex.abs.map_pow]
-      _ ≥ ((2:ℝ) ^ n * abs z) ^ d - abs c := by bound
-      _ = (2:ℝ) ^ (n*d) * abs z ^ d - abs c := by rw [mul_pow, pow_mul]
-      _ ≥ (2:ℝ) ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
-      _ = (2:ℝ) ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
-      _ ≥ (2:ℝ) ^ (n*d) * (3 * abs z) - abs c := by bound
-      _ = (2:ℝ) ^ (n*d) * 2 * abs z + ((2:ℝ) ^ (n * d) * abs z - abs c) := by ring
-      _ = (2:ℝ) ^ (n*d + 1) * abs z + ((2:ℝ) ^ (n * d) * abs z - abs c) := by rw [pow_succ']
-      _ ≥ (2:ℝ) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
-      _ = (2:ℝ) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
-      _ ≥ (2:ℝ) ^ (n + 1) * abs z := by bound
+      _ ≥ (2 ^ n * abs z) ^ d - abs c := by bound
+      _ = 2 ^ (n*d) * abs z ^ d - abs c := by rw [mul_pow, pow_mul]
+      _ ≥ 2 ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
+      _ = 2 ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
+      _ ≥ 2 ^ (n*d) * (3 * abs z) - abs c := by bound
+      _ = 2 ^ (n*d) * 2 * abs z + (2 ^ (n * d) * abs z - abs c) := by ring
+      _ = 2 ^ (n*d + 1) * abs z + (2 ^ (n * d) * abs z - abs c) := by rw [pow_succ']
+      _ ≥ 2 ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
+      _ = 2 ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
+      _ ≥ 2 ^ (n + 1) * abs z := by bound
 
 /-- Iterates tend to infinity for large `z` -/
 theorem tendsto_iter_atInf (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -105,8 +161,8 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
   have z0' : 0 < abs z := lt_of_lt_of_le (by norm_num) z3
   have zd : 3 ≤ abs z ^ (d - 1) := by
     calc abs z ^ (d - 1)
-      _ ≥ (3:ℝ) ^ (d - 1) := by bound [pow_right_mono z1]
-      _ ≥ (3:ℝ) ^ 1 := by bound [pow_le_pow_right _ d_minus_one_ge_one]
+      _ ≥ 3 ^ (d - 1) := by bound [pow_right_mono z1]
+      _ ≥ 3 ^ 1 := by bound [pow_le_pow_right _ d_minus_one_ge_one]
       _ = 3 := by norm_num
   have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp (z0'.ne')
   have zd0 : z ^ d ≠ 0 := pow_ne_zero _ z0
@@ -118,14 +174,14 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
   have czs : abs (c / z ^ d) ≤ 1 / 3 := le_trans cz (by bound)
   have l0s : 1 ≤ log (abs z) := by
     rw [Real.le_log_iff_exp_le z0']; exact le_trans Real.exp_one_lt_3.le z3
-  have l0 : 0 < log (abs z) := lt_of_lt_of_le (by norm_num) l0s
+  have l0 : 0 < log (abs z) := by positivity
   have l1 : 0 < ↑d * log (abs z) := by bound
   have l2 : |log (abs (1 + c / z ^ d))| ≤ 3/2 / abs z ^ (d - 1) := by
     nth_rw 1 [← Complex.log_re]
     refine le_trans (Complex.abs_re_le_abs _) (le_trans (log1p_small' (by norm_num) czs) ?_)
     calc 1 / (1 - 1/3) * abs (c / z ^ d)
       _ = 3/2 * abs (c / z ^ d) := by norm_num
-      _ ≤ 3/2 * (1 / abs z ^ (d - 1)) := by bound
+      _ ≤ 3/2 * (1 / abs z ^ (d - 1)) := by gcongr
       _ = 3/2 / abs z ^ (d - 1) := by rw [← mul_div_assoc, mul_one]
   have l3 : 0 < ↑d * log (abs z) + log (abs (1 + c / z ^ d)) := by
     suffices h : -log (abs (1 + c / z ^ d)) < ↑d * log (abs z); linarith
@@ -182,8 +238,8 @@ theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (c
     sub_add_eq_sub_sub _ _ (log d), ← sub_add_eq_sub_sub _ _ (↑n * log d)]
   generalize hw : (f' d c)^[n] z = w
   generalize hb : log (log (abs z)) + n * log d = b
-  have rw : (2:ℝ) ^ n * abs z ≤ abs w := by
-    trans (2:ℝ) ^ n * abs z; bound; rw [← hw]; exact iter_large d z3 cz n
+  have rw : 2 ^ n * abs z ≤ abs w := by
+    trans 2 ^ n * abs z; bound; rw [← hw]; exact iter_large d z3 cz n
   rw [← sub_add_eq_sub_sub, hw, hb] at h; clear hw hb
   have zw : abs z ≤ abs w := by
     refine le_trans ?_ rw; bound [le_mul_of_one_le_left, one_le_pow_of_one_le]
@@ -201,9 +257,9 @@ theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (c
   refine div_le_div_of_le_left (by norm_num) (by bound) ?_
   refine mul_le_mul_of_nonneg_left ?_ (by bound)
   calc abs w ^ (d - 1)
-    _ ≥ ((2:ℝ) ^ n * abs z) ^ (d - 1) := by bound
-    _ = ((2:ℝ) ^ n) ^ (d - 1) * abs z ^ (d - 1) := by rw [mul_pow]
-    _ ≥ (2:ℝ) ^ n * abs z ^ (d - 1) := by bound [one_le_pow_of_one_le]
+    _ ≥ (2 ^ n * abs z) ^ (d - 1) := by bound
+    _ = (2 ^ n) ^ (d - 1) * abs z ^ (d - 1) := by rw [mul_pow]
+    _ ≥ 2 ^ n * abs z ^ (d - 1) := by bound [one_le_pow_of_one_le]
 
 /-- `s.bottcher c z ~ 1/z` for large `z` -/
 theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
@@ -240,27 +296,6 @@ theorem potential_tendsto (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   set s := superF d
   simp only [← s.abs_bottcher, ← Complex.abs.map_mul, ← Complex.abs.map_one]
   exact Complex.continuous_abs.continuousAt.tendsto.comp (bottcher_large_approx d c)
-
--- The derivative of `x → exp (-exp x)`, for use in approximating `s.potential` -/
-theorem hasDerivAt_exp_neg_exp (x : ℝ) :
-    HasDerivAt (fun x ↦ exp (-exp x)) (-exp (x - exp x)) x := by
-  have h : HasDerivAt (fun x ↦ exp (-exp x)) (exp (-exp x) * -exp x) x :=
-    HasDerivAt.exp (Real.hasDerivAt_exp x).neg
-  simp only [mul_neg, ← Real.exp_add, neg_add_eq_sub] at h; exact h
-
-theorem deriv_exp_neg_exp (x : ℝ) : deriv (fun x ↦ exp (-exp x)) x = -exp (x - exp x) :=
-  (hasDerivAt_exp_neg_exp x).deriv
-
-/-- This is a weak bound, but it's all we use below -/
-theorem deriv_exp_neg_exp_le (x : ℝ) : ‖deriv (fun x ↦ exp (-exp x)) x‖ ≤ exp (-x) := by
-  rw [deriv_exp_neg_exp]
-  simp only [Real.norm_eq_abs, abs_le]; constructor
-  · rw [neg_le_neg_iff, Real.exp_le_exp]
-    suffices h : 2 * x ≤ exp x; linarith
-    by_cases x1 : x ≤ 1
-    exact le_trans (by linarith) (Real.add_one_le_exp _)
-    exact le_trans (by nlinarith) (Real.quadratic_le_exp_of_nonneg (by linarith))
-  · rw [neg_le]; refine (lt_trans ?_ (Real.exp_pos _)).le; rw [neg_lt_zero]; exact Real.exp_pos _
 
 /-- `potential` is the limit of roots of iterates -/
 theorem tendsto_potential (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -310,8 +345,8 @@ theorem tendsto_potential (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
       _ ≤ 1 * |x| ^ (-b - 1) := by bound [Real.abs_rpow_le_abs_rpow]
       _ = (x ^ (b + 1))⁻¹ := by rw [← Real.rpow_neg x0.le, neg_add', one_mul, abs_of_pos x0]
       _ ≤ ((1 / 2 : ℝ) ^ (b + 1))⁻¹ := by bound [m.1.le]
-      _ = (2:ℝ) ^ (b + 1) := by rw [one_div, Real.inv_rpow zero_le_two, inv_inv]
-      _ ≤ (2:ℝ) ^ (1 + 1 : ℝ) := by bound [Real.rpow_le_rpow_of_exponent_le]
+      _ = 2 ^ (b + 1) := by rw [one_div, Real.inv_rpow zero_le_two, inv_inv]
+      _ ≤ 2 ^ (1 + 1 : ℝ) := by bound [Real.rpow_le_rpow_of_exponent_le]
       _ ≤ 4 := by norm_num
   have le := Convex.norm_image_sub_le_of_norm_deriv_le (fun x m ↦ (hd x m).differentiableAt) bound
       (convex_ball _ _) (mem_ball_self (by norm_num)) am
@@ -320,20 +355,6 @@ theorem tendsto_potential (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
     _ ≤ 4 * |a - 1| := le
     _ < 4 * (r / 4) := by linarith [(lt_min_iff.mp a1).2]
     _ = r := by ring
-
-/-- `exp (2/3) ≤ 2` -/
-lemma exp_two_thirds_le : exp (2/3) ≤ 2 := by
-  have e : (2/3 : ℝ) = 1 * (2/3) := by norm_num
-  rw [e, Real.exp_mul, ←pow_le_pow_iff_left (n := 3) (by bound) (by norm_num) (by norm_num),
-    ←Real.rpow_mul_natCast (by bound), Nat.cast_ofNat, div_mul_cancel _ (by norm_num),
-    Real.rpow_two]
-  exact le_trans (pow_le_pow_left (by bound) Real.exp_one_lt_d9.le 2) (by norm_num)
-
-/-- `exp 9` is very big -/
-lemma le_exp_9 : 1000 ≤ exp 9 := by
-  have e : (9 : ℝ) = ↑(9 : ℕ) := by norm_num
-  rw [e, ←Real.exp_one_pow]
-  exact le_trans (by norm_num) (pow_le_pow_left (by norm_num) Real.exp_one_gt_d9.le _)
 
 /-- `s.potential = 1/abs z + o(1/abs z)` -/
 theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -374,25 +395,25 @@ theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs 
   have r1 : r ≤ 2/3 := by
     rw [← hr, div_le_iff]; swap; bound
     calc 2/3 * (↑d * abs z ^ (d - 1))
-      _ ≥ 2/3 * (2 * (3:ℝ) ^ (d - 1)) := by bound
+      _ ≥ 2/3 * (2 * 3 ^ (d - 1)) := by bound
       _ ≥ 2/3 * (2 * 3) := by bound [le_self_pow _ (d_minus_one_pos : 0 < d - 1).ne']
       _ = 4 := by norm_num
   set t := closedBall (log (log (abs z))) r
   have yt : log (log (abs ((f' d c)^[n] z) ^ i)) ∈ t := by
     simp only [mem_closedBall, Real.dist_eq, h]
-  have bound : ∀ x, x ∈ t → ‖deriv (fun x ↦ exp (-exp x)) x‖ ≤ 2 / log (abs z) := by
+  have bound : ∀ x, x ∈ t → ‖deriv ene x‖ ≤ 2 / log (abs z) := by
     intro x m; simp only [mem_closedBall, Real.dist_eq] at m
     replace m : -x ≤ 2/3 - log (log (abs z)) := by linarith [(abs_le.mp m).1]
-    refine le_trans (deriv_exp_neg_exp_le _) (le_trans (Real.exp_le_exp.mpr m) ?_)
+    refine le_trans (deriv_ene_le _) (le_trans (Real.exp_le_exp.mpr m) ?_)
     simp only [Real.exp_sub, Real.exp_log l2]; bound [exp_two_thirds_le, l2]
   have m :=
     Convex.norm_image_sub_le_of_norm_deriv_le
-      (fun x _ ↦ (hasDerivAt_exp_neg_exp x).differentiableAt) bound (convex_closedBall _ _)
+      (fun x _ ↦ (hasDerivAt_ene x).differentiableAt) bound (convex_closedBall _ _)
       (mem_closedBall_self r0.le) yt
   simp only [Real.norm_eq_abs] at m
   replace m := le_trans m (mul_le_mul_of_nonneg_left h (by bound))
-  simp only [Real.exp_log l1, Real.exp_log l2, Real.exp_neg, Real.exp_log z0, Real.exp_log f1, ←
-    Real.rpow_neg f0.le] at m
+  simp only [ene, Real.exp_log l1, Real.exp_log l2, Real.exp_neg, Real.exp_log z0, Real.exp_log f1,
+    ←Real.rpow_neg f0.le] at m
   rw [one_div]; refine le_trans m (le_of_eq ?_)
   rw [← hr, ← hb]; field_simp [l2.ne', z0.ne']; ring_nf
 
