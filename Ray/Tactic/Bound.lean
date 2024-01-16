@@ -105,7 +105,7 @@ attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_left Real.rpow_le_rpow
   mul_le_mul div_le_one_of_le mul_inv_le_one_of_le mul_inv_le_one_of_nonneg_of_le div_le_self
   le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le Real.exp_le_exp_of_le le_abs_self
   Real.sqrt_le_sqrt neg_le_neg Real.one_lt_exp_of_pos le_self_pow_of_pos pow_le_one
-  one_le_pow_of_one_le le_mul_of_one_le_right mul_le_of_le_one_right
+  one_le_pow_of_one_le le_mul_of_one_le_right mul_le_of_le_one_right le_div_self
 -- Triangle inequalities
 attribute [bound_rules] dist_triangle AbsoluteValue.le_add AbsoluteValue.le_sub AbsoluteValue.add_le
   AbsoluteValue.sub_le' AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le
