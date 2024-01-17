@@ -98,7 +98,7 @@ attribute [bound_rules] sq_nonneg mul_pos mul_nonneg div_pos div_nonneg pow_pos 
   NNReal.coe_pos_of_lt Nat.cast_nonneg NNReal.coe_nonneg abs_nonneg AbsoluteValue.nonneg norm_nonneg
   dist_nonneg Nat.zero_lt_succ Real.exp_pos Real.exp_nonneg Real.pi_pos Real.pi_nonneg
   Int.ceil_lt_add_one Real.sqrt_pos_of_pos ENNReal.ofReal_pos_of_pos Real.log_pos
-  Real.rpow_nonneg
+  Real.rpow_nonneg Real.log_nonneg
 -- ≤
 attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_left Real.rpow_le_rpow
   div_le_div_of_le div_le_div mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right
@@ -106,7 +106,7 @@ attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_left Real.rpow_le_rpow
   le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le Real.exp_le_exp_of_le le_abs_self
   Real.sqrt_le_sqrt neg_le_neg Real.one_lt_exp_of_pos le_self_pow_of_pos pow_le_one
   one_le_pow_of_one_le le_mul_of_one_le_right mul_le_of_le_one_right le_div_self
-  tsub_le_tsub_right inv_le_one
+  tsub_le_tsub_right inv_le_one Real.log_le_log
 -- Triangle inequalities
 attribute [bound_rules] dist_triangle AbsoluteValue.le_add AbsoluteValue.le_sub AbsoluteValue.add_le
   AbsoluteValue.sub_le' AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le
