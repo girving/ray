@@ -7,8 +7,8 @@ We derive effective estimates for `log (-log potential)` and `potential`, buildi
 the iterate growth rate estimates in `Iterates.lean`:
 
 1. `log (-log (s.potential c z)) = log (log (abs z)) + O(1) / (abs z * log (abs z))`
-2. `s.potential c z = 1/abs z + O(1) / abs z ^ k`, where `k = 1.864` if `3 ≤ abs z` and
-   `k = 1.927` if `4 ≤ abs z`.
+2. `s.potential c z = 1/abs z + O(1) / abs z ^ k`, where `k = 1.864` if `4 ≤ abs z` and
+   `k = 1.927` if `6 ≤ abs z`.
 -/
 
 open Complex (abs)

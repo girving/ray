@@ -120,7 +120,7 @@ instance : ApproxSub (Box s) ℂ where
     exact ⟨approx_sub _ _ (sub_mem_sub ar br), approx_sub _ _ (sub_mem_sub ai bi)⟩
 
 /-- `Box` approximates `ℂ` as an additive group -/
-instance : ApproxAddGroup (Box s) ℂ where
+noncomputable instance : ApproxAddGroup (Box s) ℂ where
 
 /-- `Box` multiplication approximates `ℂ` (inhomogenous case) -/
 @[mono] lemma Box.approx_mul (z : Box s) (w : Box t) (u : Int64) :
@@ -151,7 +151,7 @@ instance : ApproxMul (Box s) ℂ where
   approx_mul _ _ := Box.approx_mul _ _ _
 
 /-- `Box` approximates `ℂ` as a ring -/
-instance : ApproxRing (Box s) ℂ where
+noncomputable instance : ApproxRing (Box s) ℂ where
 
 /-- `Box` squaring approximates `ℂ` -/
 @[mono] lemma Box.approx_sqr (z : Box s) (u : Int64 := s) :

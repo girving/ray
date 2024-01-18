@@ -332,17 +332,8 @@ theorem bottcher_coe {c : ℂ} : bottcher d c = bottcher' d c := rfl
 theorem bottcher_inf : bottcher d ∞ = 0 := rfl
 
 /-!
-## Explicit points that are inside or outside the Multibrot set
+## Exponential lower and upper bounds on iterates
 -/
-
-/-- Multibrot membership in terms of the `ℂ → ℂ` iteration `f'`, not `f` -/
-theorem f_f'_iter (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c)^[n] z) := by
-  induction' n with n h; simp only [Function.iterate_zero, id]
-  simp only [h, Function.iterate_succ_apply']
-  simp only [f, lift', rec_coe]
-
-theorem multibrot_coe : c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop atInf := by
-  simp only [multibrot, mem_setOf, f_f'_iter, not_iff_not, tendsto_inf_iff_tendsto_atInf]
 
 /-- A warmup exponential lower bound on iterates -/
 lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b) (bz : b ≤ abs z)
@@ -369,6 +360,25 @@ lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b)
       _ ≥ (b-1) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
       _ = (b-1) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
       _ ≥ (b-1) ^ (n + 1) * abs z := by bound
+
+/-- Ap exponential upper bound on a single iteration -/
+lemma iter_small (d : ℕ) (c z : ℂ) : abs (f' d c z) ≤ abs z ^ d + abs c := by
+  calc abs (z^d + c)
+    _ ≤ abs (z^d) + abs c := by bound
+    _ ≤ abs z ^ d + abs c := by rw [Complex.abs.map_pow]
+
+/-!
+## Explicit points that are inside or outside the Multibrot set
+-/
+
+/-- Multibrot membership in terms of the `ℂ → ℂ` iteration `f'`, not `f` -/
+theorem f_f'_iter (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c)^[n] z) := by
+  induction' n with n h; simp only [Function.iterate_zero, id]
+  simp only [h, Function.iterate_succ_apply']
+  simp only [f, lift', rec_coe]
+
+theorem multibrot_coe : c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop atInf := by
+  simp only [multibrot, mem_setOf, f_f'_iter, not_iff_not, tendsto_inf_iff_tendsto_atInf]
 
 /-- Closed Julia sets are not outside radius `max 2 (abs c)` -/
 theorem julia_two_lt {z : ℂ} (z2 : 2 < abs z) (cz : abs c ≤ abs z) : (c,↑z) ∈ (superF d).basin := by

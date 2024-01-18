@@ -1,3 +1,4 @@
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Pointwise.Basic
 import Mathlib.Data.Set.Pointwise.Interval
@@ -107,3 +108,7 @@ lemma zpow_mul_pow {a : ℝ} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b * a^c = a^
 /-- `-` and `⁻¹` commute on `Set ℝ` -/
 @[simp] lemma Set.inv_neg {s : Set ℝ} : (-s)⁻¹ = -s⁻¹ := by
   ext x; simp only [_root_.inv_neg, mem_neg, mem_inv]
+
+/-- Make `x ^ (7 : ℝ)` simplify to `x ^ (7 : ℕ)` (when literals are involved) -/
+@[simp] lemma Real.rpow_ofNat {x : ℝ} {n : ℕ} [Nat.AtLeastTwo n] :
+    x ^ (no_index (OfNat.ofNat n) : ℝ) = x ^ (OfNat.ofNat n) := Real.rpow_nat_cast _ _

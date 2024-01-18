@@ -1,7 +1,7 @@
 import Mathlib.Data.Set.Pointwise.Basic
 import Mathlib.Data.Set.Pointwise.Interval
 import Ray.Approx.Fixed
-import Ray.Approx.Real
+import Ray.Misc.Real
 
 open Classical
 open Pointwise

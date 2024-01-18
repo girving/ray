@@ -3,8 +3,8 @@ import Ray.Approx.Approx
 import Ray.Approx.Float
 import Ray.Approx.Int
 import Ray.Approx.Int64
-import Ray.Approx.Real
 import Ray.Approx.UInt128
+import Ray.Misc.Real
 
 /-!
 ## 64-bit fixed point numbers
