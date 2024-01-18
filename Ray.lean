@@ -5,7 +5,6 @@ import Ray.Dynamics.Bottcher
 import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Connected
-import Ray.Dynamics.Multibrot.Effective
 import Ray.Dynamics.Multibrot.Isomorphism
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs

@@ -7,15 +7,26 @@ import Ray.Dynamics.Bottcher
 We define the Multibrot set as points `c` where `z ↦ z^d + c` does not escape to `∞` starting from
 `c` (or 0), both as a subset of `ℂ` and of the Riemann sphere `𝕊`.  We then lift the dynamical
 results from `Ray.lean` and `Bottcher.lean` about fixed `c` behavior into parameter results about
-the Multibrot set.  This file contains only basics; see `Multibrot/Effective.lean` for effective
-bounds and `Multibrot/Isomorphism.lean`, `Multibrot/Connected.lean`, and `Mandelbrot.lean` for the
-main theoretical results.
+the Multibrot set.  This file contains only basics; see
+`Multibrot/{Iterates,Potential,Postcritical,Bottcher}.lean` for effective bounds and
+`Multibrot/Isomorphism.lean`, `Multibrot/Connected.lean`, and `Mandelbrot.lean` for the main
+theoretical results.
+
+In detail, this file contains:
+
+1. Definitions of the Multibrot set and complement, and their `potential` and `bottcher` functions.
+2. Superattraction from the fixpoint at `∞`, in an effective region of `∞`.
+3. An initial exponential growth bound on iterates (`iter_large`).
+4. Specific points that are inside or out of the Multibrot set, including all points with
+   `2 < abs c` (`multibrot_two_lt`), points that repeat, etc.
+5. Analyticity and surjectivity of `bottcher`.
+6. Ineffective estimates for `bottcher` and `potential` near `∞`.
 -/
 
 open Complex (abs)
 open Filter (eventually_of_forall Tendsto atTop)
 open Function (uncurry)
-open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
+open Metric (ball closedBall mem_ball_self mem_ball mem_closedBall)
 open Real (exp log)
 open RiemannSphere
 open Set
@@ -26,13 +37,15 @@ variable {c : ℂ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
-theorem two_le_d [h : Fact (2 ≤ d)] : 2 ≤ d := h.elim
-theorem d_pos : 0 < d := lt_trans (by norm_num) two_le_d
-theorem d_ne_zero : d ≠ 0 := d_pos.ne'
-theorem d_minus_one_pos : 0 < d - 1 := Nat.sub_pos_of_lt (lt_of_lt_of_le one_lt_two two_le_d)
-theorem d_minus_one_ge_one : 1 ≤ d - 1 := Nat.succ_le_iff.mpr d_minus_one_pos
-theorem d_gt_one : 1 < d := lt_of_lt_of_le (by norm_num) two_le_d
-theorem d_ge_one : 1 ≤ d := d_gt_one.le
+lemma two_le_d [h : Fact (2 ≤ d)] : 2 ≤ d := h.elim
+lemma two_le_cast_d [h : Fact (2 ≤ d)] : 2 ≤ (d :ℝ) :=
+  le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
+lemma d_pos : 0 < d := lt_trans (by norm_num) two_le_d
+lemma d_ne_zero : d ≠ 0 := d_pos.ne'
+lemma d_minus_one_pos : 0 < d - 1 := Nat.sub_pos_of_lt (lt_of_lt_of_le one_lt_two two_le_d)
+lemma d_minus_one_ge_one : 1 ≤ d - 1 := Nat.succ_le_iff.mpr d_minus_one_pos
+lemma d_gt_one : 1 < d := lt_of_lt_of_le (by norm_num) two_le_d
+lemma d_ge_one : 1 ≤ d := d_gt_one.le
 
 /-!
 ## The defining iteration, the Multibrot set, and its complement
@@ -331,36 +344,60 @@ theorem f_f'_iter (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c)^[n] z) :
 theorem multibrot_coe : c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop atInf := by
   simp only [multibrot, mem_setOf, f_f'_iter, not_iff_not, tendsto_inf_iff_tendsto_atInf]
 
+/-- A warmup exponential lower bound on iterates -/
+lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b) (bz : b ≤ abs z)
+    (cz : abs c ≤ abs z) (n : ℕ) : (b-1)^n * abs z ≤ abs ((f' d c)^[n] z) := by
+  induction' n with n h
+  · simp only [Nat.zero_eq, pow_zero, one_mul, Function.iterate_zero_apply, le_refl]
+  · simp only [Function.iterate_succ_apply']
+    generalize hw : (f' d c)^[n] z = w; rw [hw] at h; clear hw
+    have z1 : 1 ≤ abs z := le_trans (by norm_num) (le_trans b2 bz)
+    have d1 : 1 ≤ d := d_ge_one
+    have b1 : 1 ≤ b - 1 := by linarith
+    have b0 : 0 ≤ b - 1 := by linarith
+    have nd : n + 1 ≤ n * d + 1 := by bound [le_mul_of_one_le_right]
+    calc abs (w ^ d + c)
+      _ ≥ abs (w ^ d) - abs c := by bound
+      _ = abs w ^ d - abs c := by rw [Complex.abs.map_pow]
+      _ ≥ ((b-1) ^ n * abs z) ^ d - abs c := by bound
+      _ = (b-1) ^ (n*d) * abs z ^ d - abs c := by rw [mul_pow, pow_mul]
+      _ ≥ (b-1) ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
+      _ = (b-1) ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
+      _ ≥ (b-1) ^ (n*d) * (b * abs z) - abs c := by bound
+      _ = (b-1) ^ (n*d) * (b-1) * abs z + ((b-1) ^ (n*d) * abs z - abs c) := by ring
+      _ = (b-1) ^ (n*d + 1) * abs z + ((b-1) ^ (n * d) * abs z - abs c) := by rw [pow_succ']
+      _ ≥ (b-1) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
+      _ = (b-1) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
+      _ ≥ (b-1) ^ (n + 1) * abs z := by bound
+
+/-- Closed Julia sets are not outside radius `max 2 (abs c)` -/
+theorem julia_two_lt {z : ℂ} (z2 : 2 < abs z) (cz : abs c ≤ abs z) : (c,↑z) ∈ (superF d).basin := by
+  simp only [multibrot_coe, not_le, not_not, (superF d).basin_iff_attracts, Attracts, f_f'_iter,
+    tendsto_inf_iff_tendsto_atInf, tendsto_atInf_iff_norm_tendsto_atTop,
+    Complex.norm_eq_abs] at z2 ⊢
+  apply Filter.tendsto_atTop_mono (iter_large d (abs z) z2.le (le_refl _) cz)
+  refine Filter.Tendsto.atTop_mul (by linarith) ?_ tendsto_const_nhds
+  apply tendsto_pow_atTop_atTop_of_one_lt; linarith
+
+/-- Closed Julia sets are inside radius `max 2 (abs c)` -/
+theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : abs c ≤ abs z) : abs z ≤ 2 := by
+  contrapose m
+  simp only [not_le, not_not] at m ⊢
+  exact julia_two_lt m cz
+
+/-- `0 < s.potential` at finite values -/
+lemma potential_pos {z : ℂ} : 0 < (superF d).potential c z :=
+  ((superF d).potential_pos _).mpr RiemannSphere.coe_ne_inf
+
+/-- `s.potential < 1` outside radius `max 2 (abs c)` -/
+lemma potential_lt_one_of_two_lt {z : ℂ} (z2 : 2 < abs z) (cz : abs c ≤ abs z) :
+    (superF d).potential c z < 1 :=
+  (superF d).potential_lt_one (julia_two_lt z2 cz)
+
 /-- The Multibrot set is inside radius 2 -/
 theorem multibrot_le_two (m : c ∈ multibrot d) : abs c ≤ 2 := by
-  set s := abs c
-  contrapose m
-  simp only [multibrot_coe, not_le, not_not] at m ⊢
-  have s1 : 1 ≤ s := le_trans (by norm_num) m.le
-  have s1' : 1 ≤ s - 1 := by linarith
-  have a : ∀ z : ℂ, 1 ≤ abs z → abs z ^ 2 - s ≤ abs (f' d c z) := by
-    intro z z1; simp only [f']; refine le_trans (sub_le_sub_right ?_ _) (Complex.abs.le_add _ _)
-    simp only [Complex.abs.map_pow]; exact pow_le_pow_right z1 two_le_d
-  have b : ∀ n, s * (s - 1) ^ n ≤ abs ((f' d c)^[n] c) := by
-    intro n; induction' n with n h
-    · simp only [pow_zero, mul_one, Function.iterate_zero_apply, le_refl]
-    · simp only [Function.iterate_succ_apply', le_refl]
-      refine le_trans ?_ (a _ ?_)
-      trans (s * (s - 1) ^ n) ^ 2 - s
-      · calc (s * (s - 1) ^ n) ^ 2 - s
-          _ = s ^ 2 * ((s - 1) ^ n) ^ 2 - s := by ring
-          _ = s ^ 2 * (s - 1) ^ (n * 2) - s := by rw [pow_mul]
-          _ ≥ s ^ 2 * (s - 1) ^ (n * 2) - s * (s - 1) ^ (n * 2) := by bound
-          _ = s * ((s - 1) ^ 1 * (s - 1) ^ (n * 2)) := by ring
-          _ = s * (s - 1) ^ (1 + n * 2) := by rw [pow_add]
-          _ ≥ s * (s - 1) ^ (1 + n * 1) := by bound [pow_le_pow_right]
-          _ = s * (s - 1) ^ (n + 1) := by ring_nf
-      · bound
-      · exact le_trans (Left.one_le_mul_of_le_of_le s1 (one_le_pow_of_one_le s1' _) (by linarith)) h
-  simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
-  apply Filter.tendsto_atTop_mono b
-  refine' Filter.Tendsto.mul_atTop (by linarith) tendsto_const_nhds _
-  apply tendsto_pow_atTop_atTop_of_one_lt; linarith
+  rw [multibrot_basin' (d := d)] at m
+  exact julia_le_two m (le_refl _)
 
 /-- The Multibrot set is a subset of `closedBall 0 2` -/
 theorem multibrot_subset_closedBall : multibrot d ⊆ closedBall 0 2 := by
@@ -656,3 +693,43 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
       apply image_subset _ ts; rw [IsClosed.closure_eq] at mt; exact mt
       apply IsCompact.isClosed; apply IsCompact.image_of_continuousOn ct
       refine' ContinuousOn.mono _ ts; exact (bottcherHolomorphic d).continuousOn
+
+/-!
+### Ineffective approximations
+-/
+
+/-- `s.bottcher c z ~ 1/z` for large `z` -/
+theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
+    Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) atInf (𝓝 1) := by
+  set s := superF d
+  have e : ∀ᶠ z : ℂ in atInf, s.bottcher c z * z = s.bottcherNear c z * z := by
+    suffices e : ∀ᶠ z : ℂ in atInf, s.bottcher c z = s.bottcherNear c z
+    exact e.mp (eventually_of_forall fun z e ↦ by rw [e])
+    refine coe_tendsto_inf.eventually (p := fun z ↦ s.bottcher c z = s.bottcherNear c z) ?_
+    apply s.bottcher_eq_bottcherNear
+  rw [Filter.tendsto_congr' e]; clear e
+  have m := bottcherNear_monic (s.superNearC.s (mem_univ c))
+  simp only [hasDerivAt_iff_tendsto, sub_zero, bottcherNear_zero, smul_eq_mul, mul_one,
+    Metric.tendsto_nhds_nhds, Real.dist_eq, Complex.norm_eq_abs, Complex.dist_eq, abs_mul,
+    abs_of_nonneg (Complex.abs.nonneg _), abs_inv] at m
+  simp only [Metric.tendsto_nhds, atInf_basis.eventually_iff, true_and_iff, mem_setOf,
+    Complex.dist_eq, Complex.norm_eq_abs]
+  intro e ep; rcases m e ep with ⟨r, rp, h⟩; use 1 / r; intro z zr
+  have az0 : abs z ≠ 0 := (lt_trans (one_div_pos.mpr rp) zr).ne'
+  have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp az0
+  have zir : abs (z⁻¹) < r := by
+    simp only [one_div, map_inv₀] at zr ⊢; exact inv_lt_of_inv_lt rp zr
+  specialize @h z⁻¹ zir
+  simp only [map_inv₀, inv_inv, ← Complex.abs.map_mul, sub_mul, inv_mul_cancel z0,
+    mul_comm z _] at h
+  simp only [Super.bottcherNear, extChartAt_inf, PartialEquiv.trans_apply,
+    coePartialEquiv_symm_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, RiemannSphere.inv_inf,
+    toComplex_zero, sub_zero, inv_coe z0, toComplex_coe]
+  exact h
+
+/-- `s.potential c z ~ 1/abs z` for large `z` -/
+theorem potential_tendsto (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
+    Tendsto (fun z : ℂ ↦ (superF d).potential c z * abs z) atInf (𝓝 1) := by
+  set s := superF d
+  simp only [← s.abs_bottcher, ← Complex.abs.map_mul, ← Complex.abs.map_one]
+  exact Complex.continuous_abs.continuousAt.tendsto.comp (bottcher_large_approx d c)

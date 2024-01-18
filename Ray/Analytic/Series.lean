@@ -5,6 +5,7 @@ import Mathlib.Data.Real.ENNReal
 import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
+import Mathlib.Data.Stream.Init
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
@@ -161,3 +162,33 @@ theorem fast_series_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ}
   · exact uniform_analytic_lim o (fun N ↦ N.analyticOn_sum fun _ _ ↦ h _)
       (fast_series_converge_uniformly_on a0 a1 hf)
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)
+
+/-- Adding one more term to a sum adds it -/
+theorem sum_cons {X : Type} [NormedAddCommGroup X] {a g : X} {f : ℕ → X} (h : HasSum f g) :
+    HasSum (Stream'.cons a f) (a + g) := by
+  rw [HasSum] at h ⊢
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_add_left a) g) h
+  have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum f) =
+      (fun N : Finset ℕ ↦ N.sum (Stream'.cons a f)) ∘ push := by
+    apply funext; intro N; simp; exact push_sum
+  rw [s] at ha
+  exact tendsto_comp_push.mp ha
+
+/-- Adding one more term to a sum adds it (`tprod` version) -/
+lemma sum_cons' {a : ℂ} {f : ℕ → ℂ} (h : Summable f) :
+    tsum (Stream'.cons a f) = a + tsum f := by
+  rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; rw [HasSum.tsum_eq _]; exact sum_cons h
+
+/-- Dropping the first term subtracts it -/
+lemma sum_drop {X : Type} [NormedAddCommGroup X] {f : ℕ → X} {g : X} (h : HasSum f g) :
+    HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
+  have c := sum_cons (a := -f 0) h
+  rw [HasSum]
+  rw [neg_add_eq_sub, HasSum, ← tendsto_comp_push, ← tendsto_comp_push] at c
+  have s : ((fun N : Finset ℕ ↦ N.sum fun n ↦ (Stream'.cons (-f 0) f) n) ∘ push) ∘ push =
+      fun N : Finset ℕ ↦ N.sum fun n ↦ f (n + 1) := by
+    clear c h g; apply funext; intro N; simp
+    nth_rw 2 [← Stream'.eta f]
+    simp only [←push_sum, Stream'.head, Stream'.tail, Stream'.get]
+    abel
+  rw [s] at c; assumption

@@ -44,6 +44,11 @@ theorem push_le_push {A B : Finset ℕ} : push A ≤ push B ↔ A ≤ B := by
     specialize AB h; simp at AB; assumption
   · intro AB; apply Finset.insert_subset_insert; apply Finset.image_mono; assumption
 
+/-- `push` and sums interact nicely -/
+theorem push_sum {X : Type} [AddCommGroup X] {a : X} {f : ℕ → X} {N : Finset ℕ} :
+    a + N.sum f = (push N).sum (cons a f) := by
+  rw [push]; simp; rfl
+
 /-- `push` and products interact nicely -/
 theorem push_prod {a : ℂ} {f : ℕ → ℂ} {N : Finset ℕ} : a * N.prod f = (push N).prod (cons a f) := by
   rw [push]; simp; rfl

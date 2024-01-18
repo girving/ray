@@ -1,4 +1,4 @@
-import Ray.Dynamics.Multibrot.Effective
+import Ray.Dynamics.Multibrot.Bottcher
 
 /-!
 ## Böttcher coordinates form an isomorphism between the exterior Multibrot set and the unit disk
