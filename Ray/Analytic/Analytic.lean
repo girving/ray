@@ -7,7 +7,6 @@ import Mathlib.Analysis.Calculus.FormalMultilinearSeries
 import Mathlib.Analysis.NormedSpace.OperatorNorm
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.ENNReal
 import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs

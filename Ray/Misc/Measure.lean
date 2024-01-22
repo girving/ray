@@ -1,6 +1,5 @@
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Prod
-import Mathlib.Data.Real.ENNReal
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Group.Measure

@@ -87,7 +87,7 @@ def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
 @[irreducible, pp_dot] def Interval.inv (x : Interval s) : FloatingInterval :=
   bif x.lo == 0 || x.hi == 0 || x.lo == nan || x.hi == nan || x.lo.n.isNeg != x.hi.n.isNeg then
     nan else
-  let r := |x|.inv_pos
+  let r := x.abs.inv_pos
   bif x.lo.n.isNeg then -r else r
 
 /-- The exact precision reason why `inv_step` is conservative -/
@@ -238,13 +238,13 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
   simp only [n0, n1, or_self, se, not_true_eq_false, ite_false]
   simp only [Fixed.isNeg_eq, decide_eq_decide, decide_eq_true_eq, ln, hn, or_false,
     if_false] at se ⊢
-  have a0 : 0 < |x|.lo.val := Interval.abs_pos ln hn n0 n1 se
+  have a0 : 0 < x.abs.lo.val := Interval.abs_pos ln hn n0 n1 se
   by_cases l0 : x.lo.val < 0
   · rw [se] at l0
-    replace ax : approx x = -approx |x| := by simp only [Interval.abs_of_nonpos l0.le an, neg_neg]
+    replace ax : approx x = -approx x.abs := by simp only [Interval.abs_of_nonpos l0.le an, neg_neg]
     simp only [ax, Set.inv_neg, l0, ite_true]
     mono
-  · replace ax : approx x = approx |x| := by simp only [Interval.abs_of_nonneg (not_lt.mp l0) an]
+  · replace ax : approx x = approx x.abs := by simp only [Interval.abs_of_nonneg (not_lt.mp l0) an]
     simp only [ax, ite_false, ←se, l0]
     mono
 

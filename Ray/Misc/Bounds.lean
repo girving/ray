@@ -1,4 +1,6 @@
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Data.Complex.ExponentialBounds
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.NNReal
@@ -17,7 +19,7 @@ import Ray.Tactic.Bound
 open Classical
 open Complex (abs exp log I)
 open Filter (atTop)
-open scoped Real NNReal Topology
+open scoped Real NNReal Topology symmDiff
 
 /-- A `Finset ℕ` with only large elements -/
 def Late (N : Finset ℕ) (m : ℕ) :=
@@ -77,7 +79,7 @@ theorem late_geometric_bound {m : ℕ} {a : ℝ} {N : Finset ℕ} (h : Late N m)
   have pa : (fun n ↦ a^(n + m)) = (fun n ↦ a^n * a^m) := by apply funext; intro n; rw [pow_add]
   calc
     M.sum (fun n ↦ a^(n + m)) = M.sum (fun n ↦ a^n * a^m) := by rw [ pa ]
-    _ = M.sum (fun n ↦ a^n) * a^m := (Finset.sum_mul).symm
+    _ = M.sum (fun n ↦ a^n) * a^m := (Finset.sum_mul _ _ _).symm
     _ ≤ (1 - a)⁻¹ * a^m := by bound [partial_geometric_bound M a0 a1]
     _ = a^m * (1 - a)⁻¹ := by ring
 

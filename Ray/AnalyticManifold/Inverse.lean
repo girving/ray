@@ -1,5 +1,4 @@
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
-import Mathlib.Geometry.Manifold.MFDeriv
 import Ray.AnalyticManifold.AnalyticManifold
 import Ray.AnalyticManifold.OneDimension
 

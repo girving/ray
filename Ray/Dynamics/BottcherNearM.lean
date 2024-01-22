@@ -206,8 +206,7 @@ theorem Super.stays_in_chart (s : Super f d a) (c : ℂ) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, a), f p.1 p.2 ∈ (extChartAt I a).source := by
   apply ContinuousAt.eventually_mem_nhd
   exact (s.fa.continuous.comp continuous_id).continuousAt
-  simp only [s.f0, Function.comp.right_id, Function.uncurry_apply_pair,
-    extChartAt_source_mem_nhds I a]
+  simp only [s.f0, Function.comp_id, Function.uncurry_apply_pair, extChartAt_source_mem_nhds I a]
 
 /-- There is a open set around the attractor in `ext_chart I a` where things are nice -/
 theorem Super.fr_prop (s : Super f d a) (c : ℂ) :

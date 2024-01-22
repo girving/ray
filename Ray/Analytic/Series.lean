@@ -1,7 +1,6 @@
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.ENNReal
 import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
@@ -22,7 +21,7 @@ Uniformly convergent series of analytic functions have analytic limits.
 open Complex (abs)
 open Filter (atTop)
 open Metric (ball closedBall sphere)
-open scoped Real NNReal ENNReal Topology
+open scoped Real NNReal ENNReal Topology symmDiff
 noncomputable section
 
 /-- Summability restricted to sets -/
@@ -132,7 +131,7 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
     have a1p : 1 - (a : ℝ) > 0 := by linarith
     calc (N.sum fun n ↦ abs (f n z))
       _ ≤ N.sum fun n ↦ c * a ^ n := Finset.sum_le_sum fun n _ ↦ hf n z zs
-      _ = c * N.sum fun n ↦ a ^ n := Finset.mul_sum.symm
+      _ = c * N.sum fun n ↦ a ^ n := (Finset.mul_sum _ _ _).symm
       _ ≤ c * (a ^ n * (1 - a)⁻¹) := by bound [late_geometric_bound NL a0 a1]
       _ = a ^ n * (c * (1 - a)⁻¹) := by ring
       _ ≤ t * (c * (1 - a)⁻¹) := by bound

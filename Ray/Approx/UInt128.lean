@@ -179,7 +179,7 @@ Using `addc`, we have
   ⟨c0, (a3 <<< 32) + x1 * y1 + b2 + c2⟩
 
 lemma mul_lt_32 {x y : ℕ} (xl : x < 2^32) (yl : y < 2^32) : x * y < UInt64.size :=
-  lt_of_lt_of_le (Nat.mul_lt_mul' xl.le yl (by norm_num)) (by norm_num)
+  lt_of_lt_of_le (Nat.mul_lt_mul_of_le_of_lt xl.le yl (by norm_num)) (by norm_num)
 
 /-- `mul128` is correct mod `2^128` -/
 lemma toNat_mul128_mod (x y : UInt64) : (mul128 x y).toNat % 2^128 = x.toNat * y.toNat % 2^128 := by
@@ -233,8 +233,8 @@ lemma toNat_mul128_mod (x y : UInt64) : (mul128 x y).toNat % 2^128 = x.toNat * y
   have h := toNat_mul128_mod x y
   rw [Nat.mod_eq_of_lt, Nat.mod_eq_of_lt] at h
   · exact h
-  · exact lt_of_lt_of_le (Nat.mul_lt_mul' (UInt64.lt_size _).le (UInt64.lt_size _) UInt64.size_pos)
-      (by norm_num)
+  · exact lt_of_lt_of_le (Nat.mul_lt_mul_of_le_of_lt (UInt64.lt_size _).le (UInt64.lt_size _)
+      UInt64.size_pos) (by norm_num)
   · exact UInt128.lt_size _
 
 /-!

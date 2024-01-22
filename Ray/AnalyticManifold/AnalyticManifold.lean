@@ -5,7 +5,6 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
-import Mathlib.Geometry.Manifold.MFDeriv
 import Mathlib.Geometry.Manifold.SmoothManifoldWithCorners
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Ray.Analytic.Analytic
@@ -133,9 +132,9 @@ theorem extChartAt_eq_refl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜
 /-- `extChartAt = refl` for `I = modelWithCornersSelf 𝕜 E` -/
 instance extChartEqReflSelf {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E] :
     ExtChartEqRefl (modelWithCornersSelf 𝕜 E) := ⟨by
-  simp only [PartialHomeomorph.singletonChartedSpace_chartAt_eq, PartialHomeomorph.refl_localEquiv,
+  simp only [PartialHomeomorph.singletonChartedSpace_chartAt_eq, PartialHomeomorph.refl_partialEquiv,
     PartialEquiv.refl_source, forall_const, extChartAt, PartialHomeomorph.extend,
-    modelWithCornersSelf_localEquiv, PartialEquiv.refl_trans]⟩
+    modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
 
 /-- `extChartAt = refl` extends to products -/
 instance extChartEqReflProd {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
@@ -240,7 +239,7 @@ theorem analyticAt_iff_holomorphicAt [ChartedSpace A E] [AnalyticManifold I E] [
     [AnalyticManifold J F] [ExtChartEqRefl I] [ExtChartEqRefl J] {f : E → F} {x : E} :
     AnalyticAt 𝕜 f x ↔ HolomorphicAt I J f x := by
   simp only [holomorphicAt_iff, extChartAt_eq_refl, PartialEquiv.refl_coe, PartialEquiv.refl_symm,
-    Function.comp.right_id, Function.comp.left_id, id.def, iff_and_self]
+    Function.id_comp, Function.comp_id, id.def, iff_and_self]
   exact AnalyticAt.continuousAt
 
 /-- Analytic functions are holomorphic -/
@@ -402,8 +401,8 @@ theorem HolomorphicAt.extChartAt {x y : M} (ys : y ∈ (extChartAt I x).source) 
   rw [holomorphicAt_iff]; use continuousAt_extChartAt' I x ys
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
     PartialHomeomorph.toFun_eq_coe, ModelWithCorners.toPartialEquiv_coe,
-    PartialHomeomorph.refl_localEquiv, PartialEquiv.refl_source,
-    PartialHomeomorph.singletonChartedSpace_chartAt_eq, modelWithCornersSelf_localEquiv,
+    PartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source,
+    PartialHomeomorph.singletonChartedSpace_chartAt_eq, modelWithCornersSelf_partialEquiv,
     PartialEquiv.trans_refl, PartialEquiv.trans_symm_eq_symm_trans_symm,
     ModelWithCorners.toPartialEquiv_coe_symm, PartialHomeomorph.coe_coe_symm,
     PartialEquiv.refl_coe, id, _root_.extChartAt]

@@ -254,24 +254,23 @@ lemma Interval.sign_cases {x : Interval s} (a : (approx x).Nonempty) (hn : x.hi 
 -/
 
 /-- Absolute value -/
-instance Interval.instAbs : Abs (Interval s) where
-  abs x :=
-    let a := abs x.lo
-    let b := abs x.hi
-    ⟨bif x.lo.n.isNeg != x.hi.n.isNeg then 0 else min a b, max a b⟩
+def Interval.abs (x : Interval s) : Interval s :=
+  let a := x.lo.abs
+  let b := x.hi.abs
+  ⟨bif x.lo.n.isNeg != x.hi.n.isNeg then 0 else min a b, max a b⟩
 
 /-- `abs` respects `approx` -/
-lemma Interval.approx_abs {x : Interval s} : abs '' approx x ⊆ approx |x| := by
+lemma Interval.approx_abs {x : Interval s} : _root_.abs '' approx x ⊆ approx x.abs := by
   by_cases n : x.lo = nan ∨ x.hi = nan ∨ approx x = ∅
   · rcases n with n | n | n
-    · simp only [approx, n, true_or, ite_true, image_univ, instAbs, Fixed.isNeg_nan, Bool.true_xor,
+    · simp only [approx, n, true_or, ite_true, image_univ, abs, Fixed.isNeg_nan, Bool.true_xor,
         Fixed.abs_nan, Bool.cond_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true, subset_univ]
-    · simp only [approx, n, or_true, ite_true, image_univ, instAbs, Fixed.isNeg_nan, Bool.xor_true,
+    · simp only [approx, n, or_true, ite_true, image_univ, abs, Fixed.isNeg_nan, Bool.xor_true,
         Fixed.abs_nan, Bool.cond_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, subset_univ]
     · simp only [n, image_empty, empty_subset]
   simp only [not_or, ←nonempty_iff_ne_empty] at n
   rcases n with ⟨nl,nh,nx⟩
-  simp only [approx, nl, nh, or_self, ite_false, instAbs, bif_eq_if, bne_iff_ne, ne_eq, ite_not,
+  simp only [approx, nl, nh, or_self, ite_false, abs, bif_eq_if, bne_iff_ne, ne_eq, ite_not,
     Fixed.max_eq_nan, Fixed.abs_eq_nan, or_false, subset_if_univ_iff]
   simp only [subset_def, mem_Icc, Fixed.val_max (Fixed.abs_ne_nan.mpr nl) (Fixed.abs_ne_nan.mpr nh),
     le_max_iff, apply_ite (f := fun x ↦ Fixed.val x), Fixed.val_zero, Fixed.val_min,
@@ -294,13 +293,13 @@ lemma Interval.approx_abs {x : Interval s} : abs '' approx x ⊆ approx |x| := b
 
 /-- `abs` preserves nonnegative intervals -/
 lemma Interval.abs_of_nonneg {x : Interval s} (h : 0 ≤ x.lo.val)
-    (ax : (approx x).Nonempty) : approx |x| = approx x := by
+    (ax : (approx x).Nonempty) : approx x.abs = approx x := by
   by_cases n : x.lo = nan ∨ x.hi = nan
-  · rcases n with n | n; repeat simp [instAbs, n]
+  · rcases n with n | n; repeat simp [abs, n]
   rcases not_or.mp n with ⟨n0,n1⟩
   have lh := le_of_nonempty ax n1
   have h' := le_trans h lh
-  simp only [approx, instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
+  simp only [approx, abs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
     ite_not, not_lt.mpr h, not_lt.mpr h', ite_true, Fixed.min_eq_nan, Fixed.abs_eq_nan, n0, n1,
     or_self, Fixed.max_eq_nan, Fixed.val_min, Fixed.val_abs n0, _root_.abs_of_nonneg h,
     Fixed.val_abs n1, _root_.abs_of_nonneg h', min_eq_left lh,
@@ -308,16 +307,16 @@ lemma Interval.abs_of_nonneg {x : Interval s} (h : 0 ≤ x.lo.val)
 
 /-- `abs` negates nonpositive intervals -/
 lemma Interval.abs_of_nonpos {x : Interval s} (h : x.hi.val ≤ 0)
-    (ax : (approx x).Nonempty) : approx |x| = -approx x := by
+    (ax : (approx x).Nonempty) : approx x.abs = -approx x := by
   by_cases n0 : x.lo = nan
-  · simp only [instAbs, n0, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+  · simp only [abs, n0, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
       Fixed.max_eq_nan, Fixed.abs_eq_nan, true_or, approx_of_hi_nan, approx_of_lo_nan, neg_univ]
   by_cases n1 : x.hi = nan
-  · simp only [instAbs, n1, Fixed.isNeg_nan, Bool.xor_true, Fixed.abs_nan, Bool.cond_not,
+  · simp only [abs, n1, Fixed.isNeg_nan, Bool.xor_true, Fixed.abs_nan, Bool.cond_not,
       Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true, approx_of_hi_nan, neg_univ]
   have lh := le_of_nonempty ax n1
   have h' := le_trans lh h
-  simp only [approx, instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
+  simp only [approx, abs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide,
     ite_not, Fixed.max_eq_nan, Fixed.abs_eq_nan, n0, n1, or_self, or_false,
     Fixed.val_max (Fixed.abs_ne_nan.mpr n0) (Fixed.abs_ne_nan.mpr n1), Fixed.val_abs n0,
     _root_.abs_of_nonpos h', Fixed.val_abs n1, _root_.abs_of_nonpos h, ite_false, preimage_neg_Icc,
@@ -332,19 +331,19 @@ lemma Interval.abs_of_nonpos {x : Interval s} (h : x.hi.val ≤ 0)
   · replace h0 := Ne.lt_of_le h0 h
     simp only [lt_of_le_of_lt lh h0, h0, ite_self, ite_true, ite_false]
 
-/-- `|x|.lo` is nonneg if inputs are not `nan` -/
+/-- `x.abs.lo` is nonneg if inputs are not `nan` -/
 lemma Interval.abs_nonneg {x : Interval s} (n0 : x.lo ≠ nan) (n1 : x.hi ≠ nan) :
-    0 ≤ |x|.lo.val := by
-  simp only [instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not,
+    0 ≤ x.abs.lo.val := by
+  simp only [abs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not,
     apply_ite (f := fun x : Fixed s ↦ 0 ≤ x.val), Fixed.val_min, le_min_iff, Fixed.val_zero,
     le_refl, Fixed.val_abs n0, Fixed.val_abs n1, _root_.abs_nonneg, true_and, ite_self]
 
-/-- `|x|.lo` is pos if inputs are not `nan` or `0` and have the same sign -/
+/-- `x.abs.lo` is pos if inputs are not `nan` or `0` and have the same sign -/
 lemma Interval.abs_pos {x : Interval s} (n0 : x.lo ≠ nan) (n1 : x.hi ≠ nan)
-    (l0 : x.lo ≠ 0) (h0 : x.hi ≠ 0) (lh : x.lo.val < 0 ↔ x.hi.val < 0) : 0 < |x|.lo.val := by
+    (l0 : x.lo ≠ 0) (h0 : x.hi ≠ 0) (lh : x.lo.val < 0 ↔ x.hi.val < 0) : 0 < x.abs.lo.val := by
   refine Ne.lt_of_le (Ne.symm ?_) (Interval.abs_nonneg n0 n1)
   contrapose l0
-  simp only [instAbs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not, lh,
+  simp only [abs, Fixed.isNeg_eq, bif_eq_if, bne_iff_ne, ne_eq, decide_eq_decide, ite_not, lh,
     ite_true, Fixed.val_min, Fixed.val_abs n0, Fixed.val_abs n1, not_not,
     ←Fixed.val_eq_zero_iff] at l0 ⊢
   have nonpos : |x.lo.val| ≤ 0 := by
@@ -355,14 +354,14 @@ lemma Interval.abs_pos {x : Interval s} (n0 : x.lo ≠ nan) (n1 : x.hi ≠ nan)
       exact not_le.mpr (Ne.lt_of_le h0 h) (_root_.abs_nonneg _)
   exact abs_eq_zero.mp (le_antisymm nonpos (_root_.abs_nonneg _))
 
-/-- `|x|` propagates `nan` from `lo` to `hi` -/
-lemma Interval.abs_eq_nan_of_lo {x : Interval s} (n : x.lo = nan) : |x|.hi = nan := by
-  simp only [instAbs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+/-- `x.abs` propagates `nan` from `lo` to `hi` -/
+lemma Interval.abs_eq_nan_of_lo {x : Interval s} (n : x.lo = nan) : x.abs.hi = nan := by
+  simp only [abs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
     Fixed.max_eq_nan, Fixed.abs_eq_nan, true_or]
 
-/-- `|x|` propagates `nan` from `hi` to `hi` -/
-lemma Interval.abs_eq_nan_of_hi {x : Interval s} (n : x.hi = nan) : |x|.hi = nan := by
-  simp only [instAbs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
+/-- `x.abs` propagates `nan` from `hi` to `hi` -/
+lemma Interval.abs_eq_nan_of_hi {x : Interval s} (n : x.hi = nan) : x.abs.hi = nan := by
+  simp only [abs, n, Fixed.isNeg_nan, Bool.true_xor, Fixed.abs_nan, Bool.cond_not,
     Fixed.max_eq_nan, Fixed.abs_eq_nan, or_true]
 
 /-!

@@ -1,4 +1,3 @@
-import Mathlib.Geometry.Manifold.MFDeriv
 import Ray.AnalyticManifold.Inverse
 import Ray.AnalyticManifold.Nontrivial
 import Ray.AnalyticManifold.OpenMapping

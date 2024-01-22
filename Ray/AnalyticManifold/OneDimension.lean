@@ -1,4 +1,3 @@
-import Mathlib.Geometry.Manifold.MFDeriv
 import Ray.AnalyticManifold.AnalyticManifold
 import Ray.Tactic.Bound
 

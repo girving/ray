@@ -4,6 +4,7 @@ import Lean.Expr
 import Lean.Parser.Syntax
 import Mathlib.Analysis.Calculus.TangentCone
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Algebra.GroupPower.Order
 import Mathlib.Algebra.Order.AbsoluteValue
 import Mathlib.Data.Real.Basic

@@ -342,12 +342,13 @@ instance : Min (Fixed s) where
 instance : Max (Fixed s) where
   max x y := -min (-x) (-y)  -- Use `min` so that `nan` propagates
 
-instance : Abs (Fixed s) where
-  abs x := ⟨⟨x.n.abs⟩⟩
+/-- Unfortunately we can't use `|x|`, since that notation can't use our own implementation.-/
+def Fixed.abs (x : Fixed s) : Fixed s :=
+  ⟨⟨x.n.abs⟩⟩
 
 lemma Fixed.min_def {x y : Fixed s} : min x y = ⟨min x.n y.n⟩ := rfl
 lemma Fixed.max_def {x y : Fixed s} : max x y = -min (-x) (-y) := rfl
-lemma Fixed.abs_def {x : Fixed s} : |x| = ⟨⟨x.n.abs⟩⟩ := rfl
+lemma Fixed.abs_def {x : Fixed s} : x.abs = ⟨⟨x.n.abs⟩⟩ := rfl
 
 @[simp] lemma Fixed.min_nan {x : Fixed s} : min x nan = nan := by
   simp only [nan, min_def, ge_iff_le, Int64.min_le, min_eq_right]
@@ -630,7 +631,7 @@ lemma Fixed.approx_mul_abs {x : Fixed s} {y : Fixed t} {u : Int64} {up : Bool}
 
  /-- If signs are equal, `*` is `abs * abs`-/
 lemma mul_of_isNeg_eq {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ nan)
-    (p : x.n.isNeg = y.n.isNeg) : approx x * approx y = approx (abs x) * approx (abs y) := by
+    (p : x.n.isNeg = y.n.isNeg) : approx x * approx y = approx x.abs * approx y.abs := by
   simp only [approx, xn, ite_false, yn, mul_singleton, image_singleton, Fixed.abs_eq_nan,
     Fixed.val_abs xn, Fixed.val_abs yn, singleton_eq_singleton_iff]
   have y0 := p.symm
@@ -644,7 +645,7 @@ lemma mul_of_isNeg_eq {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ n
 
  /-- If signs are different, `*` is `-(abs * abs)`-/
 lemma mul_of_isNeg_ne {x : Fixed s} {y : Fixed t} (xn : x ≠ nan) (yn : y ≠ nan)
-    (p : x.n.isNeg ≠ y.n.isNeg) : approx x * approx y = -(approx (abs x) * approx (abs y)) := by
+    (p : x.n.isNeg ≠ y.n.isNeg) : approx x * approx y = -(approx x.abs * approx y.abs) := by
   simp only [approx, xn, ite_false, yn, mul_singleton, image_singleton, Fixed.abs_eq_nan,
     Fixed.val_abs xn, Fixed.val_abs yn, neg_singleton, singleton_eq_singleton_iff]
   have y0 := p.symm

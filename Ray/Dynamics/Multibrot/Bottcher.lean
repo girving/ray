@@ -112,7 +112,7 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
   · refine (lt_of_le_of_lt (le_abs_self _) (lt_of_le_of_lt ?_ (half_lt_self Real.pi_pos))).ne
     rw [Complex.abs_arg_le_pi_div_two_iff, Complex.add_re, Complex.one_re]
     calc 1 + (c * w ^ d).re
-      _ ≥ 1 + -|(c * w ^ d).re| := by bound [neg_abs_le_self]
+      _ ≥ 1 + -|(c * w ^ d).re| := by bound [neg_abs_le]
       _ = 1 - |(c * w ^ d).re| := by ring
       _ ≥ 1 - abs (c * w ^ d) := by bound [Complex.abs_re_le_abs]
       _ ≥ 1 - 1 / 2 := by linarith
