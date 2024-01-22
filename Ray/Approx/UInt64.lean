@@ -1,5 +1,7 @@
+import Mathlib.Algebra.Order.Floor.Div
 import Mathlib.Data.UInt
 import Mathlib.Data.ZMod.Basic
+import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.SplitIfs
 import Mathlib.Tactic.Zify
@@ -461,3 +463,95 @@ lemma UInt64.eq_split (x : UInt64) :
 -/
 
 @[pp_dot] def UInt64.toInt (x : UInt64) : ℤ := x.toNat
+
+/-!
+### Shift right, rounding up or down
+-/
+
+/-- Shift right, rounding up or down correctly even for large `s` -/
+@[irreducible] def UInt64.shiftRightRound (x : UInt64) (s : UInt64) (up : Bool) : UInt64 :=
+  bif s == 0 then x
+  else bif 64 ≤ s then bif x == 0 || !up then 0 else 1
+  else
+    let y := x >>> s
+    bif up && x != y <<< s then y+1 else y
+
+/-- Exact `ℕ` result of `UInt64.shiftRightRound` -/
+lemma UInt64.toNat_shiftRightRound {x : UInt64} {s : UInt64} {up : Bool} :
+    (x.shiftRightRound s up).toNat = (x.toNat + (if up then 2^s.toNat - 1 else 0)) / 2^s.toNat := by
+  rw [UInt64.shiftRightRound]
+  simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq, eq_iff_toNat_eq, toNat_zero, Bool.not_eq_true',
+    Bool.and_eq_true, bne_iff_ne, ne_eq, toNat_shiftLeft', toNat_shiftRight', decide_eq_true_eq,
+    apply_ite (f := fun x : UInt64 ↦ x.toNat), toNat_one, toNat_add]
+  have p0 : 0 < 2^s.toNat := pow_pos (by norm_num) _
+  by_cases s0 : s.toNat = 0
+  · simp only [s0, Nat.zero_mod, pow_zero, Nat.div_one, tsub_zero, mul_one, ite_true, ge_iff_le,
+      le_refl, tsub_eq_zero_of_le, ite_self, add_zero]
+  · simp only [s0, ite_false]
+    by_cases s64 : 64 ≤ s
+    · simp only [s64, ite_true]
+      have lt : x.toNat < 2 ^ s.toNat := by
+        rw [UInt64.le_iff_toNat_le] at s64
+        exact lt_of_lt_of_le (UInt64.toNat_lt_2_pow_64 _) (pow_le_pow_right (by norm_num) s64)
+      induction up
+      · simp only [or_true, ite_true, ite_false, add_zero]
+        rw [Nat.div_eq_zero_of_lt lt]
+      · by_cases x0 : x.toNat = 0
+        · simp only [x0, or_false, ite_true, zero_add, Nat.two_pow_sub_one_div_two_pow, ge_iff_le,
+            le_refl, tsub_eq_zero_of_le, pow_zero]
+        · simp only [x0, or_self, ite_false, ite_true]
+          rw [Nat.div_eq_sub_div (by omega) (by omega), Nat.div_eq_zero_of_lt (by omega)]
+    · have slt : s.toNat < 64 := by rw [not_le, UInt64.lt_iff_toNat_lt] at s64; exact s64
+      have dlt : x.toNat / 2 ^ s.toNat < 2 ^ (64 - s.toNat) := by
+        apply Nat.div_lt_of_lt_mul
+        simp only [←Nat.pow_add, Nat.add_sub_of_le slt.le, UInt64.toNat_lt_2_pow_64]
+      simp only [s64, Nat.mod_eq_of_lt slt, Nat.mod_eq_of_lt dlt, ite_false]
+      induction up
+      · simp only [false_and, ite_false, add_zero]
+      · simp only [true_and, ite_not, ite_true]
+        generalize ha : x.toNat / 2^s.toNat = a
+        generalize hb : x.toNat % 2^s.toNat = b
+        rw [←Nat.div_add_mod x.toNat (2^s.toNat), ha,  hb, mul_comm _ a]
+        simp only [add_right_eq_self]
+        by_cases b0 : b = 0
+        · simp only [b0, ite_true, add_zero, Nat.add_div p0, gt_iff_lt, zero_lt_two, pow_pos,
+            Nat.mul_div_left, Nat.two_pow_sub_one_div_two_pow, ge_iff_le, le_refl,
+            tsub_eq_zero_of_le, pow_zero, Nat.mul_mod_left, zero_add, self_eq_add_right,
+            ite_eq_right_iff, one_ne_zero, imp_false, not_le, Nat.mod_lt _ p0]
+        · have p2 : 2 ≤ 2^s.toNat := le_self_pow (by omega) (by omega)
+          have a1 : a + 1 < size := by
+            rw [←ha, size_eq_pow]
+            have h : x.toNat < 2^64 := toNat_lt_2_pow_64 x
+            exact lt_of_le_of_lt (add_le_add_right (Nat.div_le_div h.le p2 (by norm_num)) _)
+              (by norm_num)
+          simp only [b0, Nat.mod_eq_of_lt a1, ite_false]
+          have e : a * 2^s.toNat + b + (2^s.toNat - 1) = a * 2^s.toNat + 2^s.toNat + (b - 1) := by
+            omega
+          have blt : b - 1 < 2^s.toNat := by
+            rw [←hb]; exact lt_of_le_of_lt (Nat.sub_le _ _) (Nat.mod_lt _ p0)
+          rw [e, ←add_one_mul, Nat.add_div p0, Nat.mul_div_cancel _ p0, Nat.div_eq_zero_of_lt blt,
+            add_zero, Nat.mul_mod_left, zero_add, Nat.mod_eq_of_lt blt]
+          simp only [self_eq_add_right, ite_eq_right_iff, one_ne_zero, imp_false, not_le, blt]
+
+/-- Alternate version using `ceilDiv` -/
+lemma UInt64.toNat_shiftRightRound' {x : UInt64} {s : UInt64} {up : Bool} :
+    (x.shiftRightRound s up).toNat =
+      if up then x.toNat ⌈/⌉ 2^s.toNat else x.toNat / 2^s.toNat := by
+  rw [UInt64.toNat_shiftRightRound]
+  induction up
+  · simp only [ite_false, add_zero]
+  · by_cases s0 : s.toNat = 0
+    · simp only [s0, pow_zero, ge_iff_le, le_refl, tsub_eq_zero_of_le, ite_self, add_zero,
+      Nat.div_one, ceilDiv_one]
+    · rw [Nat.ceilDiv_eq_add_pred_div, Nat.add_sub_assoc]
+      · simp only [ite_true]
+      · exact one_le_pow_of_one_le (by norm_num) _
+
+/-- `UInt64.shiftRightRound` only makes things smaller -/
+lemma UInt64.shiftRightRound_le_self {x : UInt64} {s : UInt64} {up : Bool} :
+    (x.shiftRightRound s up).toNat ≤ x.toNat := by
+  rw [UInt64.toNat_shiftRightRound']
+  induction up
+  · exact Nat.div_le_self x.toNat (2 ^ s.toNat)
+  · simp only [ite_true, gt_iff_lt, zero_lt_two, pow_pos, ceilDiv_le_iff_le_smul, smul_eq_mul]
+    exact Nat.le_mul_of_pos_left _ (by positivity)

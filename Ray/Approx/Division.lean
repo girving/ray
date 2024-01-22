@@ -41,18 +41,25 @@ variable {s t : Int64}
 ## `Interval` reciprocal
 -/
 
-/-- Approximate the reciprocal of a number in `[1/2,1)` using 64-bit integer division -/
+/-- Shift a `UInt64` either left or right by an `Int64` -/
+def UInt64.shift_int64 (x : UInt64) (y : Int64) : UInt64 :=
+  if y.isNeg then x >>> (-y).n else x <<< y.n
+
+/-- Approximate the reciprocal of a number using 64-bit integer division -/
 def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
-  -- Our guess is `y = 2^63 / (x.n.n / 2^a) * 2^b`, and we want
+  -- Our guess will be
+  --   `y = 2^63 / (x.n.n * 2^a) * 2^b`
+  -- and we want
   --   `y * 2^t = 1 / (x.n.n * 2^s)`
-  --   `2^63 / (x.n.n / 2^a) * 2^b * 2^t = 1 / (x.n.n * 2^s)`
-  --   `2^63 * 2^a * 2^b * 2^t = 2^-s`
-  --   `a + b ~ -s - t - 63`
-  -- `a` and `b` both correspond to lost precision, so we'll balance them.
-  let n := -63 - s - t
-  bif n.isNeg then nan else
-  let b := n.n / 2
-  ⟨⟨(((1 : UInt64) <<< 63) / (x.n.n >>> (n.n - b))) <<< b⟩⟩
+  --   `2^63 / (x.n.n * 2^a) * 2^b * 2^t = 1 / (x.n.n * 2^s)`
+  --   `2^63 / 2^a * 2^b * 2^t = 2^-s`
+  --   `b - a = -s - t - 63`
+  -- We get maximum precision if `x.n.n * 2^a ≈ 2^32`, so we choose `a = 32 - x.n.n.log2`.
+  -- This can be either positive or negative, corresponding to shifting left or right.
+  -- We then set `b = a - s - t - 63`.
+  let a := (32 : Int64) - ⟨x.n.n.log2⟩
+  let b := a - s - t - 63
+  ⟨⟨(((1 : UInt64) <<< 63) / (x.n.n.shift_int64 a)).shift_int64 b⟩⟩
 
 /-- Conservative region that includes `x⁻¹` -/
 @[irreducible] def inv_region (x : Fixed s) : Interval t :=
@@ -63,7 +70,7 @@ def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
     We trust that `1/x ∈ r`, but do not trust the guess `c`. -/
 @[irreducible] def inv_step (x : Fixed s) (r : Interval t) (c : Fixed t) : Interval t :=
   -- `r ∩ (c + r (1 - x c))`, where `x ∈ [1/2,1]`, `r,c ∈ [1,2]`
-  r ∩ (c + r.mul (1 - Interval.fixed_mul_fixed x c t) t)
+  r ∩ (c + r.mul (1 - Interval.fixed_mul_fixed x c (-62)) t)
 
 /-- Floating point interval reciprocal using Newton's method.
     We assume `x⁻¹ ∈ approx r`. -/
@@ -141,8 +148,8 @@ lemma approx_inv_step_reason {x c rl rh ml mh : ℝ} (x0 : 0 < x) (xr : rl ≤ x
     singleton_subset_iff, mem_Icc] at ax xr
   simp only [ax]; clear ax a
   have mm : approx r * ({1} - approx x * approx c) ⊆
-      approx (r.mul (1 - Interval.fixed_mul_fixed x c t) t) := by mono
-  generalize hmul : r.mul (1 - Interval.fixed_mul_fixed x c t) t = mul at raln rahn
+      approx (r.mul (1 - Interval.fixed_mul_fixed x c (-62)) t) := by mono
+  generalize hmul : r.mul (1 - Interval.fixed_mul_fixed x c (-62)) t = mul at raln rahn
   simp only [approx, rln, rhn, or_self, ite_false, mul_singleton, hmul, raln, rahn, xn, cn,
     image_singleton, sub_singleton] at mm
   clear cn rln rhn raln rahn hmul xn
@@ -296,18 +303,9 @@ lemma Interval.approx_div {x : Interval s} {y : Interval t} {u : Int64} :
   intro b m e
   use b⁻¹
   constructor
-  · simp only [FloatingInterval.approx_x]; mono
+  · simp only [FloatingInterval.approx_x]
+    apply Interval.mem_approx_inv m
   · rw [Complex.ofReal_inv, e, inv_inv]
-
-/-- Conversion from `Q` -/
-@[irreducible] def Interval.ofRat (x : ℚ) : Interval s :=
-  (.ofInt x.num : Interval 0).div (.ofNat x.den : Interval 0) s
-
-/-- `Interval.ofRat` conversion is conservative -/
-@[mono] lemma Interval.approx_ofRat (x : ℚ) : ↑x ∈ approx (.ofRat x : Interval s) := by
-  nth_rw 1 [←Rat.num_div_den x]
-  rw [ofRat, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
-  mono
 
 /-!
 ### Unit tests
@@ -321,15 +319,17 @@ lemma guess_test2 : guess_test 0.67862 (-63) (-61) := by native_decide
 lemma guess_test3 : guess_test 0.999 (-63) (-61) := by native_decide
 lemma guess_test4 : guess_test 0.67862 (-60) (-57) := by native_decide
 lemma guess_test5 : guess_test 1e-4 (-76) (-49) := by native_decide
+lemma guess_test6 : guess_test 7 0 (-62) := by native_decide
 
 /-- `Interval.inv` is provably conservative, but we need to test that it's accurate -/
-def inv_test (l h : Float) (s : Int64) (e : Float := 1e-15) : Bool :=
+def inv_test (l h : Float) (s : Int64) (e : Float := 1e-18) : Bool :=
   let x : Interval s := ⟨.ofFloat l, .ofFloat h⟩
   let r := x.inv
   (r.x.lo.toFloat * h - 1).abs < e && (r.x.hi.toFloat * l - 1).abs < e
 lemma inv_test1p : inv_test 0.4 0.6 (-60) := by native_decide
-lemma inv_test2p : inv_test 0.4871231 17.87341 (-52) := by native_decide
+lemma inv_test2p : inv_test 0.4871231 17.87341 (-52) (1e-15) := by native_decide
 lemma inv_test3p : inv_test 0.001871 17.87341 (-52) (1e-13) := by native_decide
 lemma inv_test1n : inv_test (-0.6) (-0.4) (-60) := by native_decide
-lemma inv_test2n : inv_test (-17.87341) (-0.4871231) (-52) := by native_decide
+lemma inv_test2n : inv_test (-17.87341) (-0.4871231) (-52) (1e-15) := by native_decide
 lemma inv_test3n : inv_test (-17.87341) (-0.001871) (-52) (1e-13) := by native_decide
+lemma inv_test4  : inv_test 7 7 0 (1e-20) := by native_decide
