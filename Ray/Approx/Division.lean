@@ -1,6 +1,5 @@
 import Ray.Approx.Box
-import Ray.Approx.Floating
-import Ray.Approx.Interval
+import Ray.Approx.FloatingInterval
 import Std.Data.Rat.Basic
 
 open Pointwise
