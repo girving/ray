@@ -15,7 +15,7 @@ open scoped Real
 ## `Floating` and `FloatingInterval` basics
 -/
 
-/-- Very constrained floating point type.  We use this only for division currently. -/
+/-- Floating point number -/
 structure Floating where
   s : Int64
   x : Fixed s
