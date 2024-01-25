@@ -1,64 +1,94 @@
 import Mathlib.Data.Set.Pointwise.Basic
 import Mathlib.Data.Set.Pointwise.Interval
-import Ray.Approx.Fixed
+import Ray.Approx.Floating
 import Ray.Misc.Real
 
 open Classical
 open Pointwise
 
 /-!
-## 64-bit fixed point interval arithmetic
+## 64-bit precision floating point interval arithmetic
 -/
 
 open Set
 open scoped Real
 
-variable {s t : Int64}
+/-!
+#### Type definition and basic lemmas
+-/
 
 /-- 64-bit fixed point intervals -/
-structure Interval (s : Int64) where
-  lo : Fixed s
-  hi : Fixed s
-  deriving DecidableEq, BEq
+structure Interval where
+  /-- Lower bound -/
+  lo : Floating
+  /-- Upper bound -/
+  hi : Floating
+  /-- None or both of our bounds are `nan` -/
+  norm : lo = nan ↔ hi = nan
+  /-- The interval is nontrivial -/
+  le' : lo ≠ nan → hi ≠ nan → lo.val ≤ hi.val
+  deriving DecidableEq
 
-/-- The most common `Interval` nan.  Not the only one! -/
-instance : Nan (Interval s) where
-  nan := ⟨nan,nan⟩
+instance : BEq Interval where
+  beq x y := x.lo == y.lo && x.hi == y.hi
+
+lemma Interval.beq_def {x y : Interval} : (x == y) = (x.lo == y.lo && x.hi == y.hi) := rfl
 
 /-- `Interval` has nice equality -/
-instance : LawfulBEq (Interval s) where
+instance : LawfulBEq Interval where
   eq_of_beq {x y} e := by
-    induction' x with xlo xhi; induction' y with ylo yhi
-    have g : ((xlo == ylo && xhi == yhi) = true) := e
-    simp only [Bool.and_eq_true, beq_iff_eq] at g
-    simp only [g.1, g.2]
+    induction x
+    induction y
+    simp only [Interval.beq_def, Bool.and_eq_true, beq_iff_eq] at e
+    simp only [e.1, e.2]
   rfl {x} := by
-    have e : (x == x) = (x.lo == x.lo && x.hi == x.hi) := rfl
-    simp only [e, beq_self_eq_true, Bool.and_self]
+    induction x
+    simp only [Interval.beq_def, Bool.and_eq_true, beq_iff_eq, true_and]
+
+/-- The unique `Interval` nan -/
+instance : Nan Interval where
+  nan := ⟨nan, nan, by simp only, fun _ _ ↦ le_refl _⟩
 
 /-- Intervals are equal iff their components are equal -/
-lemma Interval.ext_iff {x y : Interval s} : x = y ↔ x.lo = y.lo ∧ x.hi = y.hi := by
+lemma Interval.ext_iff {x y : Interval} : x = y ↔ x.lo = y.lo ∧ x.hi = y.hi := by
   induction x; induction y; simp only [mk.injEq]
 
 /-- `Interval` approximates `ℝ` -/
-instance : Approx (Interval s) ℝ where
-  approx x := if x.lo = nan ∨ x.hi = nan then univ else Icc x.lo.val x.hi.val
+instance : Approx Interval ℝ where
+  approx x := if x.lo = nan then univ else Icc x.lo.val x.hi.val
 
 /-- Zero -/
-instance : Zero (Interval s) where
-  zero := ⟨0,0⟩
+instance : Zero Interval where
+  zero := ⟨0, 0, by simp only [Floating.zero_ne_nan], fun _ _ ↦ le_refl _⟩
+
+/-!
+### Negation
+-/
 
 /-- Negation -/
-instance : Neg (Interval s) where
-  neg x := ⟨-x.hi, -x.lo⟩
+instance : Neg Interval where
+  neg x := {
+    lo := -x.hi
+    hi := -x.lo
+    norm := by simp only [Floating.neg_eq_nan_iff, x.norm]
+    le' := by
+      intro n0 n1
+      simp only [ne_eq, Floating.neg_eq_nan_iff] at n0 n1
+      simp only [ne_eq, n0, not_false_eq_true, Floating.val_neg, n1, neg_le_neg_iff, x.le' n1 n0] }
+
+/-!
+### Addition and subtraction
+-/
 
 /-- Addition -/
-instance : Add (Interval s) where
+instance : Add Interval where
   add x y := ⟨x.lo + y.lo, x.hi + y.hi⟩
 
 /-- Subtraction -/
 instance : Sub (Interval s) where
   sub x y := ⟨x.lo - y.hi, x.hi - y.lo⟩
+
+#exit
 
 /-- Intersection -/
 instance : Inter (Interval s) where
@@ -248,9 +278,13 @@ lemma Interval.approx_clamp {x : Interval s} {y : Fixed s} (xn : (approx x).None
     mul_le_mul_right, Int.cast_le, Int64.coe_le_coe, le_max_iff, le_refl, le_min_iff, le, true_and,
     true_or, max_le_iff, min_le_iff, and_self]
 
+
+
 /-!
 ### Safe upper and lower bounds, even if the other field is `nan`
 -/
+
+-- DO NOT SUBMIT: .lo and .hi should work directly now
 
 /-- `Interval` lower bound, even if `hi` is `nan` -/
 @[pp_dot] def Interval.safe_lo (x : Interval s) : Fixed s :=

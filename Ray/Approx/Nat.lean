@@ -169,7 +169,7 @@ lemma Nat.mod_mul_eq_mul_mod' (a n m : ℕ) (m0 : m ≠ 0) : a * n % (m * n) = a
     generalize hb : a % m = b
     generalize a / m = c
     have bm : b < m := by rw [←hb]; exact mod_lt _ m0
-    have bnn : b * n < m * n := by exact Nat.mul_lt_mul bm (le_refl _) (Nat.pos_of_ne_zero n0)
+    have bnn : b * n < m * n := Nat.mul_lt_mul_of_lt_of_le bm (le_refl _) (Nat.pos_of_ne_zero n0)
     rw [add_mul, Nat.mul_comm _ c, mul_assoc, add_mod, add_mod (c*m) b m]
     simp only [mul_mod_left, zero_add, mod_eq_of_lt bm, mod_eq_of_lt bnn]
 
@@ -332,5 +332,8 @@ lemma Nat.le_add_div_mul {n k : ℕ} (k0 : 0 < k) : n ≤ (n + k - 1) / k * k :=
       omega
 
 @[simp] lemma Nat.log2_zero : Nat.log2 0 = 0 := rfl
+
+lemma Nat.two_pow_ne_zero {n : ℕ} : 2^n ≠ 0 := by
+  apply pow_ne_zero; norm_num
 
 attribute [simp] Nat.testBit_mod_two_pow

@@ -118,18 +118,19 @@ def UInt128.ofNat (x : ℕ) : UInt128 where
   apply Nat.div_mod_mul_add_mod_eq
 
 /-!
-### 128 bit increment
+### 128-bit increment
 -/
 
-def UInt128.succ (x : UInt128) : UInt128 :=
+@[irreducible] def UInt128.succ (x : UInt128) : UInt128 :=
   let lo := x.lo + 1
   { lo := lo
     hi := x.hi + bif lo == 0 then 1 else 0 }
 
 lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat = x.toNat+1 := by
   have e : (2:UInt64)^64 = 0 := by rfl
+  rw [succ]
   by_cases ll : x.lo = (2:UInt64)^64-1
-  · simp only [succ, ll, e, zero_sub, add_left_neg, beq_self_eq_true, cond_true]
+  · simp only [ll, e, zero_sub, add_left_neg, beq_self_eq_true, cond_true]
     by_cases hh : x.hi = (2:UInt64)^64-1
     · simp only [toNat_def, hh, ll, ge_iff_le, ne_eq] at h; contrapose h; decide
     · simp only [UInt64.eq_iff_toNat_eq] at hh
@@ -138,7 +139,7 @@ lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat 
       have c : (UInt64.toNat ((2:UInt64) ^ 64 - 1) : ℤ) = (2:ℤ)^64-1 := by rfl
       zify; rw [c]; ring
   · simp only [UInt64.eq_iff_toNat_eq] at ll
-    simp only [toNat, succ, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq, UInt64.toNat_add_one ll,
+    simp only [toNat, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq, UInt64.toNat_add_one ll,
       UInt64.toNat_zero, add_eq_zero, and_false, ite_false, add_zero]
     ring
 
@@ -148,6 +149,14 @@ lemma UInt128.coe_succ {x : UInt128} (h : (x:ℝ) ≠ (2:ℝ)^128-1) : (x.succ :
   simp only [toReal, h, ge_iff_le, Nat.cast_sub, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one,
     ne_eq, not_true, not_false_eq_true, not_not]
   norm_num
+
+/-!
+### 128-bit addition
+-/
+
+@[irreducible] def UInt128.add (x y : UInt128) : UInt128 :=
+  let (x0,x1) := addc x.lo y.lo
+  ⟨x0, x1 + x.hi + y.hi⟩
 
 /-!
 ### 64 → 128 bit multiplication

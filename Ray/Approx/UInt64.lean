@@ -143,15 +143,17 @@ lemma UInt64.toNat_add_of_add_lt {m n : UInt64} (h : m + n < m) :
   · contrapose h; simp only [mn, if_true, Nat.sub_zero, not_lt]; apply Nat.le_add_right
   · simp only [mn, ite_false, ge_iff_le]
 
--- If truncation doesn't occur, `-` commutes with `toNat`
+-- `UInt64` subtract wraps around
+lemma UInt64.toNat_sub' {x y : UInt64} : (x - y).toNat = (x.toNat + (size - y.toNat)) % size := rfl
+
+ -- If truncation doesn't occur, `-` commutes with `toNat`
 lemma UInt64.toNat_sub {x y : UInt64} (h : y ≤ x) : (x - y).toNat = x.toNat - y.toNat := by
-  trans (x.toNat + (size - y.toNat)) % size
-  · rfl
-  · rw [le_iff_toNat_le] at h
-    rw [←Nat.add_sub_assoc (le_size _), add_comm, Nat.add_sub_assoc h]
-    simp only [ge_iff_le, toNat_le_toNat, Nat.add_mod_left]
-    rw [Nat.mod_eq_of_lt]
-    exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
+  rw [toNat_sub']
+  rw [le_iff_toNat_le] at h
+  rw [←Nat.add_sub_assoc (le_size _), add_comm, Nat.add_sub_assoc h]
+  simp only [ge_iff_le, toNat_le_toNat, Nat.add_mod_left]
+  rw [Nat.mod_eq_of_lt]
+  exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
 
 /-- Adding 1 is usually adding one `toNat` -/
 lemma UInt64.toNat_add_one {m : UInt64} (h : m.toNat ≠ 2^64-1) : (m + 1).toNat = m.toNat + 1 := by
@@ -317,10 +319,15 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
 
 @[simp] lemma UInt64.toNat_log2 (n : UInt64) : n.log2.toNat = n.toNat.log2 := rfl
 
+@[simp] lemma UInt64.log2_zero : (0 : UInt64).log2 = 0 := rfl
+
 @[simp] lemma UInt64.log2_lt_64 (n : UInt64) : n.toNat.log2 < 64 := by
   by_cases n0 : n.toNat = 0
   · simp only [n0, Nat.log2_zero, Nat.zero_lt_succ]
   · simp only [Nat.log2_lt n0, toNat_lt_2_pow_64 n]
+
+@[simp] lemma UInt64.log2_lt_64' (n : UInt64) : n.log2 < 64 := by
+  rw [lt_iff_toNat_lt, toNat_log2]; exact log2_lt_64 _
 
 /-!
 ### Conversion from `UInt64` to `ZMod`
@@ -463,6 +470,11 @@ lemma UInt64.eq_split (x : UInt64) :
 -/
 
 @[pp_dot] def UInt64.toInt (x : UInt64) : ℤ := x.toNat
+
+@[pp_dot] def UInt64.coe_toNat_sub (x y : UInt64) (h : y ≤ x) :
+    ((x - y).toNat : ℤ) = x.toNat - y.toNat := by
+  rw [UInt64.toNat_sub h, Nat.cast_sub]
+  rwa [←UInt64.le_iff_toNat_le]
 
 /-!
 ### Shift right, rounding up or down
