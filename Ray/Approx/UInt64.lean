@@ -155,7 +155,11 @@ lemma UInt64.toNat_sub {x y : UInt64} (h : y ≤ x) : (x - y).toNat = x.toNat - 
   rw [Nat.mod_eq_of_lt]
   exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
 
-/-- Adding 1 is usually adding one `toNat` -/
+ -- If truncation doesn't occur, `-` reduces
+lemma UInt64.sub_le {x y : UInt64} (h : y ≤ x) : x - y ≤ x := by
+  rw [le_iff_toNat_le, toNat_sub h]; apply Nat.sub_le
+
+ /-- Adding 1 is usually adding one `toNat` -/
 lemma UInt64.toNat_add_one {m : UInt64} (h : m.toNat ≠ 2^64-1) : (m + 1).toNat = m.toNat + 1 := by
   rw [toNat_add, toNat_one, Nat.mod_eq_of_lt]
   contrapose h; simp only [size_eq_pow, not_lt] at h
@@ -178,6 +182,9 @@ instance : LinearOrder UInt64 where
   simp only [HAnd.hAnd, AndOp.and, UInt64.land, Fin.land, toNat]
   rw [Nat.mod_eq_of_lt]
   exact lt_of_le_of_lt Nat.land_le_max (max_lt (Fin.prop _) (Fin.prop _))
+
+/-- `UInt64` mod is `ℕ` mod -/
+@[simp] lemma UInt64.toNat_mod {x y : UInt64} : (x % y).toNat = x.toNat % y.toNat := rfl
 
 @[simp] lemma UInt64.land_eq_hand {x y : UInt64} : UInt64.land x y = x &&& y := rfl
 
@@ -329,6 +336,32 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
 @[simp] lemma UInt64.log2_lt_64' (n : UInt64) : n.log2 < 64 := by
   rw [lt_iff_toNat_lt, toNat_log2]; exact log2_lt_64 _
 
+lemma UInt64.toNat_add_of_le {x y : UInt64} (h : x ≤ .max - y) :
+    (x + y).toNat = x.toNat + y.toNat := by
+  rw [UInt64.toNat_add']
+  split_ifs with h1
+  · simp only [tsub_zero]
+  · exfalso
+    have e : (2^64 - 1 : UInt64).toNat = 2^64 - 1 := by decide
+    have yp : y.toNat < 2^64 := toNat_lt_2_pow_64 _
+    simp only [max_eq_pow_sub_one, size_eq_pow, not_lt, le_iff_toNat_le] at h h1
+    rw [UInt64.toNat_sub, e, Nat.le_sub_iff_add_le] at h
+    · have b := le_trans h1 h
+      norm_num at b
+    · exact Nat.le_sub_one_of_lt yp
+    · rw [le_iff_toNat_le, e]; exact Nat.le_sub_one_of_lt yp
+
+lemma UInt64.pos_iff_ne_zero {x : UInt64} : 0 < x ↔ x ≠ 0 := by
+  simp only [pos_iff_toNat_pos, Nat.pos_iff_ne_zero, ne_eq, eq_iff_toNat_eq, toNat_zero]
+
+@[simp] lemma UInt64.toNat_max : UInt64.max.toNat = 2^64 - 1 := rfl
+
+@[simp] lemma UInt64.le_max (n : UInt64) : n ≤ max := by
+  rw [UInt64.le_iff_toNat_le, toNat_max]; exact Nat.le_of_lt_succ (lt_size _)
+
+@[simp] lemma UInt64.toNat_le_pow_sub_one (n : UInt64) : n.toNat ≤ 2^64 - 1 :=
+  Nat.le_of_lt_succ (toNat_lt_2_pow_64 _)
+
 /-!
 ### Conversion from `UInt64` to `ZMod`
 -/
@@ -471,10 +504,12 @@ lemma UInt64.eq_split (x : UInt64) :
 
 @[pp_dot] def UInt64.toInt (x : UInt64) : ℤ := x.toNat
 
-@[pp_dot] def UInt64.coe_toNat_sub (x y : UInt64) (h : y ≤ x) :
+@[pp_dot] lemma UInt64.coe_toNat_sub {x y : UInt64} (h : y ≤ x) :
     ((x - y).toNat : ℤ) = x.toNat - y.toNat := by
   rw [UInt64.toNat_sub h, Nat.cast_sub]
   rwa [←UInt64.le_iff_toNat_le]
+
+@[simp] lemma UInt64.toInt_zero : (0 : UInt64).toInt = 0 := rfl
 
 /-!
 ### Shift right, rounding up or down
@@ -487,6 +522,13 @@ lemma UInt64.eq_split (x : UInt64) :
   else
     let y := x >>> s
     bif up && x != y <<< s then y+1 else y
+
+/-- `0.shiftRightRound = 0` -/
+@[simp] lemma UInt64.zero_shiftRightRound (s : UInt64) (up : Bool) :
+    (0 : UInt64).shiftRightRound s up = 0 := by
+  rw [shiftRightRound]
+  simp only [beq_self_eq_true, Bool.true_or, cond_true, zero_shiftRight, zero_shiftLeft,
+    bne_self_eq_false, Bool.and_false, zero_add, cond_false, Bool.cond_self]
 
 /-- Exact `ℕ` result of `UInt64.shiftRightRound` -/
 lemma UInt64.toNat_shiftRightRound {x : UInt64} {s : UInt64} {up : Bool} :

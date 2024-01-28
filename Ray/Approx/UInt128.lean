@@ -1,5 +1,6 @@
 import Mathlib.Data.Real.Archimedean
 import Ray.Approx.Approx
+import Ray.Approx.Int
 import Ray.Approx.UInt64
 
 /-!
@@ -40,7 +41,7 @@ instance : Coe UInt128 ℝ where
 @[simp] lemma UInt128.zero_lo : (0 : UInt128).lo = 0 := rfl
 @[simp] lemma UInt128.zero_hi : (0 : UInt128).hi = 0 := rfl
 @[simp] lemma UInt128.max_lo : UInt128.max.lo = UInt64.max := rfl
-@[simp] lemma UInt128.max_hi : UInt128.max.lo = UInt64.max := rfl
+@[simp] lemma UInt128.max_hi : UInt128.max.hi = UInt64.max := rfl
 lemma UInt128.max_eq_pow_sub_one : UInt128.max.toNat = 2^128 - 1 := by rw [toNat]; rfl
 lemma UInt128.toNat_def {x : UInt128} : x.toNat = (x.hi.toNat * 2^64) + x.lo.toNat := by
   rw [toNat, Nat.shiftLeft_eq]
@@ -89,6 +90,15 @@ lemma UInt128.eq_iff_toNat_eq (x y : UInt128) : x = y ↔ x.toNat = y.toNat := b
     · rw [←UInt128.toNat_mod_pow_eq_lo x, ←UInt128.toNat_mod_pow_eq_lo y, h]
     · rw [←UInt128.toNat_div_pow_eq_hi x, ←UInt128.toNat_div_pow_eq_hi y, h]
 
+lemma UInt128.eq_zero_iff (x : UInt128) : x = 0 ↔ x.toNat = 0 := by
+  simp only [←toNat_zero, ←UInt128.eq_iff_toNat_eq]
+
+lemma UInt128.ne_zero_iff (x : UInt128) : x ≠ 0 ↔ x.toNat ≠ 0 := by
+  simp only [Ne.def, ←eq_zero_iff]
+
+@[simp] lemma UInt128.toNat_lo {x : UInt128} (h : x.toNat < 2^64) : x.lo.toNat = x.toNat := by
+  rw [toNat_def] at h ⊢; norm_num; linarith
+
 def UInt128.blt (x y : UInt128) : Bool :=
   x.hi < y.hi || (x.hi == y.hi && x.lo < y.lo)
 
@@ -126,6 +136,9 @@ def UInt128.ofNat (x : ℕ) : UInt128 where
   { lo := lo
     hi := x.hi + bif lo == 0 then 1 else 0 }
 
+@[simp] lemma UInt128.succ_max : max.succ = 0 := by
+  rw [max, succ]; rfl
+
 lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat = x.toNat+1 := by
   have e : (2:UInt64)^64 = 0 := by rfl
   rw [succ]
@@ -142,6 +155,13 @@ lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat 
     simp only [toNat, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq, UInt64.toNat_add_one ll,
       UInt64.toNat_zero, add_eq_zero, and_false, ite_false, add_zero]
     ring
+
+lemma UInt128.toNat_succ' (x : UInt128) :
+    x.succ.toNat = (if x.toNat = 2^128-1 then 0 else x.toNat + 1) := by
+  split_ifs with h
+  · have e : x = max := by rwa [eq_iff_toNat_eq, toNat_max]
+    simp only [e, succ_max, toNat_zero]
+  · exact toNat_succ h
 
 lemma UInt128.coe_succ {x : UInt128} (h : (x:ℝ) ≠ (2:ℝ)^128-1) : (x.succ : ℝ) = x+1 := by
   rw [toReal, toReal, toNat_succ, Nat.cast_add_one]
@@ -250,34 +270,46 @@ lemma toNat_mul128_mod (x y : UInt64) : (mul128 x y).toNat % 2^128 = x.toNat * y
 ### 128 bit shifting
 -/
 
+-- DO NOT SUBMIT: Rename back to shiftLeft
 /-- Multiply by `2^(s % 128)`, discarding overflow bits -/
-@[pp_dot] def UInt128.shiftLeft (x : UInt128) (s : UInt64) : UInt128 :=
+@[irreducible, pp_dot] def UInt128.shiftLeft_tweak (x : UInt128) (s : UInt64) : UInt128 :=
   let s := s.land 127
   { lo := bif s < 64 then x.lo <<< s else 0
     hi := bif s == 0 then x.hi
           else bif s < 64 then x.hi <<< s ||| x.lo >>> (64-s)
           else x.lo <<< (s - 64) }
 
+-- DO NOT SUBMIT: Rename back to shiftRight
 /-- Divide by `2^(s % 128)`, rounding down -/
-@[pp_dot] def UInt128.shiftRight (x : UInt128) (s : UInt64) : UInt128 :=
+@[irreducible, pp_dot] def UInt128.shiftRight_tweak (x : UInt128) (s : UInt64) : UInt128 :=
   let s := s.land 127
   { lo := bif s == 0 then x.lo
           else bif s < 64 then x.lo >>> s ||| x.hi <<< (64-s)
           else x.hi >>> (s - 64)
     hi := bif s < 64 then x.hi >>> s else 0 }
 
+instance : HShiftLeft UInt128 UInt64 UInt128 where
+  hShiftLeft x s := x.shiftLeft_tweak s
+
+instance : HShiftRight UInt128 UInt64 UInt128 where
+  hShiftRight x s := x.shiftRight_tweak s
+
+lemma UInt128.shiftLeft_def (x : UInt128) (s : UInt64) : x <<< s = x.shiftLeft_tweak s := rfl
+lemma UInt128.shiftRight_def (x : UInt128) (s : UInt64) : x >>> s = x.shiftRight_tweak s := rfl
+
 /-- Divide by `2^s`, rounding up or down -/
-@[pp_dot] def UInt128.shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) : UInt128 :=
+@[irreducible, pp_dot] def UInt128.shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
+    UInt128 :=
   bif s == 0 then x
   else bif 128 ≤ s then bif x == 0 || !up then 0 else 1
   else
-    let y := x.shiftRight s
-    bif up && x != y.shiftLeft s then y.succ else y
+    let y := x >>> s
+    bif up && x != y <<< s then y.succ else y
 
  /-- Multiply by `2^s`, saturating at `UInt128.max` if we overflow -/
-@[pp_dot] def UInt128.shiftLeftSaturate (x : UInt128) (s : UInt64) : UInt128 :=
-  bif bif 128 ≤ s then x != 0 else s != 0 && x.shiftRight (128-s) != 0 then UInt128.max
-  else x.shiftLeft s
+@[irreducible, pp_dot] def UInt128.shiftLeftSaturate (x : UInt128) (s : UInt64) : UInt128 :=
+  bif bif 128 ≤ s then x != 0 else s != 0 && x >>> (128-s) != 0 then UInt128.max
+  else x <<< s
 
 /-- `testBit` for `UInt128` -/
 lemma UInt128.testBit_eq {x : UInt128} {i : ℕ} :
@@ -388,14 +420,15 @@ lemma tb_false {x : UInt64} {i : ℕ} (il : 64 ≤ i) : Nat.testBit x.toNat i = 
 
 /-- `shiftLeft` is multiplication mod 2^128. -/
 lemma UInt128.toNat_shiftLeft (x : UInt128) {s : UInt64} (sl : s < 128) :
-    (x.shiftLeft s).toNat = x.toNat * 2^s.toNat % 2^128 := by
+    (x <<< s).toNat = x.toNat * 2^s.toNat % 2^128 := by
   generalize ht : s.toNat = t
   have st : s = (t : UInt64) := by rw [←ht, UInt64.cast_toNat]
   have t64' : t < UInt64.size := by rw [←ht]; exact UInt64.toNat_lt_2_pow_64 _
   simp only [st, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast, Nat.mod_eq_of_lt t64', p128, st] at sl ⊢
   clear st ht s
   refine Nat.eq_of_testBit_eq fun i ↦ ?_
-  simp only [shiftLeft, UInt64.land_eq_hand, t127' sl, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast,
+  rw [shiftLeft_def, shiftLeft_tweak]
+  simp only [UInt64.land_eq_hand, t127' sl, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast,
     Nat.mod_eq_of_lt t64', p64, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq,
     UInt64.toNat_zero, testBit_eq, apply_ite (f := UInt64.toNat), UInt64.toNat_shiftLeft',
     apply_ite (f := fun x ↦ Nat.testBit x i), Nat.testBit_mul_two_pow, Nat.testBit_mod_two_pow,
@@ -447,27 +480,42 @@ lemma UInt128.toNat_shiftLeft (x : UInt128) {s : UInt64} (sl : s < 128) :
   · simp_all
   · simp_all; omega
 
+/-- `shiftLeft` is multiplication mod 2^128. -/
+lemma UInt128.toNat_shiftLeft' (x : UInt128) {s : UInt64} :
+    (x <<< s).toNat = x.toNat * 2^(s.toNat % 128) % 2^128 := by
+  have e : (s % 128).land 127 = s.land 127 := by
+    have e : ∀ n : ℕ, n &&& 127 = n % 128 := fun _ ↦ Nat.land_eq_mod (k := 7)
+    simp only [UInt64.land_eq_hand, UInt64.eq_iff_toNat_eq, UInt64.toNat_land, UInt64.toNat_mod,
+      p128, p127, e, Nat.mod_mod]
+  refine Eq.trans ?_ (toNat_shiftLeft (x := x) (s := s % 128) ?_)
+  · rw [shiftLeft_def, shiftLeft_def, shiftLeft_tweak, shiftLeft_tweak, e]
+  · simp only [UInt64.lt_iff_toNat_lt, UInt64.toNat_mod, p128, gt_iff_lt, Nat.zero_lt_succ,
+      Nat.mod_lt]
+
 /-- Shifting left by zero does nothing -/
-@[simp] lemma UInt128.shiftLeft_zero (x : UInt128) : x.shiftLeft 0 = x := by
+@[simp] lemma UInt128.shiftLeft_zero (x : UInt128) : x <<< (0 : UInt64) = x := by
   have h : (0 : UInt64) < 64 := by decide
-  simp only [shiftLeft, UInt64.land_eq_hand, UInt64.zero_land, h, decide_True,
+  rw [shiftLeft_def, shiftLeft_tweak]
+  simp only [UInt64.land_eq_hand, UInt64.zero_land, h, decide_True,
     UInt64.shiftLeft_zero, cond_true, beq_self_eq_true, sub_zero, zero_sub]
 
 /-- Shifting zero does nothing -/
-@[simp] lemma UInt128.zero_shiftLeft (s : UInt64) : (0 : UInt128).shiftLeft s = 0 := by
-  simp only [shiftLeft, UInt64.land_eq_hand, zero_lo, UInt64.zero_shiftLeft, Bool.cond_self,
+@[simp] lemma UInt128.zero_shiftLeft (s : UInt64) : (0 : UInt128) <<< s = 0 := by
+  rw [shiftLeft_def, shiftLeft_tweak]
+  simp only [UInt64.land_eq_hand, zero_lo, UInt64.zero_shiftLeft, Bool.cond_self,
     zero_hi, UInt64.zero_shiftRight, UInt64.zero_or, UInt128.ext_iff, and_self]
 
 /-- `shiftRight` rounds down -/
 lemma UInt128.toNat_shiftRight (x : UInt128) {s : UInt64} (sl : s < 128) :
-    (x.shiftRight s).toNat = x.toNat / 2^s.toNat := by
+    (x >>> s).toNat = x.toNat / 2^s.toNat := by
   generalize ht : s.toNat = t
   have st : s = (t : UInt64) := by rw [←ht, UInt64.cast_toNat]
   have t64' : t < UInt64.size := by rw [←ht]; exact UInt64.toNat_lt_2_pow_64 _
   simp only [st, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast, Nat.mod_eq_of_lt t64', p128, st] at sl ⊢
   clear st ht s
   refine Nat.eq_of_testBit_eq fun i ↦ ?_
-  simp only [UInt128.shiftRight, UInt128.testBit_eq, bif_eq_if, beq_iff_eq, decide_eq_true_eq,
+  rw [shiftRight_def, shiftRight_tweak]
+  simp only [UInt128.testBit_eq, bif_eq_if, beq_iff_eq, decide_eq_true_eq,
     apply_ite (f := UInt64.toNat), apply_ite (f := fun x ↦ Nat.testBit x i),
     apply_ite (f := fun x ↦ Nat.testBit x (i - 64)),
     UInt64.toNat_shiftRight', UInt64.toNat_lor, Nat.testBit_lor, Nat.testBit_div_two_pow,
@@ -489,17 +537,86 @@ lemma UInt128.toNat_shiftRight (x : UInt128) {s : UInt64} (sl : s < 128) :
   · apply false_tb; omega
   · apply false_tb; omega
 
+/-- `shiftRight` rounds down -/
+lemma UInt128.toNat_shiftRight' (x : UInt128) {s : UInt64} :
+    (x >>> s).toNat = x.toNat / 2^(s.toNat % 128) := by
+  have e : (s % 128).land 127 = s.land 127 := by
+    have e : ∀ n : ℕ, n &&& 127 = n % 128 := fun _ ↦ Nat.land_eq_mod (k := 7)
+    simp only [UInt64.land_eq_hand, UInt64.eq_iff_toNat_eq, UInt64.toNat_land, UInt64.toNat_mod,
+      p128, p127, e, Nat.mod_mod]
+  refine Eq.trans ?_ (toNat_shiftRight (x := x) (s := s % 128) ?_)
+  · rw [shiftRight_def, shiftRight_def, shiftRight_tweak, shiftRight_tweak, e]
+  · simp only [UInt64.lt_iff_toNat_lt, UInt64.toNat_mod, p128, gt_iff_lt, Nat.zero_lt_succ,
+      Nat.mod_lt]
+
 lemma UInt128.coe_shiftRight (x : UInt128) {s : UInt64} (sl : s < 128) :
-    (x.shiftRight s : ℝ) = ↑(x.toNat / 2^s.toNat) := by
+    (x >>> s : ℝ) = ↑(x.toNat / 2^s.toNat) := by
   rw [UInt128.toReal, UInt128.toNat_shiftRight _ sl]
 
+/-- `shiftRightRound.toNat = rdiv` -/
+lemma UInt128.toInt_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
+    ((x.shiftRightRound s up).toNat : ℤ) = (x.toNat : ℤ).rdiv (2^s.toNat) up := by
+  rw [shiftRightRound]
+  simp only [UInt64.le_iff_toNat_le, p128, bif_eq_if, Bool.or_eq_true, beq_iff_eq, eq_iff_toNat_eq,
+    toNat_zero, Bool.not_eq_true', Bool.and_eq_true, bne_iff_ne, ne_eq, toNat_shiftLeft',
+    toNat_shiftRight', decide_eq_true_eq, UInt64.eq_iff_toNat_eq, UInt64.toNat_zero,
+    apply_ite (f := fun x : UInt128 ↦ x.toNat), toNat_one, toNat_succ', Nat.cast_ite,
+    CharP.cast_eq_zero, Nat.cast_one, Nat.cast_add, Int.ofNat_ediv, Nat.cast_pow, Nat.cast_ofNat]
+  have d0 : 128 ≤ s.toNat → (x.toNat : ℤ) < 2 ^ s.toNat := by
+    intro sh
+    refine lt_of_lt_of_le (Nat.cast_lt.mpr (lt_size _)) ?_
+    simp only [Nat.cast_pow, Nat.cast_ofNat]
+    exact pow_le_pow_right (by norm_num) sh
+  have d1 : x.toNat / 2 ^ s.toNat = 2 ^ 128 - 1 → s.toNat = 0 := by
+    intro h; contrapose h; apply ne_of_lt; apply Nat.div_lt_of_lt_mul
+    refine lt_of_lt_of_le (lt_size _) ?_
+    refine le_trans ?_ (Nat.mul_le_mul_right _ (pow_le_pow_right (by norm_num)
+      (Nat.pos_iff_ne_zero.mpr h)))
+    decide
+  have d2 : x.toNat / 2^s.toNat * 2^s.toNat < 2^128 :=
+    lt_of_le_of_lt (Nat.div_mul_le_self _ _) (lt_size _)
+  have d3 : ∀ n, (2:ℤ) ^ n = (2^n : ℕ) := by intro _; simp only [Nat.cast_pow, Nat.cast_ofNat]
+  split_ifs with h0 h1 h2 h3 h4
+  · simp only [h0, pow_zero, Int.rdiv_one]
+  · rcases h2 with x0 | down
+    · simp only [x0, CharP.cast_eq_zero, Int.zero_rdiv]
+    · simp only [Int.rdiv, down, Nat.cast_pow, Nat.cast_ofNat, cond_false,
+        Int.ediv_eq_zero_of_lt (Int.ofNat_nonneg _) (d0 h1)]
+  · simp only [not_or, Bool.not_eq_false] at h2
+    simp only [Int.rdiv, h2.2, Nat.cast_pow, Nat.cast_ofNat, cond_true, ← neg_eq_iff_eq_neg]
+    exact (Int.ediv_eq_neg_one (Nat.cast_pos.mpr (Nat.pos_iff_ne_zero.mpr h2.1)) (d0 h1).le).symm
+  · simp only [not_le] at h1
+    simp only [h3.1, Nat.mod_eq_of_lt h1, true_and, Int.rdiv, Nat.cast_pow, Nat.cast_ofNat,
+      cond_true, zero_eq_neg] at h3 h4
+    contrapose h3
+    simp only [d1 h4, pow_zero, Nat.div_one, mul_one, not_not] at h4 ⊢
+    rw [h4]; decide
+  · simp only [not_le] at h1; clear h4
+    simp only [h3.1, Nat.mod_eq_of_lt h1, true_and, Int.rdiv, Nat.cast_pow, Nat.cast_ofNat,
+      cond_true, Nat.mod_eq_of_lt d2] at h3 ⊢
+    rw [eq_comm, ←Nat.dvd_iff_div_mul_eq] at h3
+    rw [Int.neg_ediv_neg (by positivity)]
+    simp only [d3, h3, Int.ofNat_dvd, not_false_eq_true]
+  · simp only [not_le] at h1
+    simp only [Nat.mod_eq_of_lt h1, not_and_or, not_not, Bool.not_eq_true,
+      Nat.mod_eq_of_lt d2] at h3 ⊢
+    rcases h3 with down | dv
+    · simp only [Nat.mod_eq_of_lt h1, Int.rdiv, down, Nat.cast_pow, Nat.cast_ofNat, cond_false]
+    · rw [dv]
+      simp only [Nat.cast_mul, Int.ofNat_ediv, ne_eq, d3, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
+        false_and, not_false_eq_true, Int.mul_ediv_cancel, Int.mul_rdiv_cancel]
+      simp only [Nat.cast_pow, Nat.cast_ofNat, ne_eq, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
+        false_and, not_false_eq_true, Int.mul_ediv_cancel]
+
+-- DO NOT SUBMIT: Should simplify a bunch given toInt_shiftRightRound
 /-- `shiftRightRound` rounds as desired -/
 lemma UInt128.approx_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
     (x.shiftRightRound s up : ℝ) ∈ rounds {(x : ℝ) / (2:ℝ)^s.toNat} up := by
   have cp : (2:ℝ) ^ s.toNat = ((2:ℕ) ^ s.toNat : ℕ) := by
     simp only [Nat.cast_pow, Nat.cast_ofNat]
   have z2 : ∀ {n}, (2:ℝ) ^ n ≠ 0 := fun {_} ↦ pow_ne_zero _ (by norm_num)
-  simp only [shiftRightRound, bif_eq_if, Bool.or_eq_true, beq_iff_eq, Bool.not_eq_true',
+  rw [shiftRightRound]
+  simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq, Bool.not_eq_true',
     Bool.and_eq_true, bne_iff_ne, ne_eq, decide_eq_true_eq]
   by_cases s0 : s = 0
   · simp only [s0, ite_false, ite_true, UInt64.toNat_zero, pow_zero, div_one, mem_rounds_singleton,
@@ -528,7 +645,7 @@ lemma UInt128.approx_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
       simp only [not_le] at s128
       by_cases u : up
       · simp only [u, true_and, ite_not, apply_ite, ite_true]
-        by_cases lh : x = (x.shiftRight s).shiftLeft s
+        by_cases lh : x = (x >>> s) <<< s
         · simp only [← lh, ite_true, ge_iff_le]
           have lt : x.toNat / 2 ^ s.toNat * 2 ^ s.toNat < 2^128 :=
             lt_of_le_of_lt (Nat.div_mul_le_self _ _) (UInt128.lt_size _)
@@ -537,7 +654,7 @@ lemma UInt128.approx_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
           nth_rw 1 [lh]
           simp only [Nat.cast_mul, Nat.isUnit_iff, Nat.cast_pow, Nat.cast_ofNat, ne_eq,
             mul_div_cancel _ z2, le_refl]
-        · have nt : (x.shiftRight s).toNat ≠ 2^128-1 := by
+        · have nt : (x >>> s).toNat ≠ 2^128-1 := by
             rw [UInt128.toNat_shiftRight _ s128]
             apply ne_of_lt
             apply lt_of_le_of_lt (Nat.div_le_div_right (UInt128.lt_size _).le)
@@ -561,7 +678,8 @@ lemma UInt128.toNat_shiftLeftSaturate {x : UInt128} {s : UInt64}
   simp only [st, toNat_max]
   clear st ht s
   by_cases t0 : t = 0
-  · simp only [shiftLeftSaturate, t0, Nat.cast_zero, (by decide : ¬128 ≤ (0 : UInt64)),
+  · rw [shiftLeftSaturate]
+    simp only [t0, Nat.cast_zero, (by decide : ¬128 ≤ (0 : UInt64)),
       decide_False, Bool.false_and, bne_self_eq_false, sub_zero, Bool.or_self, shiftLeft_zero,
       cond_false, pow_zero, mul_one]
     rw [min_eq_left (by omega)]
@@ -608,3 +726,73 @@ lemma UInt128.shiftLeftSaturate_eq {x : UInt128} {s : UInt64}
     : x.shiftLeftSaturate s = .ofNat (min (x.toNat * 2^s.toNat) UInt128.max.toNat) := by
   simp only [ge_iff_le, eq_iff_toNat_eq, toNat_shiftLeftSaturate, toNat_ofNat]
   rw [Nat.mod_eq_of_lt]; apply min_lt_of_right_lt; rw [toNat_max]; norm_num
+
+@[simp] lemma UInt128.zero_shiftRight {s : UInt64} : (0 : UInt128) >>> s = 0 := by
+  rw [shiftRight_def, shiftRight_tweak]
+  simp only [UInt64.land_eq_hand, zero_lo, UInt64.zero_shiftRight, zero_hi, UInt64.zero_shiftLeft,
+    UInt64.zero_or, Bool.cond_self]
+  rfl
+
+@[simp] lemma UInt128.zero_shiftRightRound {s : UInt64} {up : Bool} :
+    (0 : UInt128).shiftRightRound s up = 0 := by
+  rw [shiftRightRound]
+  simp only [beq_self_eq_true, Bool.true_or, cond_true, zero_shiftRight, zero_shiftLeft,
+    bne_self_eq_false, Bool.and_false, cond_false, Bool.cond_self]
+
+/-!
+### `log2`
+-/
+
+@[irreducible] def UInt128.log2 (x : UInt128) : UInt64 :=
+  bif x.hi == 0 then x.lo.log2
+  else x.hi.log2 + 64
+
+@[simp] lemma UInt128.toNat_log2 (x : UInt128) : x.log2.toNat = x.toNat.log2 := by
+  rw [log2, toNat]
+  have e64 : (64 : UInt64).toNat = 64 := rfl
+  simp only [bif_eq_if, beq_iff_eq, UInt64.le_iff_toNat_le, p127, Nat.shiftLeft_eq,
+    apply_ite (f := fun x : UInt64 ↦ x.toNat), UInt64.toNat_log2, UInt64.toNat_add,
+    UInt64.size_eq_pow, e64]
+  split_ifs with h0
+  · simp only [h0, UInt64.toNat_zero, zero_mul, zero_add]
+  · have h0' := UInt64.ne_zero_iff_toNat_ne_zero.mp h0
+    have s0 : x.hi.toNat * 2^64 + x.lo.toNat ≠ 0 := by positivity
+    rw [Nat.mod_eq_of_lt]
+    · apply le_antisymm
+      · rw [Nat.le_log2 s0, pow_add]
+        exact le_trans (Nat.mul_le_mul_right _ (Nat.log2_self_le h0')) (Nat.le_add_right _ _)
+      · apply Nat.le_of_lt_succ
+        rw [Nat.log2_lt s0]
+        rw [Nat.succ_eq_add_one, add_assoc, add_comm _ 1, ←add_assoc, pow_add]
+        have le : x.hi.toNat + 1 ≤ 2 ^ (x.hi.toNat.log2 + 1) := Nat.lt_log2_self
+        refine lt_of_lt_of_le ?_ (Nat.mul_le_mul_right _ le)
+        simp only [add_one_mul, add_lt_add_iff_left, UInt64.toNat_lt_2_pow_64]
+    · have h : x.hi.toNat.log2 < 64 := UInt64.log2_lt_64 x.hi
+      norm_num; omega
+
+@[simp] lemma UInt128.log2_le_127 (x : UInt128) : x.log2 ≤ 127 := by
+  rw [log2]
+  have e : (64 : UInt64).toNat = 64 := rfl
+  simp only [bif_eq_if, beq_iff_eq, UInt64.le_iff_toNat_le, p127]
+  split_ifs
+  · simp only [UInt64.toNat_log2]
+    have h := UInt64.log2_lt_64 x.lo
+    omega
+  · have h := UInt64.log2_lt_64 x.hi
+    rw [UInt64.toNat_add, UInt64.toNat_log2, e, UInt64.size_eq_pow, Nat.mod_eq_of_lt]
+    · omega
+    · norm_num; omega
+
+@[simp] lemma UInt128.log2_le_127' (x : UInt128) : x.toNat.log2 ≤ 127 := by
+  have h := UInt128.log2_le_127 x
+  simpa only [ge_iff_le, UInt64.le_iff_toNat_le, toNat_log2, p127] using h
+
+@[simp] lemma UInt128.log2_zero : (0 : UInt128).log2 = 0 := by
+  rw [log2]; simp only [zero_hi, beq_self_eq_true, zero_lo, UInt64.log2_zero, zero_add, cond_true]
+
+@[simp] lemma UInt128.toNat_lo_of_log2_lt {x : UInt128} (h : x.toNat.log2 < 64) :
+    x.lo.toNat = x.toNat := by
+  by_cases x0 : x.toNat = 0
+  · simp only [x0, zero_lt_two, pow_pos, toNat_lo]
+  · rw [toNat_lo]
+    rwa [Nat.log2_lt x0] at h

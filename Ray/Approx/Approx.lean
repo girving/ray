@@ -84,6 +84,10 @@ def rounds [LE R] (s : Set R) (up : Bool) : Set R :=
   ext x; simp only [rounds, mem_univ, true_and, mem_setOf_eq, iff_true]
   use x; simp only [ite_self]; rfl
 
+lemma subset_rounds [Preorder R] (s : Set R) (up : Bool) : s ⊆ rounds s up := by
+  intro x m; use x
+  simp only [ite_self, le_refl, m, true_and]
+
 @[mono] lemma rounds_mono (st : s ⊆ t) : rounds s up ⊆ rounds t up := by
   intro x m; rcases m with ⟨y,m,h⟩; exact ⟨y, st m, h⟩
 
