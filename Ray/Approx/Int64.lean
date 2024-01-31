@@ -635,8 +635,13 @@ lemma Int64.abs_eq_self {x : Int64} (h : x.isNeg = false) : x.abs.toInt = x := b
   simp only [abs, h, cond_false, toInt, CharP.cast_eq_zero, sub_zero]; rfl
 
 /-- `.abs` negates if negative -/
+lemma Int64.abs_eq_neg' {x : Int64} (n : x.isNeg) : x.abs = (-x).n := by
+  simp only [abs, n, cond_true, neg_def]
+
+/-- `.abs` negates if negative.  It's weird that this proof is so long given the above one liner,
+    so obviously it can be improved (later). -/
 lemma Int64.abs_eq_neg {x : Int64} (n : x.isNeg) : x.abs.toInt = -x := by
-  simp only [UInt64.toInt, abs, n, UInt64.neg_def, Fin.neg, ge_iff_le, cond_true, toInt,
+  simp only [abs_eq_neg' n, UInt64.toInt, abs, n, UInt64.neg_def, Fin.neg, ge_iff_le, cond_true, toInt,
     Nat.cast_pow, Nat.cast_ofNat, neg_sub]
   trans ↑((UInt64.size - ↑x.n.val) % UInt64.size)
   · rfl

@@ -127,6 +127,17 @@ lemma norm' {x : Floating} (x0 : x ≠ 0) (s0 : x.s.toNat ≠ 0) : 2^62 ≤ x.n.
   · simp [xn]; decide
   · exact x.norm (x.n_ne_zero x0) (x.n_ne_min xn) (UInt64.ne_zero_iff_toNat_ne_zero.mpr s0)
 
+/-- Only `0` has zero `val` -/
+lemma val_eq_zero {x : Floating} : x.val = 0 ↔ x = 0 := by
+  rw [val]
+  simp only [mul_eq_zero, Int.cast_eq_zero, Int64.coe_eq_zero, two_zpow_pos.ne', or_false, ext_iff,
+    n_zero, s_zero, iff_self_and]
+  exact x.zero_same
+
+/-- Only `0` has zero `val` -/
+lemma val_ne_zero {x : Floating} : x.val ≠ 0 ↔ x ≠ 0 := by
+  rw [←not_iff_not, not_not, not_not, val_eq_zero]
+
 /-!
 ### Simplification lemmas used elsewhere
 

@@ -118,7 +118,7 @@ lemma le_def {x y : Floating} : x ≤ y ↔ ¬(y < x) := by
     (-x) ≤ (-y) ↔ y ≤ x := by
   simp only [le_def, neg_lt_neg ym xm]
 
- /-- `nan` appears negative -/
+/-- `nan` appears negative -/
 @[simp] lemma nan_lt_zero : (nan : Floating) < 0 := by native_decide
 
 /-- Our ordering is antireflexive -/
@@ -166,7 +166,7 @@ lemma le_antisymm' {x y : Floating} (xy : x ≤ y) (yx : y ≤ x) : x = y := by
       simp only [Int64.ext_iff, le_antisymm xy yx]
 
  /-- `x.n.isNeg` determines negativity -/
-lemma isNeg_iff {x : Floating} : x.n.isNeg = decide (x < 0) := by
+lemma isNeg_iff' {x : Floating} : x.n.isNeg = decide (x < 0) := by
   by_cases xn : x.n.isNeg
   · simp only [xn, lt_def, n_zero, Int64.isNeg_zero, gt_iff_lt, Bool.false_lt_true, s_zero,
       ite_true, Int64.n_zero, false_and, or_false, decide_True]
@@ -263,7 +263,7 @@ lemma isNeg_iff {x : Floating} : x.n.isNeg = decide (x < 0) := by
   simpa only [le_def] using nan_le x
 
 /-- `x.n.isNeg` determines negativity, `val` version -/
-lemma isNeg_iff_val {x : Floating} : x.n.isNeg = decide (x.val < 0) := by
+@[simp] lemma isNeg_iff {x : Floating} : x.n.isNeg = decide (x.val < 0) := by
   rw [val]; symm
   by_cases xn : x.n.isNeg
   · simp only [xn, decide_eq_true_eq, ←not_le, mul_nonneg_iff_of_pos_right two_zpow_pos]
@@ -312,13 +312,13 @@ lemma val_lt_val_of_nonneg {x y : Floating}
         · simp only [ym, not_lt_nan, iff_false, not_lt, nan_val_le]
         · by_cases x0 : x = 0
           · simp only [x0, val_zero]
-            have h0 : y < 0 := by simpa only [isNeg_iff, decide_eq_true_eq] using yn
-            have h1 : y.val < 0 := by simpa only [isNeg_iff_val, decide_eq_true_eq] using yn
+            have h0 : y < 0 := by simpa only [isNeg_iff', decide_eq_true_eq] using yn
+            have h1 : y.val < 0 := by simpa only [isNeg_iff, decide_eq_true_eq] using yn
             simp only [not_lt.mpr h1.le, not_lt_of_lt h0]
           · by_cases y0 : y = 0
             · simp only [y0, val_zero]
-              have h0 : x < 0 := by simpa only [isNeg_iff, decide_eq_true_eq] using xn
-              have h1 : x.val < 0 := by simpa only [isNeg_iff_val, decide_eq_true_eq] using xn
+              have h0 : x < 0 := by simpa only [isNeg_iff', decide_eq_true_eq] using xn
+              have h1 : x.val < 0 := by simpa only [isNeg_iff, decide_eq_true_eq] using xn
               simp only [h1, h0]
             · rw [←neg_lt_neg ym xm, ←neg_lt_neg_iff, ←val_neg xm, ←val_neg ym]
               apply val_lt_val_of_nonneg
@@ -328,14 +328,14 @@ lemma val_lt_val_of_nonneg {x y : Floating}
                   Bool.not_eq_false']
     · simp only [Bool.not_eq_true] at yn
       trans True
-      · simp only [isNeg_iff_val, decide_eq_true_eq, decide_eq_false_iff_not, not_lt] at xn yn
+      · simp only [isNeg_iff, decide_eq_true_eq, decide_eq_false_iff_not, not_lt] at xn yn
         simp only [iff_true]
         linarith
       · simp only [lt_def, xn, yn, gt_iff_lt, Bool.false_lt_true, ite_true, false_and, or_false]
   · by_cases yn : y.n.isNeg
     · simp only [Bool.not_eq_true] at xn
       trans False
-      · simp only [isNeg_iff_val, decide_eq_true_eq, decide_eq_false_iff_not, not_lt] at xn yn
+      · simp only [isNeg_iff, decide_eq_true_eq, decide_eq_false_iff_not, not_lt] at xn yn
         simp only [iff_false, not_lt]
         linarith
       · simp only [lt_def, xn, yn, gt_iff_lt, ite_false, false_and, or_false, false_iff, not_lt,
@@ -347,7 +347,7 @@ lemma val_lt_val_of_nonneg {x y : Floating}
 @[simp] lemma val_le_val {x y : Floating} : x ≤ y ↔ x.val ≤ y.val := by
   rw [←not_lt, le_def, not_iff_not, val_lt_val]
 
- /-- `Floating` is a partial order -/
+/-- `Floating` is a partial order -/
 instance : LinearOrder Floating where
   le_refl x := by simp only [val_le_val, le_refl]
   le_trans x y z := by simp only [val_le_val]; apply le_trans
@@ -358,6 +358,18 @@ instance : LinearOrder Floating where
   decidableLE x y := by infer_instance
   min_def x y := by simp only [min, ble_eq_le, bif_eq_if, decide_eq_true_eq]
   max_def x y := by simp only [Max.max, ble_eq_le, bif_eq_if, decide_eq_true_eq]
+
+@[simp] lemma lt_zero_iff {x : Floating} : x < 0 ↔ x.val < 0 := by
+  rw [←val_zero]; exact val_lt_val
+
+@[simp] lemma nonneg_iff {x : Floating} : 0 ≤ x ↔ 0 ≤ x.val := by
+  rw [←val_zero]; exact val_le_val
+
+@[simp] lemma not_nan_nonneg : ¬0 ≤ (nan : Floating).val := by
+  simpa only [val_lt_val, val_zero, not_le] using nan_lt_zero
+
+lemma ne_nan_of_nonneg {x : Floating} (n : 0 ≤ x.val) : x ≠ nan := by
+  contrapose n; simp only [ne_eq, not_not] at n; simp only [n, not_nan_nonneg, not_false_eq_true]
 
 /-!
 ### Facts about `min` and `max`
@@ -425,3 +437,19 @@ lemma eq_nan_of_max {x y : Floating} (n : x.max y = nan) : x = nan ∨ y = nan :
     intro yx; simp only [le_antisymm xy yx]
   · simp only [not_le] at xy
     simp only [neg_le_neg_iff, xy.le, ite_true, not_le.mpr xy, ite_false]
+
+/-- `Floating.max` is commutative -/
+@[simp] lemma max_comm {x y : Floating} : x.max y = y.max x := by
+  simp only [max, min_comm]
+
+/-- `max_eq_left` for `Floating.max`, if we're not `nan` -/
+@[simp] lemma max_eq_left {x y : Floating} (yx : y.val ≤ x.val) (yn : y ≠ nan) : x.max y = x := by
+  rw [max, min_eq_left]
+  · simp only [neg_neg]
+  · by_cases xn : x = nan
+    · simp only [xn, neg_nan, val_le_val, nan_val_le]
+    · simp only [val_le_val, ne_eq, xn, not_false_eq_true, val_neg, yn, neg_le_neg_iff, yx]
+
+/-- `max_eq_right` for `Floating.max`, if we're not `nan` -/
+@[simp] lemma max_eq_right {x y : Floating} (xy : x.val ≤ y.val) (xn : x ≠ nan) : x.max y = y := by
+  rw [max_comm, max_eq_left xy xn]
