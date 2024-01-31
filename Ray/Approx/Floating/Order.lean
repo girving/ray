@@ -371,6 +371,11 @@ instance : LinearOrder Floating where
 lemma ne_nan_of_nonneg {x : Floating} (n : 0 ≤ x.val) : x ≠ nan := by
   contrapose n; simp only [ne_eq, not_not] at n; simp only [n, not_nan_nonneg, not_false_eq_true]
 
+/-- If we're positive, `n` is small -/
+lemma n_lt_of_nonneg {x : Floating} (x0 : 0 ≤ x.val) : x.n.n.toNat < 2^63 := by
+  have h : x.n.isNeg = false := by simpa only [isNeg_iff, decide_eq_false_iff_not, not_lt]
+  simpa only [Int64.isNeg_eq_le, decide_eq_false_iff_not, not_le] using h
+
 /-!
 ### Facts about `min` and `max`
 -/

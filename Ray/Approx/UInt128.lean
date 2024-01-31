@@ -219,12 +219,18 @@ lemma UInt128.toNat_neg (x : UInt128) : (-x).toNat = if x = 0 then 0 else 2^128 
       omega
 
 /-!
-### 128-bit addition
+### 128-bit addition and (twos complement) subtraction
 -/
 
 @[irreducible] def UInt128.add (x y : UInt128) : UInt128 :=
   let (x0,x1) := addc x.lo y.lo
   ⟨x0, x1 + x.hi + y.hi⟩
+
+instance : Add UInt128 where
+  add := UInt128.add
+
+instance : Sub UInt128 where
+  sub x y := x + -y
 
 /-!
 ### 64 → 128 bit multiplication

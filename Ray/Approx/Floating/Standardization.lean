@@ -149,7 +149,7 @@ lemma of_ns_norm {n : Int64} {s : UInt64} (n0 : n ≠ 0) (nm : n ≠ .min) :
   rw [UInt64.toNat_sub (log2_g_le_62 nm), u62]
   omega
 
-/-- Construct a `Floating` given possibly non-standardized `n, n` -/
+/-- Construct a `Floating` given possibly non-standardized `n, s` -/
 @[irreducible] def of_ns (n : Int64) (s : UInt64) : Floating :=
   if nm : n = .min then nan else
   if n0 : n = 0 then 0 else

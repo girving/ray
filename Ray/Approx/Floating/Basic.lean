@@ -161,6 +161,14 @@ lemma rounds_of_ne_nan {a : ℝ} {x : Floating} {up : Bool}
   · simp only [ne_eq, n, not_false_eq_true, approx_eq_singleton, mem_rounds_singleton, h n]
 
 /-!
+### The smallest normalized value
+-/
+
+/-- The smallest normalized floating point value -/
+@[irreducible] def min_norm : Floating :=
+  ⟨⟨2^62⟩, 0, by decide, by decide, by decide⟩
+
+/-!
 ### Conversion to `Float`
 -/
 
