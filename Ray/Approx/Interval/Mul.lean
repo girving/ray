@@ -9,13 +9,14 @@ open Pointwise
 
 open Set
 open scoped Real
+namespace Interval
 
 /-- Multiply, changing `s` -/
-@[pp_dot] def mul (x : Interval) (y : Interval) (u : Int64) : Interval u :=
+@[irreducible, pp_dot] def mul (x : Interval) (y : Interval) : Interval :=
   bif x.lo == nan || x.hi == nan || y.lo == nan || y.hi == nan then nan
   else bif x.lo.n.isNeg != x.hi.n.isNeg && y.lo.n.isNeg != x.hi.n.isNeg then  -- x,y have mixed sign
-    ⟨min (x.lo.mul y.hi u false) (x.hi.mul y.lo u false),
-     max (x.lo.mul y.lo u true) (x.hi.mul y.hi u true)⟩
+    ⟨min (x.lo.mul y.hi false) (x.hi.mul y.lo false),
+     max (x.lo.mul y.lo true) (x.hi.mul y.hi true)⟩
   else -- At least one of x,y has constant sign, so we can save multiplications
     let (a,b,c,d) := match (x.lo.n.isNeg, x.hi.n.isNeg, y.lo.n.isNeg, y.hi.n.isNeg) with
       | (false, _, false, _)    => (x.lo, x.hi, y.lo, y.hi)  -- 0 ≤ x, 0 ≤ y
@@ -26,7 +27,9 @@ open scoped Real
       | (_, true, false, _)     => (x.lo, x.hi, y.hi, y.lo)  -- x ≤ 0, 0 ≤ y
       | (_, true, true, false)  => (x.lo, x.lo, y.hi, y.lo)  -- x ≤ 0, 0 ∈ y
       | (_, true, _, true)      => (x.hi, x.lo, y.hi, y.lo)  -- x ≤ 0, y ≤ 0
-    ⟨a.mul c u false, b.mul d u true⟩
+    ⟨a.mul c false, b.mul d true⟩
+
+#exit
 
 /-- By default, multiplying intervals preserves `s` -/
 instance : Mul Interval where
