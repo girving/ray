@@ -627,6 +627,10 @@ lemma Int64.sub_le {x y : Int64} (y0 : y.isNeg = false) (h : min + y ≤ x) : x 
   simp only [Ne.def, Int64.abs_eq_zero_iff]
 
 /-- `.abs` doesn't change if nonneg -/
+lemma Int64.abs_eq_self' {x : Int64} (h : x.isNeg = false) : x.abs = x.n := by
+  simp only [abs, h, cond_false, toInt, CharP.cast_eq_zero, sub_zero]
+
+/-- `.abs` doesn't change if nonneg -/
 lemma Int64.abs_eq_self {x : Int64} (h : x.isNeg = false) : x.abs.toInt = x := by
   simp only [abs, h, cond_false, toInt, CharP.cast_eq_zero, sub_zero]; rfl
 
@@ -701,11 +705,13 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
   · simp only [coe_abs' e, e, iff_false, not_lt, abs_nonneg]
 
 /-- `(-x).abs = x.abs` away from `min` -/
-@[simp] lemma Int64.abs_neg {x : Int64} (n : x ≠ min) : (-x).abs = x.abs := by
+@[simp] lemma Int64.abs_neg {x : Int64} : (-x).abs = x.abs := by
   by_cases z : x = 0
   · simp only [z, neg_zero, abs_zero]
+  by_cases m : x = min
+  · simp only [m, neg_min, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]
   rw [Int64.abs, Int64.abs]
-  simp only [isNeg_neg z n, bif_eq_if, Bool.not_eq_true']
+  simp only [isNeg_neg z m, bif_eq_if, Bool.not_eq_true']
   simp only [neg_def, neg_neg]
   by_cases h : x.isNeg
   repeat simp only [h, ite_false, ite_true]
@@ -718,6 +724,35 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
     simp only [neg_def, UInt64.toNat_neg, x0, UInt64.size_eq_pow, ite_false,
       Nat.cast_sub (UInt64.toNat_lt_2_pow_64 _).le, Nat.cast_pow, Nat.cast_ofNat, neg_sub,
       toInt._eq_1, n, cond_true]
+
+@[simp] lemma Int64.abs_eq_pow_iff {x : Int64} : x.abs = 2^63 ↔ x = min := by
+  rw [abs, bif_eq_if]
+  by_cases n : x.isNeg
+  · simp only [n, if_true]
+    have e : -x.n = (-x).n := rfl
+    rw [e, ←n_min, ←ext_iff, neg_eq_min]
+  · simp only [n, ite_false, ext_iff, n_min]
+
+@[simp] lemma Int64.abs_abs {x : Int64} : (⟨x.abs⟩ : Int64).abs = x.abs := by
+  rw [abs, abs]
+  by_cases x0 : x = 0
+  · simp only [x0, isNeg_zero, n_zero, neg_zero, Bool.cond_self]
+  by_cases m : x = min
+  · simp only [m, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]; decide
+  by_cases n : x.isNeg
+  · simp only [n, cond_true, ← neg_def, isNeg_neg x0 m, Bool.not_true, neg_neg, cond_false]
+  · simp only [Bool.not_eq_true] at n
+    have e : (⟨x.n⟩ : Int64) = x := rfl
+    simp only [n, cond_false, e]
+
+@[simp] lemma Int64.isNeg_abs {x : Int64} (m : x ≠ min) : (⟨x.abs⟩ : Int64).isNeg = false := by
+  rw [abs]
+  by_cases x0 : x = 0
+  · simp only [x0, isNeg_zero, n_zero, neg_zero, Bool.cond_self, ← zero_def]
+  by_cases n : x.isNeg
+  · simp only [n, cond_true, ← neg_def, isNeg_neg x0 m, Bool.not_true]
+  · have e : (⟨x.n⟩ : Int64) = x := rfl
+    simp only [n, cond_false, e]
 
 /-!
 ### Left and right shift

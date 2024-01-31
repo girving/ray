@@ -13,6 +13,13 @@ import Ray.Dynamics.Multibrot.Potential
 import Ray.Dynamics.Multibrot.PotentialLower
 import Ray.Dynamics.Multibrot.Postcritical
 import Ray.Dynamics.Ray
+import Ray.Floating.Abs
+import Ray.Floating.Add
+import Ray.Floating.Basic
+import Ray.Floating.Neg
+import Ray.Floating.Order
+import Ray.Floating.Scale
+import Ray.Floating.Standardization
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
 import Ray.Render.Grid

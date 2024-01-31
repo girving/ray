@@ -101,9 +101,13 @@ lemma Set.inv_Icc {a b : ℝ} (a0 : 0 < a) (b0 : 0 < b) : (Icc a b)⁻¹ = Icc b
 lemma pow_mul_zpow {a : ℝ} (a0 : a ≠ 0) (b : ℕ) (c : ℤ) : a^b * a^c = a^(b + c) := by
   simp only [← zpow_ofNat, zpow_add₀ a0]
 
-/-- `pow` and `zpow` multiply via addition -/
+/-- `zpow` and `pow` divide via subtraction -/
 lemma zpow_mul_pow {a : ℝ} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b * a^c = a^(b + c) := by
   simp only [← zpow_ofNat, zpow_add₀ a0]
+
+/-- `pow` and `zpow` multiply via addition -/
+lemma zpow_div_pow {a : ℝ} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b / a^c = a^(b - c) := by
+  simp only [← zpow_ofNat, zpow_sub₀ a0]
 
 /-- `-` and `⁻¹` commute on `Set ℝ` -/
 @[simp] lemma Set.inv_neg {s : Set ℝ} : (-s)⁻¹ = -s⁻¹ := by
@@ -112,3 +116,11 @@ lemma zpow_mul_pow {a : ℝ} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b * a^c = a^
 /-- Make `x ^ (7 : ℝ)` simplify to `x ^ (7 : ℕ)` (when literals are involved) -/
 @[simp] lemma Real.rpow_ofNat {x : ℝ} {n : ℕ} [Nat.AtLeastTwo n] :
     x ^ (no_index (OfNat.ofNat n) : ℝ) = x ^ (OfNat.ofNat n) := Real.rpow_nat_cast _ _
+
+/-- `x - y ≤ x + z ↔ -y ≤ z` -/
+@[simp] lemma sub_le_add_iff_left (x y z : ℝ) : x - y ≤ x + z ↔ -y ≤ z := by
+  simp only [sub_eq_add_neg, add_le_add_iff_left]
+
+/-- `x + y ≤ x - z ↔ y ≤ -z` -/
+@[simp] lemma add_le_sub_iff_left (x y z : ℝ) : x + y ≤ x - z ↔ y ≤ -z := by
+  simp only [sub_eq_add_neg, add_le_add_iff_left]

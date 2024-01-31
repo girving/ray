@@ -113,6 +113,13 @@ instance : LawfulBEq UInt128 where
     have e : (x == x) = (x.lo == x.lo && x.hi == x.hi) := rfl
     simp only [e, beq_self_eq_true, Bool.and_self]
 
+@[simp] lemma UInt128.toNat_lt (x : UInt128) : x.toNat < 2^128 := by
+  simp only [toNat_def]
+  have h0 := x.lo.toNat_lt
+  have h1 := x.hi.toNat_lt
+  norm_num only at h0 h1 ⊢
+  omega
+
 /-!
 ### Conversion from `ℕ` to `UInt128`
 -/
@@ -169,6 +176,47 @@ lemma UInt128.coe_succ {x : UInt128} (h : (x:ℝ) ≠ (2:ℝ)^128-1) : (x.succ :
   simp only [toReal, h, ge_iff_le, Nat.cast_sub, Nat.cast_pow, Nat.cast_ofNat, Nat.cast_one,
     ne_eq, not_true, not_false_eq_true, not_not]
   norm_num
+
+/-!
+### Complement
+-/
+
+instance : Complement UInt128 where
+  complement x := ⟨~~~x.lo, ~~~x.hi⟩
+
+lemma UInt128.complement_def (x : UInt128) : ~~~x = ⟨~~~x.lo, ~~~x.hi⟩ := rfl
+@[simp] lemma UInt128.complement_zero : ~~~(0 : UInt128) = UInt128.max := by decide
+
+lemma UInt128.toNat_complement {x : UInt128} : (~~~x).toNat = 2^128 - 1 - x.toNat := by
+  simp only [toNat_def, complement_def, UInt64.toNat_complement]
+  have h0 := x.lo.toNat_lt
+  have h1 := x.hi.toNat_lt
+  norm_num only at h0 h1 ⊢
+  omega
+
+/-!
+### Twos complement negation
+-/
+
+instance : Neg UInt128 where
+  neg x := (~~~x).succ
+
+lemma UInt128.neg_def (x : UInt128) : -x = (~~~x).succ := rfl
+
+@[simp] lemma UInt128.neg_zero : -(0 : UInt128) = 0 := by
+  simp only [neg_def, complement_zero, succ_max]
+
+lemma UInt128.toNat_neg (x : UInt128) : (-x).toNat = if x = 0 then 0 else 2^128 - x.toNat := by
+  by_cases x0 : x = 0
+  · simp only [x0, neg_zero, toNat_zero, tsub_zero, ite_true]
+  · simp only [neg_def, x0, ite_false]
+    have h := x.toNat_lt
+    rw [toNat_succ]
+    · simp only [toNat_complement]
+      omega
+    · contrapose x0
+      simp only [toNat_complement, ne_eq, not_not, eq_iff_toNat_eq, toNat_zero] at x0 ⊢
+      omega
 
 /-!
 ### 128-bit addition
@@ -738,6 +786,11 @@ lemma UInt128.shiftLeftSaturate_eq {x : UInt128} {s : UInt64}
   rw [shiftRightRound]
   simp only [beq_self_eq_true, Bool.true_or, cond_true, zero_shiftRight, zero_shiftLeft,
     bne_self_eq_false, Bool.and_false, cond_false, Bool.cond_self]
+
+@[simp] lemma UInt128.shiftRightRound_zero {x : UInt128} {up : Bool} :
+    x.shiftRightRound 0 up = x := by
+  rw [shiftRightRound]
+  simp only [beq_self_eq_true, shiftLeft_zero, Bool.cond_decide, cond_true]
 
 /-!
 ### `log2`

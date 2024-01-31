@@ -143,10 +143,10 @@ lemma UInt64.toNat_add_of_add_lt {m n : UInt64} (h : m + n < m) :
   · contrapose h; simp only [mn, if_true, Nat.sub_zero, not_lt]; apply Nat.le_add_right
   · simp only [mn, ite_false, ge_iff_le]
 
--- `UInt64` subtract wraps around
+/-- `UInt64` subtract wraps around -/
 lemma UInt64.toNat_sub' {x y : UInt64} : (x - y).toNat = (x.toNat + (size - y.toNat)) % size := rfl
 
- -- If truncation doesn't occur, `-` commutes with `toNat`
+/-- If truncation doesn't occur, `-` commutes with `toNat` -/
 lemma UInt64.toNat_sub {x y : UInt64} (h : y ≤ x) : (x - y).toNat = x.toNat - y.toNat := by
   rw [toNat_sub']
   rw [le_iff_toNat_le] at h
@@ -155,16 +155,20 @@ lemma UInt64.toNat_sub {x y : UInt64} (h : y ≤ x) : (x - y).toNat = x.toNat - 
   rw [Nat.mod_eq_of_lt]
   exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
 
- -- If truncation doesn't occur, `-` reduces
+/-- If truncation doesn't occur, `-` reduces -/
 lemma UInt64.sub_le {x y : UInt64} (h : y ≤ x) : x - y ≤ x := by
   rw [le_iff_toNat_le, toNat_sub h]; apply Nat.sub_le
 
- /-- Adding 1 is usually adding one `toNat` -/
+/-- Adding 1 is usually adding one `toNat` -/
 lemma UInt64.toNat_add_one {m : UInt64} (h : m.toNat ≠ 2^64-1) : (m + 1).toNat = m.toNat + 1 := by
   rw [toNat_add, toNat_one, Nat.mod_eq_of_lt]
   contrapose h; simp only [size_eq_pow, not_lt] at h
   simp only [ge_iff_le, ne_eq, not_not]
   exact le_antisymm (UInt64.le_size_sub_one _) (Nat.sub_le_of_le_add h)
+
+/-- Adding 1 is usually adding one `toNat` -/
+lemma UInt64.toNat_add_one' {m : UInt64} (h : m ≠ .max) : (m + 1).toNat = m.toNat + 1 := by
+  apply toNat_add_one; simpa only [ne_eq, eq_iff_toNat_eq] using h
 
 /-- `UInt64` is a linear order (though not an ordered algebraic structure) -/
 instance : LinearOrder UInt64 where
@@ -609,3 +613,26 @@ lemma UInt64.shiftRightRound_le_self {x : UInt64} {s : UInt64} {up : Bool} :
   · exact Nat.div_le_self x.toNat (2 ^ s.toNat)
   · simp only [ite_true, gt_iff_lt, zero_lt_two, pow_pos, ceilDiv_le_iff_le_smul, smul_eq_mul]
     exact Nat.le_mul_of_pos_left _ (by positivity)
+
+/-!
+### Complement facts
+-/
+
+lemma UInt64.toNat_complement (x : UInt64) : (~~~x).toNat = 2^64 - 1 - x.toNat := by
+  have e : ~~~x = 0 - (x + 1) := rfl
+  rw [e, zero_sub, toNat_neg]
+  by_cases x1 : x + 1 = 0
+  · have e : x = (x + 1) - 1 := by ring
+    rw [e, x1]; rfl
+  · simp only [x1, ite_false, toNat_add, toNat_one]
+    rw [Nat.mod_eq_of_lt, size_eq_pow]
+    · omega
+    · contrapose x1
+      simp only [not_lt, not_not, size_eq_pow] at x1 ⊢
+      have h : x.toNat + 1 ≤ 2^64 := by have h := x.toNat_lt; omega
+      have e : x = 2^64 - 1 := by
+        have e : (2^64 - 1 : UInt64).toNat = 2^64 - 1 := by native_decide
+        rw [eq_iff_toNat_eq, e]
+        norm_num only at x1 h ⊢
+        omega
+      rw [e]; decide
