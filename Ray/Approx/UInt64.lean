@@ -47,6 +47,9 @@ lemma UInt64.eq_iff_toNat_eq (m n : UInt64) : m = n ↔ m.toNat = n.toNat := by
 lemma UInt64.pos_iff_toNat_pos (n : UInt64) : 0 < n ↔ 0 < n.toNat := by
   rw [lt_iff_toNat_lt, toNat_zero]
 
+lemma UInt64.eq_zero_iff_toNat_eq_zero {n : UInt64} : n = 0 ↔ n.toNat = 0 := by
+  simp only [eq_iff_toNat_eq, toNat_zero]
+
 lemma UInt64.ne_zero_iff_toNat_ne_zero {n : UInt64} : n ≠ 0 ↔ n.toNat ≠ 0 := by
   simp only [Ne.def, eq_iff_toNat_eq, toNat_zero]
 

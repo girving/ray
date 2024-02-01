@@ -98,7 +98,7 @@ instance : Zero Floating where
 @[simp] lemma approx_eq_singleton {x : Floating} (n : x ≠ nan) : approx x = {x.val} := by
   simp only [approx, n, ite_false]
 
-@[simp] lemma val_mem_approx {x : Floating} : x.val ∈ approx x := by
+@[simp, mono] lemma val_mem_approx {x : Floating} : x.val ∈ approx x := by
   by_cases n : x = nan
   · simp only [n, approx_nan, mem_univ]
   · simp only [ne_eq, n, not_false_eq_true, approx_eq_singleton, mem_singleton_iff]
@@ -120,6 +120,12 @@ lemma n_ne_zero' {x : Floating} (n : x.s ≠ 0) : x.n ≠ 0 := by
   contrapose n
   simp only [ne_eq, not_not, ext_iff, n_nan, s_nan, not_and, not_forall, exists_prop] at n ⊢
   simp only [x.zero_same n]
+
+/-- `x.n = 0` exactly at 0 -/
+lemma n_eq_zero_iff {x : Floating} : x.n = 0 ↔ x = 0 := by
+  constructor
+  · intro e; simp only [ext_iff, e, n_zero, x.zero_same e, s_zero, and_self]
+  · intro e; simp only [e, n_zero]
 
 /-- More user friendly version of `x.norm` -/
 lemma norm' {x : Floating} (x0 : x ≠ 0) (s0 : x.s.toNat ≠ 0) : 2^62 ≤ x.n.abs.toNat := by
@@ -160,6 +166,14 @@ lemma rounds_of_ne_nan {a : ℝ} {x : Floating} {up : Bool}
   · simp only [n, approx_nan, rounds_univ, mem_univ]
   · simp only [ne_eq, n, not_false_eq_true, approx_eq_singleton, mem_rounds_singleton, h n]
 
+/-- `val` if we're nonnegative -/
+lemma val_of_nonneg {x : Floating} (x0 : 0 ≤ x.val) :
+    x.val = (x.n.n.toNat : ℝ) * 2^((x.s.toNat : ℤ) - 2^63) := by
+  rw [val, UInt64.toInt, Int64.coe_of_nonneg, Int.cast_ofNat]
+  rw [val] at x0
+  simpa only [Int64.isNeg_eq_le, decide_eq_false_iff_not, not_le, gt_iff_lt, two_zpow_pos,
+    mul_nonneg_iff_of_pos_right, Int.cast_nonneg, Int64.coe_nonneg_iff] using x0
+
 /-!
 ### The smallest normalized value
 -/
@@ -167,6 +181,17 @@ lemma rounds_of_ne_nan {a : ℝ} {x : Floating} {up : Bool}
 /-- The smallest normalized floating point value -/
 @[irreducible] def min_norm : Floating :=
   ⟨⟨2^62⟩, 0, by decide, by decide, by decide⟩
+
+@[simp] lemma min_norm_ne_nan : min_norm ≠ nan := by native_decide
+
+@[simp] lemma val_min_norm : min_norm.val = 2^(62 - 2^63 : ℤ) := by
+  have t0 : (2 : ℝ) ≠ 0 := by norm_num
+  rw [val, min_norm]
+  simp only [UInt64.toInt_zero, zero_sub]
+  rw [Int64.coe_of_nonneg (by decide)]
+  simp only [up62, Nat.cast_pow, Nat.cast_ofNat, Int.cast_pow, Int.int_cast_ofNat,
+    pow_mul_zpow t0]
+  ring_nf
 
 /-!
 ### Conversion to `Float`
