@@ -134,6 +134,14 @@ lemma lo_le {a : ℝ} {x : Interval} (n : x ≠ nan) (m : a ∈ approx x) : x.lo
 lemma le_hi {a : ℝ} {x : Interval} (n : x ≠ nan) (m : a ∈ approx x) : a ≤ x.hi.val := by
   simp only [approx, lo_eq_nan, n, ite_false, mem_Icc] at m; exact m.2
 
+/-- `Interval` always contains `lo` -/
+lemma lo_mem {x : Interval} : x.lo.val ∈ approx x := by
+  simp only [approx, lo_eq_nan, mem_ite_univ_left, mem_Icc, le_refl, le, and_self, implies_true]
+
+/-- `Interval` always contains `hi` -/
+lemma hi_mem {x : Interval} : x.hi.val ∈ approx x := by
+  simp only [approx, lo_eq_nan, mem_ite_univ_left, mem_Icc, le_refl, le, and_self, implies_true]
+
 /-!
 ### Propagate nans into both bounds
 -/
