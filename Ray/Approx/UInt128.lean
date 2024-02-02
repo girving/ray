@@ -1,7 +1,7 @@
 import Mathlib.Data.Real.Archimedean
 import Ray.Approx.Approx
-import Ray.Approx.Int
 import Ray.Approx.UInt64
+import Ray.Misc.Int
 
 /-!
 ## `UInt128`: 128-bit integers
@@ -121,18 +121,65 @@ instance : LawfulBEq UInt128 where
   omega
 
 /-!
-### Conversion from `ℕ` to `UInt128`
+### Wrap around conversion from `ℕ, ℤ` to `UInt128`
 -/
 
-def UInt128.ofNat (x : ℕ) : UInt128 where
+@[irreducible] def UInt128.ofNat (x : ℕ) : UInt128 where
   lo := x
   hi := (x / 2^64 : ℕ)
+
+@[irreducible] def UInt128.ofInt (x : ℤ) : UInt128 where
+  lo := x
+  hi := (x / 2^64 : ℤ)
 
 @[simp] lemma UInt128.toNat_ofNat (x : ℕ) : (UInt128.ofNat x).toNat = x % 2^128 := by
   generalize hn : 2^64 = n
   have nn : 2^128 = n^2 := by rw [←hn]; norm_num
-  simp only [toNat, Nat.shiftLeft_eq, ofNat, hn, UInt64.toNat_cast, UInt64.size_eq_pow, nn]
+  rw [ofNat]
+  simp only [toNat, Nat.shiftLeft_eq, hn, UInt64.toNat_cast, UInt64.size_eq_pow, nn]
   apply Nat.div_mod_mul_add_mod_eq
+
+@[simp] lemma UInt128.ofInt_toInt (x : UInt128) : .ofInt (x.toNat : ℤ) = x := by
+  rw [toNat_def, ofInt, UInt128.ext_iff]
+  have ep : (2 : ℤ)^64 = (2^64 : ℕ) := by norm_num
+  have p0 : 0 < 2^64:= by norm_num
+  simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Int.cast_add, Int.cast_mul,
+    Int.cast_ofNat, UInt64.cast_toNat, Int.cast_pow, Int.int_cast_ofNat, add_left_eq_self,
+    UInt64.pow_eq_zero, mul_zero, true_and, UInt64.eq_iff_toNat_eq]
+  simp only [ep, ←Nat.cast_mul, ←Nat.cast_add, ←Int.coe_nat_div, Nat.add_div p0,
+    Nat.mul_div_cancel _ p0, Nat.mul_mod_left, zero_add, not_le.mpr (Nat.mod_lt _ p0),
+    if_false, add_zero, Nat.div_eq_of_lt x.lo.toNat_lt, Int.cast_ofNat, UInt64.cast_toNat]
+
+@[simp] lemma UInt128.toInt_ofInt (x : ℤ) : ((UInt128.ofInt x).toNat : ℤ) = x % 2^128 := by
+  generalize hnn : (2:ℤ)^128 = nn
+  generalize hn : (2:ℤ)^64 = n
+  have n0 : 0 < n := by rw [←hn]; norm_num
+  have s : nn = n^2 := by rw [←hn, ←hnn]; norm_num
+  rw [ofInt]
+  simp only [hn, toNat_def, Nat.cast_add, Nat.cast_mul, UInt64.toInt_intCast, Nat.cast_pow,
+    Nat.cast_ofNat, s]
+  rw [←Int.ediv_add_emod x n]
+  generalize x / n = a
+  generalize hb : x % n = b
+  have b0 : 0 ≤ b := by rw [←hb]; exact Int.emod_nonneg _ n0.ne'
+  have bn : b < n := by rw [←hb]; convert Int.emod_lt _ n0.ne'; rw [abs_of_nonneg n0.le]
+  have an0 : 0 ≤ a % n * n := mul_nonneg (Int.emod_nonneg _ n0.ne') n0.le
+  have ba0 : 0 ≤ b + a % n * n := add_nonneg b0 an0
+  have ban : b + a % n * n < n^2 := by
+    refine lt_of_le_of_lt (add_le_add (Int.le_sub_one_iff.mpr bn)
+      (mul_le_mul_of_nonneg_right (Int.le_sub_one_iff.mpr (Int.emod_lt a n0.ne')) n0.le)) ?_
+    simp only [abs_of_nonneg n0.le, sub_mul, one_mul, sub_add_sub_cancel', pow_two, sub_lt_self_iff,
+      zero_lt_one]
+  have bnn : b < n^2 := lt_of_le_of_lt (le_add_of_nonneg_right an0) ban
+  have ann : a % n * n < n^2 := lt_of_le_of_lt (le_add_of_nonneg_left b0) ban
+  simp only [mul_comm n, add_comm _ b, Int.add_mul_ediv_right _ _ n0.ne',
+    Int.ediv_eq_zero_of_lt b0 bn, zero_add, Int.add_emod, Int.emod_eq_of_lt b0 bn,
+    Int.mul_emod_left, add_zero, Int.emod_eq_of_lt b0 bnn, Int.emod_mul_eq_mul_emod _ _ n0,
+    dvd_refl, Int.emod_emod_of_dvd]
+  rw [Int.emod_eq_of_lt b0 bnn, Int.emod_eq_of_lt an0 ann, Int.emod_eq_of_lt ba0 ban]
+
+@[simp] lemma UInt128.ofInt_zero : UInt128.ofInt 0 = 0 := by native_decide
+@[simp] lemma UInt128.ofInt_pow : UInt128.ofInt (2^128) = 0 := by native_decide
 
 /-!
 ### 128-bit increment
@@ -218,6 +265,26 @@ lemma UInt128.toNat_neg (x : UInt128) : (-x).toNat = if x = 0 then 0 else 2^128 
       simp only [toNat_complement, ne_eq, not_not, eq_iff_toNat_eq, toNat_zero] at x0 ⊢
       omega
 
+/-- `ofInt` commutes with `-` -/
+@[simp] lemma UInt128.neg_ofInt (x : ℤ) : -(UInt128.ofInt x) = .ofInt (-x) := by
+  generalize hn : (2 : ℤ)^128 = n
+  have n0 : 0 < n := by rw [←hn]; norm_num
+  simp only [eq_iff_toNat_eq, toNat_neg, toNat_zero, ← Nat.cast_inj (R := ℤ), toInt_ofInt, hn,
+    CharP.cast_eq_zero, Nat.cast_ite, Nat.cast_sub (UInt128.toNat_lt _).le, Nat.cast_pow,
+    Nat.cast_ofNat, Int.neg_emod]
+  clear hn
+  rw [←Int.ediv_add_emod x n]
+  generalize x / n = a
+  generalize hb : x % n = b
+  have b0 : 0 ≤ b := by rw [←hb]; exact Int.emod_nonneg _ n0.ne'
+  have bn : b < n := by rw [←hb]; exact Int.emod_lt_of_pos _ n0
+  have e : n - (b + n * a) = n - b + -a * n := by ring
+  simp only [add_comm _ b, Int.add_mul_emod_self_left, Int.emod_eq_of_lt b0 bn, e,
+    Int.add_mul_emod_self]
+  split_ifs with b0
+  · simp only [b0, sub_zero, Int.emod_self]
+  · rw [Int.emod_eq_of_lt (by omega) (by omega)]
+
 /-!
 ### 128-bit addition and (twos complement) subtraction
 -/
@@ -231,6 +298,61 @@ instance : Add UInt128 where
 
 instance : Sub UInt128 where
   sub x y := x + -y
+
+lemma UInt128.add_def (x y : UInt128) : x + y = .add x y := rfl
+lemma UInt128.sub_def (x y : UInt128) : x - y = x + -y := rfl
+
+/-- `add` is modular -/
+lemma UInt128.toNat_add (x y : UInt128) : (x + y).toNat = (x.toNat + y.toNat) % 2^128 := by
+  generalize hn : 2^64 = n
+  have hnn : 2^128 = n^2 := by rw [←hn]; norm_num
+  have n0 : 0 < n := by rw [←hn]; norm_num
+  rw [add_def, add]
+  rcases addc_eq x.lo y.lo with ⟨u, v, un, _, xyuv, e⟩
+  generalize hz : v + x.hi.toNat + y.hi.toNat = z
+  simp only [hn] at un xyuv
+  have m0 : x.hi.toNat * n + x.lo.toNat + (y.hi.toNat * n + y.lo.toNat) =
+      (x.hi.toNat + y.hi.toNat) * n + (x.lo.toNat + y.lo.toNat) := by ring
+  have m1 : (x.hi.toNat + y.hi.toNat) * n + (v * n + u) = z * n + u := by rw [←hz]; ring
+  simp only [toNat_def, UInt64.toNat_add, UInt64.size_eq_pow, hn, Nat.mod_add_mod, hnn, e,
+    UInt64.toNat_cast, m0, xyuv, hz, Nat.mod_eq_of_lt un, m1, ← Nat.mod_mul_eq_mul_mod]
+  have lt : z * n % n^2 + u < n^2 := by
+    rw [Nat.mod_mul_eq_mul_mod]
+    refine lt_of_le_of_lt (add_le_add (Nat.mul_le_mul_right _ (Nat.le_pred_of_lt
+      (Nat.mod_lt _ n0))) (Nat.le_pred_of_lt un)) ?_
+    generalize hk : n - 1 = k
+    have nk : n = k + 1 := by omega
+    simp only [nk, Nat.pred_succ, mul_add_one, pow_two, add_one_mul, add_lt_add_iff_left,
+      lt_add_iff_pos_right, zero_lt_one]
+  have un2 : u < n^2 := lt_of_le_of_lt (Nat.le_add_left _ _) lt
+  rw [Nat.add_mod, Nat.mod_eq_of_lt un2, Nat.mod_eq_of_lt lt]
+
+/-- `ofInt` commutes with `+` -/
+@[simp] lemma UInt128.add_ofInt (x y : ℤ) : UInt128.ofInt x + .ofInt y = .ofInt (x + y) := by
+  simp only [eq_iff_toNat_eq, toNat_add, ← Nat.cast_inj (R := ℤ), Int.ofNat_emod, Nat.cast_add,
+    toInt_ofInt, Nat.cast_pow, Nat.cast_ofNat, Int.add_emod_emod, Int.emod_add_emod]
+
+/-- `ofInt` commutes with `-` -/
+@[simp] lemma UInt128.sub_ofInt (x y : ℤ) : UInt128.ofInt x - .ofInt y = .ofInt (x - y) := by
+  simp only [sub_def, neg_ofInt, add_ofInt, sub_eq_add_neg]
+
+/-- `UInt128` inherits the additive group structure from `ℤ` -/
+instance : AddCommGroup UInt128 where
+  add_assoc x y z := by
+    rw [←UInt128.ofInt_toInt x, ←UInt128.ofInt_toInt y, ←UInt128.ofInt_toInt z]
+    simp only [UInt128.add_ofInt, add_assoc]
+  zero_add x := by
+    rw [←UInt128.ofInt_zero, ←UInt128.ofInt_toInt x]
+    simp only [UInt128.add_ofInt, zero_add]
+  add_zero x := by
+    rw [←UInt128.ofInt_zero, ←UInt128.ofInt_toInt x]
+    simp only [UInt128.add_ofInt, add_zero]
+  add_left_neg x := by
+    rw [←UInt128.ofInt_toInt x]
+    simp only [UInt128.neg_ofInt, UInt128.add_ofInt, add_left_neg, UInt128.ofInt_zero]
+  add_comm x y := by
+    rw [←UInt128.ofInt_toInt x, ←UInt128.ofInt_toInt y]
+    simp only [UInt128.add_ofInt, add_comm]
 
 /-!
 ### 64 → 128 bit multiplication

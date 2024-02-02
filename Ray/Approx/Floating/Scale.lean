@@ -1,4 +1,4 @@
-import Ray.Floating.Standardization
+import Ray.Approx.Floating.Standardization
 
 open Pointwise
 

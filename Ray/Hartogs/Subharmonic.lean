@@ -1,13 +1,14 @@
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
 import Ray.Analytic.Analytic
-import Ray.Tactic.Bound
+import Ray.Analytic.Holomorphic
 import Ray.Hartogs.Duals
 import Ray.Hartogs.FubiniBall
-import Ray.Analytic.Holomorphic
-import Ray.Misc.Max
 import Ray.Hartogs.MaxLog
+import Ray.Misc.Int
+import Ray.Misc.Max
 import Ray.Misc.Measure
+import Ray.Tactic.Bound
 
 /-!
 ## Subharmonic and harmonic functions and Hartogs' lemma
@@ -564,13 +565,6 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
         simp_rw [← (gs _).b]
         exact fF.tendsto_at z }
 
-/-- `p` is true for all integers if it is true for nonnegative and nonpositive integers.
-
-    This is a slightly nicer induction principle on the integers that covers zero twice
-    to reduce notational clutter. -/
-theorem Int.induction_overlap {p : ℤ → Prop} (hi : ∀ n : ℕ, p n) (lo : ∀ n : ℕ, p (-n)) :
-    ∀ n : ℤ, p n := by intro n; induction' n with n; exact hi n; exact lo (_ + 1)
-
 theorem toCircle_neg {T : ℝ} (x : AddCircle T) : (-x).toCircle = x.toCircle⁻¹ := by
   induction x using QuotientAddGroup.induction_on'
   rw [←AddCircle.coe_neg]
@@ -839,7 +833,7 @@ theorem SubharmonicOn.monotone_lim {f : ℕ → ℂ → ℝ} {g : ℂ → ℝ} {
       · calc -b t
           _ ≤ -(|f 0 z| + 0) := by rw [←hz]; bound
           _ = -|f 0 z| := by simp only [add_zero]
-          _ ≤ f 0 z := (neg_abs_le_self _)
+          _ ≤ f 0 z := (neg_abs_le _)
           _ ≤ f n z := fm (by simp only [zero_le']) _
       · have mn : Monotone fun n ↦ f n z := fun _ _ ab ↦ fm ab z
         calc f n z

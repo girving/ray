@@ -1,5 +1,6 @@
 import Mathlib.Algebra.Order.Floor.Div
 import Mathlib.Data.Real.Basic
+import Ray.Approx.Nat
 
 /-!
 ## `ℤ` facts
@@ -198,3 +199,34 @@ lemma Int.cast_ceilDiv_eq_neg_ediv (a b : ℕ) : ((a ⌈/⌉ b : ℕ) : ℤ) = -
 /-- `natAbs = toNat` if we nonnegative -/
 lemma Int.natAbs_eq_toNat {a : ℤ} (a0 : 0 ≤ a) : a.natAbs = a.toNat := by
   simp only [←Nat.cast_inj (R := ℤ), coe_natAbs, a0, toNat_of_nonneg, abs_eq_self]
+
+lemma Int.emod_mul_eq_mul_emod' (a n m : ℤ) (n0 : 0 ≤ n) (m0 : 0 < m) :
+    a * n % (m * n) = a % m * n := by
+  generalize hy : n.toNat = y
+  generalize hz : m.toNat = z
+  replace hy : n = y := by rw [←hy, Int.toNat_of_nonneg n0]
+  replace hz : m = z := by rw [←hz, Int.toNat_of_nonneg m0.le]
+  have z1 : 1 ≤ z := by omega
+  simp only [hy, hz]; clear hy hz n0 m0 n m
+  have e : a = a + |a| * z + -|a| * z := by ring
+  generalize hx : (a + |a| * z).toNat = x
+  replace hx : a + |a| * z = x := by
+    rw [←hx, Int.toNat_of_nonneg]
+    refine le_trans ?_ (add_le_add_left (mul_le_mul_of_nonneg_left
+      (Nat.cast_le.mpr z1) (abs_nonneg _)) _)
+    simp only [Nat.cast_one, mul_one]
+    exact le_trans (by simp) (add_le_add_left (neg_le_abs a) _)
+  rw [e, hx, Int.add_mul_emod_self, add_mul, mul_assoc, Int.add_mul_emod_self]
+  simp only [←Nat.cast_mul, ←Int.ofNat_emod, Nat.cast_inj]
+  apply Nat.mod_mul_eq_mul_mod'
+  omega
+
+lemma Int.emod_mul_eq_mul_emod (a n : ℤ) (n0 : 0 < n) : a * n % n^2 = a % n * n := by
+  rw [pow_two, Int.emod_mul_eq_mul_emod' _ _ _ n0.le n0]
+
+/-- `p` is true for all integers if it is true for nonnegative and nonpositive integers.
+
+    This is a slightly nicer induction principle on the integers that covers zero twice
+    to reduce notational clutter. -/
+theorem Int.induction_overlap {p : ℤ → Prop} (hi : ∀ n : ℕ, p n) (lo : ∀ n : ℕ, p (-n)) :
+    ∀ n : ℤ, p n := by intro n; induction' n with n; exact hi n; exact lo (_ + 1)

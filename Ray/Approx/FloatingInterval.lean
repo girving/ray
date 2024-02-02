@@ -1,5 +1,5 @@
-import Ray.Approx.Floating
-import Ray.Approx.Interval
+import Ray.Approx.Floating.Basic
+import Ray.Approx.Interval.Basic
 import Ray.Approx.Rat
 
 open Pointwise

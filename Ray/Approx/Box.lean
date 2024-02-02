@@ -1,5 +1,5 @@
 import Mathlib.Data.Complex.Basic
-import Ray.Approx.Interval
+import Ray.Approx.Interval.Basic
 
 open Classical
 open Pointwise

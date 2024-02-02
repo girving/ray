@@ -2,9 +2,9 @@ import Mathlib.Data.Real.Basic
 import Ray.Approx.Approx
 import Ray.Approx.Fixed
 import Ray.Approx.Float
-import Ray.Approx.Int
 import Ray.Approx.Int64
 import Ray.Approx.UInt128
+import Ray.Misc.Int
 import Ray.Misc.Real
 
 open Pointwise

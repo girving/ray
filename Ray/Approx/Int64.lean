@@ -1,7 +1,7 @@
 import Mathlib.Data.Real.Basic
 import Ray.Approx.Bool
-import Ray.Approx.Int
 import Ray.Approx.UInt64
+import Ray.Misc.Int
 
 /-!
 ## 64-bit two's complement integers

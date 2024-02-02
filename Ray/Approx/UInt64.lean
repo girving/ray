@@ -6,6 +6,7 @@ import Mathlib.Tactic.Ring
 import Mathlib.Tactic.SplitIfs
 import Mathlib.Tactic.Zify
 import Ray.Approx.Nat
+import Ray.Misc.Int
 import Std.Data.Nat.Lemmas
 
 /-!
@@ -13,6 +14,7 @@ import Std.Data.Nat.Lemmas
 -/
 
 open Qq
+open Set
 
 attribute [pp_dot] UInt64.toNat
 
@@ -331,6 +333,28 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
 @[simp] lemma UInt64.cast_toNat (n : UInt64) : (n.toNat : UInt64) = n := by
   simp only [UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size]
 
+@[simp] lemma UInt64.toInt_intCast (n : ℤ) : ((n : UInt64).toNat : ℤ) = n % 2^64 := by
+  have p0 : 0 < 2^64 := by norm_num
+  induction' n using Int.induction_overlap with n n
+  · simp only [Int.cast_ofNat, toNat_cast, Int.ofNat_emod, Nat.cast_ofNat]; norm_num
+  · simp only [Int.cast_neg, Int.cast_ofNat, toNat_neg, size_eq_pow, toNat_cast, Nat.cast_ite,
+      CharP.cast_eq_zero, eq_iff_toNat_eq, toNat_zero, Nat.cast_sub (Nat.mod_lt _ p0).le,
+      Nat.cast_pow, Nat.cast_ofNat, Int.ofNat_emod]
+    rw [←Nat.div_add_mod n (2^64)]
+    generalize n / 2^64 = a
+    generalize hb : n % 2^64 = b
+    have bp : b < 2^64 := by rw [←hb]; exact Nat.mod_lt _ p0
+    have e : -(2^64 * (a : ℤ)) + -b = 2^64 - b + (-a - 1) * 2^64 := by ring
+    simp only [add_comm _ b, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt bp, Nat.cast_add,
+      Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Int.add_mul_emod_self_left, neg_add_rev, e,
+      Int.add_mul_emod_self]
+    split_ifs with b0
+    · simp only [b0]; rfl
+    · rw [Int.emod_eq_of_lt (by omega) (by omega), Int.emod_eq_of_lt (by omega) (by omega)]
+
+lemma UInt64.toInt_mem_Ico (n : UInt64) : (n.toNat : ℤ) ∈ Ico 0 (2^64) := by
+  simp only [mem_Ico, Nat.cast_nonneg, cast_toNat_lt_2_pow_64, and_self]
+
 @[simp] lemma UInt64.toNat_log2 (n : UInt64) : n.log2.toNat = n.toNat.log2 := rfl
 
 @[simp] lemma UInt64.log2_zero : (0 : UInt64).log2 = 0 := rfl
@@ -368,6 +392,8 @@ lemma UInt64.pos_iff_ne_zero {x : UInt64} : 0 < x ↔ x ≠ 0 := by
 
 @[simp] lemma UInt64.toNat_le_pow_sub_one (n : UInt64) : n.toNat ≤ 2^64 - 1 :=
   Nat.le_of_lt_succ (toNat_lt_2_pow_64 _)
+
+@[simp] lemma UInt64.pow_eq_zero : (2^64 : UInt64) = 0 := by decide
 
 /-!
 ### Conversion from `UInt64` to `ZMod`

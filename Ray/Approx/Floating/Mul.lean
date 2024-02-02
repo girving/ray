@@ -198,7 +198,7 @@ lemma mul_norm_correct (n : UInt128) (up : Bool) (n0 : n ≠ 0) (lo : n.toNat �
 
 /-- Twos complement, 128-bit exponent `e = xs + ys + t + 64 - 2^63` -/
 @[irreducible, inline] def mul_exponent (xs ys t : UInt64) : Int128 :=
-  xs + ys - t + .ofNat (2^63 - 64)
+  xs + ys - t - .ofNat (2^63 - 64)
 
 /-- Multiply two nonnegative, non-nan `Floating`s -/
 @[irreducible, inline] def mul_of_nonneg (x y : Floating) (up : Bool)
@@ -257,6 +257,15 @@ lemma mul_finish_correct (n : UInt64) (s : Int128) (up : Bool)
 lemma mul_exponent_eq (xs ys t : UInt64) :
     (mul_exponent xs ys t : ℤ) = xs.toNat + ys.toNat + 64 - t.toNat - 2 ^ 63 := by
   rw [mul_exponent]
+  refine Int128.eq_of_ofInt_eq ?_ Int128.coe_small ?_
+  · have e : Int128.ofNat (2^63 - 64) = .ofInt (2^63) - .ofInt 64 := by rfl
+    simp only [e, Int128.ofInt_coe, Int128.sub_ofInt, Int128.add_ofInt, Int128.ofInt_ofUInt64]
+    abel
+  · have hx := xs.toInt_mem_Ico
+    have hy := ys.toInt_mem_Ico
+    have ht := t.toInt_mem_Ico
+    norm_num only [mem_Ico] at hx hy ht ⊢
+    omega
 
 /-- `mul_of_nonneg` rounds in the correct direction -/
 lemma approx_mul_of_nonneg {x y : Floating} {up : Bool} {x0 : 0 ≤ x.val} {y0 : 0 ≤ y.val} :
