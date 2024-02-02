@@ -458,3 +458,6 @@ lemma eq_nan_of_max {x y : Floating} (n : x.max y = nan) : x = nan ∨ y = nan :
 /-- `max_eq_right` for `Floating.max`, if we're not `nan` -/
 @[simp] lemma max_eq_right {x y : Floating} (xy : x.val ≤ y.val) (xn : x ≠ nan) : x.max y = y := by
   rw [max_comm, max_eq_left xy xn]
+
+@[simp] lemma val_nan_lt_zero : (nan : Floating).val < 0 := by
+  simp only [←lt_zero_iff, nan_lt_zero]

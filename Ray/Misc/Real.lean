@@ -124,3 +124,35 @@ lemma zpow_div_pow {a : ℝ} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b / a^c = a^
 /-- `x + y ≤ x - z ↔ y ≤ -z` -/
 @[simp] lemma add_le_sub_iff_left (x y z : ℝ) : x + y ≤ x - z ↔ y ≤ -z := by
   simp only [sub_eq_add_neg, add_le_add_iff_left]
+
+set_option maxHeartbeats 1000000 in
+/-- Rewrite `Icc * Icc ⊆ Icc` in terms of inequalities -/
+lemma Icc_mul_Icc_subset_Icc {a b c d x y : ℝ} (ab : a ≤ b) (cd : c ≤ d) :
+    Icc a b * Icc c d ⊆ Icc x y ↔
+      x ≤ a * c ∧ x ≤ a * d ∧ x ≤ b * c ∧ x ≤ b * d ∧
+      a * c ≤ y ∧ a * d ≤ y ∧ b * c ≤ y ∧ b * d ≤ y := by
+  have am : a ∈ Icc a b := left_mem_Icc.mpr ab
+  have bm : b ∈ Icc a b := right_mem_Icc.mpr ab
+  have cm : c ∈ Icc c d := left_mem_Icc.mpr cd
+  have dm : d ∈ Icc c d := right_mem_Icc.mpr cd
+  simp only [←image2_mul, image2_subset_iff]
+  constructor
+  · intro h
+    simp only [mem_Icc (a := x)] at h
+    exact ⟨(h _ am _ cm).1, (h _ am _ dm).1, (h _ bm _ cm).1, (h _ bm _ dm).1,
+           (h _ am _ cm).2, (h _ am _ dm).2, (h _ bm _ cm).2, (h _ bm _ dm).2⟩
+  · simp only [mem_Icc]
+    rintro ⟨xac,xad,xbc,xbd,acy,ady,bcy,bdy⟩ u ⟨au,ub⟩ v ⟨cv,vd⟩
+    all_goals cases nonpos_or_nonneg c
+    all_goals cases nonpos_or_nonneg d
+    all_goals cases nonpos_or_nonneg u
+    all_goals cases nonpos_or_nonneg v
+    all_goals exact ⟨by nlinarith, by nlinarith⟩
+
+/-- Rewrite `Icc^2 ⊆ Icc` in terms of inequalities -/
+lemma sqr_Icc_subset_Icc {a b x y : ℝ} :
+    (fun x ↦ x^2) '' Icc a b ⊆ Icc x y ↔ ∀ u, a ≤ u → u ≤ b → x ≤ u^2 ∧ u^2 ≤ y := by
+  simp only [subset_def, mem_image, mem_Icc, forall_exists_index, and_imp]
+  constructor
+  · intro h u au ub; exact h _ u au ub rfl
+  · intro h u v av vb vu; rw [←vu]; exact h v av vb

@@ -332,14 +332,14 @@ instance instAdd : Add Interval where
   add x y := mix (x.lo.add y.lo false) (x.hi.add y.hi true) (by
     intro ln hn
     exact le_trans (Floating.val_add_le ln) (le_trans (add_le_add x.le y.le)
-      (Floating.le_val_add hn)))
+      (Floating.le_add hn)))
 
 /-- Subtraction -/
 instance instSub : Sub Interval where
   sub x y := mix (x.lo.sub y.hi false) (x.hi.sub y.lo true) (by
     intro ln hn
-    exact le_trans (Floating.val_sub_le ln) (le_trans (sub_le_sub x.le y.le)
-      (Floating.le_val_sub hn)))
+    exact le_trans (Floating.sub_le ln) (le_trans (sub_le_sub x.le y.le)
+      (Floating.le_sub hn)))
 
 -- `+, -` propagate `nan`
 @[simp] lemma add_nan {x : Interval} : x + nan = nan := by
@@ -366,7 +366,7 @@ instance : ApproxAdd Interval ℝ where
     simp only [HAdd.hAdd, Add.add] at n ⊢
     refine subset_trans (Icc_add_Icc_subset _ _ _ _) (Icc_subset_Icc ?_ ?_)
     · simp only [lo_mix n, Floating.val_add_le (ne_nan_of_mix n).1]
-    · simp only [hi_mix n, Floating.le_val_add (ne_nan_of_mix n).2]
+    · simp only [hi_mix n, Floating.le_add (ne_nan_of_mix n).2]
 
 /-- `sub` respects `approx` -/
 instance : ApproxSub Interval ℝ where
@@ -376,8 +376,8 @@ instance : ApproxSub Interval ℝ where
     simp only [approx, lo_eq_nan, ne_nan_of_sub n, ite_false, n, sub_eq_add_neg, preimage_neg_Icc]
     simp only [HSub.hSub, Sub.sub] at n ⊢
     refine subset_trans (Icc_add_Icc_subset _ _ _ _) (Icc_subset_Icc ?_ ?_)
-    · simp only [lo_mix n, ←sub_eq_add_neg, Floating.val_sub_le (ne_nan_of_mix n).1]
-    · simp only [hi_mix n, ←sub_eq_add_neg, Floating.le_val_sub (ne_nan_of_mix n).2]
+    · simp only [lo_mix n, ←sub_eq_add_neg, Floating.sub_le (ne_nan_of_mix n).1]
+    · simp only [hi_mix n, ←sub_eq_add_neg, Floating.le_sub (ne_nan_of_mix n).2]
 
 /-- `Interval` approximates `ℝ` as an additive group -/
 instance : ApproxAddGroup Interval ℝ where
@@ -394,14 +394,12 @@ lemma sub_eq_add_neg (x y : Interval) : x - y = x + (-y) := by
 
 /-- Signs must correspond to `x.lo ≤ x.hi` -/
 lemma sign_cases (x : Interval) :
-    (x.lo.n.isNeg ∧ x.hi.n.isNeg) ∨ (x.lo.n.isNeg = false ∧ x.hi.n.isNeg = false) ∨
-    (x.lo.n.isNeg ∧ x.hi.n.isNeg = false) := by
+    (x.lo.val < 0 ∧ x.hi.val < 0) ∨ (0 ≤ x.lo.val ∧ 0 ≤ x.hi.val) ∨
+    (x.lo.val < 0 ∧ 0 ≤ x.hi.val) := by
   by_cases n : x = nan
-  · simp only [n, lo_nan, Floating.n_nan, Int64.isNeg_min, hi_nan, and_self, and_false, or_self,
-      or_false]
-  · simp only [Floating.isNeg_iff, Floating.val_lt_val, Floating.val_zero, decide_eq_true_eq,
-      decide_eq_false_iff_not, not_lt]
-    by_cases h0 : x.hi.val < 0
+  · simp only [n, lo_nan, Floating.val_nan_lt_zero, hi_nan, and_self, Floating.not_nan_nonneg,
+    and_false, or_self, or_false]
+  · by_cases h0 : x.hi.val < 0
     · simp only [trans x.le h0, h0, and_self, true_and, true_or]
     · simp only [h0, and_false, false_or, not_lt.mp h0, and_true]
       apply le_or_lt
@@ -484,16 +482,17 @@ instance : Coe Floating Interval where
   have na : x.abs ≠ nan := by simp only [ne_eq, abs_eq_nan, n, not_false_eq_true]
   rw [abs] at na ⊢
   simp only [bif_eq_if, bne_iff_ne, ne_eq, ite_not, mix_eq_nan, Floating.max_eq_nan,
-    Floating.abs_eq_nan, lo_eq_nan, n, hi_eq_nan, or_self, or_false] at na
+    Floating.abs_eq_nan, lo_eq_nan, n, hi_eq_nan, or_self, or_false, Floating.isNeg_iff,
+    decide_eq_decide] at na
   simp only [approx, lo_eq_nan, n, ite_false, bif_eq_if, bne_iff_ne, ne_eq, ite_not, mix_eq_nan, na,
     Floating.max_eq_nan, Floating.abs_eq_nan, hi_eq_nan, or_self, not_false_eq_true, lo_mix, hi_mix,
-    Floating.val_max, Floating.val_abs, image_subset_iff]
+    Floating.val_max, Floating.val_abs, image_subset_iff, Floating.isNeg_iff, decide_eq_decide]
   rcases x.sign_cases with ⟨ls,hs⟩ | ⟨ls,hs⟩ | ⟨ls,hs⟩
-  all_goals simp only [ls, hs, if_true, if_false, Fixed.zero_ne_nan, not_false_iff, true_implies,
+  all_goals try simp only [not_lt.mpr ls]
+  all_goals try simp only [not_lt.mpr hs]
+  all_goals try simp only [ls, hs, if_true, if_false, Fixed.zero_ne_nan, not_false_iff, true_implies,
     Floating.val_min, Floating.val_abs (x.lo_ne_nan n), Floating.val_abs (x.hi_ne_nan n),
-    Floating.val_zero]
-  all_goals simp only [Floating.isNeg_iff, decide_eq_true_iff, decide_eq_false_iff_not,
-    not_lt] at ls hs
+    Floating.val_zero, true_iff]
   · intro a ⟨la,ah⟩
     simp only [abs_of_neg ls, abs_of_neg hs, ge_iff_le, neg_le_neg_iff, le, min_eq_right,
       max_eq_left, mem_preimage, mem_Icc]

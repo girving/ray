@@ -803,7 +803,7 @@ lemma val_add_le {x y : Floating} (n : x.add y false ≠ nan) :
     mem_rounds_singleton, ite_true] using h
 
 /-- `add _ _ true` rounds up -/
-lemma le_val_add {x y : Floating} (n : x.add y true ≠ nan) :
+lemma le_add {x y : Floating} (n : x.add y true ≠ nan) :
     x.val + y.val ≤ (x.add y true).val := by
   have h := approx_add x y true
   rcases ne_nan_of_add n with ⟨n0, n1⟩
@@ -844,15 +844,15 @@ lemma ne_nan_of_sub {x y : Floating} {up : Bool} (n : x.sub y up ≠ nan) : x �
   rwa [Ne.def, Ne.def, neg_eq_nan_iff, ←Ne.def] at h
 
 /-- `sub _ _ false` rounds down -/
-lemma val_sub_le {x y : Floating} (n : x.sub y false ≠ nan) :
+lemma sub_le {x y : Floating} (n : x.sub y false ≠ nan) :
     (x.sub y false).val ≤ x.val - y.val := by
   have yn := (ne_nan_of_sub n).2
   simp only [sub_eq_add_neg, ne_eq, _root_.sub_eq_add_neg, ← val_neg yn, ge_iff_le] at n ⊢
   exact val_add_le n
 
 /-- `sub _ _ true` rounds up -/
-lemma le_val_sub {x y : Floating} (n : x.sub y true ≠ nan) :
+lemma le_sub {x y : Floating} (n : x.sub y true ≠ nan) :
     x.val - y.val ≤ (x.sub y true).val := by
   have yn := (ne_nan_of_sub n).2
   simp only [sub_eq_add_neg, ne_eq, _root_.sub_eq_add_neg, ← val_neg yn, ge_iff_le] at n ⊢
-  exact le_val_add n
+  exact le_add n

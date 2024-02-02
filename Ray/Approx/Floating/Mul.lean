@@ -350,3 +350,47 @@ lemma approx_mul (x y : Floating) (up : Bool) :
         rw [_root_.abs_of_nonneg (not_lt.mp x0), _root_.abs_of_nonneg hz]
     rw [e]
     exact mul_mem_mul (by mono) (by mono)
+
+/-!
+### Additional multiplication lemmas
+-/
+
+/-- `mul` propagates `nan` -/
+@[simp] lemma mul_nan {x : Floating} {up : Bool} : x.mul nan up = nan := by
+  rw [mul]
+  simp only [or_true, isNeg_iff, n_nan, Int64.isNeg_min, Bool.xor_true, abs_nan, Bool.cond_not,
+    Bool.cond_decide, dite_true]
+
+/-- `mul` propagates `nan` -/
+@[simp] lemma nan_mul {x : Floating} {up : Bool} : (nan : Floating).mul x up = nan := by
+  rw [mul]
+  simp only [true_or, bif_eq_if, n_nan, Int64.isNeg_min, isNeg_iff, Bool.true_xor,
+    Bool.not_eq_true', decide_eq_false_iff_not, not_lt, abs_nan, dite_true]
+
+/-- `mul` propagates `nan` -/
+lemma ne_nan_of_mul {x y : Floating} {up : Bool} (n : x.mul y up ≠ nan) : x ≠ nan ∧ y ≠ nan := by
+  contrapose n; simp only [ne_eq, not_and_or, not_not] at n ⊢
+  rw [mul]; simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq]
+  rcases n with n | n
+  · simp only [n, true_or, n_nan, Int64.isNeg_min, isNeg_iff, Bool.true_xor, Bool.not_eq_true',
+      decide_eq_false_iff_not, not_lt, abs_nan, dite_true]
+  · simp only [n, or_true, isNeg_iff, n_nan, Int64.isNeg_min, Bool.xor_true, Bool.not_eq_true',
+      decide_eq_false_iff_not, not_lt, abs_nan, dite_true]
+
+/-- `mul _ _ false` rounds down -/
+lemma mul_le {x y : Floating} (n : x.mul y false ≠ nan) :
+    (x.mul y false).val ≤ x.val * y.val := by
+  have h := approx_mul x y false
+  rcases ne_nan_of_mul n with ⟨n0, n1⟩
+  simpa only [approx_eq_singleton n0, approx_eq_singleton n1, mul_singleton,
+    image_singleton, approx_eq_singleton n, Bool.not_false, singleton_subset_iff,
+    mem_rounds_singleton, ite_true] using h
+
+/-- `mul _ _ true` rounds up -/
+lemma le_mul {x y : Floating} (n : x.mul y true ≠ nan) :
+    x.val * y.val ≤ (x.mul y true).val := by
+  have h := approx_mul x y true
+  rcases ne_nan_of_mul n with ⟨n0, n1⟩
+  simpa only [approx_eq_singleton n0, approx_eq_singleton n1, mul_singleton,
+    image_singleton, approx_eq_singleton n, Bool.not_true, singleton_subset_iff,
+    mem_rounds_singleton, ite_false] using h
