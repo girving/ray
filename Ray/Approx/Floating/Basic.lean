@@ -68,19 +68,26 @@ instance : Nan Floating where
 instance : Approx Floating ℝ where
   approx x := if x = nan then univ else {x.val}
 
-/-- `0` has a standard representation -/
+/-- `0 : Floating` -/
 instance : Zero Floating where
   zero := ⟨0, 0, by decide, by decide, by decide⟩
+
+/-- `1 : Floating` -/
+instance : One Floating where
+  one := ⟨2^62, 2^63 - 62, by decide, by decide, by decide⟩
 
 -- Definition lemmas
 @[simp] lemma n_zero : (0 : Floating).n = 0 := rfl
 @[simp] lemma s_zero : (0 : Floating).s = 0 := rfl
+@[simp] lemma n_one : (1 : Floating).n = 2^62 := rfl
+@[simp] lemma s_one : (1 : Floating).s = 2^63 - 62 := rfl
 @[simp] lemma n_nan : (nan : Floating).n = .min := rfl
 @[simp] lemma s_nan : (nan : Floating).s = .max := rfl
 
 /-- `nan` could be anything -/
 @[simp] lemma approx_nan : approx (nan : Floating) = univ := rfl
 
+/-- `0 = 0` -/
 @[simp] lemma val_zero : (0 : Floating).val = 0 := by
   simp only [val, n_zero, Int64.coe_zero, Int.cast_zero, s_zero, zero_mul]
 
@@ -93,6 +100,13 @@ instance : Zero Floating where
 /-- `0` is just zero -/
 @[simp] lemma approx_zero : approx (0 : Floating) = {0} := by
   simp only [approx, zero_ne_nan, val_zero, ite_false]
+
+/-- `1 = 1` -/
+@[simp] lemma val_one : (1 : Floating).val = 1 := by
+  have e0 : ((2^62 : Int64) : ℤ) = 2^62 := by decide
+  have e1 : (2^63 - 62 : UInt64).toInt - 2^63 = -62 := by decide
+  simp only [val, n_one, e0, Int.cast_pow, Int.int_cast_ofNat, s_one, e1, zpow_neg]
+  apply mul_inv_cancel; norm_num
 
 /-- If we're not `nan`, `approx` is a singleton -/
 @[simp] lemma approx_eq_singleton {x : Floating} (n : x ≠ nan) : approx x = {x.val} := by

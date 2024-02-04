@@ -52,13 +52,6 @@ lemma Int.le_rdiv {a : ℤ} {b : ℕ} : (a / b : ℝ) ≤ a.rdiv b true := by
       exact Int.ediv_mul_le _ (Nat.cast_ne_zero.mpr b0)
     · exact Nat.cast_pos.mpr (Nat.pos_of_ne_zero b0)
 
-@[simp] lemma Int.zero_rdiv {b : ℕ} {up : Bool} : (0 : ℤ).rdiv b up = 0 := by
-  induction up; repeat simp only [rdiv, neg_zero, zero_ediv, Bool.cond_self]
-
-/-- `rdiv` by 1 does nothing -/
-@[simp] lemma Int.rdiv_one {a : ℤ} {up : Bool} : a.rdiv 1 up = a := by
-  induction up; repeat simp only [rdiv, Nat.cast_one, ediv_one, neg_neg, Bool.cond_self]
-
 lemma Int.rdiv_le_rdiv {a : ℤ} {b : ℕ} {u0 u1 : Bool} (u01 : u0 ≤ u1) :
     a.rdiv b u0 ≤ a.rdiv b u1 := by
   induction u0
@@ -67,6 +60,13 @@ lemma Int.rdiv_le_rdiv {a : ℤ} {b : ℕ} {u0 u1 : Bool} (u01 : u0 ≤ u1) :
     · rw [←Int.cast_le (α := ℝ)]
       exact le_trans Int.rdiv_le Int.le_rdiv
   · simp only [Bool.eq_true_of_true_le u01, le_refl]
+
+@[simp] lemma Int.zero_rdiv {b : ℕ} {up : Bool} : (0 : ℤ).rdiv b up = 0 := by
+  induction up; repeat simp only [rdiv, neg_zero, zero_ediv, Bool.cond_self]
+
+/-- `rdiv` by 1 does nothing -/
+@[simp] lemma Int.rdiv_one {a : ℤ} {up : Bool} : a.rdiv 1 up = a := by
+  induction up; repeat simp only [rdiv, Nat.cast_one, ediv_one, neg_neg, Bool.cond_self]
 
 /-- `rdiv` never rounds up by much -/
 lemma Int.rdiv_lt {a : ℤ} {b : ℕ} {up : Bool} : (a.rdiv b up : ℝ) < a / b + 1 := by
