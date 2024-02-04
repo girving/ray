@@ -353,15 +353,15 @@ instance : ApproxAddGroup (Fixed s) ℝ where
 -/
 
 lemma Fixed.val_lt_zero {x : Fixed s} : x.val < 0 ↔ x.n.isNeg := by
-  simp only [val, mul_neg_iff, Int.cast_pos, not_lt.mpr two_zpow_pos.le, and_false,
+  simp only [val, mul_neg_iff, Int.cast_pos, two_zpow_not_neg, and_false,
     Int.cast_lt_zero, Int64.coe_lt_zero_iff, two_zpow_pos, and_true, false_or]
 
 lemma Fixed.val_nonneg {x : Fixed s} : 0 ≤ x.val ↔ x.n.isNeg = false := by
   rw [←not_iff_not]; simp only [not_le, val_lt_zero, Bool.not_eq_false]
 
 lemma Fixed.val_nonpos {x : Fixed s} : x.val ≤ 0 ↔ x.n ≤ 0 := by
-  simp only [val, mul_nonpos_iff, two_zpow_pos.le, and_true, not_le.mpr two_zpow_pos, and_false,
-    false_or, Int.cast_nonpos, Int64.coe_nonpos_iff]
+  simp only [val, mul_nonpos_iff, two_zpow_pos.le, and_true, two_zpow_not_nonpos,
+    and_false, false_or, Int.cast_nonpos, Int64.coe_nonpos_iff]
 
 lemma Fixed.val_pos {x : Fixed s} : 0 < x.val ↔ 0 < x.n := by
   simp only [val, two_zpow_pos, mul_pos_iff_of_pos_right, Int.cast_pos, Int64.coe_pos_iff]
@@ -434,7 +434,7 @@ lemma Fixed.abs_def {x : Fixed s} : x.abs = ⟨⟨x.n.abs⟩⟩ := rfl
 
 @[simp] lemma Fixed.isNeg_abs {x : Fixed s} : (abs x).n.isNeg = (x == nan) := by
   rw [Bool.eq_iff_iff, ← val_lt_zero, beq_iff_eq]
-  simp only [val, abs, mul_neg_iff, Int.cast_pos, not_lt.mpr two_zpow_pos.le, and_false,
+  simp only [val, abs, mul_neg_iff, Int.cast_pos, two_zpow_not_neg, and_false,
     Int.cast_lt_zero, Int64.abs_lt_zero, two_zpow_pos, and_true, false_or, nan, ext_iff]
 
 lemma Fixed.val_abs {x : Fixed s} (n : x ≠ nan) : (abs x).val = |x.val| := by
@@ -951,13 +951,13 @@ lemma Fixed.approx_ofRat (x : ℚ) (up : Bool) :
       · simp only [ite_true]
         refine le_trans (mul_le_mul_of_nonneg_right Int.rdiv_le two_pow_pos.le) (le_of_eq ?_)
         simp only [div_eq_mul_inv, Nat.cast_mul, mul_inv, Nat.cast_pow, Nat.cast_two,  mul_assoc,
-          inv_mul_cancel two_pow_pos.ne', mul_one]
+          inv_mul_cancel (two_pow_pos (R := ℝ)).ne', mul_one]
         nth_rw 3 [←Rat.num_div_den x]
         simp only [← div_eq_mul_inv, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
       · simp only [ite_false]
         refine le_trans (le_of_eq ?_) (mul_le_mul_of_nonneg_right Int.le_rdiv two_pow_pos.le)
         simp only [div_eq_mul_inv, Nat.cast_mul, mul_inv, Nat.cast_pow, Nat.cast_two,  mul_assoc,
-          inv_mul_cancel two_pow_pos.ne', mul_one]
+          inv_mul_cancel (two_pow_pos (R := ℝ)).ne', mul_one]
         nth_rw 1 [←Rat.num_div_den x]
         simp only [← div_eq_mul_inv, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
     · rw [ofRat, sn, cond_false] at n

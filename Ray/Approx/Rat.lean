@@ -9,6 +9,18 @@ import Ray.Misc.Real
 
 open Set
 
+lemma Rat.abs_eq_div {x : ℚ} : |x| = (x.num.natAbs : ℚ) / x.den := by
+  nth_rw 1 [←Rat.num_div_den x]
+  have d0 : 0 < (x.den : ℚ) := Nat.cast_pos.mpr x.den_pos
+  rw [abs_div, abs_of_pos d0, ←Int.cast_abs, Int.abs_eq_natAbs, Int.cast_Nat_cast]
+
+lemma Rat.abs_eq_div' {𝕜 : Type} [LinearOrderedField 𝕜] {x : ℚ} :
+    (|x| : 𝕜) = (x.num.natAbs : 𝕜) / x.den := by
+  nth_rw 1 [←Rat.num_div_den x]
+  have d0 : 0 < (x.den : 𝕜) := Nat.cast_pos.mpr x.den_pos
+  simp only [cast_div, cast_coe_int, cast_coe_nat, abs_div, abs_of_pos d0, ←Int.cast_abs,
+    Int.abs_eq_natAbs, Int.cast_Nat_cast]
+
 /-- `n` s.t. `2^n ≤ |x| < 2^(n+1)` if `n ≠ 0` -/
 @[irreducible] def Rat.log2 (x : ℚ) : ℤ :=
   -- Reduce to two possible answers
@@ -36,9 +48,7 @@ lemma Rat.log2_correct {x : ℚ} (x0 : x ≠ 0) : |x| ∈ Ico (2^x.log2) (2^(x.l
   have na := Nat.lt_log2_self (n := n)
   have db := Nat.lt_log2_self (n := x.den)
   simp only [ha, hb] at an bd na db
-  have ae : |x| = (n : ℚ) / x.den := by
-    nth_rw 1 [←Rat.num_div_den x, abs_div, abs_of_pos d0', ←Int.cast_abs, Int.abs_eq_natAbs, hn,
-      Int.cast_Nat_cast]
+  have ae : |x| = (n : ℚ) / x.den := by rw [Rat.abs_eq_div, hn]
   have lo : 2^(a - b - 1 : ℤ) ≤ |x| := by
     rw [ae]
     refine le_trans ?_ (div_le_div (by positivity) (Nat.cast_le.mpr an) (by positivity)

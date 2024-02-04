@@ -63,7 +63,11 @@ instance : Approx Interval ℝ where
 
 /-- Zero -/
 instance : Zero Interval where
-  zero := ⟨0, 0, by simp only [Floating.zero_ne_nan], fun _ _ ↦ le_refl _⟩
+  zero := ⟨0, 0, by simp only, fun _ _ ↦ le_refl _⟩
+
+/-- One -/
+instance : One Interval where
+  one := ⟨1, 1, by simp only, fun _ _ ↦ le_refl _⟩
 
 /-- The width of an interval -/
 @[pp_dot] def size (x : Interval) : Floating := x.hi.sub x.lo true
@@ -79,10 +83,14 @@ instance : Repr Interval where
 -- Bounds properties of interval arithmetic
 @[simp] lemma lo_zero : (0 : Interval).lo = 0 := rfl
 @[simp] lemma hi_zero : (0 : Interval).hi = 0 := rfl
+@[simp] lemma lo_one : (1 : Interval).lo = 1 := rfl
+@[simp] lemma hi_one : (1 : Interval).hi = 1 := rfl
 @[simp] lemma lo_nan : (nan : Interval).lo = nan := rfl
 @[simp] lemma hi_nan : (nan : Interval).hi = nan := rfl
 @[simp] lemma approx_zero : approx (0 : Interval) = {0} := by
   simp only [approx, lo_zero, Floating.zero_ne_nan, Floating.val_zero, hi_zero, Icc_self, ite_false]
+@[simp] lemma approx_one : approx (1 : Interval) = {1} := by
+  simp only [approx, lo_one, Floating.one_ne_nan, Floating.val_one, hi_one, Icc_self, ite_false]
 @[simp] lemma approx_nan : approx (nan : Interval) = univ := by
   simp only [approx, nan, ite_true, inter_self, true_or]
 
@@ -199,6 +207,16 @@ lemma hi_mem {x : Interval} : x.hi.val ∈ approx x := by
     · simp only [n, not_true_eq_false, and_true, IsEmpty.forall_iff, implies_true]
   · simp only [not_or] at n
     simp only [n, not_false_eq_true, and_self, forall_true_left, or_self]
+
+/-- Induction principle for `mix`, separating out the `nan` case.  This is useful since it
+    extracts the `le` proof, which is usually complicated. -/
+lemma mix_induction {lo hi : Floating} {le : lo ≠ nan → hi ≠ nan → lo.val ≤ hi.val}
+    {p : Interval → Prop}
+    (bad : p (nan : Interval)) (good : mix lo hi le ≠ nan → p (mix lo hi le)) :
+    p (mix lo hi le) := by
+  by_cases n : mix lo hi le = nan
+  · simp only [n, bad]
+  · exact good n
 
 /-!
 ### Negation

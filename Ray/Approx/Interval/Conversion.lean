@@ -1,3 +1,4 @@
+import Ray.Approx.Floating.Conversion
 import Ray.Approx.Interval.Basic
 
 open Classical
@@ -9,24 +10,27 @@ open Pointwise
 
 open Set
 open scoped Real
+namespace Interval
 
 /-- `ℕ` converts to `Interval` -/
-@[irreducible] def ofNat (n : ℕ) : Interval := ⟨.ofNat n false, .ofNat n true⟩
+@[irreducible] def ofNat (n : ℕ) : Interval :=
+  mix (.ofNat n false) (.ofNat n true)
+    (fun n0 n1 ↦ le_trans (Floating.ofNat_le n0) (Floating.le_ofNat n1))
 
 /-- `ℤ` converts to `Interval` -/
-@[irreducible] def ofInt (n : ℤ) : Interval := ⟨.ofInt n false, .ofInt n true⟩
+@[irreducible] def ofInt (n : ℤ) : Interval :=
+  mix (.ofInt n false) (.ofInt n true)
+    (fun n0 n1 ↦ le_trans (Floating.ofInt_le n0) (Floating.le_ofInt n1))
 
 /-- `ℚ` converts to `Interval` -/
-@[irreducible] def ofRat (x : ℚ) : Interval := ⟨.ofRat x false, .ofRat x true⟩
+@[irreducible] def ofRat (x : ℚ) : Interval :=
+  mix (.ofRat x false) (.ofRat x true)
+    (fun n0 n1 ↦ le_trans (Floating.ofRat_le n0) (Floating.le_ofRat n1))
 
-/-- Conversion from `ofScientific` -/
+/-- Conversion from `ofScientific`.
+    Warning: This is slow for large exponents, as it builds large `ℚ` values. -/
 instance : OfScientific Interval where
   ofScientific x u t := .ofRat (OfScientific.ofScientific x u t)
-
-/-- We use the general `.ofNat` routine for `1`, to handle overflow -/
-instance : One Interval := ⟨.ofNat 1⟩
-
-lemma one_def : (1 : Interval) = .ofNat 1 := rfl
 
 /-- Conversion from `ℕ` literals to `Interval` -/
 instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
@@ -34,29 +38,27 @@ instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
 /-- `.ofNat` is conservative -/
 @[mono] lemma approx_ofNat (n : ℕ) : ↑n ∈ approx (.ofNat n : Interval) := by
   rw [ofNat]; simp only [approx, mem_ite_univ_left, mem_Icc]
-  by_cases g : (.ofNat n false : Fixed s) = nan ∨ (.ofNat n true : Fixed s) = nan
-  · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
-  · simp only [g, not_false_eq_true, forall_true_left]
-    simp only [not_or] at g
-    exact ⟨Fixed.ofNat_le g.1, Fixed.le_ofNat g.2⟩
+  intro m; simp only [lo_eq_nan] at m
+  simp only [lo_mix m, hi_mix m]
+  simp only [mix_eq_nan, not_or] at m
+  exact ⟨Floating.ofNat_le m.1, Floating.le_ofNat m.2⟩
 
 /-- `.ofInt` is conservative -/
 @[mono] lemma approx_ofInt (n : ℤ) : ↑n ∈ approx (.ofInt n : Interval) := by
   rw [ofInt]; simp only [approx, mem_ite_univ_left, mem_Icc]
-  by_cases g : (.ofInt n false : Fixed s) = nan ∨ (.ofInt n true : Fixed s) = nan
-  · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
-  · simp only [g, not_false_eq_true, forall_true_left]
-    simp only [not_or] at g
-    exact ⟨Fixed.ofInt_le g.1, Fixed.le_ofInt g.2⟩
+  intro m; simp only [lo_eq_nan] at m
+  simp only [lo_mix m, hi_mix m]
+  simp only [mix_eq_nan, not_or] at m
+  exact ⟨Floating.ofInt_le m.1, Floating.le_ofInt m.2⟩
+
 
 /-- `.ofRat` is conservative -/
 @[mono] lemma approx_ofRat (x : ℚ) : ↑x ∈ approx (.ofRat x : Interval) := by
   rw [ofRat]; simp only [approx, mem_ite_univ_left, mem_Icc]
-  by_cases g : (.ofRat x false : Fixed s) = nan ∨ (.ofRat x true : Fixed s) = nan
-  · simp only [g, not_true_eq_false, IsEmpty.forall_iff]
-  · simp only [g, not_false_eq_true, forall_true_left]
-    simp only [not_or] at g
-    exact ⟨Fixed.ofRat_le g.1, Fixed.le_ofRat g.2⟩
+  intro m; simp only [lo_eq_nan] at m
+  simp only [lo_mix m, hi_mix m]
+  simp only [mix_eq_nan, not_or] at m
+  exact ⟨Floating.ofRat_le m.1, Floating.le_ofRat m.2⟩
 
 /-- `approx_ofRat` for rational literals `a / b` -/
 @[mono] lemma ofNat_div_mem_approx_ofRat {a b : ℕ} [a.AtLeastTwo] [b.AtLeastTwo] :
@@ -76,33 +78,17 @@ instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
   simp only [OfScientific.ofScientific]
   apply approx_ofRat
 
-/-- `1 : Interval` is conservative -/
-@[mono] lemma approx_one : 1 ∈ approx (1 : Interval) := by
-  rw [←Nat.cast_one]
-  apply approx_ofNat
-
-/-- `1 : Interval` is conservative, `⊆` version since this appears frequently -/
-@[mono] lemma subset_approx_one : {1} ⊆ approx (1 : Interval) := by
-  simp only [singleton_subset_iff]; exact approx_one
-
 /-- `n.lo ≤ n` -/
-lemma ofNat_le (n : ℕ) : (.ofNat n : Interval).lo.val ≤ n := by
-  simp only [ofNat]
-  by_cases n : (.ofNat n false : Fixed s) = nan
-  · simp only [n, Fixed.val_nan]
-    exact le_trans (neg_nonpos.mpr (zpow_nonneg (by norm_num) _)) (Nat.cast_nonneg _)
-  · exact le_trans (Fixed.ofNat_le n) (by norm_num)
+lemma ofNat_le (n : ℕ) : (ofNat n).lo.val ≤ n := by
+  by_cases m : ofNat n = nan
+  · simp only [m, lo_nan]
+    exact le_trans Floating.val_nan_lt_zero.le (Nat.cast_nonneg _)
+  · have h := approx_ofNat n
+    simp only [approx, lo_eq_nan, m, ite_false, mem_Icc] at h
+    exact h.1
 
 /-- `n ≤ n.hi` unless we're `nan` -/
-lemma le_ofNat (n : ℕ) (h : (.ofNat n : Interval).hi ≠ nan) :
-    n ≤ (.ofNat n : Interval).hi.val := by
-  rw [ofNat] at h ⊢; exact Fixed.le_ofNat h
-
-/-- `1.lo ≤ 1` -/
-lemma one_le : (1 : Interval).lo.val ≤ 1 := by
-  simpa only [Nat.cast_one] using ofNat_le 1 (s := s)
-
-/-- `1 ≤ 1.hi` unless we're `nan` -/
-lemma le_one (n : (1 : Interval).hi ≠ nan) : 1 ≤ (1 : Interval).hi.val := by
-  rw [one_def, ofNat] at n ⊢
-  refine le_trans (by norm_num) (Fixed.le_ofNat n)
+lemma le_ofNat (n : ℕ) (m : ofNat n ≠ nan) : n ≤ (ofNat n).hi.val := by
+  have h := approx_ofNat n
+  simp only [approx, lo_eq_nan, m, ite_false, mem_Icc] at h
+  exact h.2

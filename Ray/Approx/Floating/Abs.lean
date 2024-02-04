@@ -41,7 +41,7 @@ namespace Floating
 /-- `abs` is exact away from `nan` -/
 @[simp] lemma val_abs {x : Floating} (n : x ≠ nan) : x.abs.val = |x.val| := by
   rw [val, val]
-  simp only [abs_mul, abs_of_pos two_zpow_pos, n_abs, s_abs]
+  simp only [abs_mul, abs_of_pos (two_zpow_pos (𝕜 := ℝ)), n_abs, s_abs]
   refine congr_arg₂ _ ?_ rfl
   simp only [Int64.coe_of_nonneg (Int64.isNeg_abs (x.n_ne_min n)), Int64.toNat_abs,
     Int.coe_natAbs, Int.cast_abs, Complex.int_cast_abs]

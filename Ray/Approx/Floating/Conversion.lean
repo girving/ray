@@ -1,5 +1,6 @@
 import Ray.Approx.Floating.Basic
 import Ray.Approx.Floating.Neg
+import Ray.Approx.Floating.Scale
 import Ray.Approx.Floating.Standardization
 import Ray.Approx.Rat
 
@@ -231,102 +232,140 @@ lemma le_ofInt {n : ℤ} (h : (ofInt n true) ≠ nan) : n ≤ (ofInt n true).val
   simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
     approx_ofInt n true
 
-#exit
-
 /-!
 ## Conversion from `ℚ`
 -/
 
+/-- Conversion from `ℚ`, taking absolute values and rounding up or down -/
+@[irreducible, inline] def ofRat_abs (x : ℚ) (up : Bool) : Floating :=
+  if x0 : x = 0 then 0 else
+  let r := x.log2
+  let n := x.num.natAbs
+  -- Our floating point number will be roughly
+  --   `y * 2^(s - 2^63)`
+  -- where
+  --   `y = y * 2^(62 - r)`
+  --   `s = r - 62 + 2^63`
+  let p := if r ≤ 62 then (n <<< (62 - r).toNat, x.den) else (n, x.den <<< (r - 62).toNat)
+  let c := convert_tweak (p.1.rdiv p.2 up) (r - 62 + 2^63) (by
+    simp only [mem_Icc, Nat.shiftLeft_eq]
+    generalize hr : x.log2 = r
+    generalize hn : x.num.natAbs = n
+    have d0 : 0 < (x.den : ℚ) := Nat.cast_pos.mpr x.den_pos
+    have ae : (n : ℚ) / x.den = |x| := by rw [Rat.abs_eq_div, hn]
+    have t0 : (2 : ℚ) ≠ 0 := by norm_num
+    by_cases r62 : r ≤ 62
+    · simp only [r62, ite_true]
+      constructor
+      · apply Nat.le_rdiv_of_mul_le x.den_pos
+        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_ofNat,
+          ←le_div_iff d0, ←div_mul_eq_mul_div, ae, ←div_le_iff two_zpow_pos]
+        simp only [←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
+        ring_nf; rw [←hr]
+        exact Rat.log2_self_le x0
+      · apply Nat.rdiv_le_of_le_mul
+        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_ofNat,
+          ←div_le_iff d0, ←div_mul_eq_mul_div, ae, ←le_div_iff two_zpow_pos]
+        simp only [←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
+        ring_nf; rw [←hr, add_comm]
+        exact Rat.lt_log2_self.le
+    · simp only [r62, ite_false]
+      replace r62 := (not_le.mp r62).le
+      constructor
+      · apply Nat.le_rdiv_of_mul_le (mul_pos x.den_pos two_pow_pos)
+        simp only [←mul_assoc, mul_comm _ (2^(_:ℤ).toNat), ←pow_add, ←Nat.cast_le (α := ℚ),
+          ←le_div_iff d0, ae, Nat.cast_mul, Nat.cast_pow, Nat.cast_two]
+        simp only [←zpow_ofNat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
+          Nat.cast_add]
+        ring_nf; rw [←hr]
+        exact Rat.log2_self_le x0
+      · apply Nat.rdiv_le_of_le_mul
+        simp only [←mul_assoc, mul_comm _ (2^(_:ℤ).toNat), ←pow_add, ←Nat.cast_le (α := ℚ),
+          ←div_le_iff d0, ae, Nat.cast_mul, Nat.cast_pow, Nat.cast_two]
+        simp only [←zpow_ofNat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
+          Nat.cast_add]
+        ring_nf; rw [←hr, add_comm]
+        exact Rat.lt_log2_self.le)
+  c.finish up
+
 /-- Conversion from `ℚ`, rounding up or down -/
 @[irreducible] def ofRat (x : ℚ) (up : Bool) : Floating :=
-  let r := x.log2
-  sorry
-  /-
-  -- Our rational is `x = a / b`.  The `Int64` result `y` should satisfy
-  --   `y * 2^s ≈ a / b`
-  -- and should be normalized as
-  --   `log2 |y| = 62`
-  --   `log2 |y| = 62`
-  -- We can do this via an exact integer division if we merge `2^s` into either `a` or `b`.
-  -- This might be expensive if `s` is large, but we can worry about that later.
-  let (a,b) := bif s.isNeg then (x.num >>> ↑s, x.den) else (x.num, x.den <<< s.n.toNat)
-  let d := a.rdiv b up
-  bif |d| < 2^63 then ⟨d⟩ else nan
-  -/
+  let neg : Bool := decide (x < 0)
+  let z := ofRat_abs x (up != neg)
+  bif neg then -z else z
+
+/-- `ofRat_abs` rounds the desired way -/
+lemma approx_ofRat_abs (x : ℚ) (up : Bool) : ↑|x| ∈ rounds (approx (ofRat_abs x up)) !up := by
+  rw [ofRat_abs]
+  simp only
+  by_cases x0 : x = 0
+  · simp only [x0, abs_zero, Rat.cast_zero, Rat.zero_num, Int.natAbs_zero, Nat.zero_shiftLeft,
+      Rat.zero_den, dite_true, ne_eq, zero_ne_nan, not_false_eq_true, approx_eq_singleton, val_zero,
+      mem_rounds_singleton, Bool.not_eq_true', le_refl, ite_self]
+  simp only [Rat.cast_abs, x0, dite_false]
+  apply approx_convert
+  generalize x.log2 = r
+  generalize hn : x.num.natAbs = n
+  have ae : (n : ℝ) / x.den = |(x:ℝ)| := by rw [Rat.abs_eq_div', hn]
+  have t0 : (2:ℝ) ≠ 0 := by norm_num
+  simp only [Nat.shiftLeft_eq, add_sub_cancel]
+  by_cases r62 : r ≤ 62
+  · simp only [r62, ite_true]
+    induction up
+    · simp only [ite_false]
+      refine le_trans (mul_le_mul_of_nonneg_right Nat.rdiv_le two_zpow_pos.le) ?_
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae,
+        mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
+      ring_nf; simp only [zpow_zero, mul_one, le_refl]
+    · simp only [ite_true]
+      refine le_trans ?_ (mul_le_mul_of_nonneg_right Nat.le_rdiv two_zpow_pos.le)
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae,
+        mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
+      ring_nf; simp only [zpow_zero, mul_one, le_refl]
+  · simp only [r62, ite_false]
+    replace r62 := (not_le.mp r62).le
+    induction up
+    · simp only [ite_false]
+      refine le_trans (mul_le_mul_of_nonneg_right Nat.rdiv_le two_zpow_pos.le) ?_
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_ofNat,
+        mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62), ←div_div,
+        div_mul_cancel _ (two_zpow_pos (𝕜 := ℝ)).ne', le_refl]
+    · simp only [ite_true, ge_iff_le]
+      refine le_trans ?_ (mul_le_mul_of_nonneg_right Nat.le_rdiv two_zpow_pos.le)
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_ofNat,
+        mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62), ←div_div,
+        div_mul_cancel _ (two_zpow_pos (𝕜 := ℝ)).ne', le_refl]
 
 /-- `ofRat` rounds the desired way -/
 lemma approx_ofRat (x : ℚ) (up : Bool) : ↑x ∈ rounds (approx (ofRat x up)) !up := by
-  by_cases n : ofRat x up = nan
-  · simp only [n, approx_nan, rounds_univ, mem_univ]
-  rw [approx_eq_singleton n, ofRat]
-  by_cases sn : s.isNeg
-  · simp only [Bool.cond_decide, sn, cond_true, neg_neg, Bool.cond_self]
-    by_cases dn : |Int.rdiv (x.num >>> ↑s) ↑x.den up| < 2 ^ 63
-    · simp only [dn, ite_true, Int64.toInt_ofInt dn, val]
-      rw [←Int64.coe_lt_zero_iff] at sn
-      generalize (s : ℤ) = s at sn dn
-      have e : s = -(-s).toNat := by rw [Int.toNat_of_nonneg (by omega), neg_neg]
-      rw [e] at dn ⊢; clear e sn
-      generalize (-s).toNat = s at dn
-      simp only [Int.shiftRight_neg, Int.shiftLeft_eq_mul_pow, zpow_neg,
-        mul_inv_le_iff two_pow_pos, Nat.cast_pow, Nat.cast_ofNat, zpow_coe_nat, ge_iff_le] at dn ⊢
-      nth_rw 1 [←Rat.num_div_den x]
-      simp only [Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat, ←mul_div_assoc,
-        Int64.toInt_ofInt dn]
-      induction up
-      · simp only [Bool.not_false, mem_rounds_singleton, mul_inv_le_iff two_pow_pos, ←
-          mul_div_assoc, mul_comm _ (x.num : ℝ), ite_true, ge_iff_le]
-        refine le_trans Int.rdiv_le ?_
-        simp only [Int.cast_mul, Int.cast_pow, Int.int_cast_ofNat, le_refl]
-      · simp only [rounds, ← div_eq_mul_inv, mem_singleton_iff, Bool.not_true, ite_false,
-          exists_eq_left, le_div_iff two_pow_pos, mem_setOf_eq, ge_iff_le]
-        refine le_trans (le_of_eq ?_) Int.le_rdiv
-        simp only [div_eq_mul_inv, Int.cast_mul, Int.cast_pow, Int.int_cast_ofNat]; ring_nf
-    · rw [ofRat, sn, cond_true] at n
-      simp only [bif_eq_if, dn, decide_False, ite_false, not_true_eq_false] at n
-  · simp only [Bool.cond_decide, sn, cond_false, val._eq_1, mem_rounds_singleton,
-      Bool.not_eq_true']
-    simp only [Bool.not_eq_true] at sn
-    by_cases dn : |Int.rdiv x.num (x.den <<< s.n.toNat) up| < 2 ^ 63
-    · simp only [dn, ite_true, Int64.toInt_of_isNeg_eq_false sn, zpow_ofNat]
-      rw [Int64.toInt_ofInt dn, Nat.shiftLeft_eq]
-      generalize s.n.toNat = s; clear dn
-      induction up
-      · simp only [ite_true]
-        refine le_trans (mul_le_mul_of_nonneg_right Int.rdiv_le two_pow_pos.le) (le_of_eq ?_)
-        simp only [div_eq_mul_inv, Nat.cast_mul, mul_inv, Nat.cast_pow, Nat.cast_two,  mul_assoc,
-          inv_mul_cancel two_pow_pos.ne', mul_one]
-        nth_rw 3 [←Rat.num_div_den x]
-        simp only [← div_eq_mul_inv, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
-      · simp only [ite_false]
-        refine le_trans (le_of_eq ?_) (mul_le_mul_of_nonneg_right Int.le_rdiv two_pow_pos.le)
-        simp only [div_eq_mul_inv, Nat.cast_mul, mul_inv, Nat.cast_pow, Nat.cast_two,  mul_assoc,
-          inv_mul_cancel two_pow_pos.ne', mul_one]
-        nth_rw 1 [←Rat.num_div_den x]
-        simp only [← div_eq_mul_inv, Rat.cast_div, Rat.cast_coe_int, Rat.cast_coe_nat]
-    · rw [ofRat, sn, cond_false] at n
-      simp only [Bool.cond_decide, dn, ite_false, not_true_eq_false] at n
+  rw [ofRat]
+  by_cases x0 : x < 0
+  · simp only [Bool.cond_decide, x0, decide_True, Bool.xor_true, ite_true, approx_neg,
+      rounds_neg, Bool.not_not, mem_neg, ←Rat.cast_neg, ←abs_of_neg x0]
+    convert approx_ofRat_abs x _
+    simp only [Bool.not_not]
+  · simp only [Bool.cond_decide, x0, decide_False, Bool.xor_false, ite_false]
+    convert approx_ofRat_abs x _
+    rw [abs_of_nonneg (by linarith)]
 
 /-- `approx_ofRat`, down version -/
-lemma ofRat_le {x : ℚ} (h : ofRat x false ≠ nan) : (.ofRat x false).val ≤ x := by
+lemma ofRat_le {x : ℚ} (h : ofRat x false ≠ nan) : (ofRat x false).val ≤ x := by
   simpa only [approx, h, ite_false, Bool.not_false, mem_rounds_singleton, ite_true] using
-    approx_ofRat x false (s := s)
+    approx_ofRat x false
 
 /-- `approx_ofRat`, up version -/
 lemma le_ofRat {x : ℚ} (h : ofRat x true ≠ nan) : x ≤ (ofRat x true).val := by
-  simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using
-    approx_ofRat x true (s := s)
-
-#exit
+  simpa only [approx, h, ite_false, Bool.not_true, mem_rounds_singleton] using approx_ofRat x true
 
 /-!
 ## Conversion from `Float`
 -/
 
-/-- Convert a `Float` to `Floating` -/
-@[irreducible] def ofFloat (x : Float) : Floating :=
-  let xs := x.abs.scaleB (-s)
-  bif xs ≤ 0.5 then 0 else
-  let y : Int64 := ⟨xs.toUInt64⟩
-  bif y == 0 || y.isNeg then nan else
-  ⟨bif x < 0 then -y else y⟩
+/-- Convert a `Float` to `Floating`.  This could be fast, but we don't need it to be. -/
+@[irreducible] def ofFloat (x : Float) (up : Bool) : Floating :=
+  match x.toRatParts with
+  | none => nan
+  | some (y, s) =>
+    let t : Int64 := s
+    if s ≠ (t : ℤ) then nan else
+    (ofInt y up).scaleB t up

@@ -1,5 +1,5 @@
 import Ray.Approx.Box
-import Ray.Approx.FloatingInterval
+import Ray.Approx.Interval.Mul
 import Std.Data.Rat.Basic
 
 open Pointwise
@@ -7,7 +7,7 @@ open Pointwise
 /-!
 ## `Interval` and `Box` inv and division
 
-Given `x : Interval s`, we want `1 / x` (division will follow immediately).  If `0 ∈ x`, then
+Given `x : Interval`, we want `1 / x` (division will follow immediately).  If `0 ∈ x`, then
 `1 / x = nan`.  Otherwise, `x` is reliably positive or negative.
 
 Given a smooth function `f : ℝ → ℝ` and its extension `f : Interval → Interval`.  At each step,
@@ -40,40 +40,39 @@ variable {s t : Int64}
 ## `Interval` reciprocal
 -/
 
+-- DO NOT SUBMIT: Remove
 /-- Shift a `UInt64` either left or right by an `Int64` -/
 def UInt64.shift_int64 (x : UInt64) (y : Int64) : UInt64 :=
   if y.isNeg then x >>> (-y).n else x <<< y.n
 
-/-- Approximate the reciprocal of a number using 64-bit integer division -/
-def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
+/-- Approximate the reciprocal of a positive number using 64-bit integer division -/
+def inv_guess (x : Floating) : Floating :=
+  bif x.s == 0 then nan else  -- Bail if we're denormalized or zero
   -- Our guess will be
-  --   `y = 2^63 / (x.n.n * 2^a) * 2^b`
-  -- and we want
-  --   `y * 2^t = 1 / (x.n.n * 2^s)`
-  --   `2^63 / (x.n.n * 2^a) * 2^b * 2^t = 1 / (x.n.n * 2^s)`
-  --   `2^63 / 2^a * 2^b * 2^t = 2^-s`
-  --   `b - a = -s - t - 63`
-  -- We get maximum precision if `x.n.n * 2^a ≈ 2^32`, so we choose `a = 32 - x.n.n.log2`.
-  -- This can be either positive or negative, corresponding to shifting left or right.
-  -- We then set `b = a - s - t - 63`.
-  let a := (32 : Int64) - ⟨x.n.n.log2⟩
-  let b := a - s - t - 63
-  ⟨⟨(((1 : UInt64) <<< 63) / (x.n.n.shift_int64 a)).shift_int64 b⟩⟩
+  --   `x = x.n.n * 2^(x.s - 2^63)`
+  --   `x⁻¹ = (1 / x.n.n) * 2^(2^63 - x.s)`
+  --   `x⁻¹ = (2^63 / (x.n.n / 2^a)) * 2^(2^63 - x.s - 63 - a)`
+  --   `x⁻¹ = (2^63 / (x.n.n / 2^a)) * 2^(2^64 - 63 - a - x.s - 2^63)`
+  -- We get maximum precision if `x.n.n / 2^a = 2^32`, so we set `a = 30`:
+  --   `x⁻¹ = (2^63 / (x.n.n / 2^30)) * 2^(2^64 - 93 - x.s - 2^63)`
+  let t := (2^64 - 93 : UInt64) - x.s
+  let y := ((1 : UInt64) <<< 63) / (x.n.n >>> 30)
+  .of_ns ⟨y⟩ t
 
 /-- Conservative region that includes `x⁻¹` -/
-@[irreducible] def inv_region (x : Fixed s) : Interval t :=
+@[irreducible] def inv_region (x : Floating) : Interval :=
   let n := x.log2
   ⟨.two_pow (-1-n) false, .two_pow (-n) true⟩
 
 /-- One step of Newton's method for the reciprocal.
     We trust that `1/x ∈ r`, but do not trust the guess `c`. -/
-@[irreducible] def inv_step (x : Fixed s) (r : Interval t) (c : Fixed t) : Interval t :=
+@[irreducible] def inv_step (x : Floating) (r : Interval) (c : Floating) : Interval :=
   -- `r ∩ (c + r (1 - x c))`, where `x ∈ [1/2,1]`, `r,c ∈ [1,2]`
   r ∩ (c + r.mul (1 - Interval.fixed_mul_fixed x c (-62)) t)
 
 /-- Floating point interval reciprocal using Newton's method.
     We assume `x⁻¹ ∈ approx r`. -/
-@[irreducible, pp_dot] def Fixed.inv_pos (x : Fixed s) : Interval t :=
+@[irreducible, pp_dot] def Fixed.inv_pos (x : Floating) : Interval :=
   -- Three steps of Newton's method to produce a tight, conservative interval.
   -- Probably two is enough, but I'm lazy.
   let r1 := inv_step x (inv_region x) (inv_guess x)
@@ -81,7 +80,7 @@ def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
   inv_step x r2 r2.lo
 
 /-- `Interval` reciprocal of a positive interval -/
-@[irreducible, pp_dot] def Interval.inv_pos (x : Interval s) : FloatingInterval :=
+@[irreducible, pp_dot] def Interval.inv_pos (x : Interval) : FloatingInterval :=
   -- If `2^n ≤ x.lo < 2^(n+1)`, then `2^(-n-1) < y = x.lo⁻¹ ≤ 2^-n`
   -- A good output precision is `-62 - n` so that
   --   `y.n = y / 2^(-62 - n) ≤ 2^-n / 2^(-62 - n) = 2^62`.
@@ -90,7 +89,7 @@ def inv_guess (x : Fixed s) {t : Int64} : Fixed t :=
   ⟨k.n, x.hi.inv_pos ∪ x.lo.inv_pos⟩
 
 /-- `Interval` reciprocal using Newton's method. -/
-@[irreducible, pp_dot] def Interval.inv (x : Interval s) : FloatingInterval :=
+@[irreducible, pp_dot] def Interval.inv (x : Interval) : FloatingInterval :=
   bif x.lo == 0 || x.hi == 0 || x.lo == nan || x.hi == nan || x.lo.n.isNeg != x.hi.n.isNeg then
     nan else
   let r := x.abs.inv_pos
@@ -125,7 +124,7 @@ lemma approx_inv_step_reason {x c rl rh ml mh : ℝ} (x0 : 0 < x) (xr : rl ≤ x
       simp only [← mul_assoc, inv_mul_cancel x0.ne', one_mul, le_refl]
 
 /-- `inv_step` is conservative -/
-@[mono] lemma approx_inv_step {x : Fixed s} {r : Interval t} (c : Fixed t) (x0 : 0 < x.val)
+@[mono] lemma approx_inv_step {x : Floating} {r : Interval} (c : Floating) (x0 : 0 < x.val)
     (xr : (approx x)⁻¹ ⊆ approx r) : (approx x)⁻¹ ⊆ approx (inv_step x r c) := by
   -- Preliminiaries
   rw [inv_step]
@@ -155,15 +154,15 @@ lemma approx_inv_step_reason {x c rl rh ml mh : ℝ} (x0 : 0 < x) (xr : rl ≤ x
   exact approx_inv_step_reason x0 xr mm
 
 /-- `inv_step` propagates `r = nan` -/
-@[simp] lemma inv_step_nan {x : Fixed s} {c : Fixed t} : inv_step x nan c = nan := by
+@[simp] lemma inv_step_nan {x : Floating} {c : Floating} : inv_step x nan c = nan := by
   rw [inv_step]
   simp only [Interval.nan_mul_lo, Interval.add_def, Interval.lo_fixed, Fixed.add_nan,
     Interval.hi_fixed, Interval.inter_def, Interval.mk.injEq, Fixed.max_eq_nan, or_self,
     Fixed.min_eq_nan, and_self, Interval.lo_nan, Interval.hi_nan, Interval.nan_def]
 
 /-- `inv_region` is conservative -/
-@[mono] lemma approx_inv_region {x : Fixed s} :
-    (approx x)⁻¹ ⊆ approx (inv_region x : Interval t) := by
+@[mono] lemma approx_inv_region {x : Floating} :
+    (approx x)⁻¹ ⊆ approx (inv_region x : Interval) := by
   rw [inv_region]
   by_cases x0 : x.val ≤ 0
   · simp only [x0, Fixed.log2_eq_nan_of_nonpos, Fixed.sub_nan, Fixed.two_pow_nan, Fixed.neg_nan,
@@ -194,26 +193,26 @@ lemma approx_inv_step_reason {x c rl rh ml mh : ℝ} (x0 : 0 < x) (xr : rl ≤ x
       simp only [v, neg_neg, m.1]
 
 /-- `inv_region` propagates `nan` -/
-@[simp] lemma inv_region_nan : (inv_region (nan : Fixed s) : Interval t) = nan := by
+@[simp] lemma inv_region_nan : (inv_region (nan : Floating) : Interval) = nan := by
   rw [inv_region]
   simp only [Fixed.log2_nan, Fixed.sub_nan, Fixed.two_pow_nan, Fixed.neg_nan, Interval.nan_def]
 
 /-- `Fixed.inv_pos` is conservative -/
-lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
-    (approx x)⁻¹ ⊆ approx (x.inv_pos : Interval t) := by
+lemma Fixed.approx_inv_pos {x : Floating} (x0 : 0 < x.val) :
+    (approx x)⁻¹ ⊆ approx (x.inv_pos : Interval) := by
   rw [Fixed.inv_pos]; mono
 
 /-- `inv_pos` propagates `nan` -/
-@[simp] lemma Fixed.imv_pos_nan : ((nan : Fixed s).inv_pos : Interval t) = nan := by
+@[simp] lemma Fixed.imv_pos_nan : ((nan : Floating).inv_pos : Interval) = nan := by
   rw [Fixed.inv_pos]; simp only [inv_region_nan, inv_step_nan]
 
 /-- `Fixed.inv_pos'` is conservative -/
-@[mono] lemma Fixed.approx_inv_pos' {x : Fixed s} (p : 0 < x.val) :
-    x.val⁻¹ ∈ approx (x.inv_pos : Interval t) :=
+@[mono] lemma Fixed.approx_inv_pos' {x : Floating} (p : 0 < x.val) :
+    x.val⁻¹ ∈ approx (x.inv_pos : Interval) :=
   Fixed.approx_inv_pos p (by mono)
 
 /-- `Interval.inv_pos` is conservative -/
-@[mono] lemma Interval.approx_inv_pos {x : Interval s} (p : 0 < x.lo.val) :
+@[mono] lemma Interval.approx_inv_pos {x : Interval} (p : 0 < x.lo.val) :
     (approx x)⁻¹ ⊆ approx x.inv_pos := by
   rw [inv_pos]
   simp only [bif_eq_if, beq_iff_eq]
@@ -233,7 +232,7 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
   · exact Interval.approx_union_right (Fixed.approx_inv_pos' p)
 
 /-- `Interval.inv` is conservative -/
-@[mono] lemma Interval.approx_inv {x : Interval s} : (approx x)⁻¹ ⊆ approx x.inv := by
+@[mono] lemma Interval.approx_inv {x : Interval} : (approx x)⁻¹ ⊆ approx x.inv := by
   rw [inv]
   simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq, bne_iff_ne, ne_eq]
   by_cases n : x.lo = 0 ∨ x.hi = 0 ∨ x.lo = nan ∨ x.hi = nan ∨ approx x = ∅ ∨
@@ -255,12 +254,12 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
     mono
 
 /-- `Interval.inv` is conservative, `mono ⊆` version -/
-@[mono] lemma Interval.subset_approx_inv {p : Set ℝ} {x : Interval s}
+@[mono] lemma Interval.subset_approx_inv {p : Set ℝ} {x : Interval}
     (px : p ⊆ approx x) : p⁻¹ ⊆ approx x.inv :=
   subset_trans (inv_subset_inv.mpr px) Interval.approx_inv
 
 /-- `Interval.inv` is conservative, `mono ∈` version -/
-@[mono] lemma Interval.mem_approx_inv {p : ℝ} {x : Interval s}
+@[mono] lemma Interval.mem_approx_inv {p : ℝ} {x : Interval}
     (px : p ∈ approx x) : p⁻¹ ∈ approx x.inv :=
   Interval.approx_inv (inv_mem_inv.mpr px)
 
@@ -269,31 +268,31 @@ lemma Fixed.approx_inv_pos {x : Fixed s} (x0 : 0 < x.val) :
 -/
 
 /-- `Interval` division via reciproval multiplication -/
-@[irreducible] def Interval.div (x : Interval s) (y : Interval t) (u : Int64) : Interval u :=
+@[irreducible] def Interval.div (x : Interval) (y : Interval) (u : Int64) : Interval u :=
   y.inv.x.mul x u
 
 /-- `Box / Interval` via reciproval multiplication -/
-@[irreducible] def Box.div_scalar (z : Box s) (x : Interval t) (u : Int64) : Box u :=
+@[irreducible] def Box.div_scalar (z : Box s) (x : Interval) (u : Int64) : Box u :=
   x.inv.x.mul_box z u
 
 /-- `Interval.div` is conservative -/
-lemma Interval.approx_div {x : Interval s} {y : Interval t} {u : Int64} :
+lemma Interval.approx_div {x : Interval} {y : Interval} {u : Int64} :
     approx x / approx y ⊆ approx (x.div y u) := by
   rw [Interval.div, div_eq_inv_mul]; mono
 
 /-- `Interval.div` is conservative, `mono ⊆` version  -/
-@[mono] lemma Interval.subset_approx_div {p q : Set ℝ} {x : Interval s} {y : Interval t}
+@[mono] lemma Interval.subset_approx_div {p q : Set ℝ} {x : Interval} {y : Interval}
     {u : Int64} (px : p ⊆ approx x) (qy : q ⊆ approx y) : p / q ⊆ approx (x.div y u) :=
   subset_trans (div_subset_div px qy) Interval.approx_div
 
 /-- `Interval.div` is conservative, `mono ∈ version  -/
-@[mono] lemma Interval.mem_approx_div {p q : ℝ} {x : Interval s} {y : Interval t}
+@[mono] lemma Interval.mem_approx_div {p q : ℝ} {x : Interval} {y : Interval}
     {u : Int64} (px : p ∈ approx x) (qy : q ∈ approx y) : p / q ∈ approx (x.div y u) := by
   apply Interval.subset_approx_div (singleton_subset_iff.mpr px) (singleton_subset_iff.mpr qy)
   simp only [div_singleton, image_singleton, mem_singleton_iff]
 
 /-- `Box / Interval` is conservative -/
-@[mono] lemma Box.approx_div_scalar {z : Box s} {x : Interval t} {u : Int64} :
+@[mono] lemma Box.approx_div_scalar {z : Box s} {x : Interval} {u : Int64} :
     approx z / Complex.ofReal '' approx x ⊆ approx (z.div_scalar x u) := by
   rw [Box.div_scalar, div_eq_inv_mul]
   refine subset_trans (mul_subset_mul ?_ subset_rfl) (Interval.approx_mul_box _ _ _)
@@ -312,7 +311,7 @@ lemma Interval.approx_div {x : Interval s} {y : Interval t} {u : Int64} :
 
 /-- We're don't verify anything about `inv_guess`, but we do need some tests -/
 def guess_test (x : Float) (s t : Int64) (e : Float := 1e-9) : Bool :=
-  ((inv_guess (.ofFloat x : Fixed s) : Fixed t).toFloat - 1 / x).abs < e
+  ((inv_guess (.ofFloat x : Floating) : Floating).toFloat - 1 / x).abs < e
 lemma guess_test1 : guess_test 0.5 (-63) (-61) := by native_decide
 lemma guess_test2 : guess_test 0.67862 (-63) (-61) := by native_decide
 lemma guess_test3 : guess_test 0.999 (-63) (-61) := by native_decide
@@ -322,7 +321,7 @@ lemma guess_test6 : guess_test 7 0 (-62) := by native_decide
 
 /-- `Interval.inv` is provably conservative, but we need to test that it's accurate -/
 def inv_test (l h : Float) (s : Int64) (e : Float := 1e-18) : Bool :=
-  let x : Interval s := ⟨.ofFloat l, .ofFloat h⟩
+  let x : Interval := ⟨.ofFloat l, .ofFloat h⟩
   let r := x.inv
   (r.x.lo.toFloat * h - 1).abs < e && (r.x.hi.toFloat * l - 1).abs < e
 lemma inv_test1p : inv_test 0.4 0.6 (-60) := by native_decide

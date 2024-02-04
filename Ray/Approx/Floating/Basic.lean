@@ -97,6 +97,12 @@ instance : One Floating where
 /-- `nan ≠ 0` -/
 @[simp] lemma nan_ne_zero : (nan : Floating) ≠ 0 := by decide
 
+/-- `1 ≠ nan` -/
+@[simp] lemma one_ne_nan : (1 : Floating) ≠ nan := by decide
+
+/-- `nan ≠ 1` -/
+@[simp] lemma nan_ne_one : (nan : Floating) ≠ 1 := by decide
+
 /-- `0` is just zero -/
 @[simp] lemma approx_zero : approx (0 : Floating) = {0} := by
   simp only [approx, zero_ne_nan, val_zero, ite_false]

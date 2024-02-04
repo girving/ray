@@ -73,10 +73,20 @@ theorem image_mul_right_Icc_of_neg {a b c : 𝕜} (c0 : c < 0) :
     · simp only [div_mul_cancel _ c0.ne]
 
 /-- A simple lemma that we use a lot -/
-@[simp] lemma two_pow_pos {n : ℕ} : 0 < (2:𝕜) ^ n := pow_pos (by norm_num) _
+@[simp] lemma two_pow_pos {R : Type} [StrictOrderedSemiring R] {n : ℕ} : 0 < (2:R) ^ n :=
+  pow_pos (by norm_num) _
 
 /-- A simple lemma that we use a lot -/
-@[simp] lemma two_zpow_pos {n : ℤ} : 0 < (2:𝕜) ^ n := zpow_pos_of_pos (by norm_num) _
+@[simp] lemma two_zpow_pos {𝕜 : Type} [LinearOrderedSemifield 𝕜] {n : ℤ} : 0 < (2:𝕜) ^ n :=
+  zpow_pos_of_pos (by norm_num) _
+
+/-- Writing `not_lt.mpr two_zpow_pos` fails to infer inside `simp`, so we write this out -/
+@[simp] lemma two_zpow_not_nonpos {𝕜 : Type} [LinearOrderedSemifield 𝕜] {n : ℤ} : ¬(2:𝕜) ^ n ≤ 0 :=
+  not_le.mpr two_zpow_pos
+
+/-- Writing `not_lt.mpr two_zpow_pos.le` fails to infer inside `simp`, so we write this out -/
+@[simp] lemma two_zpow_not_neg {𝕜 : Type} [LinearOrderedSemifield 𝕜] {n : ℤ} : ¬(2:𝕜) ^ n < 0 :=
+  not_lt.mpr two_zpow_pos.le
 
 /-- The range of two power multiplication is `univ` -/
 @[simp] lemma range_mul_two_zpow_eq_univ {n : ℤ} : range (fun x : 𝕜 ↦ x * 2^n) = univ :=

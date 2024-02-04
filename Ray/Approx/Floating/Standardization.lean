@@ -8,37 +8,6 @@ open Set
 open scoped Real
 namespace Floating
 
-/-
--- DO NOT SUBMIT: Do I need preorder?
-/-- Typeclass for `UInt64` and `UInt128` to express what we need for standardization.
-    This is a mess, but for now I'm going to just push ahead. -/
-class Low (I : Type) (U : outParam Type) [Zero I] [Zero U] [Preorder U] where
-  nonneg (n : U) : 0 ≤ n
-  toNat : U → ℕ
-  toInt : I → ℤ
-  abs (n : I) : U
-  log2 (n : U) : UInt64
-  bits' : UInt64
-  min : I
-  abs_zero : abs 0 = 0
-  log2_zero : log2 0 = 0
-  toNat_log2 (n : U) : (log2 n).toNat = Nat.log2 (toNat n)
-  ne_zero_iff (n : U) : n ≠ 0 ↔ toNat n ≠ 0
-  abs_ne_zero_iff (n : I) : abs n ≠ 0 ↔ n ≠ 0
-
-instance : Low Int64 UInt64 where
-  abs := Int64.abs
-  log2 := UInt64.log2
-  bits' := 64
-  min := Int64.min
-  abs_zero := Int64.abs_zero
-  log2_zero := UInt64.log2_zero
-  nonneg _ := UInt64.nonneg
-  toNat_log2 _ := UInt64.toNat_log2 _
-
-variable {I U : Type} [Zero I] [Zero U] [Preorder U] [low : Low I U]
--/
-
 /-- Decrease `s` by `g` if possible, saturating at `s = 0`.
     We return `(t, s - t)` where `t` is the normalized exponent. -/
 @[irreducible, specialize] def lower (g s : UInt64) : UInt64 × UInt64 :=
@@ -153,7 +122,7 @@ lemma of_ns_norm {n : Int64} {s : UInt64} (n0 : n ≠ 0) (nm : n ≠ .min) :
 @[irreducible] def of_ns (n : Int64) (s : UInt64) : Floating :=
   if nm : n = .min then nan else
   if n0 : n = 0 then 0 else
-  -- If `n` is small, we decrease `s` until either `n` has the high bit set or `s = .min`
+  -- If `n` is small, we decrease `s` until either `n` has the high bit set or `s = 0`
   let t := lower (62 - n.abs.log2) s
   { n := n <<< t.2
     s := t.1
