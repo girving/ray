@@ -1,3 +1,4 @@
+import Ray.Approx.Box
 import Ray.Dynamics.Mandelbrot
 import Ray.Render.Color
 
@@ -21,7 +22,7 @@ Not very many iterations will give us a lower bound very close to `1`.
 Increasing `n` by 1 if necessary, we have `6 ≤ abs w`.  By `potential_approx` and
 `potential_error_le_of_z6`, we have
 
-  `|p w - 1/abs w| ≤ 0.8095 / abs z ^ 1.927`
+  `|p w - 1/abs w| ≤ 0.8095 / abs w ^ 1.927`
 
 Here is an `abs w : 1/abs w, RHS` table for various `abs w` values:
 
@@ -29,11 +30,9 @@ Here is an `abs w : 1/abs w, RHS` table for various `abs w` values:
   `w   32: 1/w 0.03125, error 1.018e-3, ratio 0.032`
   `w 1020: 1/w 0.00098, error 1.290e-6, ratio 0.001`
 
-### What to do about the `rpow`?
+We then finish with
 
-In either case, we get a nice estimate for `p w`, and need to apply `fun p ↦ p ^ (2^n)⁻¹` to
-recover an estimate for `p z.`  The straightforward thing to do is implement `Interval.rpow`, though
-that would take significant effort: I'd do it via Taylor series for `log` and `exp`.
+  `p z = p w ^ (2^n)⁻¹`
 -/
 
 open Complex (abs)
@@ -41,3 +40,8 @@ open Real (log)
 open Set
 
 private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
+
+/-- One step of the Mandelbrot iteration -/
+def step (c z : Box) : ℂ := z ^ 2 + c
+
+--/-- Warmup potential computation without stopping criteria -/

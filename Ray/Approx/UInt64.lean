@@ -6,6 +6,7 @@ import Mathlib.Tactic.Ring
 import Mathlib.Tactic.SplitIfs
 import Mathlib.Tactic.Zify
 import Ray.Approx.Nat
+import Ray.Misc.Int
 import Std.Data.Nat.Lemmas
 
 /-!
@@ -13,6 +14,7 @@ import Std.Data.Nat.Lemmas
 -/
 
 open Qq
+open Set
 
 attribute [pp_dot] UInt64.toNat
 
@@ -46,6 +48,9 @@ lemma UInt64.eq_iff_toNat_eq (m n : UInt64) : m = n ↔ m.toNat = n.toNat := by
 
 lemma UInt64.pos_iff_toNat_pos (n : UInt64) : 0 < n ↔ 0 < n.toNat := by
   rw [lt_iff_toNat_lt, toNat_zero]
+
+lemma UInt64.eq_zero_iff_toNat_eq_zero {n : UInt64} : n = 0 ↔ n.toNat = 0 := by
+  simp only [eq_iff_toNat_eq, toNat_zero]
 
 lemma UInt64.ne_zero_iff_toNat_ne_zero {n : UInt64} : n ≠ 0 ↔ n.toNat ≠ 0 := by
   simp only [Ne.def, eq_iff_toNat_eq, toNat_zero]
@@ -143,15 +148,21 @@ lemma UInt64.toNat_add_of_add_lt {m n : UInt64} (h : m + n < m) :
   · contrapose h; simp only [mn, if_true, Nat.sub_zero, not_lt]; apply Nat.le_add_right
   · simp only [mn, ite_false, ge_iff_le]
 
--- If truncation doesn't occur, `-` commutes with `toNat`
+/-- `UInt64` subtract wraps around -/
+lemma UInt64.toNat_sub' {x y : UInt64} : (x - y).toNat = (x.toNat + (size - y.toNat)) % size := rfl
+
+/-- If truncation doesn't occur, `-` commutes with `toNat` -/
 lemma UInt64.toNat_sub {x y : UInt64} (h : y ≤ x) : (x - y).toNat = x.toNat - y.toNat := by
-  trans (x.toNat + (size - y.toNat)) % size
-  · rfl
-  · rw [le_iff_toNat_le] at h
-    rw [←Nat.add_sub_assoc (le_size _), add_comm, Nat.add_sub_assoc h]
-    simp only [ge_iff_le, toNat_le_toNat, Nat.add_mod_left]
-    rw [Nat.mod_eq_of_lt]
-    exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
+  rw [toNat_sub']
+  rw [le_iff_toNat_le] at h
+  rw [←Nat.add_sub_assoc (le_size _), add_comm, Nat.add_sub_assoc h]
+  simp only [ge_iff_le, toNat_le_toNat, Nat.add_mod_left]
+  rw [Nat.mod_eq_of_lt]
+  exact lt_of_le_of_lt (Nat.sub_le _ _) (lt_size _)
+
+/-- If truncation doesn't occur, `-` reduces -/
+lemma UInt64.sub_le {x y : UInt64} (h : y ≤ x) : x - y ≤ x := by
+  rw [le_iff_toNat_le, toNat_sub h]; apply Nat.sub_le
 
 /-- Adding 1 is usually adding one `toNat` -/
 lemma UInt64.toNat_add_one {m : UInt64} (h : m.toNat ≠ 2^64-1) : (m + 1).toNat = m.toNat + 1 := by
@@ -159,6 +170,10 @@ lemma UInt64.toNat_add_one {m : UInt64} (h : m.toNat ≠ 2^64-1) : (m + 1).toNat
   contrapose h; simp only [size_eq_pow, not_lt] at h
   simp only [ge_iff_le, ne_eq, not_not]
   exact le_antisymm (UInt64.le_size_sub_one _) (Nat.sub_le_of_le_add h)
+
+/-- Adding 1 is usually adding one `toNat` -/
+lemma UInt64.toNat_add_one' {m : UInt64} (h : m ≠ .max) : (m + 1).toNat = m.toNat + 1 := by
+  apply toNat_add_one; simpa only [ne_eq, eq_iff_toNat_eq] using h
 
 /-- `UInt64` is a linear order (though not an ordered algebraic structure) -/
 instance : LinearOrder UInt64 where
@@ -176,6 +191,9 @@ instance : LinearOrder UInt64 where
   simp only [HAnd.hAnd, AndOp.and, UInt64.land, Fin.land, toNat]
   rw [Nat.mod_eq_of_lt]
   exact lt_of_le_of_lt Nat.land_le_max (max_lt (Fin.prop _) (Fin.prop _))
+
+/-- `UInt64` mod is `ℕ` mod -/
+@[simp] lemma UInt64.toNat_mod {x y : UInt64} : (x % y).toNat = x.toNat % y.toNat := rfl
 
 @[simp] lemma UInt64.land_eq_hand {x y : UInt64} : UInt64.land x y = x &&& y := rfl
 
@@ -315,12 +333,67 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
 @[simp] lemma UInt64.cast_toNat (n : UInt64) : (n.toNat : UInt64) = n := by
   simp only [UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size]
 
+@[simp] lemma UInt64.toInt_intCast (n : ℤ) : ((n : UInt64).toNat : ℤ) = n % 2^64 := by
+  have p0 : 0 < 2^64 := by norm_num
+  induction' n using Int.induction_overlap with n n
+  · simp only [Int.cast_ofNat, toNat_cast, Int.ofNat_emod, Nat.cast_ofNat]; norm_num
+  · simp only [Int.cast_neg, Int.cast_ofNat, toNat_neg, size_eq_pow, toNat_cast, Nat.cast_ite,
+      CharP.cast_eq_zero, eq_iff_toNat_eq, toNat_zero, Nat.cast_sub (Nat.mod_lt _ p0).le,
+      Nat.cast_pow, Nat.cast_ofNat, Int.ofNat_emod]
+    rw [←Nat.div_add_mod n (2^64)]
+    generalize n / 2^64 = a
+    generalize hb : n % 2^64 = b
+    have bp : b < 2^64 := by rw [←hb]; exact Nat.mod_lt _ p0
+    have e : -(2^64 * (a : ℤ)) + -b = 2^64 - b + (-a - 1) * 2^64 := by ring
+    simp only [add_comm _ b, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt bp, Nat.cast_add,
+      Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, Int.add_mul_emod_self_left, neg_add_rev, e,
+      Int.add_mul_emod_self]
+    split_ifs with b0
+    · simp only [b0]; rfl
+    · rw [Int.emod_eq_of_lt (by omega) (by omega), Int.emod_eq_of_lt (by omega) (by omega)]
+
+lemma UInt64.toInt_mem_Ico (n : UInt64) : (n.toNat : ℤ) ∈ Ico 0 (2^64) := by
+  simp only [mem_Ico, Nat.cast_nonneg, cast_toNat_lt_2_pow_64, and_self]
+
 @[simp] lemma UInt64.toNat_log2 (n : UInt64) : n.log2.toNat = n.toNat.log2 := rfl
+
+@[simp] lemma UInt64.log2_zero : (0 : UInt64).log2 = 0 := rfl
 
 @[simp] lemma UInt64.log2_lt_64 (n : UInt64) : n.toNat.log2 < 64 := by
   by_cases n0 : n.toNat = 0
   · simp only [n0, Nat.log2_zero, Nat.zero_lt_succ]
   · simp only [Nat.log2_lt n0, toNat_lt_2_pow_64 n]
+
+@[simp] lemma UInt64.log2_lt_64' (n : UInt64) : n.log2 < 64 := by
+  rw [lt_iff_toNat_lt, toNat_log2]; exact log2_lt_64 _
+
+lemma UInt64.toNat_add_of_le {x y : UInt64} (h : x ≤ .max - y) :
+    (x + y).toNat = x.toNat + y.toNat := by
+  rw [UInt64.toNat_add']
+  split_ifs with h1
+  · simp only [tsub_zero]
+  · exfalso
+    have e : (2^64 - 1 : UInt64).toNat = 2^64 - 1 := by decide
+    have yp : y.toNat < 2^64 := toNat_lt_2_pow_64 _
+    simp only [max_eq_pow_sub_one, size_eq_pow, not_lt, le_iff_toNat_le] at h h1
+    rw [UInt64.toNat_sub, e, Nat.le_sub_iff_add_le] at h
+    · have b := le_trans h1 h
+      norm_num at b
+    · exact Nat.le_sub_one_of_lt yp
+    · rw [le_iff_toNat_le, e]; exact Nat.le_sub_one_of_lt yp
+
+lemma UInt64.pos_iff_ne_zero {x : UInt64} : 0 < x ↔ x ≠ 0 := by
+  simp only [pos_iff_toNat_pos, Nat.pos_iff_ne_zero, ne_eq, eq_iff_toNat_eq, toNat_zero]
+
+@[simp] lemma UInt64.toNat_max : UInt64.max.toNat = 2^64 - 1 := rfl
+
+@[simp] lemma UInt64.le_max (n : UInt64) : n ≤ max := by
+  rw [UInt64.le_iff_toNat_le, toNat_max]; exact Nat.le_of_lt_succ (lt_size _)
+
+@[simp] lemma UInt64.toNat_le_pow_sub_one (n : UInt64) : n.toNat ≤ 2^64 - 1 :=
+  Nat.le_of_lt_succ (toNat_lt_2_pow_64 _)
+
+@[simp] lemma UInt64.pow_eq_zero : (2^64 : UInt64) = 0 := by decide
 
 /-!
 ### Conversion from `UInt64` to `ZMod`
@@ -464,6 +537,13 @@ lemma UInt64.eq_split (x : UInt64) :
 
 @[pp_dot] def UInt64.toInt (x : UInt64) : ℤ := x.toNat
 
+@[pp_dot] lemma UInt64.coe_toNat_sub {x y : UInt64} (h : y ≤ x) :
+    ((x - y).toNat : ℤ) = x.toNat - y.toNat := by
+  rw [UInt64.toNat_sub h, Nat.cast_sub]
+  rwa [←UInt64.le_iff_toNat_le]
+
+@[simp] lemma UInt64.toInt_zero : (0 : UInt64).toInt = 0 := rfl
+
 /-!
 ### Shift right, rounding up or down
 -/
@@ -475,6 +555,13 @@ lemma UInt64.eq_split (x : UInt64) :
   else
     let y := x >>> s
     bif up && x != y <<< s then y+1 else y
+
+/-- `0.shiftRightRound = 0` -/
+@[simp] lemma UInt64.zero_shiftRightRound (s : UInt64) (up : Bool) :
+    (0 : UInt64).shiftRightRound s up = 0 := by
+  rw [shiftRightRound]
+  simp only [beq_self_eq_true, Bool.true_or, cond_true, zero_shiftRight, zero_shiftLeft,
+    bne_self_eq_false, Bool.and_false, zero_add, cond_false, Bool.cond_self]
 
 /-- Exact `ℕ` result of `UInt64.shiftRightRound` -/
 lemma UInt64.toNat_shiftRightRound {x : UInt64} {s : UInt64} {up : Bool} :
@@ -555,3 +642,26 @@ lemma UInt64.shiftRightRound_le_self {x : UInt64} {s : UInt64} {up : Bool} :
   · exact Nat.div_le_self x.toNat (2 ^ s.toNat)
   · simp only [ite_true, gt_iff_lt, zero_lt_two, pow_pos, ceilDiv_le_iff_le_smul, smul_eq_mul]
     exact Nat.le_mul_of_pos_left _ (by positivity)
+
+/-!
+### Complement facts
+-/
+
+lemma UInt64.toNat_complement (x : UInt64) : (~~~x).toNat = 2^64 - 1 - x.toNat := by
+  have e : ~~~x = 0 - (x + 1) := rfl
+  rw [e, zero_sub, toNat_neg]
+  by_cases x1 : x + 1 = 0
+  · have e : x = (x + 1) - 1 := by ring
+    rw [e, x1]; rfl
+  · simp only [x1, ite_false, toNat_add, toNat_one]
+    rw [Nat.mod_eq_of_lt, size_eq_pow]
+    · omega
+    · contrapose x1
+      simp only [not_lt, not_not, size_eq_pow] at x1 ⊢
+      have h : x.toNat + 1 ≤ 2^64 := by have h := x.toNat_lt; omega
+      have e : x = 2^64 - 1 := by
+        have e : (2^64 - 1 : UInt64).toNat = 2^64 - 1 := by native_decide
+        rw [eq_iff_toNat_eq, e]
+        norm_num only at x1 h ⊢
+        omega
+      rw [e]; decide

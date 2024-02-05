@@ -88,3 +88,6 @@ lemma if_and {X : Type} {p q : Prop} {dp : Decidable (p ∧ q)} {x y : X} :
 
 @[simp] lemma if_true_false {p : Prop} {dp : Decidable p} : @ite _ p dp True False = p := by
   by_cases h : p; repeat simp [h]
+
+@[simp] lemma Bool.bne_eq_false {x y : Bool} : (x != y) = false ↔ x = y := by
+  induction x; all_goals induction y; all_goals decide

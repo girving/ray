@@ -2,6 +2,7 @@ import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Bitwise
 import Mathlib.Data.Nat.Order.Basic
 import Mathlib.Data.Nat.Parity
+import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.LibrarySearch
 import Ray.Approx.Bool
 
@@ -169,7 +170,7 @@ lemma Nat.mod_mul_eq_mul_mod' (a n m : ℕ) (m0 : m ≠ 0) : a * n % (m * n) = a
     generalize hb : a % m = b
     generalize a / m = c
     have bm : b < m := by rw [←hb]; exact mod_lt _ m0
-    have bnn : b * n < m * n := by exact Nat.mul_lt_mul bm (le_refl _) (Nat.pos_of_ne_zero n0)
+    have bnn : b * n < m * n := Nat.mul_lt_mul_of_lt_of_le bm (le_refl _) (Nat.pos_of_ne_zero n0)
     rw [add_mul, Nat.mul_comm _ c, mul_assoc, add_mod, add_mod (c*m) b m]
     simp only [mul_mod_left, zero_add, mod_eq_of_lt bm, mod_eq_of_lt bnn]
 
@@ -333,4 +334,109 @@ lemma Nat.le_add_div_mul {n k : ℕ} (k0 : 0 < k) : n ≤ (n + k - 1) / k * k :=
 
 @[simp] lemma Nat.log2_zero : Nat.log2 0 = 0 := rfl
 
+lemma Nat.two_pow_ne_zero {n : ℕ} : 2^n ≠ 0 := by
+  apply pow_ne_zero; norm_num
+
 attribute [simp] Nat.testBit_mod_two_pow
+
+/-!
+### Divide and shift with controllable rounding
+-/
+
+/-- Divide, rounding up or down -/
+def Nat.rdiv (n k : ℕ) (up : Bool) : ℕ :=
+  (bif up then n + (k-1) else n) / k
+
+/-- Shift right, rounding up or down -/
+@[irreducible] def Nat.shiftRightRound (n k : ℕ) (up : Bool) : ℕ :=
+  (bif up then n + ((1 <<< k) - 1) else n) >>> k
+
+lemma Nat.shiftRightRound_eq_rdiv (n k : ℕ) (up : Bool) :
+    n.shiftRightRound k up = n.rdiv (2^k) up := by
+  rw [shiftRightRound]
+  simp only [shiftLeft_eq, one_mul, bif_eq_if, shiftRight_eq_div_pow, rdiv]
+
+/-- `rdiv` rounds down if desired -/
+lemma Nat.rdiv_le {a b : ℕ} : (a.rdiv b false : ℝ) ≤ a / b := by
+  simp only [rdiv, cond_false]
+  by_cases b0 : b = 0
+  · simp only [b0, Nat.cast_zero, Nat.div_zero, cast_zero, div_zero, le_refl]
+  · rw [le_div_iff]
+    · rw [←Nat.cast_mul, Nat.cast_le]
+      exact div_mul_le_self a b
+    · exact Nat.cast_pos.mpr (Nat.pos_of_ne_zero b0)
+
+/-- `rdiv` rounds up if desired -/
+lemma Nat.le_rdiv {a b : ℕ} : (a / b : ℝ) ≤ a.rdiv b true := by
+  simp only [rdiv, cond_true]
+  by_cases b0 : b = 0
+  · simp only [b0, cast_zero, div_zero, ge_iff_le, _root_.zero_le, tsub_eq_zero_of_le, add_zero,
+      Nat.div_zero, le_refl]
+  · rw [div_le_iff (Nat.cast_pos.mpr (Nat.pos_of_ne_zero b0)), ←Nat.cast_mul, Nat.cast_le]
+    have lt : b - 1 < b := by omega
+    rw [add_div (by omega), div_eq_of_lt lt, add_zero, mod_eq_of_lt lt]
+    by_cases z : a % b = 0
+    · simp only [z, zero_add, not_le.mpr lt, ite_false, add_zero, ge_iff_le]
+      refine (Nat.div_mul_cancel ((Nat.dvd_iff_mod_eq_zero _ _).mpr z)).symm.le
+    · simp only [←Nat.pos_iff_ne_zero] at z
+      have le : b ≤ a % b + (b - 1) := by omega
+      simp only [le, ite_true, ge_iff_le, add_one_mul]
+      nth_rw 1 [←Nat.div_add_mod a b, mul_comm b]
+      simp only [add_le_add_iff_left]
+      exact (Nat.mod_lt _ (by omega)).le
+
+lemma Nat.rdiv_le_rdiv {a b : ℕ} {u0 u1 : Bool} (u01 : u0 ≤ u1) :
+    a.rdiv b u0 ≤ a.rdiv b u1 := by
+  induction u0
+  · induction u1
+    · rfl
+    · rw [←Nat.cast_le (α := ℝ)]
+      exact le_trans Nat.rdiv_le Nat.le_rdiv
+  · simp only [Bool.eq_true_of_true_le u01, le_refl]
+
+@[simp] lemma Nat.zero_rdiv {b : ℕ} {up : Bool} : (0 : ℕ).rdiv b up = 0 := by
+  rw [rdiv]
+  induction up
+  · simp only [zero_add, cond_false, Nat.zero_div]
+  · simp only [zero_add, cond_true]
+    by_cases b0 : b = 0
+    · simp only [b0, _root_.zero_le, tsub_eq_zero_of_le, Nat.div_zero]
+    · exact Nat.div_eq_of_lt (by omega)
+
+/-- `rdiv` by 0 is 0 -/
+@[simp] lemma Nat.rdiv_zero {a : ℕ} {up : Bool} : a.rdiv 0 up = 0 := by
+  rw [rdiv]; simp only [_root_.zero_le, tsub_eq_zero_of_le, add_zero, Bool.cond_self, Nat.div_zero]
+
+/-- `rdiv` by 1 does nothing -/
+@[simp] lemma Nat.rdiv_one {a : ℕ} {up : Bool} : a.rdiv 1 up = a := by
+  rw [rdiv]
+  induction up
+  repeat simp only [le_refl, tsub_eq_zero_of_le, add_zero, Bool.cond_self, Nat.div_one]
+
+/-- `rdiv` never rounds up by much -/
+lemma Nat.rdiv_lt {a b : ℕ} {up : Bool} : (a.rdiv b up : ℝ) < a / b + 1 := by
+  by_cases b0 : b = 0
+  · simp only [b0, rdiv_zero, cast_zero, div_zero, zero_add, zero_lt_one]
+  refine lt_of_le_of_lt (Nat.cast_le.mpr (Nat.rdiv_le_rdiv (Bool.le_true up))) ?_
+  simp only [rdiv, cond_true]
+  have b0 : 0 < (b : ℝ) := by positivity
+  have bb : b-1 < b := by omega
+  rw [←mul_lt_mul_iff_of_pos_right b0]
+  simp only [add_one_mul, div_mul_cancel _ b0.ne', ←Nat.cast_add, ←Nat.cast_mul, Nat.cast_lt]
+  refine lt_of_le_of_lt (Nat.div_mul_le_self _ _) ?_
+  omega
+
+/-- Prove `rdiv ≤` in terms of a multiplication inequality -/
+lemma Nat.rdiv_le_of_le_mul {a b c : ℕ} {up : Bool} (h : a ≤ c * b) : a.rdiv b up ≤ c := by
+  by_cases b0 : b = 0
+  · simp only [b0, rdiv_zero, _root_.zero_le]
+  · refine le_trans (rdiv_le_rdiv (Bool.le_true _)) ?_
+    have b0' : 0 < b := pos_iff_ne_zero.mpr b0
+    simp only [rdiv, cond_true, Nat.div_le_iff_le_mul_add_pred b0']
+    linarith
+
+/-- Prove `≤ rdiv` in terms of a multiplication inequality -/
+lemma Nat.le_rdiv_of_mul_le {a b c : ℕ} {up : Bool} (b0 : 0 < b) (h : c * b ≤ a) :
+    c ≤ a.rdiv b up := by
+  refine le_trans ?_ (rdiv_le_rdiv (Bool.false_le _))
+  simpa only [rdiv, cond_false, le_div_iff_mul_le b0]

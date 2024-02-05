@@ -1,7 +1,16 @@
 import Ray.Approx.Box
 import Ray.Approx.Division
-import Ray.Approx.Interval
+import Ray.Approx.Floating.Abs
+import Ray.Approx.Floating.Add
+import Ray.Approx.Floating.Basic
+import Ray.Approx.Floating.Neg
+import Ray.Approx.Floating.Order
+import Ray.Approx.Floating.Scale
+import Ray.Approx.Interval.Basic
+import Ray.Approx.Interval.Mul
+import Ray.Approx.Interval.Conversion
 import Ray.Approx.Series
+import Ray.Approx.Floating.Standardization
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.Basic

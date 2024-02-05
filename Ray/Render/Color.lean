@@ -1,4 +1,4 @@
-import Ray.Approx.Interval
+import Ray.Approx.Interval.Basic
 
 /-!
 ## Approximate colors

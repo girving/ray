@@ -1,7 +1,7 @@
 import Mathlib.Data.Real.Basic
 import Ray.Approx.Bool
-import Ray.Approx.Int
 import Ray.Approx.UInt64
+import Ray.Misc.Int
 
 /-!
 ## 64-bit two's complement integers
@@ -124,7 +124,9 @@ instance : LE Int64 where
 
 /-- The definition of `<` -/
 lemma Int64.lt_def (x y : Int64) :
-    (x < y) = (x.isNeg > y.isNeg || (x.isNeg == y.isNeg && x.n < y.n)) := rfl
+    (x < y) = (x.isNeg > y.isNeg ∨ (x.isNeg = y.isNeg ∧ x.n < y.n)) := by
+  simp only [LT.lt, blt, gt_iff_lt, Bool.and_eq_true, Bool.not_eq_true', Bool.decide_and,
+    Bool.decide_coe, Bool.or_eq_true, decide_eq_true_eq, beq_iff_eq]
 
 /-- The definition of `≤` -/
 lemma Int64.le_def (x y : Int64) :
@@ -142,6 +144,22 @@ instance decidableLE : @DecidableRel Int64 (· ≤ ·)
 lemma Int64.blt_eq_decide_lt (x y : Int64) : x.blt y = decide (x < y) := by
   simp only [LT.lt, Bool.decide_coe]
 
+/-- Negation preserves `min` -/
+@[simp] lemma Int64.neg_eq_min {x : Int64} : (-x) = min ↔ x = min := by
+  have i : ∀ {x : Int64}, x = min → (-x) = min := by
+    intro x h; simp only [h, neg_def, n_min]; decide
+  by_cases a : x = min
+  · simp only [a, neg_min]
+  · by_cases b : (-x) = min
+    · rw [b, ←neg_neg x, i b]
+    · simp only [a, b]
+
+/-- `min ≠ 0` -/
+@[simp] lemma Int64.min_ne_zero : Int64.min ≠ 0 := by decide
+
+/-- `0 ≠ min` -/
+@[simp] lemma Int64.zero_ne_min : 0 ≠ Int64.min := by decide
+
 -- Consequences of the sign bit being true or false
 lemma Int64.coe_of_nonneg {x : Int64} (h : x.isNeg = false) : (x : ℤ) = x.n.toNat := by
   simp only [h, cond_false, Nat.cast_zero, sub_zero, Int64.toInt]
@@ -157,26 +175,40 @@ lemma Int64.isNeg_eq_le (x : Int64) : x.isNeg = decide (2^63 ≤ x.n.toNat) := b
 @[simp] lemma Int64.coe_lt_coe (x y : Int64) : (x : ℤ) < (y : ℤ) ↔ x < y := by
   by_cases xs : x.isNeg
   · by_cases ys : y.isNeg
-    · simp only [UInt64.toNat, xs, cond_true, Nat.cast_pow, Nat.cast_ofNat, ys,
-        sub_lt_sub_iff_right, Nat.cast_lt, Fin.val_fin_lt, lt_def, lt_self_iff_false, decide_False,
-        beq_self_eq_true, Bool.true_and, Bool.false_or, decide_eq_true_eq, Int64.toInt]
-      apply Fin.val_fin_lt
+    · simp only [toInt, UInt64.toNat, UInt64.val_val_eq_toNat, xs, cond_true, Nat.cast_pow,
+        Nat.cast_ofNat, ys, sub_lt_sub_iff_right, Nat.cast_lt, UInt64.toNat_lt_toNat, lt_def,
+        gt_iff_lt, lt_self_iff_false, true_and, false_or]
     · simp only [toInt, xs, cond_true, Nat.cast_pow, Nat.cast_ofNat, ys, cond_false,
-        CharP.cast_eq_zero, sub_zero, lt_def, gt_iff_lt, Bool.false_lt_true, decide_True,
-        Bool.true_or, iff_true]
+        CharP.cast_eq_zero, sub_zero, lt_def, gt_iff_lt, Bool.false_lt_true, false_and, or_false,
+        iff_true]
       refine lt_of_lt_of_le ?_ (Nat.cast_nonneg _)
       simp only [sub_neg, UInt64.cast_toNat_lt_2_pow_64]
   · by_cases ys : y.isNeg
     · simp only [toInt, xs, cond_false, CharP.cast_eq_zero, sub_zero, ys, cond_true, Nat.cast_pow,
-        Nat.cast_ofNat, lt_def, gt_iff_lt, Bool.lt_iff, and_self, decide_False, Bool.false_or,
-        Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, false_and, iff_false, not_lt,
-        tsub_le_iff_right]
+        Nat.cast_ofNat, lt_def, gt_iff_lt, Bool.lt_iff, and_self, false_and, or_self, iff_false,
+        not_lt, tsub_le_iff_right]
       refine (lt_of_lt_of_le (UInt64.cast_toNat_lt_2_pow_64 _) ?_).le
       simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]
-    · simp only [UInt64.toNat, xs, cond_false, Nat.cast_zero, sub_zero, ys, Nat.cast_lt,
-        Fin.val_fin_lt, lt_def, lt_self_iff_false, decide_False, beq_self_eq_true, Bool.true_and,
-        Bool.false_or, decide_eq_true_eq, Int64.toInt]
-      apply Fin.val_fin_lt
+    · simp only [toInt, UInt64.toNat, UInt64.val_val_eq_toNat, xs, cond_false, CharP.cast_eq_zero,
+        sub_zero, ys, Nat.cast_lt, UInt64.toNat_lt_toNat, lt_def, gt_iff_lt, lt_self_iff_false,
+        true_and, false_or]
+
+/-- Converting to `ℤ` is under `2^63` -/
+@[simp] lemma Int64.coe_lt_pow (x : Int64) : (x : ℤ) < 2^63 := by
+  have h := UInt64.toNat_lt_2_pow_64 x.n
+  simp only [toInt, bif_eq_if, Nat.cast_ite, Nat.cast_pow, Nat.cast_ofNat, CharP.cast_eq_zero]
+  split_ifs with h0
+  · linarith
+  · simp only [isNeg_eq_le, decide_eq_true_eq, not_le] at h0
+    simp only [sub_zero]; omega
+
+/-- Converting to `ℤ` is at least `-2^63` -/
+@[simp] lemma Int64.pow_le_coe (x : Int64) : -2^63 ≤ (x : ℤ) := by
+  simp only [toInt, isNeg_eq_le, bif_eq_if, decide_eq_true_eq, Nat.cast_ite, Nat.cast_pow,
+    Nat.cast_ofNat, CharP.cast_eq_zero]
+  split_ifs; repeat linarith
+
+@[simp] lemma Int64.coe_min' : ((.min : Int64) : ℤ) = -(2:ℤ)^63 := rfl
 
 /-- The ordering is consistent with `ℤ` -/
 @[simp] lemma Int64.coe_le_coe (x y : Int64) : (x : ℤ) ≤ (y : ℤ) ↔ x ≤ y := by
@@ -234,6 +266,12 @@ lemma Int64.isNeg_neg {x : Int64} (x0 : x ≠ 0) (xn : x ≠ .min) : (-x).isNeg 
 @[simp] lemma Int64.coe_eq_zero (x : Int64) : (x : ℤ) = 0 ↔ x = 0 := by
   rw [←coe_zero, coe_eq_coe]
 
+/-- Converting to `ℤ` is more than `-2^63` if we're not `min` -/
+@[simp] lemma Int64.pow_lt_coe {x : Int64} (n : x ≠ min) : -2^63 < (x : ℤ) := by
+  refine Ne.lt_of_le ?_ (pow_le_coe x)
+  rw [Ne.def, ←coe_min', coe_eq_coe]
+  exact n.symm
+
 /-!
 ### Conditions for `ℤ` conversion to commute with arithmetic
 -/
@@ -288,6 +326,11 @@ lemma Int64.coe_add_eq {x y : Int64} (h : (x + y).isNeg = x.isNeg) :
       simp only [UInt64.toNat_add', lt, ite_true, ge_iff_le, nonpos_iff_eq_zero, add_eq_zero,
         tsub_zero, Nat.cast_add]
 
+/-- `ℤ` conversion commutes with add if `isNeg` matches the right argument -/
+lemma Int64.coe_add_eq' {x y : Int64} (h : (x + y).isNeg = y.isNeg) :
+    ((x + y : Int64) : ℤ) = x + y := by
+  simp only [add_comm x, add_comm (x : ℤ)] at h ⊢; apply Int64.coe_add_eq h
+
 /-- `ℤ` conversion commutes with add if the two arguments have different `isNeg`s -/
 lemma Int64.coe_add_ne {x y : Int64} (h : x.isNeg ≠ y.isNeg) : ((x + y : Int64) : ℤ) = x + y := by
   have way : ∀ {x y : Int64}, x.isNeg → ¬y.isNeg → ((x + y : Int64) : ℤ) = x + y := by
@@ -311,6 +354,60 @@ lemma Int64.coe_add_ne {x y : Int64} (h : x.isNeg ≠ y.isNeg) : ((x + y : Int64
   · simp only [x0] at h; exact way x0 h.symm
   · simp only [x0] at h; rw [ne_comm, Ne.def, Bool.not_eq_false] at h
     rw [_root_.add_comm, _root_.add_comm (x : ℤ)]; exact way h x0
+
+/-- `ℤ` conversion commutes with sub if the result is positive -/
+lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg = false) :
+    ((x - y : Int64) : ℤ) = x - y := by
+  simp only [sub_def, isNeg_eq_le, UInt64.toNat_sub', UInt64.size_eq_pow, decide_eq_false_iff_not,
+    not_le, toInt, Int.ofNat_emod, Nat.cast_add, Nat.cast_pow, Nat.cast_ofNat, bif_eq_if,
+    decide_eq_true_eq, Nat.cast_ite, CharP.cast_eq_zero, Int64.le_def, Int64.lt_def,
+    Bool.lt_iff, Bool.or_eq_true, decide_eq_decide, Bool.and_eq_true, beq_iff_eq, not_or,
+    not_and_or, not_lt, UInt64.le_iff_toNat_le] at yx h ⊢
+  have xs  : x.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
+  have ys  : y.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
+  generalize x.n.toNat = x at h xs yx
+  generalize y.n.toNat = y at h ys yx
+  have xc0 : 0 ≤ (x : ℤ) := by omega
+  have yc0 : 0 ≤ (y : ℤ) := by omega
+  have xcs : (x : ℤ) < 2^64 := by omega
+  simp only [Nat.cast_sub ys.le, Nat.cast_pow, Nat.cast_ofNat]
+  by_cases y0 : y = 0
+  · simp only [y0, tsub_zero, Nat.cast_pow, Nat.cast_ofNat, Int.add_emod_self,
+      Int.emod_eq_of_lt xc0 xcs, Nat.add_mod_right, xs, Nat.mod_eq_of_lt, CharP.cast_eq_zero,
+      nonpos_iff_eq_zero, ite_false, sub_self, sub_zero]
+  · by_cases c0 : x + (2 ^ 64 - y) < 2^64
+    · have d0 : (x : ℤ) + (2^64 - y) < 2^64 := by omega
+      have d1 : 0 ≤ (x : ℤ) + (2^64 - y) := by omega
+      simp only [Nat.mod_eq_of_lt c0, Int.emod_eq_of_lt d1 d0] at h ⊢
+      simp only [not_le.mpr h, ite_false, sub_zero]
+      split_ifs with h0 h1 h2
+      · omega
+      · omega
+      · omega
+      · contrapose h; simp only [not_le, not_lt] at h2 ⊢
+        exact le_trans (le_trans (by norm_num) (Nat.sub_le_sub_left h2.le _)) (Nat.le_add_left _ _)
+    · simp only [not_lt] at c0
+      have yx' : y ≤ x := by omega
+      have e0 : x + (2 ^ 64 - y) - 2 ^ 64 = x - y := by
+        rw [←Nat.add_sub_assoc ys.le, Nat.sub_right_comm, Nat.add_sub_assoc (le_refl _),
+          Nat.sub_self,  Nat.add_zero]
+      have e1 : (x + (2 ^ 64 - y)) % 2 ^ 64 = x - y := by
+        rw [Nat.mod_eq]
+        simp only [gt_iff_lt, zero_lt_two, pow_pos, c0, and_self, ite_true, e0,
+          Nat.mod_eq_of_lt (lt_of_le_of_lt (Nat.sub_le _ _) xs)]
+      have d0 : (x : ℤ) - y < 2^64 := by linarith
+      have d1 : 0 ≤ (x : ℤ) - y := by linarith
+      have d2 : (x : ℤ) + (2 ^ 64 - ↑y) = 2^64 + (x - y) := by ring
+      have d3 : ((x : ℤ) + (2 ^ 64 - ↑y)) % 2 ^ 64 = ↑x - ↑y := by
+        simp only [d2, Int.add_emod, Int.emod_self, zero_add, Int.emod_eq_of_lt d1 d0]
+      simp only [e1] at h
+      simp only [e1, not_le.mpr h, if_false, sub_zero, d3]
+      split_ifs with h0 h1 h2
+      · ring
+      · simp only [h1, not_lt.mpr h0, or_self, h0, iff_false, not_true_eq_false, not_false_eq_true,
+          true_or, and_true] at yx
+      · linarith
+      · ring
 
 /-- Conversion to `ℤ` is the same as via `ℕ` if we're nonnegative -/
 lemma Int64.toReal_toInt {x : Int64} (h : x.isNeg = false) : ((x : ℤ) : ℝ) = x.n.toNat := by
@@ -437,6 +534,9 @@ lemma Int64.coe_lt_zero_iff {x : Int64} : (x : ℤ) < 0 ↔ x.isNeg := by
   · intro h; contrapose h; simp only [Bool.not_eq_true, not_lt] at h ⊢; exact coe_nonneg h
   · exact coe_lt_zero
 
+lemma Int64.coe_nonneg_iff {x : Int64} : 0 ≤ (x : ℤ) ↔ x.isNeg = false := by
+  rw [←not_iff_not]; simp only [not_le, coe_lt_zero_iff, Bool.not_eq_false]
+
 @[simp] lemma Int64.coe_pos_iff {x : Int64} : 0 < (x : ℤ) ↔ 0 < x := by
   have h := coe_lt_coe 0 x
   simpa only [coe_zero] using h
@@ -448,7 +548,56 @@ lemma Int64.isNeg_eq {x : Int64} : x.isNeg = decide (x < 0) := by
     simp only [Bool.not_eq_true] at n
     exact coe_nonneg n
 
-@[simp] lemma Int64.coe_min' : ((.min : Int64) : ℤ) = -(2:ℤ)^63 := rfl
+@[simp] lemma Int64.natAbs_lt_pow_iff {x : Int64} : (x : ℤ).natAbs < 2^63 ↔ x ≠ min := by
+  rw [←not_iff_not, not_not, not_lt]
+  constructor
+  · intro h
+    rw [Int64.toInt] at h
+    by_cases n : x.isNeg
+    · simp only [n, cond_true, Nat.cast_pow, Nat.cast_ofNat] at h
+      simp only [isNeg_eq_le, decide_eq_true_eq] at n
+      have e : (x.n.toNat : ℤ) - 2 ^ 64 = -(2^64 - x.n.toNat : ℕ) := by norm_num
+      simp only [e, Int.natAbs_neg, Int.natAbs_ofNat] at h
+      simp only [ext_iff, n_min, UInt64.eq_iff_toNat_eq, UInt64.toNat_2_pow_63]
+      linarith
+    · simp only [Bool.not_eq_true] at n
+      simp only [n, cond_false, CharP.cast_eq_zero, sub_zero, Int.natAbs_ofNat] at h
+      simp only [isNeg_eq_le, decide_eq_false_iff_not, not_le] at n
+      linarith
+  · intro e; rw [e]; decide
+
+/-- A sufficient condition for subtraction to decrease the value -/
+lemma Int64.sub_le {x y : Int64} (y0 : y.isNeg = false) (h : min + y ≤ x) : x - y ≤ x := by
+  simp only [isNeg_eq_le, decide_eq_false_iff_not, not_le, add_def, n_min, le_def, lt_def,
+    UInt64.toNat_add, UInt64.toNat_2_pow_63, UInt64.size_eq_pow, gt_iff_lt, Bool.lt_iff,
+    decide_eq_true_eq, Bool.decide_and, UInt64.lt_iff_toNat_lt, Bool.or_eq_true, Bool.and_eq_true,
+    beq_iff_eq, decide_eq_decide, sub_def, UInt64.toNat_sub'] at y0 h ⊢
+  have xs : x.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
+  have ys : y.n.toNat < 2^64 := UInt64.toNat_lt_2_pow_64 _
+  generalize x.n.toNat = a at h xs
+  generalize y.n.toNat = b at h ys y0
+  clear x y
+  have b0 : 2^63 + b < 2^64 := by linarith
+  simp only [b0, Nat.mod_eq_of_lt, add_lt_iff_neg_left, not_lt_zero', false_and,
+    le_add_iff_nonneg_right, zero_le, iff_true, false_or, not_and, not_lt] at h
+  by_cases a3 : a < 2^63
+  · simp only [not_le.mpr a3, and_false, false_iff, not_le, false_or, not_and, not_lt]
+    by_cases ab : a < b
+    · have e0 : (a + (2^64 - b)) = 2^64 - (b - a) := by omega
+      have e1 : 2^64 - (b - a) < 2^64 := by omega
+      simp only [e0, e1, Nat.mod_eq_of_lt, tsub_le_iff_right]
+      omega
+    · have e0 : a + (2^64 - b) = a - b + 2^64 := by omega
+      have e1 : a - b < 2^64 := by omega
+      simp only [e0, Nat.add_mod_right, Nat.mod_eq_of_lt e1, tsub_le_iff_right,
+        le_add_iff_nonneg_right, zero_le, implies_true]
+  · simp only [not_lt] at a3
+    simp only [a3, forall_true_left] at h
+    have e : a + (2^64 - b) = a - b + 2^64 := by omega
+    have d0 : a - b < 2^64 := by omega
+    have d1 : 2^63 ≤ a - b := by omega
+    simp only [e, Nat.add_mod_right, d0, Nat.mod_eq_of_lt, not_lt.mpr d1, false_and, false_or,
+      not_and, not_lt, tsub_le_iff_right, le_add_iff_nonneg_right, zero_le, implies_true]
 
 /-!
 ### Order operations: min, abs
@@ -461,13 +610,38 @@ lemma Int64.isNeg_eq {x : Int64} : x.isNeg = decide (x < 0) := by
 @[simp] lemma Int64.abs_zero : (0 : Int64).abs = 0 := rfl
 @[simp] lemma Int64.abs_min : Int64.min.abs = Int64.min := rfl
 
+/-- `abs` preserves 0 -/
+@[simp] lemma Int64.abs_eq_zero_iff {x : Int64} : x.abs = 0 ↔ x = 0 := by
+  constructor
+  · intro h
+    rw [Int64.abs] at h
+    simp only [ext_iff, n_zero]
+    generalize x.isNeg = b at h
+    induction b
+    · simpa only [cond_false] using h
+    · simpa only [cond_true, neg_eq_zero] using h
+  · intro h; simp only [h, abs_zero]
+
+/-- `abs` preserves 0 -/
+@[simp] lemma Int64.abs_ne_zero_iff {x : Int64} : x.abs ≠ 0 ↔ x ≠ 0 := by
+  simp only [Ne.def, Int64.abs_eq_zero_iff]
+
+/-- `.abs` doesn't change if nonneg -/
+lemma Int64.abs_eq_self' {x : Int64} (h : x.isNeg = false) : x.abs = x.n := by
+  simp only [abs, h, cond_false, toInt, CharP.cast_eq_zero, sub_zero]
+
 /-- `.abs` doesn't change if nonneg -/
 lemma Int64.abs_eq_self {x : Int64} (h : x.isNeg = false) : x.abs.toInt = x := by
   simp only [abs, h, cond_false, toInt, CharP.cast_eq_zero, sub_zero]; rfl
 
 /-- `.abs` negates if negative -/
+lemma Int64.abs_eq_neg' {x : Int64} (n : x.isNeg) : x.abs = (-x).n := by
+  simp only [abs, n, cond_true, neg_def]
+
+/-- `.abs` negates if negative.  It's weird that this proof is so long given the above one liner,
+    so obviously it can be improved (later). -/
 lemma Int64.abs_eq_neg {x : Int64} (n : x.isNeg) : x.abs.toInt = -x := by
-  simp only [UInt64.toInt, abs, n, UInt64.neg_def, Fin.neg, ge_iff_le, cond_true, toInt,
+  simp only [abs_eq_neg' n, UInt64.toInt, abs, n, UInt64.neg_def, Fin.neg, ge_iff_le, cond_true, toInt,
     Nat.cast_pow, Nat.cast_ofNat, neg_sub]
   trans ↑((UInt64.size - ↑x.n.val) % UInt64.size)
   · rfl
@@ -502,12 +676,16 @@ lemma Int64.coe_max {x y : Int64} : (Max.max (α := Int64) x y : ℤ) = Max.max 
   · simp only [xy, ite_true]
   · simp only [xy, ite_false]
 
-/-- `.abs` is absolute value -/
+/-- `.abs` is absolute value (`ℤ` version) -/
 lemma Int64.coe_abs {x : Int64} : x.abs.toInt = |(x : ℤ)| := by
   by_cases n : x.isNeg
   · simp only [abs_eq_neg n, abs_of_neg (coe_lt_zero n)]
   · simp only [Bool.not_eq_true] at n
     simp only [UInt64.toInt, abs, n, cond_false, toInt, CharP.cast_eq_zero, sub_zero, Nat.abs_cast]
+
+/-- `.abs` is absolute value (`ℕ` version) )-/
+lemma Int64.toNat_abs {x : Int64} : x.abs.toNat = (x : ℤ).natAbs := by
+  rw [←Nat.cast_inj (R := ℤ), Int.coe_natAbs]; exact coe_abs
 
 /-- If we turn `abs` back into an `Int64`, it's abs except at `.min` -/
 lemma Int64.coe_abs' {x : Int64} (n : x ≠ .min) : ((⟨x.abs⟩ : Int64) : ℤ) = |(x : ℤ)| := by
@@ -515,11 +693,13 @@ lemma Int64.coe_abs' {x : Int64} (n : x ≠ .min) : ((⟨x.abs⟩ : Int64) : ℤ
   · simp only [x0, coe_zero, abs_zero]; rfl
   have x0' : x.n ≠ 0 := by simpa only [ext_iff, n_zero] using x0
   by_cases xn : x.isNeg
-  · simp only [toInt, abs, xn, cond_true, UInt64.toNat_neg, x0', ge_iff_le, ite_false,
-      UInt64.le_size, Nat.cast_sub, ← neg_def, isNeg_neg x0 n, Bool.not_true, ← UInt64.size_eq_pow,
-      cond_false, CharP.cast_eq_zero, sub_zero]
+  · simp only [abs, xn, cond_true, ← neg_def, toInt._eq_1, isNeg_neg x0 n, Bool.not_true, ←
+      UInt64.size_eq_pow, cond_false, sub_zero, Nat.cast_zero]
     rw [abs_of_neg, neg_sub]
-    simp only [sub_neg, Nat.cast_lt, UInt64.lt_size]
+    · simp only [neg_def, UInt64.toNat_neg, x0', if_false]
+      rw [Nat.cast_sub]
+      exact UInt64.le_size _
+    · simp only [sub_neg, Nat.cast_lt, UInt64.lt_size]
   · have xn' : (⟨x.n⟩ : Int64).isNeg ≠ true := xn
     simp only [toInt, abs, xn, cond_false, xn', CharP.cast_eq_zero, sub_zero, Nat.abs_cast]
 
@@ -528,6 +708,56 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
   by_cases e : x = .min
   · simp only [e, abs_min]; decide
   · simp only [coe_abs' e, e, iff_false, not_lt, abs_nonneg]
+
+/-- `(-x).abs = x.abs` away from `min` -/
+@[simp] lemma Int64.abs_neg {x : Int64} : (-x).abs = x.abs := by
+  by_cases z : x = 0
+  · simp only [z, neg_zero, abs_zero]
+  by_cases m : x = min
+  · simp only [m, neg_min, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]
+  rw [Int64.abs, Int64.abs]
+  simp only [isNeg_neg z m, bif_eq_if, Bool.not_eq_true']
+  simp only [neg_def, neg_neg]
+  by_cases h : x.isNeg
+  repeat simp only [h, ite_false, ite_true]
+
+/-- `(-t).n.toNat = t` when converting negatives to `ℤ` -/
+@[simp] lemma Int64.toNat_neg {x : Int64} (n : x.isNeg) : ((-x).n.toNat : ℤ) = -x := by
+  by_cases x0 : x = 0
+  · simp only [x0, isNeg_zero] at n
+  · simp only [ext_iff, n_zero] at x0
+    simp only [neg_def, UInt64.toNat_neg, x0, UInt64.size_eq_pow, ite_false,
+      Nat.cast_sub (UInt64.toNat_lt_2_pow_64 _).le, Nat.cast_pow, Nat.cast_ofNat, neg_sub,
+      toInt._eq_1, n, cond_true]
+
+@[simp] lemma Int64.abs_eq_pow_iff {x : Int64} : x.abs = 2^63 ↔ x = min := by
+  rw [abs, bif_eq_if]
+  by_cases n : x.isNeg
+  · simp only [n, if_true]
+    have e : -x.n = (-x).n := rfl
+    rw [e, ←n_min, ←ext_iff, neg_eq_min]
+  · simp only [n, ite_false, ext_iff, n_min]
+
+@[simp] lemma Int64.abs_abs {x : Int64} : (⟨x.abs⟩ : Int64).abs = x.abs := by
+  rw [abs, abs]
+  by_cases x0 : x = 0
+  · simp only [x0, isNeg_zero, n_zero, neg_zero, Bool.cond_self]
+  by_cases m : x = min
+  · simp only [m, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]; decide
+  by_cases n : x.isNeg
+  · simp only [n, cond_true, ← neg_def, isNeg_neg x0 m, Bool.not_true, neg_neg, cond_false]
+  · simp only [Bool.not_eq_true] at n
+    have e : (⟨x.n⟩ : Int64) = x := rfl
+    simp only [n, cond_false, e]
+
+@[simp] lemma Int64.isNeg_abs {x : Int64} (m : x ≠ min) : (⟨x.abs⟩ : Int64).isNeg = false := by
+  rw [abs]
+  by_cases x0 : x = 0
+  · simp only [x0, isNeg_zero, n_zero, neg_zero, Bool.cond_self, ← zero_def]
+  by_cases n : x.isNeg
+  · simp only [n, cond_true, ← neg_def, isNeg_neg x0 m, Bool.not_true]
+  · have e : (⟨x.n⟩ : Int64) = x := rfl
+    simp only [n, cond_false, e]
 
 /-!
 ### Left and right shift
@@ -609,6 +839,13 @@ lemma Int64.coe_shiftLeft {x : Int64} {s : UInt64} (s64 : s.toNat < 64)
       -⟨(-x).n.shiftRightRound s !up⟩
   else
     ⟨x.n.shiftRightRound s up⟩
+
+/-- `0.shiftRightRound = 0` -/
+@[simp] lemma Int64.zero_shiftRightRound (s : UInt64) (up : Bool) :
+    (0 : Int64).shiftRightRound s up = 0 := by
+  rw [shiftRightRound]
+  simp only [isNeg_zero, Bool.cond_decide, neg_zero, n_zero, UInt64.zero_shiftRightRound,
+    cond_false, ext_iff]
 
 /-- `Int64.isNeg` for powers of two -/
 lemma Int64.isNeg_one_shift {s : UInt64} (s64 : s.toNat < 64) :
@@ -738,3 +975,22 @@ lemma Int64.coe_shiftRightRound (x : Int64) (s : UInt64) (up : Bool) :
     · simp only [ite_false, Int.ofNat_ediv, Nat.cast_pow, Nat.cast_ofNat, coe_of_nonneg xn]
     · simp only [ite_true, Int.cast_ceilDiv_eq_neg_ediv, Nat.cast_pow, Nat.cast_ofNat,
         coe_of_nonneg xn]
+
+/-- `Int64.shiftRightRound` reduces `abs` -/
+lemma Int64.abs_shiftRightRound_le (x : Int64) (s : UInt64) (up : Bool) :
+    |(x.shiftRightRound s up : ℤ)| ≤ |(x : ℤ)| := by
+  simp only [ne_eq, coe_shiftRightRound, Nat.cast_pow, Nat.cast_ofNat, Int.abs_rdiv_le]
+
+/-- `Int64.shiftRightRound` never produces `min` from scratch -/
+lemma Int64.shiftRightRound_ne_min {x : Int64} (n : x ≠ min) (s : UInt64) (up : Bool) :
+    x.shiftRightRound s up ≠ min := by
+  contrapose n
+  simp only [ne_eq, not_not] at n ⊢
+  have h := abs_shiftRightRound_le x s up
+  simp only [n, coe_min', _root_.abs_neg, abs_pow, abs_two, le_abs] at h
+  rcases h with h | h
+  · linarith [coe_lt_pow x]
+  · rw [←coe_eq_coe, coe_min']
+    apply le_antisymm
+    · linarith
+    · exact pow_le_coe _

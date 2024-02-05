@@ -1,6 +1,9 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Ray.Approx.Array
 import Ray.Approx.Division
+import Ray.Approx.Floating.Floor
+import Ray.Approx.Floating.Log2
+import Ray.Approx.Interval.Scale
 
 open Pointwise
 
@@ -21,19 +24,19 @@ variable {s t : Int64}
 
 /-- Sum an `Interval` Taylor series, spitting out `x^n` and the result.
     For now, we use a slow linear loop. -/
-@[irreducible] def taylor_sum' (c : Array (Interval s)) (x p t : Interval s) (offset steps : ℕ)
+@[irreducible] def taylor_sum' (c : Array (Interval)) (x p t : Interval) (offset steps : ℕ)
     (_ : offset + steps ≤ c.size) :
-    Interval s :=
+    Interval :=
   match steps with
   | 0 => t
   | steps+1 => taylor_sum' c x (p * x) (t + c[offset]'(by omega) * p) (offset+1) steps (by omega)
 
 /-- Sum an `Interval` Taylor series -/
-@[irreducible] def taylor_sum (c : Array (Interval s)) (x : Interval s) : Interval s :=
+@[irreducible] def taylor_sum (c : Array (Interval)) (x : Interval) : Interval :=
   taylor_sum' c x 1 0 0 c.size (by omega)
 
 /-- `taylor_sum'` is conservative -/
-lemma approx_taylor_sum' (c : Array (Interval s)) (c' : ℕ → ℝ) (x p t : Interval s) (x' p' t' : ℝ)
+lemma approx_taylor_sum' (c : Array (Interval)) (c' : ℕ → ℝ) (x p t : Interval) (x' p' t' : ℝ)
     (offset steps : ℕ) (os : offset + steps ≤ c.size)
     (ac : ∀ k : Fin c.size, c' k ∈ approx (c[k]))
     (xx : x' ∈ approx x) (pp : p' ∈ approx p) (tt : t' ∈ approx t) :
@@ -49,7 +52,7 @@ lemma approx_taylor_sum' (c : Array (Interval s)) (c' : ℕ → ℝ) (x p t : In
     · exact mem_approx_add tt (mem_approx_mul (ac ⟨_, by omega⟩) pp)
 
 /-- `taylor_sum` is conservative -/
-lemma approx_taylor_sum (c : Array (Interval s)) (c' : ℕ → ℝ) (x : Interval s) (x' : ℝ)
+lemma approx_taylor_sum (c : Array (Interval)) (c' : ℕ → ℝ) (x : Interval) (x' : ℝ)
     (ac : ∀ k : Fin c.size, c' k ∈ approx (c[k])) (xx : x' ∈ approx x) :
     ∑ k in Finset.range c.size, c' k * x' ^ k ∈ approx (taylor_sum c x) := by
   have h := approx_taylor_sum' c c' x 1 0 x' 1 0 0 c.size (by omega) ac xx
@@ -64,79 +67,54 @@ lemma approx_taylor_sum (c : Array (Interval s)) (c' : ℕ → ℝ) (x : Interva
 /-- A power series approximation within an interval `[-r,r]` around `0` -/
 structure Series (s : Int64) where
   /-- Lower bound on the radius of accuracy -/
-  radius : Fixed s
+  radius : Floating
   /-- Power series coefficients -/
-  coeffs : Array (Interval s)
+  coeffs : Array (Interval)
   /-- Upper bound on the error within `[-r,r]` -/
-  error : Fixed s
+  error : Floating
 
 /-- Evaluation of a `Series` at a point.  For now, we use a slow linear loop. -/
-@[irreducible] def Series.eval (p : Series s) (x : Interval s) : Interval s :=
+@[irreducible] def Series.eval (p : Series s) (x : Interval) : Interval :=
   let a := x.abs
-  bif a.hi == nan || p.radius.n < a.hi.n then nan else
-  taylor_sum p.coeffs x + ⟨-p.error, p.error⟩
+  bif a.hi == nan || p.radius < a.hi then nan else
+  taylor_sum p.coeffs x + Interval.error p.error
 
 /-- `Series` objects approximate functions -/
 instance : Approx (Series s) (ℝ → ℝ) where
-  approx p := {f | ∀ (x : ℝ) (y : Interval s), x ∈ approx y → f x ∈ approx (p.eval y)}
+  approx p := {f | ∀ (x : ℝ) (y : Interval), x ∈ approx y → f x ∈ approx (p.eval y)}
 
 /-- `Series.eval` propagates `nan` -/
-@[simp] lemma Series.eval_nan {p : Series s} : p.eval (nan : Interval s) = nan := by
+@[simp] lemma Series.eval_nan {p : Series s} : p.eval (nan : Interval) = nan := by
   rw [Series.eval]
-  simp only [bif_eq_if, Interval.abs_nan_hi, beq_self_eq_true, Fixed.nan_n, Bool.true_or, ite_true]
+  simp only [Interval.abs_nan, Interval.hi_nan, beq_self_eq_true, Floating.n_nan, Bool.true_or,
+    cond_true]
 
 /-- `Approx` proof given an effective Taylor series bound -/
 lemma Series.approx_of_taylor (p : Series s) (f : ℝ → ℝ) (a : ℕ → ℝ) (b : ℝ)
     (pf : p.radius ≠ nan → ∀ x : ℝ,
       |x| ≤ p.radius.val → |f x - ∑ n in Finset.range p.coeffs.size, a n * x ^ n| ≤ b)
     (ac : ∀ n : Fin p.coeffs.size, a n ∈ approx p.coeffs[n])
-    (eb : p.error ≠ nan → b ≤ p.error.val) :
+    (be : p.error ≠ nan → b ≤ p.error.val) :
     f ∈ approx p := by
   intro x y xy
-  by_cases n : y.abs.hi = nan ∨ p.radius.n < y.abs.hi.n ∨ p.error = nan
+  by_cases n : y.abs = nan ∨ p.radius < y.abs.hi
   · rw [Series.eval]
-    rcases n with yn | ry | en
-    · simp only [yn, beq_self_eq_true, Fixed.nan_n, Bool.true_or, cond_true, Interval.lo_nan,
-        Interval.approx_of_lo_nan, mem_univ]
-    · simp only [Bool.cond_decide, ry, Fixed.nan_n, Int64.min_le, ite_true, Interval.lo_nan,
-        Interval.approx_of_lo_nan, mem_univ, decide_true_eq_true, Bool.or_true, cond_true]
-    · simp only [decide_False, en, Fixed.neg_nan, ← Interval.nan_def, Interval.add_nan,
-        Bool.cond_self, Interval.lo_nan, Interval.approx_of_lo_nan, mem_univ]
-  simp only [not_or] at n
-  rcases n with ⟨yn, ry, en⟩
-  have rn : p.radius ≠ nan := by
-    contrapose ry; simp only [ne_eq, not_not] at ry
-    simp only [ry, Fixed.nan_n, not_lt, not_le]
-    contrapose yn; simp only [not_lt] at yn
-    simp only [Fixed.ext_iff, le_antisymm yn (Int64.min_le _), Fixed.nan_n, not_true_eq_false,
-      not_false_eq_true]
+    rcases n with yn | ry
+    · simp only [yn, Interval.hi_nan, beq_self_eq_true, Floating.n_nan, Bool.true_or, cond_true,
+        Interval.approx_nan, mem_univ]
+    · simp only [ry, decide_True, Bool.or_true, cond_true, Interval.approx_nan, mem_univ]
+  simp only [not_or, not_lt, ←Ne.def, Floating.val_le_val] at n
+  rcases n with ⟨yn, ry⟩
+  have yn' : y ≠ nan := by simpa only [ne_eq, Interval.abs_eq_nan] using yn
+  have rn : p.radius ≠ nan := Floating.ne_nan_of_le (y.abs.hi_ne_nan yn) ry
   have xa : |x| ≤ p.radius.val := by
-    simp only [← Fixed.val_lt_val, not_lt] at ry
-    have axy := Interval.mem_approx_abs xy
-    simp only [approx, ne_eq, neg_neg, Interval.abs_lo_ne_nan_of_hi yn, not_false_eq_true,
-      Fixed.ne_nan_of_neg, yn, or_self, ite_false, mem_Icc] at axy
-    exact le_trans axy.2 ry
+    have a := Interval.mem_approx_abs xy
+    simp only [approx, Interval.lo_eq_nan, yn, ite_false, mem_Icc] at a
+    exact le_trans a.2 ry
   specialize pf rn x xa
-  specialize eb en
-  simp only [eval]
-  generalize hj : taylor_sum p.coeffs y = j
-  generalize hje : j + ⟨-p.error, p.error⟩ = je
-  by_cases jen : je.lo = nan ∨ je.hi = nan
-  · rcases jen with n | n
-    repeat simp only [Interval.approx_of_lo_nan, Interval.approx_of_hi_nan, mem_univ, n, ry,
-      bif_eq_if, decide_false_eq_false, if_false, yn, beq_iff_eq, Bool.or_eq_true_iff, false_or]
-  rcases not_or.mp jen with ⟨jenl, jenh⟩
-  suffices h : (∑ n in Finset.range p.coeffs.size, a n * x ^ n) ∈ approx j by
-    simp only [approx, jenl, jenh, false_or, if_false, mem_Icc]
-    simp only [←hje, Interval.add_def, ←Fixed.sub_eq_add_neg] at jenl jenh ⊢
-    simp only [Fixed.val_sub jenl, Fixed.val_add jenh, ry, decide_false_eq_false, cond_false, jenh,
-      jenl, false_or, if_false, bif_eq_if, or_false, Bool.or_eq_true_iff, beq_iff_eq, yn]
-    simp only [approx, Fixed.ne_nan_of_sub jenl, Fixed.ne_nan_of_add jenh, false_or, if_false,
-      mem_Icc] at h
-    simp only [abs_le] at pf
-    exact ⟨by linarith, by linarith⟩
-  rw [←hj]
-  exact approx_taylor_sum _ _ _ _ ac xy
+  simp only [eval, bif_eq_if, Floating.val_lt_val, not_lt.mpr ry, decide_False, Bool.or_false,
+    beq_iff_eq, Interval.hi_eq_nan, Interval.abs_eq_nan, yn', ite_false]
+  exact Interval.approx_add_error pf be (approx_taylor_sum _ _ _ _ ac xy)
 
 /-!
 ### `Series` approximations for `exp` and `log`
@@ -165,13 +143,13 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
       rw [exp_series]
       simp only [beq_self_eq_true, pow_zero, CharP.cast_eq_zero, zero_add, Nat.factorial_zero,
         Nat.cast_one, mul_zero, div_zero, cond_true]
-    simp only [n0, Series.eval._eq_1, bif_eq_if, Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq, e,
-      Fixed.neg_nan, ← Interval.nan_def, Interval.add_nan, ite_self, Interval.lo_nan,
-      Interval.approx_of_lo_nan, mem_univ]
+    simp only [n0, Series.eval._eq_1, bif_eq_if, Floating.val_lt_val, Bool.or_eq_true, beq_iff_eq,
+      Interval.hi_eq_nan, Interval.abs_eq_nan, decide_eq_true_eq, e, Interval.error_nan,
+      Interval.add_nan, ite_self, Interval.approx_nan, mem_univ]
   · apply (exp_series s n).approx_of_taylor
     · intro rn x xr
       rw [exp_series] at xr rn; simp only at xr
-      have xr' : |x| ≤ exp_series_radius := le_trans xr (Fixed.ofRat_le rn)
+      have xr' : |x| ≤ exp_series_radius := le_trans xr (Floating.ofRat_le rn)
       have x1 : |x| ≤ 1 := by simp only [exp_series_radius] at xr'; exact le_trans xr' (by norm_num)
       simp only [nn]
       have h := Real.exp_bound x1 (Nat.pos_iff_ne_zero.mpr n0)
@@ -189,12 +167,12 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
       rw [exp_series, bif_eq_if] at en ⊢
       simp only [beq_iff_eq, ne_eq, ite_eq_left_iff, not_forall, exists_prop, n0, not_false_iff,
         true_or, if_false] at en ⊢
-      refine le_trans (le_of_eq ?_) (Fixed.le_ofRat en)
+      refine le_trans (le_of_eq ?_) (Floating.le_ofRat en)
       simp only [div_eq_inv_mul, mul_inv, mul_comm _ ((n:ℚ)⁻¹), Rat.cast_mul, Rat.cast_pow,
         Rat.cast_inv, Rat.cast_coe_nat, Rat.cast_add, Rat.cast_one]
 
 /-- `mono` friendly version of `approx_exp_series` -/
-@[mono] lemma mem_approx_exp_series {a : ℝ} {x : Interval s} (ax : a ∈ approx x) {n : ℕ} :
+@[mono] lemma mem_approx_exp_series {a : ℝ} {x : Interval} (ax : a ∈ approx x) {n : ℕ} :
     Real.exp a ∈ approx ((exp_series s n).eval x) :=
   approx_exp_series n a x ax
 
@@ -252,7 +230,7 @@ lemma approx_log1p_div_series (n : ℕ) : log1p_div ∈ approx (log1p_div_series
       (b := log_series_radius ^ n / (1 - log_series_radius))
   · intro rn x xr
     rw [log1p_div_series] at xr rn; simp only at xr
-    have xr' : |x| ≤ log_series_radius := le_trans xr (Fixed.ofRat_le rn)
+    have xr' : |x| ≤ log_series_radius := le_trans xr (Floating.ofRat_le rn)
     have x1 : |x| < 1 := by
       simp only [log_series_radius] at xr'
       exact lt_of_le_of_lt xr' (by norm_num)
@@ -266,11 +244,11 @@ lemma approx_log1p_div_series (n : ℕ) : log1p_div ∈ approx (log1p_div_series
     apply Interval.approx_ofRat
   · intro en
     simp only [log1p_div_series] at en ⊢
-    refine le_trans (le_of_eq ?_) (Fixed.le_ofRat en)
+    refine le_trans (le_of_eq ?_) (Floating.le_ofRat en)
     simp only [Rat.cast_div, Rat.cast_pow, Rat.cast_sub, Rat.cast_one]
 
 /-- `mono` friendly version of `approx_log1p_div_series` -/
-@[mono] lemma mem_approx_log1p_div_series {a : ℝ} {x : Interval s} (ax : a ∈ approx x) {n : ℕ} :
+@[mono] lemma mem_approx_log1p_div_series {a : ℝ} {x : Interval} (ax : a ∈ approx x) {n : ℕ} :
     log1p_div a ∈ approx ((log1p_div_series s n).eval x) :=
   approx_log1p_div_series n a x ax
 
@@ -285,14 +263,18 @@ them before we've done the general argument reduction.
 -/
 
 /-- `log 2` -/
-@[irreducible] def Interval.log_2 : Interval (-62) :=
+@[irreducible] def Interval.log_2 : Interval :=
   -- log 2 = 2 * log (4/3) + log (9/8) = 2/3 * log1p_div (1/3) + 1/8 * log1p_div (1/8)
   .ofRat (2/3) * log1p_div_series_38.eval (ofRat (1/3)) +
     .ofRat (1/8) * log1p_div_series_38.eval (ofRat (1/8))
 
 /-- Untrusted rational approximation to `(log 2)⁻¹` -/
-@[irreducible] def untrusted_inv_log_2 : Fixed (-62) :=
+@[irreducible] def untrusted_inv_log_2 : Floating :=
   .ofRat (1 / 0.693147180559945309417232121458) false
+
+/-- Untrusted rational approximation to `(log 2)⁻¹ / 2` -/
+@[irreducible] def untrusted_inv_log_2_div_2 : Floating :=
+  .ofRat (0.5 / 0.693147180559945309417232121458) false
 
 /-- `Interval.log_2` is conservative -/
 @[mono] lemma Interval.approx_log_2 : Real.log 2 ∈ approx Interval.log_2 := by
@@ -313,73 +295,63 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
 -/
 
 /-- `exp x` for potentially large `x`, via argument reduction -/
-@[irreducible] def Fixed.exp (x : Fixed s) : FloatingInterval :=
+@[irreducible] def Floating.exp (x : Floating) : Interval :=
   bif x == nan then nan else
   -- We want
   --   `x - n log 2 ∈ [-log 2 / 2, log 2 / 2]`
   --   `x / log 2 - n ∈ [-1/2, 1/2]`
-  --   `n ∈ x/log2 + [-1/2, 1/2]`
-  --   `n ∈ x/log2 - 1/2 + [0,1]`
+  --   `n ∈ x/log 2 + [-1/2, 1/2]`
+  --   `n = floor(x/log 2 + 1/2)`
   -- We're not going to trust that `n` is correct, so we needn't trust our `(log 2)⁻¹` estimate.
-  let z : Fixed (-1) := x.mul untrusted_inv_log_2 _ false
-  let n : Fixed 0 := ⟨(z.n + 1).shiftRightRound 1 false⟩
-  let y : Interval s := ⟨x,x⟩ - Interval.log_2.mul_fixed n _
-  (exp_series_16.eval (y.repoint _) : FloatingInterval).scaleB n
+  let n := ((x.mul untrusted_inv_log_2 false).add (.ofRat (1/2) false) false).floor
+  let y : Interval := x - Interval.log_2.mul_float n
+  (exp_series_16.eval y).scaleB' n
 
 /-- `exp x` for potentially large `x`, via argument reduction -/
-@[irreducible] def Interval.exp (x : Interval s) : FloatingInterval :=
+@[irreducible] def Interval.exp (x : Interval) : Interval :=
   x.lo.exp ∪ x.hi.exp
 
-/-- `Fixed.exp` is conservative -/
-@[mono] lemma Fixed.mem_approx_exp {x : Fixed s} {x' : ℝ} (xm : x' ∈ approx x) :
+/-- `Floating.exp` is conservative -/
+@[mono] lemma Floating.mem_approx_exp {x : Floating} {x' : ℝ} (xm : x' ∈ approx x) :
     Real.exp x' ∈ approx x.exp := by
-  rw [Fixed.exp]
-  generalize x.mul untrusted_inv_log_2 _ false = z
+  rw [Floating.exp]
+  generalize hn : floor ((mul x untrusted_inv_log_2 false).add (ofRat (1 / 2) false) false) = n
   simp only [bif_eq_if, beq_iff_eq]
-  generalize (⟨(z.n + 1).shiftRightRound 1 false⟩ : Fixed 0) = n
   by_cases xn : x = nan
-  · simp only [xn, ite_true, FloatingInterval.nan_x, Interval.lo_nan,
-      FloatingInterval.approx_of_lo_eq_nan, mem_univ]
-  simp only [ne_eq, neg_neg, xn, not_false_eq_true, ne_nan_of_neg, ite_false]
+  · simp only [xn, Interval.coe_nan, Interval.nan_sub, Series.eval_nan, ite_true,
+      Interval.approx_nan, mem_univ]
+  simp only [ne_eq, neg_neg, xn, not_false_eq_true, ite_false]
   have e : Real.exp x' = Real.exp (x' - Real.log 2 * n.val) * 2 ^ n.val := by
     rw [Real.exp_sub, Real.exp_mul, Real.exp_log (by norm_num),
       div_mul_cancel _ (Real.rpow_pos_of_pos (by norm_num) _).ne']
   rw [e, exp_series_16]
   mono
 
-/-- `Fixed.exp` propagates `nan` -/
-@[simp] lemma Fixed.exp_nan : (nan : Fixed s).exp = nan := by
-  rw [Fixed.exp, exp_series_16]
-  simp only [beq_self_eq_true, ← Interval.nan_def, nan_mul, nan_n, Interval.nan_sub,
-    Interval.repoint_nan, Series.eval_nan, cond_true]
+/-- `Floating.exp` propagates `nan` -/
+@[simp] lemma Floating.exp_nan : (nan : Floating).exp = nan := by
+  rw [Floating.exp, exp_series_16]
+  simp only [beq_self_eq_true, nan_mul, Interval.nan_sub, Series.eval_nan, cond_true]
 
 /-- `Interval.exp` is conservative (`⊆` version) -/
-@[mono] lemma Interval.approx_exp {x : Interval s} : Real.exp '' approx x ⊆ approx x.exp := by
+@[mono] lemma Interval.approx_exp {x : Interval} : Real.exp '' approx x ⊆ approx x.exp := by
   rw [Interval.exp]
-  by_cases n : x.lo = nan ∨ x.hi = nan
-  · rcases n with n | n
-    · simp only [n, approx_of_lo_nan, image_univ, Real.range_exp, Fixed.exp_nan,
-        FloatingInterval.nan_union, FloatingInterval.nan_x, lo_nan,
-        FloatingInterval.approx_of_lo_eq_nan, subset_univ]
-    · simp only [n, approx_of_hi_nan, image_univ, Real.range_exp, Fixed.exp_nan,
-        FloatingInterval.union_nan, FloatingInterval.nan_x, lo_nan,
-        FloatingInterval.approx_of_lo_eq_nan, subset_univ]
-  rcases not_or.mp n with ⟨ln,hn⟩
-  have e : approx x = Icc x.lo.val x.hi.val := by simp only [approx, ln, hn, false_or, if_false]
-  rw [e]
+  by_cases xn : x = nan
+  · simp only [xn, approx_nan, image_univ, Real.range_exp, lo_nan, Floating.exp_nan, hi_nan,
+      union_nan, subset_univ]
+  rw [approx_eq_Icc xn]
   refine subset_trans Real.exp_monotone.image_Icc_subset (Icc_subset_approx ?_ ?_)
-  · apply FloatingInterval.approx_union_left; mono
-  · apply FloatingInterval.approx_union_right; mono
+  · apply Interval.approx_union_left; mono
+  · apply Interval.approx_union_right; mono
 
 /-- `Interval.exp` is conservative (`∈` version) -/
-@[mono] lemma Interval.mem_approx_exp {x : Interval s} {a : ℝ} (ax : a ∈ approx x) :
+@[mono] lemma Interval.mem_approx_exp {x : Interval} {a : ℝ} (ax : a ∈ approx x) :
     Real.exp a ∈ approx x.exp :=
   Interval.approx_exp (mem_image_of_mem _ ax)
 
 /-- `Interval.exp` propagates `nan` -/
-@[simp] lemma Interval.exp_nan : (nan : Interval s).exp = nan := by
+@[simp] lemma Interval.exp_nan : (nan : Interval).exp = nan := by
   rw [Interval.exp]
-  simp only [lo_nan, Fixed.exp_nan, hi_nan, FloatingInterval.union_nan]
+  simp only [lo_nan, Floating.exp_nan, hi_nan, Interval.union_nan]
 
 /-!
 ### `log x` for arbitrary `x`, via argument reduction
@@ -391,47 +363,40 @@ set the final precision.
 -/
 
 /-- Untrusted 4/3 approximation -/
-@[irreducible] def untrusted_four_thirds : Fixed (-62) := .ofRat (4/3) false
+@[irreducible] def untrusted_four_thirds : Floating := .ofRat (4/3) false
 
 /-- Choose `n` s.t. `x * 2^-n ∈ [2/3, 4/3]`.  We don't trust the output of this routine for
     our conservativeness results. -/
-@[irreducible] def Fixed.untrusted_log_shift (x : Fixed s) : Fixed 0 :=
+@[irreducible] def Floating.untrusted_log_shift (x : Floating) : Fixed 0 :=
   -- we make an initial guess that puts us in [1,2], then add 1 if we're not small enough
   let g := x.log2
-  let y := ((x : Floating).scaleB (-g)).x.repoint (-62) false
-  bif y.n ≤ untrusted_four_thirds.n then g else g+1
+  let y := x.scaleB' (-g) false
+  bif y ≤ untrusted_four_thirds then g else g+1
 
 /-- `log x` for arbitrary `x`, via argument reduction -/
-@[irreducible] def Fixed.log (x : Fixed s) : FloatingInterval :=
-  bif x.n ≤ 0 then nan else
+@[irreducible] def Floating.log (x : Floating) : Interval :=
+  bif x ≤ 0 then nan else
   let n := x.untrusted_log_shift
-  let y := ((x : Floating).scaleB (-n) : FloatingInterval).x.repoint (-62) - 1
-  -- To choose our precision `t`, note that
-  --   `x * 2^-n ∈ [2/3, 4/3]`
-  --   `x ∈ [2/3, 4/3] * 2^n`
-  --   `log x ∈ [log (2/3), log (4/3)] + n log 2`
-  --   `|log x| ≤ 1/2 + |n| log 2 ≤ |n+1|`
-  let t : Int64 := ⟨(n.n.abs + 1).log2⟩ - 62
-  y.mul (log1p_div_series_38.eval y) t + Interval.log_2.mul_fixed n t
+  let y := ((x : Interval).scaleB' (-n)) - 1
+  y * log1p_div_series_38.eval y + Interval.log_2.mul_float n
 
 /-- `log x` for arbitrary `x`, via argument reduction -/
-@[irreducible] def Interval.log (x : Interval s) : FloatingInterval :=
+@[irreducible] def Interval.log (x : Interval) : Interval :=
   x.lo.log ∪ x.hi.log
 
-/-- `Fixed.log` is conservative -/
-@[mono] lemma Fixed.mem_approx_log {x : Fixed s} {x' : ℝ} (xm : x' ∈ approx x) :
+/-- `Floating.log` is conservative -/
+@[mono] lemma Floating.mem_approx_log {x : Floating} {x' : ℝ} (xm : x' ∈ approx x) :
     Real.log x' ∈ approx x.log := by
-  rw [Fixed.log, log1p_div_series_38]
+  rw [Floating.log, log1p_div_series_38]
   generalize x.untrusted_log_shift = n
   simp only [bif_eq_if]
-  by_cases x0 : x.n ≤ 0
-  · simp only [x0, decide_True, ite_true, FloatingInterval.nan_x, Interval.lo_nan,
-      FloatingInterval.approx_of_lo_eq_nan, mem_univ]
-  simp only [x0, decide_False, ite_false]
-  simp only [not_le, ←Fixed.val_pos] at x0
-  simp only [approx_eq_singleton (Fixed.ne_nan_of_pos x0), mem_singleton_iff] at xm
+  by_cases x0 : x.val ≤ 0
+  · simp only [val_le_val, val_zero, x0, decide_True, ite_true, Interval.approx_nan, mem_univ]
+  simp only [val_le_val, val_zero, x0, decide_False, ite_false]
+  simp only [not_le] at x0
+  simp only [approx_eq_singleton (Floating.ne_nan_of_nonneg x0.le), mem_singleton_iff] at xm
   simp only [xm]; clear xm x'
-  generalize hy : (((x : Floating).scaleB (-n)) : FloatingInterval).x.repoint (-62) - 1 = y
+  generalize hy : (x : Interval).scaleB' (-n) - 1 = y
   generalize hy' : x.val * 2^(-n.val) - 1 = y'
   have e : Real.log x.val = y' * log1p_div y' +  Real.log 2 * n.val := by
     simp only [← hy', mul_log1p_div, add_sub_cancel'_right]
@@ -443,18 +408,18 @@ set the final precision.
   rw [e]
   mono
 
-/-- `Fixed.log` propagates `nan` -/
-@[simp] lemma Fixed.log_nan : (nan : Fixed s).log = nan := by
-  rw [Fixed.log]; simp only [nan_n, Int64.min_le, decide_True, cond_true]
+/-- `Floating.log` turns nonpositives to `nan` -/
+@[simp] lemma Floating.log_nonpos {x : Floating} (x0 : x.val ≤ 0) : x.log = nan := by
+  rw [Floating.log]
+  simp only [val_le_val, val_zero, Bool.cond_decide, ite_eq_left_iff, not_le, not_lt.mpr x0,
+    IsEmpty.forall_iff]
 
-/-- `Fixed.log` turns nonpositives to `nan` -/
-@[simp] lemma Fixed.log_nonpos {x : Fixed s} (x0 : x.val ≤ 0) : x.log = nan := by
-  rw [Fixed.log]
-  simp only [val_nonpos] at x0
-  simp only [x0, decide_True, cond_true]
+/-- `Floating.log` propagates `nan` -/
+@[simp] lemma Floating.log_nan : (nan : Floating).log = nan :=
+  log_nonpos val_nan_lt_zero.le
 
 /-- `Interval.log` is conservative (`⊆` version) -/
-@[mono] lemma Interval.approx_log {x : Interval s} : Real.log '' approx x ⊆ approx x.log := by
+@[mono] lemma Interval.approx_log {x : Interval} : Real.log '' approx x ⊆ approx x.log := by
   rw [Interval.log]
   by_cases n : x.lo = nan ∨ x.hi = nan ∨ x.lo.val ≤ 0
   · rcases n with n | n | n; repeat simp [n]
@@ -468,25 +433,24 @@ set the final precision.
     exact ⟨Real.log_le_log l0 m0, Real.log_le_log (by linarith) m1⟩
   rw [e]
   refine subset_trans le (Icc_subset_approx ?_ ?_)
-  · apply FloatingInterval.approx_union_left; mono
-  · apply FloatingInterval.approx_union_right; mono
+  · apply Interval.approx_union_left; mono
+  · apply Interval.approx_union_right; mono
 
 /-- `Interval.log` is conservative (`∈` version) -/
-@[mono] lemma Interval.mem_approx_log {x : Interval s} {a : ℝ} (ax : a ∈ approx x) :
+@[mono] lemma Interval.mem_approx_log {x : Interval} {a : ℝ} (ax : a ∈ approx x) :
     Real.log a ∈ approx x.log :=
   Interval.approx_log (mem_image_of_mem _ ax)
 
 /-- `Interval.log` turns nonpositives to `nan` -/
-@[simp] lemma Interval.log_nonpos {x : Interval s} {a : ℝ} (a0 : a ≤ 0) (ax : a ∈ approx x) :
+@[simp] lemma Interval.log_nonpos {x : Interval} {a : ℝ} (a0 : a ≤ 0) (ax : a ∈ approx x) :
     x.log = nan := by
   rw [Interval.log]
   by_cases n : x.lo = nan ∨ x.hi = nan
   · rcases n with n | n; repeat simp [n]
   · rcases not_or.mp n with ⟨n0,n1⟩
-    simp only [approx, ne_eq, neg_neg, n0, not_false_eq_true, Fixed.ne_nan_of_neg, n1, or_self,
-      ite_false, mem_Icc] at ax
+    simp only [approx, ne_eq, neg_neg, n0, not_false_eq_true, n1, or_self, ite_false, mem_Icc] at ax
     have l0 : x.lo.val ≤ 0 := by linarith
-    simp only [Fixed.log_nonpos l0, FloatingInterval.nan_union]
+    simp only [Floating.log_nonpos l0, Interval.nan_union]
 
 /-!
 ### Powers
@@ -495,19 +459,18 @@ These are easy now that we have `exp` and `log`.
 -/
 
 /-- `x^y = exp (x.log * y)` -/
-@[irreducible] def Interval.pow (x : Interval s) (y : Interval t) : FloatingInterval :=
-  (x.log * y).x.exp
+@[irreducible] def Interval.pow (x : Interval) (y : Interval) : Interval :=
+  (x.log * y).exp
 
 /-- `Interval.pow` is conservative -/
-@[mono] lemma Interval.mem_approx_pow {x : Interval s} {y : Interval t} {x' y' : ℝ}
+@[mono] lemma Interval.mem_approx_pow {x : Interval} {y : Interval} {x' y' : ℝ}
     (xm : x' ∈ approx x) (ym : y' ∈ approx y) : x' ^ y' ∈ approx (x.pow y) := by
   rw [Interval.pow]
   by_cases x0 : 0 < x'
   · rw [Real.rpow_def_of_pos x0]; mono
   · simp only [not_lt] at x0
-    rw [Interval.log_nonpos x0 xm, FloatingInterval.nan_mul, FloatingInterval.nan_x,
-      Interval.exp_nan]
-    simp only [FloatingInterval.nan_x, lo_nan, FloatingInterval.approx_of_lo_eq_nan, mem_univ]
+    rw [Interval.log_nonpos x0 xm, Interval.nan_mul, Interval.exp_nan]
+    simp only [approx_nan, mem_univ]
 
 /-!
 ### Unit tests
@@ -542,23 +505,23 @@ lemma untrusted_inv_log_2_test : untrusted_inv_log_2.toFloat * 0.693147180559945
 
 /-- `exp` tests -/
 def exp_test (x : ℚ) (e : Float) : Bool :=
-  ((FloatingInterval.ofRat x).x.exp).x.size.toFloat < e
-lemma exp_test1 : exp_test 0 1e-17 := by native_decide
-lemma exp_test2 : exp_test 10 1e-11 := by native_decide
-lemma exp_test3 : exp_test (-10) 1e-19 := by native_decide
+  let y := (Interval.ofRat x).exp
+  y.size.toFloat ≤ e * y.lo.toFloat
+example : exp_test 0 1e-18 := by native_decide
+example : exp_test 10 1e-16 := by native_decide
+example : exp_test (-10) 1e-15 := by native_decide
 
 /-- `log` tests -/
-def log_test (x : ℚ) (s : Int64) (e : Float) : Bool :=
-  (.ofRat x : Interval s).log.x.size.toFloat ≤ e
-lemma log_test1 : log_test 1 (-62) 0 := by native_decide
-lemma log_test2 : log_test 2 (-61) 1e-16 := by native_decide
-lemma log_test3 : log_test 1237821 (-42) 1e-15 := by native_decide
-lemma log_test4 : log_test 1e-8 (-60) 1e-10 := by native_decide
+def log_test (x : ℚ) (e : Float) : Bool := (Interval.ofRat x).log.size.toFloat ≤ e
+example : log_test 1 0 := by native_decide
+example : log_test 2 1e-17 := by native_decide
+example : log_test 1237821 1e-15 := by native_decide
+example : log_test 1e-8 1e-15 := by native_decide
 
 /-- `pow` tests -/
 def pow_test (x y : ℚ) (e : Float) : Bool :=
-  ((.ofRat x : FloatingInterval).x.pow (.ofRat y : FloatingInterval).x).x.size.toFloat ≤ e
-lemma pow_test1 : pow_test 3.7 4.2 1e-13 := by native_decide
-lemma pow_test2 : pow_test 0.1 (-1/2) 1e-15 := by native_decide
-lemma pow_test3 : pow_test 2 (1/2) 1e-16 := by native_decide
-lemma pow_test4 : pow_test 2 (1/100) 1e-15 := by native_decide
+  ((Interval.ofRat x).pow (Interval.ofRat y)).size.toFloat ≤ e
+example : pow_test 3.7 4.2 1e-13 := by native_decide
+example : pow_test 0.1 (-1/2) 1e-16 := by native_decide
+example : pow_test 2 (1/2) 1e-16 := by native_decide
+example : pow_test 2 (1/100) 1e-17 := by native_decide
