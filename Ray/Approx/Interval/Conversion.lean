@@ -32,6 +32,10 @@ namespace Interval
 instance : OfScientific Interval where
   ofScientific x u t := .ofRat (OfScientific.ofScientific x u t)
 
+/-- Conversion from `Float` -/
+@[irreducible] def ofFloat (x : Float) : Interval :=
+  mix (.ofFloat x false) (.ofFloat x true) Floating.ofFloat_le_ofFloat
+
 /-- Conversion from `ℕ` literals to `Interval` -/
 instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
 
@@ -50,7 +54,6 @@ instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
   simp only [lo_mix m, hi_mix m]
   simp only [mix_eq_nan, not_or] at m
   exact ⟨Floating.ofInt_le m.1, Floating.le_ofInt m.2⟩
-
 
 /-- `.ofRat` is conservative -/
 @[mono] lemma approx_ofRat (x : ℚ) : ↑x ∈ approx (.ofRat x : Interval) := by

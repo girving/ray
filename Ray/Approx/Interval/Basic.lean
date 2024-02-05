@@ -94,6 +94,12 @@ instance : Repr Interval where
 @[simp] lemma approx_nan : approx (nan : Interval) = univ := by
   simp only [approx, nan, ite_true, inter_self, true_or]
 
+-- Basic `mono` lemmas
+@[mono, simp] lemma mem_approx_zero : 0 ∈ approx (0 : Interval) := by
+  simp only [approx_zero, mem_singleton]
+@[mono, simp] lemma mem_approx_one : 1 ∈ approx (1 : Interval) := by
+  simp only [approx_one, mem_singleton]
+
 /-- `x.lo = nan` if `x = nan` -/
 @[simp] lemma lo_eq_nan {x : Interval} : x.lo = nan ↔ x = nan := by
   simp only [ext_iff, lo_nan, hi_nan, iff_self_and]; intro n; rwa [←x.norm]
@@ -149,6 +155,10 @@ lemma lo_mem {x : Interval} : x.lo.val ∈ approx x := by
 /-- `Interval` always contains `hi` -/
 lemma hi_mem {x : Interval} : x.hi.val ∈ approx x := by
   simp only [approx, lo_eq_nan, mem_ite_univ_left, mem_Icc, le_refl, le, and_self, implies_true]
+
+/-- `approx` is a finite interval if we're not `nan` -/
+lemma approx_eq_Icc {x : Interval} (n : x ≠ nan) : approx x = Icc x.lo.val x.hi.val := by
+  simp only [approx, lo_eq_nan, n, ite_false]
 
 /-!
 ### Propagate nans into both bounds
@@ -247,6 +257,9 @@ instance : Neg Interval where
 instance : ApproxNeg Interval ℝ where
   approx_neg x := by simp only [approx_neg, neg_subset_neg, subset_refl]
 
+instance : InvolutiveNeg Interval where
+  neg_neg x := by simp only [ext_iff, lo_neg, hi_neg, neg_neg, and_self]
+
 /-!
 ### Union
 -/
@@ -344,10 +357,15 @@ where intersections are guaranteed nonempty.
       max_le_iff, le_refl, true_and, and_true, le_total]
   · simp only [inter, Floating.val_min, le_min_iff, inf_le_left, inf_le_right, and_self]
 
-/-- `mono` version of `approx_inter` -/
+/-- `mono ⊆` version of `approx_inter` -/
 @[mono] lemma subset_approx_inter {s : Set ℝ} {x y : Interval} {t : (approx x ∩ approx y).Nonempty}
     (sx : s ⊆ approx x) (sy : s ⊆ approx y) : s ⊆ approx (x.inter y t) :=
   subset_trans (subset_inter sx sy) approx_inter
+
+/-- `mono ∈` version of `approx_inter` -/
+@[mono] lemma mem_approx_inter {a : ℝ} {x y : Interval} {t : (approx x ∩ approx y).Nonempty}
+    (ax : a ∈ approx x) (ay : a ∈ approx y) : a ∈ approx (x.inter y t) := by
+  simp only [←singleton_subset_iff] at ax ay ⊢; exact subset_approx_inter ax ay
 
 /-!
 ### Addition and subtraction
@@ -468,6 +486,10 @@ instance : Coe Floating Interval where
   · simp only [n, mix_nan, coe_nan]
   · rw [mix]
     simp only [n, or_self, dite_false, ext_iff, lo_coe, hi_coe, and_self]
+
+/-- Teach `mono` how to convert `a ∈ approx ↑x` to `a ∈ approx x` -/
+@[mono] lemma mem_approx_coe {a : ℝ} {x : Floating} (ax : a ∈ approx x) :
+    a ∈ approx (x : Interval) := by rwa [approx_coe]
 
 /-!
 ### Absolute value
@@ -620,3 +642,57 @@ lemma abs_pos {x : Interval} (n : x ≠ nan) (l0 : x.lo ≠ 0) (lh : x.lo.val < 
     have z1 : 0 ≤ x.hi.val := le_trans z x.le
     simpa only [not_lt.mpr z, not_lt.mpr z1, Floating.abs_of_nonneg z, Floating.abs_of_nonneg z1,
       le, ite_true, Floating.val_eq_zero, ne_eq]
+
+/-- If an interval doesn't contain zero, its absolute value is positive -/
+lemma abs_pos_of_not_zero_mem {x : Interval} (z : 0 ∉ approx x) : 0 < x.abs.lo.val := by
+  by_cases n : x = nan
+  · simp only [n, approx_nan, mem_univ, not_true_eq_false] at z
+  apply abs_pos n
+  · contrapose z; simp only [ne_eq, not_not, ←Floating.val_eq_zero] at z
+    simp only [← z, not_not, lo_mem]
+  · simp only [approx, lo_eq_nan, n, ite_false, mem_Icc, not_and, not_le] at z
+    by_cases l0 : x.lo.val < 0
+    · simpa only [l0, l0.le, true_iff, true_implies] using z
+    · simp only [l0, false_iff, not_lt]
+      simp only [not_lt] at l0
+      exact le_trans l0 x.le
+
+/-!
+### Check if an interval contains zero
+-/
+
+/-- Determine whether `0 ∈ approx x` -/
+@[irreducible, pp_dot] def zero_mem (x : Interval) : Bool :=
+  x.lo == 0 || x == nan || x.lo.n.isNeg != x.hi.n.isNeg
+
+/-- Mathematical definition of `zero_mem` -/
+@[simp] lemma zero_mem_eq (x : Interval) : x.zero_mem = decide (0 ∈ approx x) := by
+  rw [zero_mem]
+  simp only [Floating.isNeg_iff, Bool.beq_eq_decide_eq, approx, mem_if_univ_iff, mem_Icc,
+    ←Bool.decide_or]
+  by_cases n : x = nan
+  · simp [n]
+  · simp only [n, or_false, lo_eq_nan, not_false_eq_true, forall_true_left, Bool.decide_and,
+      ←Floating.val_eq_zero]
+    by_cases l0 : x.lo.val = 0
+    · simpa only [l0, decide_True, lt_self_iff_false, decide_False, Bool.false_xor, Bool.true_or,
+        le_refl, Bool.true_and, true_eq_decide_iff] using x.le
+    · simp only [l0, decide_False, Bool.false_or]
+      by_cases ln : x.lo.val < 0
+      · simp only [ln, decide_True, Bool.true_xor, ln.le, Bool.true_and]
+        simp only [←not_lt, decide_not]
+      · simp only [ln, decide_False, Bool.false_xor]
+        simp only [not_lt] at ln
+        have lt := ln.lt_of_ne (Ne.symm l0)
+        simp only [not_le.mpr lt, decide_False, Bool.false_and, decide_eq_false_iff_not, not_lt,
+          ge_iff_le, le_trans ln x.le]
+
+/-- If we don't contain zero, each endpoint is negative iff the other is -/
+@[simp] lemma lo_lt_zero_iff_hi_lt_zero {x : Interval} (z : 0 ∉ approx x) :
+    x.lo.val < 0 ↔ x.hi.val < 0 := by
+  by_cases n : x = nan
+  · simp only [n, approx_nan, mem_univ, not_true_eq_false] at z
+  · simp only [approx, lo_eq_nan, n, ite_false, mem_Icc, not_and_or, not_le] at z
+    have le := x.le
+    rcases z with z | z
+    all_goals { constructor; all_goals { intro h; linarith } }

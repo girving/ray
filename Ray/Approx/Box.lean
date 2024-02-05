@@ -32,16 +32,16 @@ instance : LawfulBEq Box where
     simp only [e, beq_self_eq_true, Bool.and_self]
 
 /-- Reduce `Box s` equality to `Interval` equality -/
-lemma Box.ext_iff (z w : Box) : z = w ↔ z.re = w.re ∧ z.im = w.im := by
+lemma ext_iff (z w : Box) : z = w ↔ z.re = w.re ∧ z.im = w.im := by
   induction z; induction w; simp only [mk.injEq]
 
 /-- Simplification of `∈ image2` for `Box` -/
-@[simp] lemma Box.mem_image2_iff {z : ℂ} {s t : Set ℝ} :
+@[simp] lemma mem_image2_iff {z : ℂ} {s t : Set ℝ} :
     z ∈ image2 (fun r i ↦ (⟨r,i⟩ : ℂ)) s t ↔ z.re ∈ s ∧ z.im ∈ t := by
   simp only [image2, Complex.ext_iff, exists_and_left, exists_eq_right_right, mem_setOf_eq]
 
 /-- `Box` approximates `ℂ` -/
-instance Box.instApprox : Approx Box ℂ where
+instance instApprox : Approx Box ℂ where
   approx z := image2 (fun r i ↦ ⟨r,i⟩) (approx z.re) (approx z.im)
 
 /-- `Box` zero -/
@@ -81,16 +81,15 @@ def sqr_mag (z : Box) : Interval :=
   z.re.sqr + z.im.sqr
 
 -- Definition lemmas
-lemma Box.neg_def {z : Box} : -z = ⟨-z.re, -z.im⟩ := rfl
-lemma Box.add_def {z w : Box} : z + w = ⟨z.re + w.re, z.im + w.im⟩ := rfl
-lemma Box.sub_def {z w : Box} : z - w = ⟨z.re - w.re, z.im - w.im⟩ := rfl
-lemma Box.mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + z.im * w.re⟩ :=
-  rfl
+lemma neg_def {z : Box} : -z = ⟨-z.re, -z.im⟩ := rfl
+lemma add_def {z w : Box} : z + w = ⟨z.re + w.re, z.im + w.im⟩ := rfl
+lemma sub_def {z w : Box} : z - w = ⟨z.re - w.re, z.im - w.im⟩ := rfl
+lemma mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + z.im * w.re⟩ := rfl
 
 -- Bounds properties of `Box` arithmetic
-@[simp] lemma Box.re_zero : (0 : Box).re = 0 := rfl
-@[simp] lemma Box.im_zero : (0 : Box).im = 0 := rfl
-@[simp] lemma Box.approx_zero : approx (0 : Box) = {0} := by
+@[simp] lemma re_zero : (0 : Box).re = 0 := rfl
+@[simp] lemma im_zero : (0 : Box).im = 0 := rfl
+@[simp] lemma approx_zero : approx (0 : Box) = {0} := by
   simp only [instApprox, re_zero, Interval.approx_zero, im_zero, image2_singleton_right,
     image_singleton, singleton_eq_singleton_iff, Complex.ext_iff, Complex.zero_re, Complex.zero_im,
     and_self]
@@ -132,7 +131,7 @@ instance : ApproxMul Box ℂ where
     exact ⟨by mono, by mono⟩
 
 /-- `Interval * Box` multiplication approximates `ℂ` -/
-@[mono] lemma Interval.approx_mul_box (x : Interval) (z : Box) :
+@[mono] lemma _root_.Interval.approx_mul_box (x : Interval) (z : Box) :
     (Complex.ofReal '' approx x) * approx z ⊆ approx (x.mul_box z) := by
   simp only [Box.instApprox, mul_subset_iff, Box.mem_image2_iff, and_imp, Complex.mul_re,
     Complex.mul_im, Interval.mul_box]
@@ -142,7 +141,7 @@ instance : ApproxMul Box ℂ where
   exact ⟨by mono, by mono⟩
 
 /-- `mono` friendly version of `Interval.approx_mul_box` -/
-@[mono] lemma Interval.subset_approx_mul_box {p : Set ℝ} {q : Set ℂ} {x : Interval} {z : Box}
+@[mono] lemma _root_.Interval.subset_approx_mul_box {p : Set ℝ} {q : Set ℂ} {x : Interval} {z : Box}
     (px : p ⊆ approx x) (qz : q ⊆ approx z) :
     (Complex.ofReal '' p) * q ⊆ approx (x.mul_box z) :=
   subset_trans (mul_subset_mul (image_mono px) qz) (Interval.approx_mul_box _ _)
@@ -151,9 +150,9 @@ instance : ApproxMul Box ℂ where
 noncomputable instance : ApproxRing Box ℂ where
 
 /-- `Box` squaring approximates `ℂ` -/
-@[mono] lemma Box.approx_sqr (z : Box) :
+@[mono] lemma approx_sqr (z : Box) :
     (fun z ↦ z^2) '' approx z ⊆ approx z.sqr := by
-  simp only [Box.instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
+  simp only [instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
   rintro w ⟨r,rz,i,iz,e⟩
   refine ⟨r^2 - i^2, ?_, 2*r*i, ?_, ?_⟩
   · apply approx_sub

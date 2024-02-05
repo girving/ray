@@ -25,7 +25,7 @@ namespace Floating
   bif t == nan then nan else scaleB x t.n up
 
 /-- `scaleB` is conservative -/
-@[mono] lemma mem_approx_scaleB {x : Floating} {t : Int64} {up : Bool} {x' : ℝ}
+@[mono] lemma mem_approx_scaleB {x : Floating} (t : Int64) (up : Bool) {x' : ℝ}
     (xm : x' ∈ approx x) : x' * 2^(t : ℤ) ∈ rounds (approx (x.scaleB t up)) !up := by
   rw [scaleB]
   have t0 : 0 < (2 : ℝ) := by norm_num
@@ -85,3 +85,55 @@ namespace Floating
         UInt64.toNat_add_of_le xt, Nat.cast_add, Int64.coe_of_nonneg tn]
       left
       ring
+
+/-- `scaleB _ _ false` rounds down -/
+@[mono] lemma scaleB_le {x : Floating} {t : Int64} (n : x.scaleB t false ≠ nan) :
+    (x.scaleB t false).val ≤ x.val * 2^(t : ℤ) := by
+  simpa only [approx, n, ite_false, Bool.not_false, mem_rounds_singleton, ite_true] using
+    mem_approx_scaleB t false (val_mem_approx (x := x))
+
+/-- `scaleB _ _ true` rounds up -/
+@[mono] lemma le_scaleB {x : Floating} {t : Int64} (n : x.scaleB t true ≠ nan) :
+    x.val * 2^(t : ℤ) ≤ (x.scaleB t true).val := by
+  simpa only [approx, n, ite_false, Bool.not_true, mem_rounds_singleton] using
+    mem_approx_scaleB t true (val_mem_approx (x := x))
+
+/-- `scaleB` propagates `nan` -/
+@[simp] lemma nan_scaleB {t : Int64} {up : Bool} : (nan : Floating).scaleB t up = nan := by
+  rw [scaleB]
+  simp only [bif_eq_if, decide_true_eq_true, if_true]
+  split_ifs
+  all_goals simp only [n_nan, s_nan, of_ns_nan]
+
+/-- `scaleB` propagates `nan` -/
+@[simp] lemma ne_nan_of_scaleB {x : Floating} {t : Int64} {up : Bool} (n : x.scaleB t up ≠ nan) :
+    x ≠ nan := by
+  contrapose n; simp only [ne_eq, not_not] at n
+  simp only [n, nan_scaleB, ne_eq, not_true_eq_false, not_false_eq_true]
+
+/-!
+### The special case of `n = 2^62`
+-/
+
+/-- Build `2^62 * 2^(s - 2^63)` -/
+@[irreducible] def two_pow_special (s : UInt64) : Floating where
+  n := 2^62
+  s := s
+  zero_same := by intro n; contrapose n; decide
+  nan_same := by intro n; contrapose n; decide
+  norm := by intro _ _ _; decide
+
+/-- `two_pow_special` never makes `nan` -/
+@[simp] lemma two_pow_special_ne_nan (s : UInt64) : two_pow_special s ≠ nan := by
+  rw [two_pow_special]
+  simp only [ne_eq, ext_iff, n_nan, s_nan, not_and]
+  intro n; contrapose n; decide
+
+/-- `two_pow_special` never makes `nan` -/
+@[simp] lemma val_two_pow_special (s : UInt64) :
+    (two_pow_special s).val = 2^(62 + (s.toNat : ℤ) - 2^63) := by
+  have t0 : (2 : ℝ) ≠ 0 := by norm_num
+  have e : ((2^62 : Int64) : ℤ) = 2^62 := by decide
+  rw [two_pow_special, val, e]
+  simp only [Int.cast_pow, Int.int_cast_ofNat, UInt64.toInt, pow_mul_zpow t0]
+  ring_nf
