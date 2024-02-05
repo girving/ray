@@ -277,12 +277,12 @@ instance : Union Interval where
 
 /-- Union propagates `nan` -/
 @[simp] lemma union_nan {x : Interval} : x ∪ nan = nan := by
-  simp only [Union.union, lo_nan, Floating.val_le_val, Floating.nan_val_le, min_eq_right,
+  simp only [Union.union, lo_nan, Floating.val_le_val, Floating.val_nan_le, min_eq_right,
     hi_nan, Floating.max_nan, ext_iff, and_self]
 
 /-- Union propagates `nan` -/
 @[simp] lemma nan_union {x : Interval} : nan ∪ x = nan := by
-  simp only [Union.union, lo_nan, Floating.val_le_val, Floating.nan_val_le, min_eq_left,
+  simp only [Union.union, lo_nan, Floating.val_le_val, Floating.val_nan_le, min_eq_left,
     hi_nan, Floating.nan_max, ext_iff, and_self]
 
 /-- `union` is commutative -/
@@ -334,14 +334,14 @@ where intersections are guaranteed nonempty.
 @[simp] lemma inter_nan {x : Interval} {t : (approx x ∩ approx nan).Nonempty} :
     x.inter nan t = nan := by
   rw [inter]
-  simp only [lo_nan, Floating.max_nan, hi_nan, ge_iff_le, Floating.val_le_val, Floating.nan_val_le,
+  simp only [lo_nan, Floating.max_nan, hi_nan, ge_iff_le, Floating.val_le_val, Floating.val_nan_le,
     min_eq_right, ext_iff, and_self]
 
 /-- `inter` propagates `nan` -/
 @[simp] lemma nan_inter {x : Interval} {t : (approx nan ∩ approx x).Nonempty} :
     (nan : Interval).inter x t = nan := by
   rw [inter]
-  simp only [lo_nan, Floating.nan_max, hi_nan, ge_iff_le, Floating.val_le_val, Floating.nan_val_le,
+  simp only [lo_nan, Floating.nan_max, hi_nan, ge_iff_le, Floating.val_le_val, Floating.val_nan_le,
     min_eq_left, ext_iff, and_self]
 
 /-- `inter` respects `approx` -/
@@ -431,6 +431,16 @@ lemma sub_eq_add_neg (x y : Interval) : x - y = x + (-y) := by
   simp only [HSub.hSub, Sub.sub, HAdd.hAdd, Add.add, lo_neg, hi_neg, ext_iff]
   rw [mix, mix]
   simp only [←Floating.sub_eq_add_neg, and_self]
+
+/-- Upper bound on `(x + y).lo` -/
+lemma lo_add_le {x y : Interval} (n : x + y ≠ nan) : (x + y).lo.val ≤ x.lo.val + y.lo.val := by
+  have h : x.lo.val + y.lo.val ∈ approx (x + y) := mem_approx_add lo_mem lo_mem
+  simp only [approx, lo_eq_nan, n, ite_false, mem_Icc] at h; exact h.1
+
+/-- Lower bound on `(x + y).hi` -/
+lemma le_hi_add {x y : Interval} (n : x + y ≠ nan) : x.hi.val + y.hi.val ≤ (x + y).hi.val := by
+  have h : x.hi.val + y.hi.val ∈ approx (x + y) := mem_approx_add hi_mem hi_mem
+  simp only [approx, lo_eq_nan, n, ite_false, mem_Icc] at h; exact h.2
 
 /-!
 ### Utility lemmas
@@ -696,3 +706,60 @@ lemma abs_pos_of_not_zero_mem {x : Interval} (z : 0 ∉ approx x) : 0 < x.abs.lo
     have le := x.le
     rcases z with z | z
     all_goals { constructor; all_goals { intro h; linarith } }
+
+/-!
+### Grow an interval by an upper error bound
+-/
+
+/-- A symmetric error interval around zero: `[-e, e]` -/
+@[irreducible] def error (e : Floating) : Interval :=
+  bif e == nan then nan else
+  if e0 : e.n.isNeg then 0 else {
+    lo := -e
+    hi := e
+    norm := by simp only [Floating.neg_eq_nan_iff]
+    le' := by
+      intro _ n
+      simp only [Floating.isNeg_iff, decide_eq_true_eq, not_lt] at e0
+      simp only [Floating.val_neg n, neg_le_self_iff, e0] }
+
+/-- `error` propagates `nan` -/
+@[simp] lemma error_nan : error (nan : Floating) = nan := by
+  rw [error]; simp only [beq_self_eq_true, dite_true, cond_true]
+
+/-- `error` propagates `nan` -/
+lemma ne_nan_of_error {e : Floating} (n : error e ≠ nan) : e ≠ nan := by
+  contrapose n; simp only [ne_eq, not_not] at n; simp only [n, ne_eq, not_not, error_nan]
+
+lemma lo_error_le (e : Floating) : (error e).lo.val ≤ -e.val := by
+  rw [error]
+  simp only [Floating.isNeg_iff, decide_eq_true_eq, bif_eq_if, beq_iff_eq, Floating.val_le_val]
+  split_ifs with n e0
+  · simp only [lo_nan, n]
+    trans 0
+    · exact Floating.val_nan_lt_zero.le
+    · simp only [Left.nonneg_neg_iff]; exact Floating.val_nan_lt_zero.le
+  · simp only [Floating.isNeg_iff, decide_eq_true_eq] at e0
+    simp only [lo_zero, Floating.val_zero, Floating.val_neg n, Left.nonneg_neg_iff, e0.le]
+  · simp only [le_refl, Floating.val_neg n]
+
+lemma le_hi_error (e : Floating) : e.val ≤ (error e).hi.val := by
+  rw [error]
+  simp only [Floating.isNeg_iff, decide_eq_true_eq, bif_eq_if, beq_iff_eq, Floating.val_le_val]
+  split_ifs with n e0
+  · simp only [n, hi_nan, le_refl]
+  · simp only [hi_zero, Floating.val_zero, e0.le]
+  · simp only [le_refl]
+
+ /-- How to prove `y ∈ approx (x + error e)` -/
+lemma approx_add_error {y z b : ℝ} {x : Interval} {e : Floating}
+    (yz : |y - z| ≤ b) (be : e ≠ nan → b ≤ e.val) (zx : z ∈ approx x) :
+    y ∈ approx (x + error e) := by
+  simp only [approx, mem_if_univ_iff, lo_eq_nan, mem_Icc]
+  intro n
+  simp only [abs_le, neg_le_sub_iff_le_add, tsub_le_iff_right, approx, lo_eq_nan,
+    (ne_nan_of_add n).1, ite_false, mem_Icc] at yz zx
+  specialize be (ne_nan_of_error (ne_nan_of_add n).2)
+  constructor
+  · exact le_trans (lo_add_le n) (by linarith [lo_error_le e])
+  · exact le_trans (by linarith [le_hi_error e]) (le_hi_add n)
