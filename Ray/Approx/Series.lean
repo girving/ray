@@ -60,8 +60,6 @@ lemma approx_taylor_sum (c : Array (Interval)) (c' : ℕ → ℝ) (x : Interval)
     forall_true_left] at h
   rw [taylor_sum]; exact h
 
--- DO NOT SUBMIT: Switch order of summation so that small things get summed first
-
 /-!
 ### Generic `Series` machinery
 -/
@@ -506,10 +504,12 @@ lemma untrusted_inv_log_2_test : untrusted_inv_log_2.toFloat * 0.693147180559945
   native_decide
 
 /-- `exp` tests -/
-def exp_test (x : ℚ) (e : Float) : Bool := ((Interval.ofRat x).exp).size.toFloat < e
+def exp_test (x : ℚ) (e : Float) : Bool :=
+  let y := (Interval.ofRat x).exp
+  y.size.toFloat ≤ e * y.lo.toFloat
 example : exp_test 0 1e-18 := by native_decide
-example : exp_test 10 1e-11 := by native_decide
-example : exp_test (-10) 1e-20 := by native_decide
+example : exp_test 10 1e-16 := by native_decide
+example : exp_test (-10) 1e-15 := by native_decide
 
 /-- `log` tests -/
 def log_test (x : ℚ) (e : Float) : Bool := (Interval.ofRat x).log.size.toFloat ≤ e
