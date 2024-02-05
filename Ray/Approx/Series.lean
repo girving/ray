@@ -1,6 +1,8 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Ray.Approx.Array
 import Ray.Approx.Division
+import Ray.Approx.Floating.Floor
+import Ray.Approx.Interval.Scale
 
 open Pointwise
 
@@ -271,6 +273,10 @@ them before we've done the general argument reduction.
 @[irreducible] def untrusted_inv_log_2 : Floating :=
   .ofRat (1 / 0.693147180559945309417232121458) false
 
+/-- Untrusted rational approximation to `(log 2)⁻¹ / 2` -/
+@[irreducible] def untrusted_inv_log_2_div_2 : Floating :=
+  .ofRat (0.5 / 0.693147180559945309417232121458) false
+
 /-- `Interval.log_2` is conservative -/
 @[mono] lemma Interval.approx_log_2 : Real.log 2 ∈ approx Interval.log_2 := by
   have e : Real.log 2 = 2/3 * log1p_div (1/3) + 1/8 * log1p_div (1/8) := by
@@ -295,15 +301,12 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
   -- We want
   --   `x - n log 2 ∈ [-log 2 / 2, log 2 / 2]`
   --   `x / log 2 - n ∈ [-1/2, 1/2]`
-  --   `n ∈ x/log2 + [-1/2, 1/2]`
-  --   `n ∈ x/log2 - 1/2 + [0,1]`
+  --   `n ∈ x/log 2 + [-1/2, 1/2]`
+  --   `n = floor(x/log 2 + 1/2)`
   -- We're not going to trust that `n` is correct, so we needn't trust our `(log 2)⁻¹` estimate.
-  let z : Floating := x.mul untrusted_inv_log_2 false
-  let n : Floating := ⟨(z.n + 1).shiftRightRound 1 false⟩
+  let n := ((x.mul untrusted_inv_log_2 false).add (.ofRat (1/2) false) false).floor
   let y : Interval := x - Interval.log_2.mul_float n
-  (exp_series_16.eval y).scaleB n
-
-#exit
+  (exp_series_16.eval y).scaleB' n
 
 /-- `exp x` for potentially large `x`, via argument reduction -/
 @[irreducible] def Interval.exp (x : Interval) : Interval :=
@@ -313,13 +316,12 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
 @[mono] lemma Floating.mem_approx_exp {x : Floating} {x' : ℝ} (xm : x' ∈ approx x) :
     Real.exp x' ∈ approx x.exp := by
   rw [Floating.exp]
-  generalize x.mul untrusted_inv_log_2 _ false = z
+  generalize hn : floor ((mul x untrusted_inv_log_2 false).add (ofRat (1 / 2) false) false) = n
   simp only [bif_eq_if, beq_iff_eq]
-  generalize (⟨(z.n + 1).shiftRightRound 1 false⟩ : Floating 0) = n
   by_cases xn : x = nan
-  · simp only [xn, ite_true, FloatingInterval.nan_x, Interval.lo_nan,
-      FloatingInterval.approx_of_lo_eq_nan, mem_univ]
-  simp only [ne_eq, neg_neg, xn, not_false_eq_true, ne_nan_of_neg, ite_false]
+  · simp only [xn, Interval.coe_nan, Interval.nan_sub, Series.eval_nan, ite_true,
+      Interval.approx_nan, mem_univ]
+  simp only [ne_eq, neg_neg, xn, not_false_eq_true, ite_false]
   have e : Real.exp x' = Real.exp (x' - Real.log 2 * n.val) * 2 ^ n.val := by
     rw [Real.exp_sub, Real.exp_mul, Real.exp_log (by norm_num),
       div_mul_cancel _ (Real.rpow_pos_of_pos (by norm_num) _).ne']
@@ -329,26 +331,18 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
 /-- `Floating.exp` propagates `nan` -/
 @[simp] lemma Floating.exp_nan : (nan : Floating).exp = nan := by
   rw [Floating.exp, exp_series_16]
-  simp only [beq_self_eq_true, ← Interval.nan_def, nan_mul, nan_n, Interval.nan_sub,
-    Interval.repoint_nan, Series.eval_nan, cond_true]
+  simp only [beq_self_eq_true, nan_mul, Interval.nan_sub, Series.eval_nan, cond_true]
 
 /-- `Interval.exp` is conservative (`⊆` version) -/
 @[mono] lemma Interval.approx_exp {x : Interval} : Real.exp '' approx x ⊆ approx x.exp := by
   rw [Interval.exp]
-  by_cases n : x.lo = nan ∨ x.hi = nan
-  · rcases n with n | n
-    · simp only [n, approx_of_lo_nan, image_univ, Real.range_exp, Floating.exp_nan,
-        FloatingInterval.nan_union, FloatingInterval.nan_x, lo_nan,
-        FloatingInterval.approx_of_lo_eq_nan, subset_univ]
-    · simp only [n, approx_of_hi_nan, image_univ, Real.range_exp, Floating.exp_nan,
-        FloatingInterval.union_nan, FloatingInterval.nan_x, lo_nan,
-        FloatingInterval.approx_of_lo_eq_nan, subset_univ]
-  rcases not_or.mp n with ⟨ln,hn⟩
-  have e : approx x = Icc x.lo.val x.hi.val := by simp only [approx, ln, hn, false_or, if_false]
-  rw [e]
+  by_cases xn : x = nan
+  · simp only [xn, approx_nan, image_univ, Real.range_exp, lo_nan, Floating.exp_nan, hi_nan,
+      union_nan, subset_univ]
+  rw [approx_eq_Icc xn]
   refine subset_trans Real.exp_monotone.image_Icc_subset (Icc_subset_approx ?_ ?_)
-  · apply FloatingInterval.approx_union_left; mono
-  · apply FloatingInterval.approx_union_right; mono
+  · apply Interval.approx_union_left; mono
+  · apply Interval.approx_union_right; mono
 
 /-- `Interval.exp` is conservative (`∈` version) -/
 @[mono] lemma Interval.mem_approx_exp {x : Interval} {a : ℝ} (ax : a ∈ approx x) :
@@ -358,7 +352,7 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
 /-- `Interval.exp` propagates `nan` -/
 @[simp] lemma Interval.exp_nan : (nan : Interval).exp = nan := by
   rw [Interval.exp]
-  simp only [lo_nan, Floating.exp_nan, hi_nan, FloatingInterval.union_nan]
+  simp only [lo_nan, Floating.exp_nan, hi_nan, Interval.union_nan]
 
 /-!
 ### `log x` for arbitrary `x`, via argument reduction
@@ -370,15 +364,17 @@ set the final precision.
 -/
 
 /-- Untrusted 4/3 approximation -/
-@[irreducible] def untrusted_four_thirds : Floating (-62) := .ofRat (4/3) false
+@[irreducible] def untrusted_four_thirds : Floating := .ofRat (4/3) false
 
 /-- Choose `n` s.t. `x * 2^-n ∈ [2/3, 4/3]`.  We don't trust the output of this routine for
     our conservativeness results. -/
-@[irreducible] def Floating.untrusted_log_shift (x : Floating) : Floating 0 :=
+@[irreducible] def Floating.untrusted_log_shift (x : Floating) : Fixed 0 :=
   -- we make an initial guess that puts us in [1,2], then add 1 if we're not small enough
   let g := x.log2
   let y := ((x : Floating).scaleB (-g)).x.repoint (-62) false
   bif y.n ≤ untrusted_four_thirds.n then g else g+1
+
+#exit
 
 /-- `log x` for arbitrary `x`, via argument reduction -/
 @[irreducible] def Floating.log (x : Floating) : FloatingInterval :=
