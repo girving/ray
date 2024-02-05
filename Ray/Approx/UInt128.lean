@@ -782,66 +782,16 @@ lemma UInt128.toInt_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
       simp only [Nat.cast_pow, Nat.cast_ofNat, ne_eq, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
         false_and, not_false_eq_true, Int.mul_ediv_cancel]
 
--- DO NOT SUBMIT: Should simplify a bunch given toInt_shiftRightRound
 /-- `shiftRightRound` rounds as desired -/
 lemma UInt128.approx_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
     (x.shiftRightRound s up : ℝ) ∈ rounds {(x : ℝ) / (2:ℝ)^s.toNat} up := by
-  have cp : (2:ℝ) ^ s.toNat = ((2:ℕ) ^ s.toNat : ℕ) := by
-    simp only [Nat.cast_pow, Nat.cast_ofNat]
-  have z2 : ∀ {n}, (2:ℝ) ^ n ≠ 0 := fun {_} ↦ pow_ne_zero _ (by norm_num)
-  rw [shiftRightRound]
-  simp only [bif_eq_if, Bool.or_eq_true, beq_iff_eq, Bool.not_eq_true',
-    Bool.and_eq_true, bne_iff_ne, ne_eq, decide_eq_true_eq]
-  by_cases s0 : s = 0
-  · simp only [s0, ite_false, ite_true, UInt64.toNat_zero, pow_zero, div_one, mem_rounds_singleton,
-      le_refl, ite_self]
-  · simp only [s0, ite_false]
-    have s1 : 1 ≤ s.toNat := by
-      rw [UInt64.eq_iff_toNat_eq] at s0
-      exact Nat.one_le_iff_ne_zero.mpr s0
-    by_cases s128 : 128 ≤ s
-    · simp only [s128, ite_true]
-      by_cases x0 : x = 0
-      · simp only [x0, true_or, ite_true, toReal_zero, zero_div, mem_rounds_singleton, le_refl,
-          ite_self]
-      · simp only [x0, false_or]
-        have z : (x:ℝ) / (2:ℝ) ^ UInt64.toNat s < 1 := by
-          rw [div_lt_one (pow_pos two_pos _)]
-          refine lt_of_lt_of_le (UInt128.coe_lt_size _) ?_
-          have e : UInt64.toNat 128 = 128 := rfl
-          rw [UInt64.le_iff_toNat_le, e] at s128
-          exact pow_right_mono (by norm_num) s128
-        by_cases u : up
-        · simp only [u, ite_false, toReal_one, mem_rounds_singleton, ite_true, z.le]
-        · simp only [u, ite_true, toReal_zero, mem_rounds_singleton, ite_false, ge_iff_le]
-          exact div_nonneg (coe_nonneg _) (pow_nonneg (by norm_num) _)
-    · simp only [s128, ite_false, mem_rounds_singleton]
-      simp only [not_le] at s128
-      by_cases u : up
-      · simp only [u, true_and, ite_not, apply_ite, ite_true]
-        by_cases lh : x = (x >>> s) <<< s
-        · simp only [← lh, ite_true, ge_iff_le]
-          have lt : x.toNat / 2 ^ s.toNat * 2 ^ s.toNat < 2^128 :=
-            lt_of_le_of_lt (Nat.div_mul_le_self _ _) (UInt128.lt_size _)
-          simp only [UInt128.eq_iff_toNat_eq, UInt128.toNat_shiftLeft _ s128,
-            UInt128.toNat_shiftRight _ s128, UInt128.toReal, Nat.mod_eq_of_lt lt] at lh ⊢
-          nth_rw 1 [lh]
-          simp only [Nat.cast_mul, Nat.isUnit_iff, Nat.cast_pow, Nat.cast_ofNat, ne_eq,
-            mul_div_cancel _ z2, le_refl]
-        · have nt : (x >>> s).toNat ≠ 2^128-1 := by
-            rw [UInt128.toNat_shiftRight _ s128]
-            apply ne_of_lt
-            apply lt_of_le_of_lt (Nat.div_le_div_right (UInt128.lt_size _).le)
-            refine lt_of_le_of_lt (Nat.div_le_div_left (pow_right_mono one_le_two s1) two_pos) ?_
-            norm_num
-          simp only [lh, toReal._eq_1, UInt128.toNat_shiftRight _ s128, Nat.isUnit_iff,
-            UInt128.toNat_succ nt, Nat.cast_add, Nat.cast_one, ite_false, ge_iff_le]
-          rw [cp]
-          apply Nat.cast_div_le_div_add_one
-      · simp only [u, toReal, false_and, ite_false, UInt128.toNat_shiftRight _ s128,
-          Nat.isUnit_iff, ge_iff_le]
-        rw [le_div_iff (pow_pos two_pos _), cp, ←Nat.cast_mul, Nat.cast_le]
-        apply Nat.div_mul_le_self
+  have a := toInt_shiftRightRound x s up
+  simp only [←Int.cast_inj (α := ℝ), Int.cast_Nat_cast] at a
+  have e : (2:ℝ)^s.toNat = (2^s.toNat : ℕ) := by simp only [Nat.cast_pow, Nat.cast_ofNat]
+  simp only [toReal, mem_rounds_singleton, a, e]
+  induction up
+  · exact Int.rdiv_le
+  · exact Int.le_rdiv
 
 lemma UInt128.toNat_shiftLeftSaturate {x : UInt128} {s : UInt64}
     : (x.shiftLeftSaturate s).toNat = min (x.toNat * 2^s.toNat) UInt128.max.toNat := by

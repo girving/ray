@@ -216,27 +216,6 @@ def inv_guess (x : Floating) : Floating :=
     apply abs_pos_of_not_zero_mem z)
   bif x.lo.n.isNeg then -r else r
 
--- DO NOT SUBMIT: DO I NEED THIS?
---/-- `inv_step` propagates `r = nan` -/
---@[simp] lemma inv_step_nan {x : Floating} {c : Floating} {x0 : 0 < x.val} :
---    inv_step x nan c x0 = nan := by
---  rw [inv_step]
---  simp only [Interval.nan_mul_lo, Interval.add_def, Interval.lo_fixed, Floating.add_nan,
---    Interval.hi_fixed, Interval.inter_def, Interval.mk.injEq, Floating.max_eq_nan, or_self,
---    Floating.min_eq_nan, and_self, Interval.lo_nan, Interval.hi_nan, Interval.nan_def]
-
--- DO NOT SUBMIT
---/-- `inv_region` propagates `nan` -/
---@[simp] lemma inv_region_nan : (inv_region (nan : Floating) : Interval) = nan := by
---  sorry
-  --rw [inv_region]
-  --simp only [Floating.log2_nan, Floating.sub_nan, Floating.two_pow_nan, Floating.neg_nan, Interval.nan_def]
-
--- DO NOT SUBMIT
---/-- `inv_pos` propagates `nan` -/
---@[simp] lemma Floating.inv_pos_nan : ((nan : Floating).inv_pos : Interval) = nan := by
---  rw [Floating.inv_pos]; simp only [inv_region_nan, inv_step_nan]
-
 /-- `Interval.inv_pos` is conservative -/
 @[mono] lemma approx_inv_pos {x : Interval} (l0 : 0 < x.lo.val) :
     (approx x)⁻¹ ⊆ approx (x.inv_pos l0) := by
