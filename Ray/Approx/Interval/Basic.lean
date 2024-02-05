@@ -19,7 +19,7 @@ open scoped Real
 #### Type definition and basic lemmas
 -/
 
-/-- 64-bit fixed point intervals -/
+/-- Floating point intervals -/
 structure Interval where
   /-- Lower bound -/
   lo : Floating
