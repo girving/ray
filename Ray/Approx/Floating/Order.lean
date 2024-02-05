@@ -375,6 +375,9 @@ instance : LinearOrder Floating where
 @[simp] lemma not_nan_nonneg : ¬0 ≤ (nan : Floating).val := by
   simpa only [val_lt_val, val_zero, not_le] using nan_lt_zero
 
+@[simp] lemma not_nan_pos : ¬0 < (nan : Floating).val := by
+  simpa only [val_le_val, val_zero, not_lt] using nan_lt_zero.le
+
 lemma ne_nan_of_nonneg {x : Floating} (n : 0 ≤ x.val) : x ≠ nan := by
   contrapose n; simp only [ne_eq, not_not] at n; simp only [n, not_nan_nonneg, not_false_eq_true]
 
