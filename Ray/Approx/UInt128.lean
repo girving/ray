@@ -446,18 +446,16 @@ lemma toNat_mul128_mod (x y : UInt64) : (mul128 x y).toNat % 2^128 = x.toNat * y
 ### 128 bit shifting
 -/
 
--- DO NOT SUBMIT: Rename back to shiftLeft
 /-- Multiply by `2^(s % 128)`, discarding overflow bits -/
-@[irreducible, pp_dot] def UInt128.shiftLeft_tweak (x : UInt128) (s : UInt64) : UInt128 :=
+@[irreducible, pp_dot] def UInt128.shiftLeft (x : UInt128) (s : UInt64) : UInt128 :=
   let s := s.land 127
   { lo := bif s < 64 then x.lo <<< s else 0
     hi := bif s == 0 then x.hi
           else bif s < 64 then x.hi <<< s ||| x.lo >>> (64-s)
           else x.lo <<< (s - 64) }
 
--- DO NOT SUBMIT: Rename back to shiftRight
 /-- Divide by `2^(s % 128)`, rounding down -/
-@[irreducible, pp_dot] def UInt128.shiftRight_tweak (x : UInt128) (s : UInt64) : UInt128 :=
+@[irreducible, pp_dot] def UInt128.shiftRight (x : UInt128) (s : UInt64) : UInt128 :=
   let s := s.land 127
   { lo := bif s == 0 then x.lo
           else bif s < 64 then x.lo >>> s ||| x.hi <<< (64-s)
@@ -465,13 +463,13 @@ lemma toNat_mul128_mod (x y : UInt64) : (mul128 x y).toNat % 2^128 = x.toNat * y
     hi := bif s < 64 then x.hi >>> s else 0 }
 
 instance : HShiftLeft UInt128 UInt64 UInt128 where
-  hShiftLeft x s := x.shiftLeft_tweak s
+  hShiftLeft x s := x.shiftLeft s
 
 instance : HShiftRight UInt128 UInt64 UInt128 where
-  hShiftRight x s := x.shiftRight_tweak s
+  hShiftRight x s := x.shiftRight s
 
-lemma UInt128.shiftLeft_def (x : UInt128) (s : UInt64) : x <<< s = x.shiftLeft_tweak s := rfl
-lemma UInt128.shiftRight_def (x : UInt128) (s : UInt64) : x >>> s = x.shiftRight_tweak s := rfl
+lemma UInt128.shiftLeft_def (x : UInt128) (s : UInt64) : x <<< s = x.shiftLeft s := rfl
+lemma UInt128.shiftRight_def (x : UInt128) (s : UInt64) : x >>> s = x.shiftRight s := rfl
 
 /-- Divide by `2^s`, rounding up or down -/
 @[irreducible, pp_dot] def UInt128.shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
@@ -603,7 +601,7 @@ lemma UInt128.toNat_shiftLeft (x : UInt128) {s : UInt64} (sl : s < 128) :
   simp only [st, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast, Nat.mod_eq_of_lt t64', p128, st] at sl ⊢
   clear st ht s
   refine Nat.eq_of_testBit_eq fun i ↦ ?_
-  rw [shiftLeft_def, shiftLeft_tweak]
+  rw [shiftLeft_def, shiftLeft]
   simp only [UInt64.land_eq_hand, t127' sl, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast,
     Nat.mod_eq_of_lt t64', p64, bif_eq_if, beq_iff_eq, UInt64.eq_iff_toNat_eq,
     UInt64.toNat_zero, testBit_eq, apply_ite (f := UInt64.toNat), UInt64.toNat_shiftLeft',
@@ -664,20 +662,20 @@ lemma UInt128.toNat_shiftLeft' (x : UInt128) {s : UInt64} :
     simp only [UInt64.land_eq_hand, UInt64.eq_iff_toNat_eq, UInt64.toNat_land, UInt64.toNat_mod,
       p128, p127, e, Nat.mod_mod]
   refine Eq.trans ?_ (toNat_shiftLeft (x := x) (s := s % 128) ?_)
-  · rw [shiftLeft_def, shiftLeft_def, shiftLeft_tweak, shiftLeft_tweak, e]
+  · rw [shiftLeft_def, shiftLeft_def, shiftLeft, shiftLeft, e]
   · simp only [UInt64.lt_iff_toNat_lt, UInt64.toNat_mod, p128, gt_iff_lt, Nat.zero_lt_succ,
       Nat.mod_lt]
 
 /-- Shifting left by zero does nothing -/
 @[simp] lemma UInt128.shiftLeft_zero (x : UInt128) : x <<< (0 : UInt64) = x := by
   have h : (0 : UInt64) < 64 := by decide
-  rw [shiftLeft_def, shiftLeft_tweak]
+  rw [shiftLeft_def, shiftLeft]
   simp only [UInt64.land_eq_hand, UInt64.zero_land, h, decide_True,
     UInt64.shiftLeft_zero, cond_true, beq_self_eq_true, sub_zero, zero_sub]
 
 /-- Shifting zero does nothing -/
 @[simp] lemma UInt128.zero_shiftLeft (s : UInt64) : (0 : UInt128) <<< s = 0 := by
-  rw [shiftLeft_def, shiftLeft_tweak]
+  rw [shiftLeft_def, shiftLeft]
   simp only [UInt64.land_eq_hand, zero_lo, UInt64.zero_shiftLeft, Bool.cond_self,
     zero_hi, UInt64.zero_shiftRight, UInt64.zero_or, UInt128.ext_iff, and_self]
 
@@ -690,7 +688,7 @@ lemma UInt128.toNat_shiftRight (x : UInt128) {s : UInt64} (sl : s < 128) :
   simp only [st, UInt64.lt_iff_toNat_lt, UInt64.toNat_cast, Nat.mod_eq_of_lt t64', p128, st] at sl ⊢
   clear st ht s
   refine Nat.eq_of_testBit_eq fun i ↦ ?_
-  rw [shiftRight_def, shiftRight_tweak]
+  rw [shiftRight_def, shiftRight]
   simp only [UInt128.testBit_eq, bif_eq_if, beq_iff_eq, decide_eq_true_eq,
     apply_ite (f := UInt64.toNat), apply_ite (f := fun x ↦ Nat.testBit x i),
     apply_ite (f := fun x ↦ Nat.testBit x (i - 64)),
@@ -721,7 +719,7 @@ lemma UInt128.toNat_shiftRight' (x : UInt128) {s : UInt64} :
     simp only [UInt64.land_eq_hand, UInt64.eq_iff_toNat_eq, UInt64.toNat_land, UInt64.toNat_mod,
       p128, p127, e, Nat.mod_mod]
   refine Eq.trans ?_ (toNat_shiftRight (x := x) (s := s % 128) ?_)
-  · rw [shiftRight_def, shiftRight_def, shiftRight_tweak, shiftRight_tweak, e]
+  · rw [shiftRight_def, shiftRight_def, shiftRight, shiftRight, e]
   · simp only [UInt64.lt_iff_toNat_lt, UInt64.toNat_mod, p128, gt_iff_lt, Nat.zero_lt_succ,
       Nat.mod_lt]
 
@@ -904,7 +902,7 @@ lemma UInt128.shiftLeftSaturate_eq {x : UInt128} {s : UInt64}
   rw [Nat.mod_eq_of_lt]; apply min_lt_of_right_lt; rw [toNat_max]; norm_num
 
 @[simp] lemma UInt128.zero_shiftRight {s : UInt64} : (0 : UInt128) >>> s = 0 := by
-  rw [shiftRight_def, shiftRight_tweak]
+  rw [shiftRight_def, shiftRight]
   simp only [UInt64.land_eq_hand, zero_lo, UInt64.zero_shiftRight, zero_hi, UInt64.zero_shiftLeft,
     UInt64.zero_or, Bool.cond_self]
   rfl
@@ -977,3 +975,22 @@ lemma UInt128.shiftLeftSaturate_eq {x : UInt128} {s : UInt64}
   · simp only [x0, zero_lt_two, pow_pos, toNat_lo]
   · rw [toNat_lo]
     rwa [Nat.log2_lt x0] at h
+
+/-- Shifting some high bits down produces a small value -/
+lemma UInt128.toNat_hi_shiftRightRound_le_hi {y : UInt64} {s : UInt64} {up : Bool} :
+    ((⟨0, y⟩ : UInt128).shiftRightRound s up).hi.toNat ≤ y.toNat := by
+  have h := UInt128.toInt_shiftRightRound ⟨0, y⟩ s up
+  generalize (⟨0, y⟩ : UInt128).shiftRightRound s up = z at h
+  contrapose h; simp only [not_le] at h
+  apply ne_of_gt
+  rw [←Int.cast_lt (α := ℝ)]
+  refine lt_of_lt_of_le Int.rdiv_lt ?_
+  simp only [UInt128.toNat_def, UInt64.toNat_zero, add_zero, Nat.cast_mul, Nat.cast_pow,
+    Nat.cast_ofNat, Int.cast_mul, Int.cast_ofNat, Int.cast_pow, Int.int_cast_ofNat, Nat.cast_add,
+    Int.cast_add]
+  trans y.toNat * 2^64 + 1
+  · exact add_le_add_right (div_le_self (by positivity) (one_le_pow_of_one_le (by norm_num) _)) _
+  · have e : (2^64 : ℝ) = (2^64 : ℕ) := by norm_num
+    simp only [e, ←Nat.cast_mul, ←Nat.cast_add_one, ←Nat.cast_add, Nat.cast_le]
+    norm_num
+    omega

@@ -16,8 +16,6 @@ open scoped Real
 
 variable {𝕜 : Type} [LinearOrderedField 𝕜]
 
--- DO NOT SUBMIT: Move the general field stuff somewhere else
-
 /-- Simplify to case assuming not `nan` -/
 lemma mem_if_univ_iff {x : 𝕜} {u : Set 𝕜} {p : Prop} {dp : Decidable p} :
     x ∈ @ite _ p dp univ u ↔ ¬p → x ∈ u := by
