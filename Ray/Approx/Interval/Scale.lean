@@ -27,9 +27,24 @@ namespace Interval
   rw [scaleB]; simp only [lo_nan, Floating.nan_scaleB, hi_nan, mix_self, coe_nan]
 
 /-- `scaleB` propagates `nan` -/
-@[simp] lemma ne_nan_of_scaleB {x : Interval} {t : Int64} (n : x.scaleB t ≠ nan) : x ≠ nan := by
+lemma ne_nan_of_scaleB {x : Interval} {t : Int64} (n : x.scaleB t ≠ nan) : x ≠ nan := by
   contrapose n; simp only [ne_eq, not_not] at n
   simp only [n, nan_scaleB, ne_eq, not_true_eq_false, not_false_eq_true]
+
+/-- `scaleB'` propagates `nan` -/
+@[simp] lemma nan_scaleB' {t : Fixed 0} : (nan : Interval).scaleB' t = nan := by
+  rw [scaleB']; simp only [nan_scaleB, Bool.cond_self]
+
+/-- `scaleB'` propagates `nan` -/
+@[simp] lemma scaleB'_nan {x : Interval} : x.scaleB' nan = nan := by
+  rw [scaleB']; simp only [beq_self_eq_true, Fixed.nan_n, cond_true]
+
+/-- `scaleB'` propagates `nan` -/
+lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
+    x ≠ nan ∧ t ≠ nan := by
+  contrapose n; simp only [ne_eq, not_not, not_and_or] at n
+  rcases n with n | n
+  all_goals simp only [n, nan_scaleB', scaleB'_nan, ne_eq, not_true_eq_false, not_false_eq_true]
 
 /-- `scaleB` is conservative -/
 @[mono] lemma mem_approx_scaleB {x : Interval} {t : Int64} {x' : ℝ}

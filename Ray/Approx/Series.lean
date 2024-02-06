@@ -77,7 +77,7 @@ structure Series (s : Int64) where
 @[irreducible] def Series.eval (p : Series s) (x : Interval) : Interval :=
   let a := x.abs
   bif a.hi == nan || p.radius < a.hi then nan else
-  taylor_sum p.coeffs x + Interval.error p.error
+  (taylor_sum p.coeffs x).grow p.error
 
 /-- `Series` objects approximate functions -/
 instance : Approx (Series s) (ℝ → ℝ) where
@@ -114,7 +114,7 @@ lemma Series.approx_of_taylor (p : Series s) (f : ℝ → ℝ) (a : ℕ → ℝ)
   specialize pf rn x xa
   simp only [eval, bif_eq_if, Floating.val_lt_val, not_lt.mpr ry, decide_False, Bool.or_false,
     beq_iff_eq, Interval.hi_eq_nan, Interval.abs_eq_nan, yn', ite_false]
-  exact Interval.approx_add_error pf be (approx_taylor_sum _ _ _ _ ac xy)
+  exact Interval.approx_grow pf be (approx_taylor_sum _ _ _ _ ac xy)
 
 /-!
 ### `Series` approximations for `exp` and `log`
@@ -144,8 +144,8 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
       simp only [beq_self_eq_true, pow_zero, CharP.cast_eq_zero, zero_add, Nat.factorial_zero,
         Nat.cast_one, mul_zero, div_zero, cond_true]
     simp only [n0, Series.eval._eq_1, bif_eq_if, Floating.val_lt_val, Bool.or_eq_true, beq_iff_eq,
-      Interval.hi_eq_nan, Interval.abs_eq_nan, decide_eq_true_eq, e, Interval.error_nan,
-      Interval.add_nan, ite_self, Interval.approx_nan, mem_univ]
+      Interval.hi_eq_nan, Interval.abs_eq_nan, decide_eq_true_eq, e, Interval.grow_nan, ite_self,
+      Interval.approx_nan, mem_univ]
   · apply (exp_series s n).approx_of_taylor
     · intro rn x xr
       rw [exp_series] at xr rn; simp only at xr

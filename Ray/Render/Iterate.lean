@@ -1,6 +1,5 @@
 import Ray.Approx.Box
 import Ray.Dynamics.Mandelbrot
-import Ray.Render.Color
 
 /-!
 ## Mandelbrot iteration

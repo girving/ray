@@ -1,4 +1,5 @@
 import Ray.Approx.Box
+import Ray.Approx.Floating.TwoPow
 import Ray.Approx.Interval.Conversion
 import Ray.Approx.Interval.Around
 import Ray.Approx.Interval.Mul

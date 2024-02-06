@@ -110,30 +110,3 @@ namespace Floating
     x ≠ nan := by
   contrapose n; simp only [ne_eq, not_not] at n
   simp only [n, nan_scaleB, ne_eq, not_true_eq_false, not_false_eq_true]
-
-/-!
-### The special case of `n = 2^62`
--/
-
-/-- Build `2^62 * 2^(s - 2^63)` -/
-@[irreducible] def two_pow_special (s : UInt64) : Floating where
-  n := 2^62
-  s := s
-  zero_same := by intro n; contrapose n; decide
-  nan_same := by intro n; contrapose n; decide
-  norm := by intro _ _ _; decide
-
-/-- `two_pow_special` never makes `nan` -/
-@[simp] lemma two_pow_special_ne_nan (s : UInt64) : two_pow_special s ≠ nan := by
-  rw [two_pow_special]
-  simp only [ne_eq, ext_iff, n_nan, s_nan, not_and]
-  intro n; contrapose n; decide
-
-/-- `two_pow_special` never makes `nan` -/
-@[simp] lemma val_two_pow_special (s : UInt64) :
-    (two_pow_special s).val = 2^(62 + (s.toNat : ℤ) - 2^63) := by
-  have t0 : (2 : ℝ) ≠ 0 := by norm_num
-  have e : ((2^62 : Int64) : ℤ) = 2^62 := by decide
-  rw [two_pow_special, val, e]
-  simp only [Int.cast_pow, Int.int_cast_ofNat, UInt64.toInt, pow_mul_zpow t0]
-  ring_nf

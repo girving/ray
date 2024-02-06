@@ -771,7 +771,11 @@ lemma Fixed.le_mul {x : Fixed s} {y : Fixed t} {u : Int64} (n : Fixed.mul x y u 
     let k := (bif up then n + (1 <<< u) - 1 else n) >>> u
     bif k.log2 < 63 then ⟨k⟩ else nan
 
-/-- We use the general `.ofNat` routine even for `1`, to handle overflow,
+/-- Conversion from `ℕ` literals to `Fixed 0`, not rounding -/
+@[irreducible] def Fixed.ofNat0 (n : ℕ) : Fixed 0 :=
+  bif n.log2 < 63 then ⟨n⟩ else nan
+
+ /-- We use the general `.ofNat` routine even for `1`, to handle overflow,
     rounding down arbitrarily -/
 instance : One (Fixed s) := ⟨.ofNat 1 false⟩
 
@@ -867,6 +871,20 @@ lemma Fixed.approx_ofNat (n : ℕ) (up : Bool) :
       · simp only [Int64.toInt_ofNat ((Nat.log2_lt zero).mp nn.1), Int.cast_ofNat, ←Nat.cast_mul,
           Nat.cast_le]
         exact Nat.le_add_div_mul (Nat.pos_pow_of_pos _ (by norm_num))
+
+/-- `Fixed.ofNat0` is conservative -/
+@[mono] lemma Fixed.approx_ofNat0 (n : ℕ) : ↑n ∈ approx (ofNat0 n) := by
+  by_cases nn : (ofNat0 n) = nan
+  · simp only [nn, approx_nan, mem_univ]
+  rw [ofNat0] at nn ⊢
+  simp only [bif_eq_if, decide_eq_true_eq, ite_eq_right_iff, not_forall, exists_prop] at nn ⊢
+  simp only [approx, nn, ite_true, ne_eq, neg_neg, not_false_eq_true, ne_nan_of_neg, val._eq_1,
+    Int64.coe_zero, zpow_zero, mul_one, ite_false, mem_singleton_iff]
+  replace nn := nn.1
+  by_cases n0 : n = 0
+  · simp only [n0, CharP.cast_eq_zero, Nat.cast_zero, Int64.coe_zero, Int.cast_zero]
+  simp only [Nat.log2_lt n0] at nn
+  simp only [Int64.toInt_ofNat nn, Int.cast_ofNat]
 
 /-- `Fixed.approx_ofNat`, down version -/
 lemma Fixed.ofNat_le {n : ℕ} (h : (.ofNat n false : Fixed s) ≠ nan) :

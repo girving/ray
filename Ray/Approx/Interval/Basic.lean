@@ -723,6 +723,10 @@ lemma abs_pos_of_not_zero_mem {x : Interval} (z : 0 ∉ approx x) : 0 < x.abs.lo
       simp only [Floating.isNeg_iff, decide_eq_true_eq, not_lt] at e0
       simp only [Floating.val_neg n, neg_le_self_iff, e0] }
 
+-- Grow an interval by an error bound -/
+@[irreducible] def grow (x : Interval) (e : Floating) : Interval :=
+  x + error e
+
 /-- `error` propagates `nan` -/
 @[simp] lemma error_nan : error (nan : Floating) = nan := by
   rw [error]; simp only [beq_self_eq_true, dite_true, cond_true]
@@ -730,6 +734,14 @@ lemma abs_pos_of_not_zero_mem {x : Interval} (z : 0 ∉ approx x) : 0 < x.abs.lo
 /-- `error` propagates `nan` -/
 lemma ne_nan_of_error {e : Floating} (n : error e ≠ nan) : e ≠ nan := by
   contrapose n; simp only [ne_eq, not_not] at n; simp only [n, ne_eq, not_not, error_nan]
+
+/-- `grow` propagates `nan` -/
+@[simp] lemma grow_nan {x : Interval} : x.grow nan = nan := by
+  rw [grow]; simp only [error_nan, add_nan]
+
+/-- `grow` propagates `nan` -/
+@[simp] lemma nan_grow {e : Floating} : (nan : Interval).grow e = nan := by
+  rw [grow]; simp only [nan_add]
 
 lemma lo_error_le (e : Floating) : (error e).lo.val ≤ -e.val := by
   rw [error]
@@ -751,10 +763,11 @@ lemma le_hi_error (e : Floating) : e.val ≤ (error e).hi.val := by
   · simp only [hi_zero, Floating.val_zero, e0.le]
   · simp only [le_refl]
 
- /-- How to prove `y ∈ approx (x + error e)` -/
-lemma approx_add_error {y z b : ℝ} {x : Interval} {e : Floating}
+ /-- How to prove `y ∈ approx (x.grow e)` -/
+lemma approx_grow {y z b : ℝ} {x : Interval} {e : Floating}
     (yz : |y - z| ≤ b) (be : e ≠ nan → b ≤ e.val) (zx : z ∈ approx x) :
-    y ∈ approx (x + error e) := by
+    y ∈ approx (x.grow e) := by
+  rw [grow]
   simp only [approx, mem_if_univ_iff, lo_eq_nan, mem_Icc]
   intro n
   simp only [abs_le, neg_le_sub_iff_le_add, tsub_le_iff_right, approx, lo_eq_nan,

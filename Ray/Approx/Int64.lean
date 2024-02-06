@@ -461,6 +461,24 @@ lemma Int64.toInt_eq_toNat_of_lt {x : Int64} (h : x.n.toNat < 2^63) : (x : ℤ) 
   simp only [UInt64.toNat_log2]
   exact lt_trans (UInt64.log2_lt_64 _) (by norm_num)
 
+/-- Adding `2^63` and converting via `UInt64` commutes -/
+@[simp] lemma Int64.toNat_add_pow_eq_coe (n : Int64) :
+    ((n + 2^63).n.toNat : ℤ) = (n : ℤ) + 2^63 := by
+  have e : (2^63 : Int64).n.toNat = 2^63 := by decide
+  simp only [add_def, UInt64.toNat_add, e, UInt64.size_eq_pow, Int.ofNat_emod, Nat.cast_add,
+    Nat.cast_pow, Nat.cast_ofNat, toInt, isNeg_eq_le, bif_eq_if, decide_eq_true_eq, Nat.cast_ite,
+    CharP.cast_eq_zero]
+  have lt := n.n.toNat_lt
+  by_cases b : 2 ^ 63 ≤ n.n.toNat
+  · simp only [b, ite_true]
+    have m : (n.n.toNat : ℤ) + 2^63 = n.n.toNat - 2^63 + 2^64 := by linarith
+    rw [m, Int.add_emod_self, Int.emod_eq_of_lt]
+    all_goals omega
+  · simp only [b, ite_false, sub_zero]
+    rw [Int.emod_eq_of_lt]
+    · omega
+    · norm_num at b ⊢; omega
+
 /-!
 ### Order lemmas
 -/

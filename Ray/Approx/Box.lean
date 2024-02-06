@@ -78,7 +78,7 @@ def sqr (z : Box) : Box :=
   ⟨z.re.sqr - z.im.sqr, w.scaleB 1⟩
 
 /-- `Box` square magnitude -/
-def sqr_mag (z : Box) : Interval :=
+def normSq (z : Box) : Interval :=
   z.re.sqr + z.im.sqr
 
 -- Definition lemmas
