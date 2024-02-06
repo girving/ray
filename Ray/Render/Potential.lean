@@ -40,8 +40,3 @@ open Real (log)
 open Set
 
 private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
-
-/-- One step of the Mandelbrot iteration -/
-def step (c z : Box) : ℂ := z ^ 2 + c
-
---/-- Warmup potential computation without stopping criteria -/

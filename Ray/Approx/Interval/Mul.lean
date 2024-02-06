@@ -357,7 +357,7 @@ lemma approx_mul_float (x : Interval) (y : Floating) :
       exact le_trans (Floating.mul_le n0) (le_trans (by nlinarith) (Floating.le_mul n1)))
 
 /-- `sqr` respects `approx` -/
-lemma approx_sqr (x : Interval) : (fun x ↦ x^2) '' approx x ⊆ approx x.sqr := by
+@[mono] lemma approx_sqr (x : Interval) : (fun x ↦ x^2) '' approx x ⊆ approx x.sqr := by
   -- Record Floating.mul bounds
   generalize mll0 : x.lo.mul x.lo false = ll0
   generalize mll1 : x.lo.mul x.lo true = ll1
@@ -400,3 +400,7 @@ lemma approx_sqr (x : Interval) : (fun x ↦ x^2) '' approx x ⊆ approx x.sqr :
     · by_cases us : u < 0
       · left; nlinarith
       · right; nlinarith
+
+/-- `sqr` respects `approx`, `∈` version -/
+@[mono] lemma mem_approx_sqr (a : ℝ) (x : Interval) (ax : a ∈ approx x) : a^2 ∈ approx x.sqr := by
+  apply approx_sqr; use a

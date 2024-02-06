@@ -1,6 +1,7 @@
 import Mathlib.Data.Complex.Basic
 import Ray.Approx.Interval.Basic
 import Ray.Approx.Interval.Mul
+import Ray.Approx.Interval.Scale
 
 open Classical
 open Pointwise
@@ -74,7 +75,7 @@ def _root_.Interval.mul_box (x : Interval) (z : Box) : Box :=
 /-- `Box` squaring (tighter than `z * z`) -/
 def sqr (z : Box) : Box :=
   let w := z.re * z.im
-  ⟨z.re.sqr - z.im.sqr, w + w⟩
+  ⟨z.re.sqr - z.im.sqr, w.scaleB 1⟩
 
 /-- `Box` square magnitude -/
 def sqr_mag (z : Box) : Interval :=
@@ -93,6 +94,14 @@ lemma mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + 
   simp only [instApprox, re_zero, Interval.approx_zero, im_zero, image2_singleton_right,
     image_singleton, singleton_eq_singleton_iff, Complex.ext_iff, Complex.zero_re, Complex.zero_im,
     and_self]
+
+/-- Prove `re ∈` via full `∈` -/
+@[mono] lemma mem_approx_re {z : ℂ} {w : Box} (zw : z ∈ approx w) : z.re ∈ approx w.re := by
+  simp only [approx, mem_image2_iff] at zw; exact zw.1
+
+/-- Prove `im ∈` via full `∈` -/
+@[mono] lemma mem_approx_im {z : ℂ} {w : Box} (zw : z ∈ approx w) : z.im ∈ approx w.im := by
+  simp only [approx, mem_image2_iff] at zw; exact zw.2
 
 /-- `Box.neg` respects `approx` -/
 instance : ApproxNeg Box ℂ where
@@ -150,8 +159,7 @@ instance : ApproxMul Box ℂ where
 noncomputable instance : ApproxRing Box ℂ where
 
 /-- `Box` squaring approximates `ℂ` -/
-@[mono] lemma approx_sqr (z : Box) :
-    (fun z ↦ z^2) '' approx z ⊆ approx z.sqr := by
+@[mono] lemma approx_sqr (z : Box) : (fun z ↦ z^2) '' approx z ⊆ approx z.sqr := by
   simp only [instApprox, image_image2, Box.mem_image2_iff, subset_def, Box.sqr, mem_image2]
   rintro w ⟨r,rz,i,iz,e⟩
   refine ⟨r^2 - i^2, ?_, 2*r*i, ?_, ?_⟩
@@ -159,10 +167,12 @@ noncomputable instance : ApproxRing Box ℂ where
     rw [Set.mem_sub]
     exact ⟨r^2, Interval.approx_sqr _ (mem_image_of_mem _ rz),
            i^2, Interval.approx_sqr _ (mem_image_of_mem _ iz), rfl⟩
-  · rw [mul_assoc, two_mul]
-    apply approx_add
-    rw [Set.mem_add]
-    have ri := approx_mul _ _ (mem_image2_of_mem rz iz)
-    exact ⟨r*i, ri, r*i, ri, rfl⟩
+  · have e : (2 : ℝ) = 2^(1 : ℤ) := by norm_num
+    rw [mul_assoc, mul_comm, e]
+    exact Interval.mem_approx_scaleB (mem_approx_mul rz iz)
   · simpa only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
       mul_comm _ r] using e
+
+/-- `Box` squaring approximates `ℂ`, `∈` version -/
+@[mono] lemma mem_approx_sqr {z' : ℂ} {z : Box} (m : z' ∈ approx z) : z'^2 ∈ approx z.sqr := by
+  apply approx_sqr; use z'
