@@ -202,7 +202,7 @@ lemma log1p_div_bound {x : ℝ} (x1 : |x| < 1) (n : ℕ) :
     · simp only [Nat.zero_eq, Finset.range_zero, Finset.sum_empty, sub_zero, abs_one, pow_zero,
         le_refl]
     · simp only [Finset.sum_range_succ', Nat.cast_add, Nat.cast_one, ne_eq, add_eq_zero,
-        one_ne_zero, and_false, not_false_eq_true, zero_pow', mul_zero, Finset.sum_const_zero,
+        one_ne_zero, and_false, not_false_eq_true, zero_pow, mul_zero, Finset.sum_const_zero,
         pow_zero, CharP.cast_eq_zero, zero_add, div_self, mul_one, sub_self, abs_zero,
         Nat.succ_ne_zero, le_refl]
   · have n1 : |-x| < 1 := by simpa only [abs_neg] using x1

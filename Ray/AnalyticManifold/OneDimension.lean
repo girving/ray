@@ -73,7 +73,7 @@ def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I 
     simp only [mderivToScalar']
     rw [Metric.continuous_iff]; intro x e ep; use e / 2, half_pos ep; intro y xy
     simp only [dist_eq_norm, ← ContinuousLinearMap.sub_apply y x (1 : ℂ)] at xy ⊢
-    have b := ContinuousLinearMap.le_of_op_norm_le _ xy.le (1 : ℂ)
+    have b := ContinuousLinearMap.le_of_opNorm_le _ xy.le (1 : ℂ)
     simp only [tangentSpace_norm_eq_complex_norm, Complex.abs.map_one, mul_one] at b ⊢
     exact lt_of_le_of_lt b (half_lt_self ep)
   continuous_invFun := by
@@ -81,7 +81,7 @@ def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I 
     rw [Metric.continuous_iff]; intro x e ep; use e / 2, half_pos ep; intro y xy
     simp only [dist_eq_norm, Complex.norm_eq_abs] at xy ⊢
     refine' lt_of_le_of_lt _ (half_lt_self ep)
-    apply ContinuousLinearMap.op_norm_le_bound' _ (half_pos ep).le; intro s _
+    apply ContinuousLinearMap.opNorm_le_bound' _ (half_pos ep).le; intro s _
     -- Something's wrong with the type at this point, so rewrite it to make things go through
     have h : ‖(y • ContinuousLinearMap.id ℂ ℂ - x • ContinuousLinearMap.id ℂ ℂ) s‖ ≤
         e/2 * ‖s‖ := by
@@ -268,7 +268,7 @@ def Precritical (f : S → S) (z : S) :=
 theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : Holomorphic I I f) (c : Critical f^[n] z) :
     Precritical f z := by
   induction' n with n h
-  · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.op_norm_zero_iff,
+  · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
       ContinuousLinearMap.norm_id] at c
     norm_num at c
   · rw [Function.iterate_succ', Critical,
@@ -385,8 +385,8 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
     apply mem_extChartAt_source
   apply ((extChartAt_open_target II p).eventually_mem (mem_extChartAt_target II p)).mp
   refine' fm.mp (eventually_of_forall fun q fm m ↦ ⟨_, _, _⟩)
-  · exact (continuousAt_extChartAt' I _ fm).comp_of_eq
-        (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ _ m)) rfl
+  · exact (continuousAt_extChartAt' I fm).comp_of_eq
+        (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl
   · apply HolomorphicAt.analyticAt I I
     refine' (HolomorphicAt.extChartAt fm).comp_of_eq _ rfl
     rw [extChartAt_prod] at m

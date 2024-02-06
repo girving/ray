@@ -483,7 +483,7 @@ theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, 
     apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
     refine' (HolomorphicAt.extChartAt _).comp _; exact m
     exact fa.comp (holomorphicAt_id.inv z0)
-  · refine' (continuousAt_extChartAt' I y _).comp _
+  · refine' (continuousAt_extChartAt' I _).comp _
     · simp only [eq_self_iff_true, if_pos, mem_extChartAt_source]
     · simp [continuousAt_iff_tendsto_nhdsWithin]
       apply tendsto_nhdsWithin_congr (f := fun z ↦ f z⁻¹)

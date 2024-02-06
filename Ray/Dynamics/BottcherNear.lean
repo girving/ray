@@ -65,6 +65,7 @@ structure SuperNear (f : ℂ → ℂ) (d : ℕ) (t : Set ℂ) extends SuperAt f 
   gs' : ∀ {z : ℂ}, z ≠ 0 → z ∈ t → abs (f z / z ^ d - 1) ≤ 1 / 4
 
 -- Facts about d
+theorem SuperAt.d0 (s : SuperAt f d) : d ≠ 0 := by have h := s.d2; omega
 theorem SuperAt.dp (s : SuperAt f d) : 0 < d := lt_of_lt_of_le two_pos s.d2
 theorem SuperAt.drp (s : SuperAt f d) : 0 < (d : ℝ) := Nat.cast_pos.mpr s.dp
 theorem SuperAt.drz (s : SuperAt f d) : (d : ℝ) ≠ 0 := s.drp.ne'
@@ -90,7 +91,7 @@ theorem SuperAt.f0 (s : SuperAt f d) : f 0 = 0 :=
 
 /-- `f = z^d g` -/
 theorem SuperAt.fg (s : SuperAt f d) (z : ℂ) : f z = z ^ d * g f d z := by
-  by_cases z0 : z = 0; · simp only [z0, zero_pow s.dp, s.f0, MulZeroClass.zero_mul]
+  by_cases z0 : z = 0; · simp only [z0, zero_pow s.d0, s.f0, MulZeroClass.zero_mul]
   · simp only [g, z0, if_false]; field_simp [z0]; rw [mul_comm]
 
 /-- `g` is analytic where `f` is -/
@@ -695,7 +696,7 @@ theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :
   intro ⟨e, w⟩ m' small; simp only [df _ _ m'] at small ⊢
   nth_rw 4 [← Nat.sub_add_cancel (Nat.succ_le_of_lt (s.s m).dp)]
   simp only [pow_add, pow_one, mul_comm _ (w ^ (d - 1)), mul_assoc (w ^ (d - 1)) _ _, ←
-    left_distrib, mul_eq_zero, pow_eq_zero_iff (Nat.sub_pos_of_lt (s.s m).d2)]
+    left_distrib, mul_eq_zero, pow_eq_zero_iff (Nat.sub_pos_of_lt (s.s m).d2).ne']
   exact or_iff_left (add_ne_zero_of_abs_lt small)
 
 end BottcherC

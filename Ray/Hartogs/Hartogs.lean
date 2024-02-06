@@ -493,7 +493,7 @@ def ContinuousMultilinearMap.along0 {n : ℕ}
 theorem Along0.norm {n : ℕ} (p : ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ × ℂ) E) :
     ‖p.along0‖ ≤ ‖p‖ := by
   have pp : 0 ≤ ‖p‖ := by bound
-  apply p.along0.op_norm_le_bound pp
+  apply p.along0.opNorm_le_bound pp
   intro m
   simp only [ContinuousMultilinearMap.along0,
     ContinuousMultilinearMap.compContinuousLinearMap_apply, Complex.norm_eq_abs]
@@ -503,7 +503,7 @@ theorem Along0.norm {n : ℕ} (p : ContinuousMultilinearMap ℂ (fun _ : Fin n �
       id.def, ContinuousLinearMap.zero_apply, Complex.norm_eq_abs, AbsoluteValue.map_zero,
       max_eq_left, map_nonneg]
   simp_rw [e]
-  exact ContinuousMultilinearMap.le_op_norm p _
+  exact ContinuousMultilinearMap.le_opNorm p _
 
 /-- `.along0` is linear -/
 def Along0.linearMap (n : ℕ) :
@@ -776,7 +776,7 @@ theorem uneven_bounded (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s
     FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel'_right, Prod.mk.eta] at hs
   set g := fun n : ℕ ↦ c * (s / t) ^ n
   have gs : HasSum g (c * (1 - s / t)⁻¹) := HasSum.mul_left _
-    (hasSum_geometric_of_lt_1 (by bound) (by bound))
+    (hasSum_geometric_of_lt_one (by bound) (by bound))
   apply HasSum.norm_le_of_bounded hs gs
   intro n
   simp only [mem_ball_zero_iff, Complex.norm_eq_abs] at ds

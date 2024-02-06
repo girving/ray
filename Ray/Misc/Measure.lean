@@ -79,25 +79,25 @@ instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHaarMeasu
       funext x
       simp only [Complex.ext_iff, Complex.measurableEquivRealProd,
         Homeomorph.toMeasurableEquiv_symm_coe, ContinuousLinearEquiv.symm_toHomeomorph,
-        ContinuousLinearEquiv.coe_toHomeomorph, Complex.equivRealProdClm_symm_apply_re,
+        ContinuousLinearEquiv.coe_toHomeomorph, Complex.equivRealProdCLM_symm_apply_re,
         Complex.equivRealProdAddHom_symm_apply_re, eq_self_iff_true,
-        Complex.equivRealProdClm_symm_apply_im, Complex.equivRealProdAddHom_symm_apply_im,
+        Complex.equivRealProdCLM_symm_apply_im, Complex.equivRealProdAddHom_symm_apply_im,
         and_self_iff]
     rw [←e]; clear e
     exact (MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod).map_eq.symm
   rw [v]
-  have e : (⇑Complex.equivRealProdClm.symm : ℝ × ℝ → ℂ) =
+  have e : (⇑Complex.equivRealProdCLM.symm : ℝ × ℝ → ℂ) =
       ⇑Complex.equivRealProdAddHom.symm.toAddMonoidHom := by
     funext x
-    simp only [Complex.ext_iff, AddEquiv.coe_toAddMonoidHom, Complex.equivRealProdClm_symm_apply_re,
+    simp only [Complex.ext_iff, AddEquiv.coe_toAddMonoidHom, Complex.equivRealProdCLM_symm_apply_re,
       Complex.equivRealProdAddHom_symm_apply_re, eq_self_iff_true,
-      Complex.equivRealProdClm_symm_apply_im, Complex.equivRealProdAddHom_symm_apply_im,
+      Complex.equivRealProdCLM_symm_apply_im, Complex.equivRealProdAddHom_symm_apply_im,
       and_self_iff]
   apply Measure.isAddHaarMeasure_map (volume : Measure (ℝ × ℝ))
     Complex.equivRealProdAddHom.symm.toAddMonoidHom
   · rw [←e]; apply ContinuousLinearEquiv.continuous
   · apply AddEquiv.surjective
-  · rw [←e]; exact Complex.equivRealProdClm.symm.toHomeomorph.toCocompactMap.cocompact_tendsto'
+  · rw [←e]; exact Complex.equivRealProdCLM.symm.toHomeomorph.toCocompactMap.cocompact_tendsto'
 
 /-- `ℂ` has no atoms -/
 instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where

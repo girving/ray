@@ -249,11 +249,11 @@ theorem HarmonicOn.linear {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) (g
 
 /-- Real parts of harmonic functions are harmonic -/
 theorem HarmonicOn.re {f : ℂ → ℂ} {s : Set ℂ} (fh : HarmonicOn f s) :
-    HarmonicOn (fun z ↦ (f z).re) s := by simp only [← Complex.reClm_apply]; exact fh.linear _
+    HarmonicOn (fun z ↦ (f z).re) s := by simp only [← Complex.reCLM_apply]; exact fh.linear _
 
 /-- Complex conjugates of harmonic functions are harmonic (since `conj` is linear) -/
 theorem HarmonicOn.conj {f : ℂ → ℂ} {s : Set ℂ} (fh : HarmonicOn f s) :
-    HarmonicOn (fun z ↦ conj (f z)) s := by simp only [← conjClm_apply]; exact fh.linear _
+    HarmonicOn (fun z ↦ conj (f z)) s := by simp only [← conjCLM_apply]; exact fh.linear _
 
 /-- Real parts of analytic functions are subharmonic -/
 theorem AnalyticOn.reSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOn ℂ f s) :
@@ -750,9 +750,9 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     rw [hi] at im; clear hi m
     simp only [← intervalIntegral.integral_of_le rp.le, Algebra.id.smul_eq_mul,
       intervalIntegral.integral_mul_const, intervalIntegral.integral_const_mul, integral_id,
-      zero_pow', Ne.def, bit0_eq_zero, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
+      zero_pow, Ne.def, bit0_eq_zero, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
     rw [intervalIntegral.integral_const_mul] at im
-    simp only [integral_id, ne_eq, zero_pow', sub_zero] at im
+    simp only [integral_id, ne_eq, zero_pow, sub_zero] at im
     ring_nf at im ⊢
     calc f c
       _ = π⁻¹ * r⁻¹^2 * (π * r^2 * f c) := by ring_nf; field_simp [rp.ne', Real.pi_pos.ne']

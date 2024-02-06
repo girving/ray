@@ -398,7 +398,7 @@ theorem ModelWithCorners.coe_coe_symm (I : ModelWithCorners 𝕜 E A) :
 /-- `extChartAt` is holomorphic -/
 theorem HolomorphicAt.extChartAt {x y : M} (ys : y ∈ (extChartAt I x).source) :
     HolomorphicAt I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y := by
-  rw [holomorphicAt_iff]; use continuousAt_extChartAt' I x ys
+  rw [holomorphicAt_iff]; use continuousAt_extChartAt' I ys
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
     PartialHomeomorph.toFun_eq_coe, ModelWithCorners.toPartialEquiv_coe,
     PartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source,
@@ -419,7 +419,7 @@ theorem HolomorphicAt.extChartAt {x y : M} (ys : y ∈ (extChartAt I x).source) 
 /-- `extChartAt.symm` is holomorphic -/
 theorem HolomorphicAt.extChartAt_symm {x : M} {y : E} (ys : y ∈ (_root_.extChartAt I x).target) :
     HolomorphicAt (modelWithCornersSelf 𝕜 E) I (_root_.extChartAt I x).symm y := by
-  rw [holomorphicAt_iff]; use continuousAt_extChartAt_symm'' I x ys
+  rw [holomorphicAt_iff]; use continuousAt_extChartAt_symm'' I ys
   simp only [extChartAt_eq_refl, PartialEquiv.refl_coe, Function.comp, id, extChartAt,
     PartialHomeomorph.extend, PartialEquiv.coe_trans, PartialEquiv.coe_trans_symm,
     PartialHomeomorph.coe_coe, PartialHomeomorph.coe_coe_symm, ModelWithCorners.coe_coe,
@@ -519,7 +519,7 @@ theorem extChartAt_mderiv_left_inverse {x y : M} (m : y ∈ (extChartAt I x).sou
     (HolomorphicAt.extChartAt m).mdifferentiableAt
   refine' _root_.trans c.symm _; clear c; rw [←mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).source
-  use extChartAt_source_mem_nhds' I x m
+  use extChartAt_source_mem_nhds' I m
   intro z zm; simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
 
 /-- Chart derivatives are invertible (right inverse) -/
@@ -532,10 +532,11 @@ theorem extChartAt_mderiv_right_inverse {x : M} {y : E} (m : y ∈ (extChartAt I
     (HolomorphicAt.extChartAt_symm m).mdifferentiableAt
   refine' _root_.trans c.symm _; clear c; rw [← mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).target
-  have n := extChartAt_target_mem_nhdsWithin' I x m'
+  have n := extChartAt_target_mem_nhdsWithin' I m'
   simp only [ModelWithCorners.range_eq_univ, nhdsWithin_univ,
     PartialEquiv.right_inv _ m] at n
-  use n; intro z zm; simp only [Function.comp, id, PartialEquiv.right_inv _ zm]
+  use n; intro z zm
+  simp only [Function.comp, id, PartialEquiv.right_inv _ zm, Function.comp]
 
 /-- Chart derivatives are invertible (right inverse) -/
 theorem extChartAt_mderiv_right_inverse' {x y : M} (m : y ∈ (extChartAt I x).source) :

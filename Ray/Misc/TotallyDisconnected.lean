@@ -73,7 +73,7 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
   have e : ball x r = closedBall x r := by
     apply Set.ext; intro z; simp only [mem_ball, mem_closedBall]
     simp only [mem_setOf, not_exists] at rr; simp only [Ne.le_iff_lt (rr z x)]
-  refine ⟨ball x r, ⟨isOpen_ball, ?_⟩, ?_⟩
+  refine ⟨ball x r, ⟨?_, isOpen_ball⟩, ?_⟩
   rw [e]; exact isClosed_ball; use mem_ball_self rp
   simp only [mem_ball, not_lt]; rw [dist_comm]; exact rxy.le
 

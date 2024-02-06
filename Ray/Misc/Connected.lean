@@ -177,7 +177,7 @@ theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s) (ne
     refine' _root_.trans (continuous_subtype_val.closure_preimage_subset _) _
     intro ⟨x, m⟩ h; exact cl ⟨m, h⟩
   have p : IsPreconnected (univ : Set s) := (Subtype.preconnectedSpace sp).isPreconnected_univ
-  cases' disjoint_or_subset_of_isClopen p ⟨uo, uc⟩ with h h
+  cases' disjoint_or_subset_of_isClopen p ⟨uc, uo⟩ with h h
   · simp only [univ_disjoint, preimage_eq_empty_iff, Subtype.range_coe] at h
     exfalso; exact ne.not_disjoint h.symm
   · rw [← Subtype.coe_preimage_self, preimage_subset_preimage_iff] at h

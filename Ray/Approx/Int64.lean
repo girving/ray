@@ -175,9 +175,10 @@ lemma Int64.isNeg_eq_le (x : Int64) : x.isNeg = decide (2^63 ≤ x.n.toNat) := b
 @[simp] lemma Int64.coe_lt_coe (x y : Int64) : (x : ℤ) < (y : ℤ) ↔ x < y := by
   by_cases xs : x.isNeg
   · by_cases ys : y.isNeg
-    · simp only [toInt, UInt64.toNat, UInt64.val_val_eq_toNat, xs, cond_true, Nat.cast_pow,
+    · simp only [toInt, UInt64.toNat, xs, cond_true, Nat.cast_pow,
         Nat.cast_ofNat, ys, sub_lt_sub_iff_right, Nat.cast_lt, UInt64.toNat_lt_toNat, lt_def,
         gt_iff_lt, lt_self_iff_false, true_and, false_or]
+      rw [UInt64.val_val_eq_toNat, UInt64.val_val_eq_toNat, UInt64.lt_iff_toNat_lt]
     · simp only [toInt, xs, cond_true, Nat.cast_pow, Nat.cast_ofNat, ys, cond_false,
         CharP.cast_eq_zero, sub_zero, lt_def, gt_iff_lt, Bool.false_lt_true, false_and, or_false,
         iff_true]
@@ -189,9 +190,10 @@ lemma Int64.isNeg_eq_le (x : Int64) : x.isNeg = decide (2^63 ≤ x.n.toNat) := b
         not_lt, tsub_le_iff_right]
       refine (lt_of_lt_of_le (UInt64.cast_toNat_lt_2_pow_64 _) ?_).le
       simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]
-    · simp only [toInt, UInt64.toNat, UInt64.val_val_eq_toNat, xs, cond_false, CharP.cast_eq_zero,
+    · simp only [toInt, UInt64.toNat, xs, cond_false, CharP.cast_eq_zero,
         sub_zero, ys, Nat.cast_lt, UInt64.toNat_lt_toNat, lt_def, gt_iff_lt, lt_self_iff_false,
         true_and, false_or]
+      rw [UInt64.val_val_eq_toNat, UInt64.val_val_eq_toNat, UInt64.lt_iff_toNat_lt]
 
 /-- Converting to `ℤ` is under `2^63` -/
 @[simp] lemma Int64.coe_lt_pow (x : Int64) : (x : ℤ) < 2^63 := by
@@ -833,6 +835,7 @@ lemma Int64.coe_shiftLeft {x : Int64} {s : UInt64} (s64 : s.toNat < 64)
     simp only [Nat.mod_eq_of_lt lt, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, decide_eq_true_eq,
       Nat.cast_ite, CharP.cast_eq_zero, le, decide_False, ite_false, sub_zero, sub_eq_self,
       ite_eq_right_iff, Nat.zero_lt_succ, pow_eq_zero_iff, OfNat.ofNat_ne_zero, imp_false, not_le]
+    intro le; contrapose le; simp only [not_le]
     refine lt_of_lt_of_le (Nat.mul_lt_mul_of_pos_right xs (pow_pos (by norm_num) _)) ?_
     simp only [← pow_add]
     exact pow_le_pow_right (by norm_num) (by omega)

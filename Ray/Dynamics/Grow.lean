@@ -301,7 +301,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   have xt : x ∈ closure t := by
     simp only [closure_ball _ g.pos.ne', mem_closedBall, Complex.dist_eq, sub_zero, ax]
   have ez : ∃ z : S, MapClusterPt z (𝓝[t] x) (r c) :=
-    @cluster_point_of_compact _ _ _ _
+    @exists_clusterPt_of_compactSpace _ _ _ _
       (Filter.map_neBot (hf := mem_closure_iff_nhdsWithin_neBot.mp xt))
   rcases ez with ⟨z, cp⟩
   have pz : s.potential c z = abs x := by

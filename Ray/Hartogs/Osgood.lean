@@ -408,7 +408,7 @@ theorem cauchy2_hasSum_n1n0 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 :
     apply ContinuousOn.mono h.fc h.rs'
   · rw [← hs]; exact fun n z0 z0s ↦ cauchy2_hasSum_n1n0_bound h w0m n z0s
   · apply Summable.mul_left
-    apply summable_geometric_of_abs_lt_1
+    apply summable_geometric_of_abs_lt_one
     rw [abs_div, abs_of_pos h.rp]; simp at w1m ⊢; exact (div_lt_one h.rp).mpr w1m
   · intro z0 z0s
     simp_rw [smul_comm s _]; simp_rw [smul_comm (w1 ^ _) _]; apply HasSum.const_smul
@@ -477,8 +477,8 @@ theorem cauchy2_radius (h : Separate f c0 c1 r b s) : ENNReal.ofReal r ≤ (seri
   simp_rw [mul_comm _ b, mul_assoc b _ _]; apply Summable.mul_left b
   have trn : ‖↑t / r‖ < 1 := by simp; rw [abs_of_pos h.rp, div_lt_one h.rp]; assumption
   simp_rw [right_distrib _ _ _, one_mul]
-  exact Summable.add (hasSum_coe_mul_geometric_of_norm_lt_1 trn).summable
-    (hasSum_geometric_of_norm_lt_1 trn).summable
+  exact Summable.add (hasSum_coe_mul_geometric_of_norm_lt_one trn).summable
+    (hasSum_geometric_of_norm_lt_one trn).summable
 
 /-- The 2D series converges to `f` -/
 theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r)
@@ -505,8 +505,8 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
     refine .of_norm_bounded _ ?_ fb
     simp_rw [mul_assoc]; apply Summable.mul_left; simp_rw [mul_comm ((abs w0 / r) ^ _) _]
     apply Summable.mul_of_nonneg
-    · exact summable_geometric_of_lt_1 (by bound [h.rp]) ((div_lt_one h.rp).mpr w1m)
-    · exact summable_geometric_of_lt_1 (by bound [h.rp]) ((div_lt_one h.rp).mpr w0m)
+    · exact summable_geometric_of_lt_one (by bound [h.rp]) ((div_lt_one h.rp).mpr w1m)
+    · exact summable_geometric_of_lt_one (by bound [h.rp]) ((div_lt_one h.rp).mpr w0m)
     · intro n; simp only [Pi.zero_apply, div_pow]; bound [h.rp]
     · intro n; simp only [Pi.zero_apply, div_pow]; bound [h.rp]
   have fs' : HasSum f a' := by rw [← ha']; exact sf.hasSum

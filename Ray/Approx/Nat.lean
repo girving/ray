@@ -176,14 +176,14 @@ lemma Nat.mod_mul_eq_mul_mod' (a n m : ℕ) (m0 : m ≠ 0) : a * n % (m * n) = a
 
 lemma Nat.mod_mul_eq_mul_mod (a n : ℕ) : a * n % n^2 = a % n * n := by
   by_cases n0 : n = 0
-  · simp only [n0, mul_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow', mod_self,
+  · simp only [n0, mul_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mod_self,
       mod_zero]
   · rw [pow_two, Nat.mod_mul_eq_mul_mod' _ _ _ n0]
 
 lemma Nat.div_mod_mul_add_mod_eq {a n : ℕ} : a / n % n * n + a % n = a % n^2 := by
   by_cases n0 : n = 0
   · simp only [n0, Nat.div_zero, mod_self, mul_zero, mod_zero, zero_add, ne_eq,
-      OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow']
+      OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow]
   · rw [←Nat.div_add_mod a n]
     have np : 0 < n := Nat.pos_of_ne_zero n0
     generalize hc : a % n = c

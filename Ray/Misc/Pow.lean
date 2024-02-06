@@ -12,6 +12,6 @@ theorem pow_mul_nat {z w : ℂ} {n : ℕ} : (z ^ w) ^ n = z ^ (w * n) := by
     have wn0 : w * n ≠ 0 := mul_ne_zero w0 (Nat.cast_ne_zero.mpr n0)
     rw [Complex.zero_cpow w0]
     rw [Complex.zero_cpow wn0]
-    exact zero_pow' n n0
+    exact zero_pow n0
   simp only [Complex.cpow_def_of_ne_zero z0, ← Complex.exp_nat_mul]
   ring_nf

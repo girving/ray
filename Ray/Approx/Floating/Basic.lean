@@ -150,7 +150,7 @@ lemma n_eq_zero_iff {x : Floating} : x.n = 0 ↔ x = 0 := by
 /-- More user friendly version of `x.norm` -/
 lemma norm' {x : Floating} (x0 : x ≠ 0) (s0 : x.s.toNat ≠ 0) : 2^62 ≤ x.n.abs.toNat := by
   by_cases xn : x = nan
-  · simp [xn]; decide
+  · simp only [xn]; decide
   · exact x.norm (x.n_ne_zero x0) (x.n_ne_min xn) (UInt64.ne_zero_iff_toNat_ne_zero.mpr s0)
 
 /-- Only `0` has zero `val` -/
@@ -211,7 +211,7 @@ lemma val_of_nonneg {x : Floating} (x0 : 0 ≤ x.val) :
   rw [Int64.coe_of_nonneg (by decide)]
   simp only [up62, Nat.cast_pow, Nat.cast_ofNat, Int.cast_pow, Int.int_cast_ofNat,
     pow_mul_zpow t0]
-  ring_nf
+  exact congr_arg₂ _ rfl (by ring_nf)
 
 /-!
 ### Conversion to `Float`

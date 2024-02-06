@@ -111,9 +111,9 @@ theorem NontrivialAnalyticOn.discreteTopology (n : NontrivialAnalyticOn f s) (a 
     use t0; intro wz; rw [wz]; exact tz
 
 /-- pow is nontrivial -/
-theorem powNontrivial {d : ℕ} (dp : d > 0) : NontrivialAnalyticOn (fun z ↦ z ^ d) univ := by
+theorem powNontrivial {d : ℕ} (dp : 0 < d) : NontrivialAnalyticOn (fun z ↦ z ^ d) univ := by
   apply Entire.nontrivialAnalyticOn fun _ _ ↦ (analyticAt_id _ _).pow _; use 0, 1
-  simp only [id, one_pow, zero_pow dp, Pi.pow_def]; norm_num
+  simp only [id, one_pow, zero_pow (Nat.pos_iff_ne_zero.mp dp), Pi.pow_def]; norm_num
 
 /-- All roots of unity as a set -/
 def allRootsOfUnity :=
@@ -122,7 +122,7 @@ def allRootsOfUnity :=
 /-- Roots of unity are nonzero -/
 theorem allRootsOfUnity.ne_zero {z : ℂ} (m : z ∈ allRootsOfUnity) : z ≠ 0 := by
   rcases m with ⟨n, n0, z1⟩; contrapose z1; simp only [not_not] at z1
-  simp only [z1, zero_pow' _ n0]; exact zero_ne_one
+  simp only [z1, zero_pow n0]; exact zero_ne_one
 
 /-- Roots of unity are totally disconnected -/
 theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOfUnity := by
@@ -137,7 +137,7 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
     intro z e; simp only [mem_setOf] at e
     simp only [mem_image, SetLike.mem_coe, mem_rootsOfUnity, PNat.mk_coe]
     by_cases z0 : z = 0
-    · simp only [z0, zero_pow' _ n0, zero_ne_one] at e
+    · simp only [z0, zero_pow n0, zero_ne_one] at e
     use Units.mk0 z z0
     simp only [Units.val_mk0, eq_self_iff_true, and_true_iff, ← Units.eq_iff,
       Units.val_pow_eq_pow_val, Units.val_one, e]
@@ -419,7 +419,7 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
           (continuousAt_extChartAt J x) xt').mp
       apply ((extChartAt_open_target J x).eventually_mem (mem_extChartAt_target J x)).mp
       refine' eventually_of_forall fun y m e ↦ _; simp only at e
-      apply ((continuousAt_extChartAt_symm'' J x m).eventually e).mp
+      apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
       refine' eventually_of_forall fun z e ↦ _; simp only at e
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
     have da : AnalyticAt ℂ d z := by rw [← hd, ← hz]; exact (fa _ xs).2.sub (ga _ xs).2

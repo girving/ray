@@ -75,7 +75,7 @@ theorem Nonseparating.complexManifold {t : Set S}
       have n : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' u ∈ 𝓝 (extChartAt I z z) := by
         apply Filter.inter_mem
         exact (extChartAt_open_target I z).mem_nhds (mem_extChartAt_target I z)
-        exact extChartAt_preimage_mem_nhds _ _ un
+        exact extChartAt_preimage_mem_nhds _ un
       rcases (h z).loc _ _ m n with ⟨c, cs, cn, cp⟩
       have e : (extChartAt I z).source ∩ extChartAt I z ⁻¹' c = (extChartAt I z).symm '' c := by
         apply Set.ext; intro x; simp only [mem_inter_iff, mem_preimage, mem_image]; constructor

@@ -85,10 +85,10 @@ In particular, we show that `f d` has a superattracting fixpoint at `∞`.
 
 -- Basic properties of f
 theorem f_0' (d : ℕ) [Fact (2 ≤ d)] : f' d c 0 = c := by
-  simp only [lift_coe', f', zero_pow d_pos, zero_add]
+  simp only [lift_coe', f', zero_pow d_ne_zero, zero_add]
 
 theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
-  simp only [f, ← coe_zero, lift_coe', f', zero_pow d_pos, zero_add]
+  simp only [f, ← coe_zero, lift_coe', f', zero_pow d_ne_zero, zero_add]
 
 theorem analytic_f' : AnalyticOn ℂ (uncurry (f' d)) univ := fun _ _ ↦
   ((analyticAt_snd _).pow _).add (analyticAt_fst _)
@@ -135,7 +135,7 @@ theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
     add_zero, sub_zero]
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', f, lift_inf', RiemannSphere.inv_inf, toComplex_zero,
-      zero_pow d_pos, zero_div]
+      zero_pow d_ne_zero, zero_div]
   simp only [f, f', inv_coe z0, lift_coe', inv_pow]
   have zd := pow_ne_zero d z0
   by_cases h : (z ^ d)⁻¹ + c = 0
@@ -156,19 +156,19 @@ def gl (d : ℕ) (c z : ℂ) :=
 theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
   simp only [fl_f, gl, g]
   by_cases z0 : z = 0
-  simp only [if_pos, z0, zero_pow d_pos, MulZeroClass.mul_zero, add_zero, inv_one]
+  simp only [if_pos, z0, zero_pow d_ne_zero, MulZeroClass.mul_zero, add_zero, inv_one]
   rw [if_neg z0, div_eq_mul_inv _ (_ + _), mul_comm, mul_div_assoc, div_self (pow_ne_zero _ z0),
     mul_one]
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
   apply (analyticAt_const.add (analyticAt_const.mul ((analyticAt_id _ _).pow _))).inv
-  simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow d_pos, mul_zero, add_zero,
+  simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow d_ne_zero, mul_zero, add_zero,
     one_ne_zero, not_false_eq_true]
 
 theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
   funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
 
-theorem gl_zero : gl d c 0 = 1 := by simp only [gl, zero_pow d_pos, MulZeroClass.mul_zero]; norm_num
+theorem gl_zero : gl d c 0 = 1 := by simp only [gl, zero_pow d_ne_zero, MulZeroClass.mul_zero]; norm_num
 
 theorem gl_frequently_ne_zero : ∃ᶠ z in 𝓝 0, gl d c z ≠ 0 := by
   refine' (analyticAt_gl.continuousAt.eventually_ne _).frequently; simp only [gl_zero]
@@ -266,10 +266,10 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
       one_mul, ContinuousLinearMap.zero_apply, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero,
-      false_or_iff, pow_eq_zero_iff d_minus_one_pos]
+      false_or_iff, pow_eq_zero_iff d_minus_one_pos.ne']
     dsimp [TangentSpace]
     simp only [ge_iff_le, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, tsub_pos_iff_lt,
-      pow_eq_zero_iff d_minus_one_pos, false_or]
+      pow_eq_zero_iff d_minus_one_pos.ne', false_or]
     constructor
     · intro h; specialize h 1
       simp only [one_mul, mul_eq_zero, one_ne_zero, false_or_iff] at h
@@ -640,11 +640,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
   -- From bottcher d c = y near a point, show that bottcher d c = y everywhere in 𝕊
   set t := {c | c ∈ multibrotExt d ∧ ∀ᶠ e in 𝓝 c, bottcher d e = b}
   have tu : t = univ := by
-    refine' IsClopen.eq_univ _ ⟨c, m, h⟩; constructor
-    · rw [isOpen_iff_eventually]; intro e ⟨m, h⟩
-      apply (isOpen_multibrotExt.eventually_mem m).mp
-      apply (eventually_eventually_nhds.mpr h).mp
-      exact eventually_of_forall fun f h m ↦ ⟨m, h⟩
+    refine IsClopen.eq_univ ?_ ⟨c, m, h⟩; constructor
     · rw [isClosed_iff_frequently]; intro x e; by_contra xt
       have pb : potential d x = abs b := by
         apply tendsto_nhds_unique_of_frequently_eq potential_continuous.continuousAt
@@ -660,6 +656,10 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
         holomorphicAt_const with h h
       use h; contrapose h; simp only [Filter.not_eventually, not_not] at h ⊢
       exact e'.mp (eventually_of_forall fun y yt ↦ yt.2.self_of_nhds)
+    · rw [isOpen_iff_eventually]; intro e ⟨m, h⟩
+      apply (isOpen_multibrotExt.eventually_mem m).mp
+      apply (eventually_eventually_nhds.mpr h).mp
+      exact eventually_of_forall fun f h m ↦ ⟨m, h⟩
   -- Contradiction!
   have m0 : (0 : 𝕊) ∈ multibrotExt d :=
     haveI m : (0 : 𝕊) ∈ t := by simp only [tu, mem_univ]

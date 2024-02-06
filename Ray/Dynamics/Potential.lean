@@ -196,8 +196,8 @@ theorem Super.potential_eq_zero (s : Super f d a) : s.potential c z = 0 ↔ ∃ 
       use n, h.1
     · rw [not_exists] at r; simp only [s.potential_eq_one r, one_ne_zero] at h
   · intro p; rcases p with ⟨n, p⟩
-    have nz : d ^ n > 0 := pow_pos s.dp _
-    rw [← pow_eq_zero_iff nz, ← s.potential_eqn_iter n, p, s.potential_a]
+    have nz : d^n > 0 := pow_pos s.dp _
+    rw [← pow_eq_zero_iff nz.ne', ← s.potential_eqn_iter n, p, s.potential_a]
 
 /-- `s.potential` is upper semicontinuous unconditionally -/
 theorem UpperSemicontinuous.potential (s : Super f d a) :

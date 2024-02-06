@@ -147,7 +147,6 @@ def boundDiscrTree : IO (Std.Tactic.Cache (DiscrTree Lemma)) := Std.Tactic.Cache
     tree ← withNewMCtxDepth do withReducible do
       let (_, _, type) ← forallMetaTelescope (←getConstInfo rule).type
       return tree.insertCore (←DiscrTree.mkPath type discrTreeConfig) (.syn (mkIdent rule) false)
-        discrTreeConfig
   return tree
 
 /-- Check if a name is an inequality operator -/

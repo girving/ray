@@ -16,7 +16,7 @@ We define continuous multilinear maps for
 2. `sndCmmap` for `snd`
 3. `smulCmmap` for two continuous multilinear maps `smul`'ed together
 4. Products of monomials: `termCmmap` for `x^a * y^b`
-5. `conjClm` for `conj` (this is one a continuous linear map)
+5. `conjCLM` for `conj` (this is one a continuous linear map)
 6. `cmmapApplyCmap`, a continuous linear map that evaluates a continuous multilinear map at a point
 -/
 
@@ -180,10 +180,10 @@ theorem smulCmmap_norm [NormedAddCommGroup A] [NormedSpace 𝕜 A] [NormedAddCom
     [NormedSpace 𝕜 B] (x : ContinuousMultilinearMap 𝕜 (fun _ : Fin 1 ↦ A) 𝕜)
     (xs : ContinuousMultilinearMap 𝕜 (fun _ : Fin n ↦ A) B) :
     ‖smulCmmap 𝕜 A B x xs‖ ≤ ‖x‖ * ‖xs‖ := by
-  apply ContinuousMultilinearMap.op_norm_le_bound; bound
+  apply ContinuousMultilinearMap.opNorm_le_bound; bound
   intro z; rw [smulCmmap_apply]
-  have xb := ContinuousMultilinearMap.le_op_norm x fun _ : Fin 1 ↦ z 0
-  have xsb := ContinuousMultilinearMap.le_op_norm xs fun i : Fin n ↦ z i.succ
+  have xb := ContinuousMultilinearMap.le_opNorm x fun _ : Fin 1 ↦ z 0
+  have xsb := ContinuousMultilinearMap.le_opNorm xs fun i : Fin n ↦ z i.succ
   simp only [Finset.univ_unique, Fin.default_eq_zero, Finset.prod_const, Finset.card_singleton,
     pow_one] at xb xsb
   have e0 := Fin.prod_cons ‖z 0‖ fun i : Fin n ↦ ‖z i.succ‖
@@ -237,13 +237,13 @@ theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCo
     · simp [nk] at tn ⊢; rw [sndCmmap_norm] at tn; simp at tn; exact _root_.trans tn nh
 
 /-- `conj` as a `ContinuousLinearMap`. This is `starₗᵢ ℂ`, but with a simpler type. -/
-def conjClm : ℂ →L[ℝ] ℂ where
+def conjCLM : ℂ →L[ℝ] ℂ where
   toFun z := conj z
   map_add' := by simp only [map_add, forall_const]
   map_smul' := by simp only [Complex.real_smul, map_mul, RingHom.id_apply, mul_eq_mul_right_iff,
     map_eq_zero, Complex.conj_ofReal, implies_true]
 
-theorem conjClm_apply (z : ℂ) : conjClm z = conj z := rfl
+theorem conjCLM_apply (z : ℂ) : conjCLM z = conj z := rfl
 
 /-- The continuous linear map that evaluates a continuous multilinear map at a point -/
 def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype I]

@@ -370,7 +370,7 @@ theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.n
   have gc : ContinuousAt g 0 := by
     rw [← hg]
     refine'
-      (continuousAt_extChartAt_symm'' I a _).comp (continuous_id.add continuous_const).continuousAt
+      (continuousAt_extChartAt_symm'' I _).comp (continuous_id.add continuous_const).continuousAt
     simp only [zero_add]; exact mem_extChartAt_target I a
   have g0 : g 0 = a := by
     simp only [← hg]; simp only [zero_add]; exact PartialEquiv.left_inv _ (mem_extChartAt_source _ _)

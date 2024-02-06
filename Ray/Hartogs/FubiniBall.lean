@@ -136,7 +136,7 @@ theorem square_eq {c : ℂ} {r : ℝ} :
     funext
     simp only [realCircleMap_eq_circleMap, Complex.measurableEquivRealProd,
       Complex.equivRealProd_apply, Homeomorph.toMeasurableEquiv_coe,
-      ContinuousLinearEquiv.coe_toHomeomorph, Complex.equivRealProdClm_apply]
+      ContinuousLinearEquiv.coe_toHomeomorph, Complex.equivRealProdCLM_apply]
   have i : (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2) '' square r = closedBall c r \ {c} := by
     apply Set.ext; intro z; rw [Set.mem_image]; constructor
     · intro gp; rcases gp with ⟨⟨s, t⟩, ss, tz⟩
@@ -224,8 +224,8 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
   simp only [Complex.equivRealProd_apply]
   rw [Complex.measurableEquivRealProd, Homeomorph.toMeasurableEquiv_symm_coe]
   simp only [ContinuousLinearEquiv.symm_toHomeomorph, ContinuousLinearEquiv.coe_toHomeomorph]
-  apply Complex.ext; · simp only [Complex.equivRealProdClm_symm_apply_re]
-  · simp only [Complex.equivRealProdClm_symm_apply_im]
+  apply Complex.ext; · simp only [Complex.equivRealProdCLM_symm_apply_re]
+  · simp only [Complex.equivRealProdCLM_symm_apply_im]
 
 /-- `circleMap` is continuous on `ℝ × ℝ` -/
 theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
@@ -282,7 +282,7 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
   simp only [ENNReal.toReal_ofReal Real.two_pi_pos.le, ←
     intervalIntegral.integral_of_le rp, integral_const, Measure.restrict_apply, MeasurableSet.univ,
     Set.univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
-    intervalIntegral.integral_mul_const, integral_id, zero_pow', Ne.def, bit0_eq_zero,
+    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne.def, bit0_eq_zero,
     Nat.one_ne_zero, not_false_iff] at f
   ring_nf at f ⊢; exact f
 

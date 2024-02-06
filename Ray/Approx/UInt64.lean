@@ -86,8 +86,8 @@ lemma UInt64.ne_zero_iff_toNat_ne_zero {n : UInt64} : n ≠ 0 ↔ n.toNat ≠ 0 
     · exact Fin.is_le'
 
 lemma UInt64.toNat_add (m n : UInt64) : (m + n).toNat = (m.toNat + n.toNat) % UInt64.size := by
-  simp only [UInt64.toNat, UInt64.add_def]
-  simp only [HAdd.hAdd, Add.add, Fin.add, Nat.add_eq]
+  rw [UInt64.toNat, UInt64.add_def, Fin.add_def]
+  simp only; rfl
 
 lemma UInt64.toNat_add' (m n : UInt64) :
     (m + n).toNat = m.toNat + n.toNat - if m.toNat + n.toNat < size then 0 else size := by
@@ -405,11 +405,13 @@ noncomputable instance : Coe UInt64 (ZMod UInt64.size) where
   coe x := x.toZMod
 
 @[simp] lemma UInt64.toZMod_toNat (x : UInt64) :
-    (x.toNat : ZMod UInt64.size) = (x : ZMod UInt64.size) := rfl
+    (x.toNat : ZMod UInt64.size) = (x : ZMod UInt64.size) := by
+  rw [toZMod]
 
 @[simp] lemma UInt64.toZMod_add (x y : UInt64) :
     ((x + y : UInt64) : ZMod UInt64.size) = x + y := by
-  simp only [toZMod, toNat_add, ZMod.nat_cast_mod, Nat.cast_add, toZMod_toNat]
+  simp only [toZMod]
+  rw [toNat_add, ZMod.nat_cast_mod, Nat.cast_add, toZMod_toNat]
 
 @[simp] lemma UInt64.toZMod_mul (x y : UInt64) :
     ((x * y : UInt64) : ZMod UInt64.size) = x * y := by

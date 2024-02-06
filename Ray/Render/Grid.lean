@@ -33,7 +33,7 @@ noncomputable def Grid.vertex (g : Grid) (k : ℕ × ℕ) : ℂ :=
 noncomputable def Grid.cell (g : Grid) (k : ℕ × ℕ) : Set ℂ :=
   let lo := g.vertex k
   let hi := g.vertex (k + 1)
-  Complex.equivRealProdClm.symm '' Icc lo.re hi.re ×ˢ Icc lo.im hi.im
+  Complex.equivRealProdCLM.symm '' Icc lo.re hi.re ×ˢ Icc lo.im hi.im
 
 /-- The mean of a function over a grid cell -/
 noncomputable def Grid.mean (g : Grid) (k : ℕ × ℕ) (f : ℂ → E) : E :=
