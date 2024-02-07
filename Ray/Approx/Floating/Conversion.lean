@@ -1,5 +1,6 @@
 import Ray.Approx.Floating.Basic
 import Ray.Approx.Floating.Neg
+import Ray.Approx.Floating.Order
 import Ray.Approx.Floating.Scale
 import Ray.Approx.Floating.Standardization
 import Ray.Approx.Rat
@@ -156,27 +157,49 @@ lemma approx_convert {a : ℝ} {n : ℕ} {s : ℤ} {norm : n ∈ Icc (2^62) (2^6
     Use `Interval.ofNat` if you want something trustworthy (it rounds both ways). -/
 instance {n : ℕ} [n.AtLeastTwo] : OfNat Floating n := ⟨.ofNat n false⟩
 
+/-- Small naturals convert exactly -/
+lemma val_ofNat' {n : ℕ} (lt : n < 2^63 := by norm_num) {up : Bool}  : (ofNat n up).val = n := by
+  have n62 : n.log2 ≤ 62 := by
+    by_cases n0 : n = 0
+    · simp only [n0, Nat.log2_zero, zero_le]
+    · rw [←Nat.log2_lt n0] at lt; exact Nat.lt_succ_iff.mp lt
+  have e63 : (2^63 : UInt64).toInt = 2^63 := by decide
+  have nn : (n : Int64) ≠ Int64.min := by
+    simp only [ne_eq, Int64.ext_iff, Int64.ofNat_eq_coe, Int64.n_min, UInt64.eq_iff_toNat_eq,
+      UInt64.toNat_cast, UInt64.size_eq_pow, UInt64.toNat_2_pow_63]
+    norm_num only at lt ⊢
+    rw [Nat.mod_eq_of_lt (by omega)]
+    omega
+  rw [ofNat]
+  simp only [n62, tsub_eq_zero_of_le, CharP.cast_eq_zero, dite_true, approx, of_ns_eq_nan_iff,
+    nn, if_false, val_of_ns nn, mem_rounds_singleton, e63, sub_self, Bool.not_eq_true', zpow_zero,
+    mul_one, Int64.toInt_ofNat lt, Int.cast_Nat_cast, le_refl, ite_self]
+
+/-- Small naturals convert exactly -/
+lemma val_ofNat {n : ℕ} [n.AtLeastTwo] (lt : n < 2^63 := by norm_num) :
+    (OfNat.ofNat n : Floating).val = n :=
+  val_ofNat' lt
+
+/-- Small naturals do not overflow.  Much larger values also do not overflow, but this is all
+    we need at the moment. -/
+lemma ofNat_ne_nan {n : ℕ} (lt : n < 2^63) (up : Bool) : ofNat n up ≠ nan := by
+  simp only [Ne.def, ←val_inj]
+  apply ne_of_gt
+  simp only [val_ofNat' lt]
+  exact lt_of_lt_of_le val_nan_lt_zero (Nat.cast_nonneg _)
+
 /-- `ofNat` rounds the desired way -/
 lemma approx_ofNat (n : ℕ) (up : Bool) : ↑n ∈ rounds (approx (.ofNat n up : Floating)) !up := by
-  have t0 : (2:ℝ) ≠ 0 := by norm_num
-  have e63 : (2^63 : UInt64).toInt = 2^63 := by decide
-  rw [ofNat]
-  simp only
   by_cases n62 : n.log2 ≤ 62
   · have lt : n < 2^63 :=
       lt_of_lt_of_le Nat.lt_log2_self (pow_le_pow_right (by norm_num) (by omega))
-    have nn : (n : Int64) ≠ Int64.min := by
-      simp only [ne_eq, Int64.ext_iff, Int64.ofNat_eq_coe, Int64.n_min, UInt64.eq_iff_toNat_eq,
-        UInt64.toNat_cast, UInt64.size_eq_pow, UInt64.toNat_2_pow_63]
-      norm_num only at lt ⊢
-      rw [Nat.mod_eq_of_lt (by omega)]
-      omega
-    simp only [n62, tsub_eq_zero_of_le, CharP.cast_eq_zero, dite_true, approx, of_ns_eq_nan_iff,
-      nn, if_false, val_of_ns nn, mem_rounds_singleton, e63, sub_self, Bool.not_eq_true', zpow_zero,
-      mul_one, Int64.toInt_ofNat lt, Int.cast_Nat_cast, le_refl, ite_self]
-  · simp only [n62, dite_false]
+    simp only [approx, ofNat_ne_nan lt, ↓reduceIte, val_ofNat' lt, mem_rounds_singleton,
+      Bool.not_eq_true', le_refl, ite_self]
+  · rw [ofNat]
+    simp only [n62, dite_false]
     apply approx_convert
     simp only [Nat.shiftRightRound_eq_rdiv]
+    have t0 : (2:ℝ) ≠ 0 := by norm_num
     induction up
     · simp only [ite_false]
       refine le_trans (mul_le_mul_of_nonneg_right Nat.rdiv_le two_zpow_pos.le) ?_

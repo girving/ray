@@ -18,6 +18,7 @@ inductive Exit : Type
   | count
   | large
   | nan
+  deriving DecidableEq
 
 /-- An iteration result -/
 structure Iter where
@@ -42,12 +43,11 @@ def iterate' (c z : Box) (rs : Floating) (k n : ℕ) : Iter := match n with
     let w := ⟨zr2 - zi2, zri.scaleB 1⟩ + c
     iterate' c w rs (k+1) n
 
-/-- Iterate until we reach a given count or definitely exceed a given radius.
+/-- Iterate until we reach a given count or definitely exceed a given squared radius.
     Returns the final iterate, and the number of steps taken. -/
-def iterate (c z : Box) (r : Floating) (n : ℕ) : Iter :=
-  let rs := r.mul r true
+def iterate (c z : Box) (rs : Floating) (n : ℕ) : Iter :=
   if rs = nan then ⟨z, 0, .nan⟩ else
-  iterate' c z (r.mul r true) 0 n
+  iterate' c z rs 0 n
 
 /-- All correctness properties of `iterate'` in a single lemma -/
 lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
@@ -90,31 +90,31 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
       exact h.2
 
 /-- `iterate` produces a correct iterate -/
-@[mono] lemma mem_approx_iterate {c z : Box} {r : Floating} {c' z' : ℂ}
+@[mono] lemma mem_approx_iterate {c z : Box} {rs : Floating} {c' z' : ℂ}
     (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) :
-    let i := iterate c z r n; (f' 2 c')^[i.n] z' ∈ approx i.z := by
-  rw [iterate]; simp only
-  generalize r.mul r true = rs
+    (f' 2 c')^[(iterate c z rs n).n] z' ∈ approx (iterate c z rs n).z := by
+  rw [iterate]
   by_cases rsn : rs = nan
   · simpa only [rsn, ite_true, Function.iterate_zero, id_eq]
   · simp only [rsn, ite_false]
     exact (iterate'_correct cm zm rsn (le_refl _) 0 n).2.1
 
 /-- If `iterate` claims the result is large, it is` -/
-lemma iterate_large {c z : Box} {r : Floating} {c' z' : ℂ}
-    (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) :
-    let i := iterate c z r n; i.exit = .large → r.val ≤ abs ((f' 2 c')^[i.n] z') := by
-  rw [iterate]; simp only
-  generalize hrs : r.mul r true = rs
+lemma iterate_large {c z : Box} {rs : Floating} {n : ℕ} {c' z' : ℂ}
+    (cm : c' ∈ approx c) (zm : z' ∈ approx z) (l : (iterate c z rs n).exit = .large) :
+    rs.val ≤ abs ((f' 2 c')^[(iterate c z rs n).n] z') ^ 2 := by
+  rw [iterate] at l ⊢
   by_cases rsn : rs = nan
-  · simp only [rsn, ite_true, Function.iterate_zero, id_eq, IsEmpty.forall_iff]
-  · simp only [rsn, ite_false]
-    intro e
-    by_cases r0 : r.val < 0
-    · exact le_trans r0.le (Complex.abs.nonneg _)
-    · have le := (iterate'_correct cm zm rsn (le_refl _) 0 n).2.2 e
-      simp only [←hrs, not_lt, Nat.sub_zero] at le rsn r0 ⊢
-      rw [←Real.sqrt_sq r0, ←Real.sqrt_sq (Complex.abs.nonneg _)]
-      refine Real.sqrt_le_sqrt (le_trans ?_ le)
-      simp only [pow_two]
-      exact Floating.le_mul rsn
+  · simp only [rsn, ↓reduceIte] at l
+  · simp only [rsn, ite_false] at l ⊢
+    simpa only [not_lt, Nat.sub_zero] using (iterate'_correct cm zm rsn (le_refl _) 0 n).2.2 l
+
+/-- Iterate exits with `.nan` when `rs = nan` -/
+@[simp] lemma iterate_nan {c z : Box} {n : ℕ} : (iterate c z nan n).exit = .nan := by
+  rw [iterate]; simp only [ite_true, Function.iterate_zero]
+
+/-- Iterate exits with `.nan` when `rs = nan` -/
+@[simp] lemma ne_nan_of_iterate {c z : Box} {rs : Floating} {n : ℕ}
+    (e : (iterate c z rs n).exit ≠ .nan) : rs ≠ nan := by
+  contrapose e; simp only [ne_eq, not_not] at e
+  simp only [e, iterate_nan, ne_eq, not_true_eq_false, not_false_eq_true]

@@ -27,4 +27,5 @@ import Ray.Hartogs.Osgood
 import Ray.Render.Grid
 import Ray.Render.Mandelbrot
 import Ray.Render.Iterate
+import Ray.Render.Potential
 import Ray.Tactic.Bound

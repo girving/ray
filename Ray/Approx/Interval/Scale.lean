@@ -73,3 +73,16 @@ lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
     mem_singleton_iff] at tm
   rw [tm, Fixed.val, Int64.coe_zero, zpow_zero, mul_one, Real.rpow_int_cast]
   exact mem_approx_scaleB xm
+
+/-!
+### Dividing by two
+-/
+
+@[irreducible] def div2 (x : Interval) : Interval := scaleB x (-1)
+
+@[mono] lemma mem_approx_div2 {x : Interval} {x' : ℝ} (xm : x' ∈ approx x) :
+    x' / 2 ∈ approx (div2 x) := by
+  have e : x' / 2 = x' * 2^(-1 : ℤ) := by
+    simp only [div_eq_mul_inv, Int.reduceNeg, zpow_neg, zpow_one]
+  rw [e, div2]
+  exact mem_approx_scaleB xm

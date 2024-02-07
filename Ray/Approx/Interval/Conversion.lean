@@ -76,7 +76,7 @@ instance {n : ℕ} [n.AtLeastTwo] : OfNat Interval n := ⟨.ofNat n⟩
 
 /-- `ofRat` conversion is conservative -/
 @[mono] lemma approx_ofScientific (x : ℕ) (u : Bool) (t : ℕ) :
-    ↑(OfScientific.ofScientific x u t : ℚ) ∈
+    OfScientific.ofScientific x u t ∈
       approx (OfScientific.ofScientific x u t : Interval) := by
   simp only [OfScientific.ofScientific]
   apply approx_ofRat

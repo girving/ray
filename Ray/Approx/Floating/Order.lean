@@ -443,6 +443,10 @@ lemma eq_nan_of_max {x y : Floating} (n : x.max y = nan) : x = nan ∨ y = nan :
   refine ⟨eq_nan_of_max, ?_⟩
   intro n; rcases n with n | n; repeat simp only [n, max_nan, nan_max]
 
+/-- `Floating.max` is `nan` if an argument is -/
+@[simp] lemma max_ne_nan {x y : Floating} : x.max y ≠ nan ↔ x ≠ nan ∧ y ≠ nan := by
+  simp only [ne_eq, max_eq_nan, not_or]
+
 /-- `min` commutes with `val` -/
 @[simp] lemma val_min {x y : Floating} : (min x y).val = min x.val y.val := by
   simp only [LinearOrder.min_def, apply_ite (f := Floating.val), val_le_val]
@@ -458,6 +462,11 @@ lemma eq_nan_of_max {x y : Floating} (n : x.max y = nan) : x = nan ∨ y = nan :
     intro yx; simp only [le_antisymm xy yx, ←val_inj]
   · simp only [not_le] at xy
     simp only [neg_le_neg_iff, xy.le, ite_true, not_le.mpr xy, ite_false]
+
+/-- `Floating.max` commutes with `val` away from `nan` -/
+@[simp] lemma val_max' {x y : Floating} (n : x.max y ≠ nan) :
+    (x.max y).val = Max.max x.val y.val := by
+  simp only [max_ne_nan] at n; exact val_max n.1 n.2
 
 /-- `Floating.max` is commutative -/
 @[simp] lemma max_comm {x y : Floating} : x.max y = y.max x := by
