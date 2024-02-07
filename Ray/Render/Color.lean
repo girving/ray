@@ -24,6 +24,9 @@ structure Color32 where
 instance : Nan Color32 where
   nan := ⟨255, 0, 0, 255⟩
 
+lemma Color32.ext_iff (x y : Color32) : x = y ↔ x.r = y.r ∧ x.g = y.g ∧ x.b = y.b ∧ x.a = y.a := by
+  induction x; induction y; simp only [mk.injEq]
+
 /-- Approximation interval around a color channel -/
 def UInt8.approx (v : UInt8) : Set ℝ :=
   let x : ℝ := v.toNat
@@ -42,3 +45,17 @@ instance : Approx Color32 Color where
 /-- Roughly what `Color` a `Color32` corresponds to -/
 noncomputable def Color32.val (c : Color32) : Color :=
   ![c.r.color, c.g.color, c.b.color, c.a.color]
+
+/-- `c[i]` for `i < 4` -/
+instance : GetElem Color32 (Fin 4) UInt8 (fun _ _ ↦ True) where
+  getElem c i _ := match i with
+  | 0 => c.r
+  | 1 => c.g
+  | 2 => c.b
+  | 3 => c.a
+
+-- `c[i]` simplification lemmas
+@[simp] lemma Color32.get_0 (c : Color32) : c[(0 : Fin 4)] = c.r := rfl
+@[simp] lemma Color32.get_1 (c : Color32) : c[(1 : Fin 4)] = c.g := rfl
+@[simp] lemma Color32.get_2 (c : Color32) : c[(2 : Fin 4)] = c.b := rfl
+@[simp] lemma Color32.get_3 (c : Color32) : c[(3 : Fin 4)] = c.a := rfl

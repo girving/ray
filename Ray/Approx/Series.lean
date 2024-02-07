@@ -1,9 +1,9 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Ray.Approx.Array
 import Ray.Approx.Division
 import Ray.Approx.Floating.Floor
 import Ray.Approx.Floating.Log2
 import Ray.Approx.Interval.Scale
+import Ray.Misc.Array
 
 open Pointwise
 
