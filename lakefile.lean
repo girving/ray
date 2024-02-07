@@ -13,3 +13,21 @@ require mathlib from git "https://github.com/leanprover-community/mathlib4"
 
 @[default_target]
 lean_lib Ray
+
+@[default_target]
+lean_exe gradient_test {
+  root := `Ray.Render.GradientTest
+  moreLinkArgs := #["-L/opt/homebrew/lib", "-lpng"]
+}
+
+target png.o pkg : FilePath := do
+  let o := pkg.buildDir / "Ray/Render/png.o"
+  let src ← inputFile <| pkg.dir / "Ray/Render/png.cc"
+  let args := #["-I", (←getLeanIncludeDir).toString, "-I/opt/homebrew/include"]
+  buildO "png.cc" o src args #["-fPIC"] "c++" getLeanTrace
+
+extern_lib libray pkg := do
+  let name := nameToStaticLib "ray"
+  let png ← fetch <| pkg.target ``png.o
+  buildStaticLib (pkg.nativeLibDir / name) #[png]
+

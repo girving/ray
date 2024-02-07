@@ -119,16 +119,16 @@ lemma get_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray)
   apply get!_push_colors; convert k.prop; simp only [size_push_colors]
 
 /-- Build an image -/
-@[irreducible] def ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : Image :=
+@[irreducible] def ofFn (w h : ℕ) (f : ℕ → ℕ → Color32) : Image :=
   ⟨push_colors (fun i ↦ f (i % w) (h - 1 - i / w)) (h * w) (.mkEmpty (h * w * 4)), w, h, by
     simp only [size_push_colors, ByteArray.size_mkEmpty, zero_add]⟩
 
-@[simp] lemma width_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn f w h).width = w := by rw [ofFn]
-@[simp] lemma height_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn f w h).height = h := by rw [ofFn]
+@[simp] lemma width_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn w h f).width = w := by rw [ofFn]
+@[simp] lemma height_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn w h f).height = h := by rw [ofFn]
 
 @[simp] lemma get_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ)
-    (x : Fin (ofFn f w h).width) (y : Fin (ofFn f w h).height) :
-    (ofFn f w h).get x y = f x y := by
+    (x : Fin (ofFn w h f).width) (y : Fin (ofFn w h f).height) :
+    (ofFn w h f).get x y = f x y := by
   rw [get]
   simp only [ByteArray.getElemNat_eq_get!]
   have xw := x.prop
