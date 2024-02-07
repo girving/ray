@@ -42,7 +42,7 @@ lemma sdiff_late {m : ℕ} {B : Finset ℕ} (A : Finset ℕ) : B ≥ Finset.rang
 theorem partial_geometric_bound {a : ℝ} (N : Finset ℕ) (a0 : 0 ≤ a) (a1 : a < 1) :
     N.sum (fun n ↦ a^n) ≤ (1 - a)⁻¹ :=
   haveI pos : ∀ n, n ∉ N → 0 ≤ a^n := by intro n _; bound
-  sum_le_hasSum N pos (hasSum_geometric_of_lt_1 a0 a1)
+  sum_le_hasSum N pos (hasSum_geometric_of_lt_one a0 a1)
 
 theorem partial_scaled_geometric_bound {a : ℝ} (c : ℝ≥0) (N : Finset ℕ) (a0 : 0 ≤ a) (a1 : a < 1)
     : N.sum (fun n ↦ (c:ℝ) * a^n) ≤ c * (1 - a)⁻¹ := by
