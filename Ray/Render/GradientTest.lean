@@ -7,8 +7,9 @@ import Ray.Render.PNG
 def gradient (_ : Unit) : Image :=
   let w := 162
   let h := 100
+  let chunk := 128
   let i (c : ℚ) : UInt8 := (c * 255).floor
-  Image.ofFn w h (fun x y ↦
+  Image.ofFn w h chunk (fun x y ↦
     let x := (x : ℚ) / w
     let y := (y : ℚ) / h
     let r := i x

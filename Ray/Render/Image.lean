@@ -59,19 +59,21 @@ namespace Image
   some (i.get ⟨x, h.1⟩ ⟨y, h.2⟩) else none
 
 /-!
-### Image construction
+### Build packed color arrays
+
+This is a bit fiddly since we have to directly interface with `ByteArray`
 -/
 
 /-- Append a bunch of colors to a `ByteArray` -/
-def push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) : ByteArray :=
+def push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) : ByteArray :=
   if n = 0 then d else
-  let c := f (d.size / 4)
-  push_colors f (n-1) ((((d.push c.r).push c.g).push c.b).push c.a)
+  let c := f o
+  push_colors f (n-1) (o+1) ((((d.push c.r).push c.g).push c.b).push c.a)
 
 /-- `push_colors` has the right size -/
-@[simp] lemma size_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) :
-    (push_colors f n d).size = d.size + n * 4 := by
-  induction' n with n h generalizing d
+@[simp] lemma size_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) :
+    (push_colors f n o d).size = d.size + n * 4 := by
+  induction' n with n h generalizing d o
   · simp only [Nat.zero_eq, push_colors, ↓reduceIte, zero_mul, add_zero]
   · rw [push_colors]
     simp only [Nat.succ_eq_add_one, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
@@ -79,10 +81,11 @@ def push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) : ByteArray 
     omega
 
 /-- `push_colors` fills in the right values, `get!` version -/
-lemma get!_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) (k : ℕ) (lt : k < d.size + n * 4) :
-    (push_colors f n d).get! k = (if k < d.size then d.get! k else
-      (f (d.size / 4 + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
-  induction' n with n h generalizing d
+lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k : ℕ)
+    (lt : k < d.size + n * 4) :
+    (push_colors f n o d).get! k = (if k < d.size then d.get! k else
+      (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
+  induction' n with n h generalizing d o
   · simp only [Nat.zero_eq, zero_mul, add_zero] at lt
     simp only [Nat.zero_eq, push_colors._eq_1, ↓reduceIte, lt, ↓reduceDite]
   · simp only [ByteArray.getElem_eq_get!, ByteArray.getElemNat_eq_get!] at h ⊢
@@ -104,7 +107,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) (k : 
         have lt4 : k < d.size + 4 := by omega
         simp only [lt0, lt1, lt2, lt3, lt4, if_true]
       · have ge : d.size + 4 ≤ k := by omega
-        have e0 : d.size/4 + 1 + (k - (d.size + 4)) / 4 = d.size/4 + (k - d.size) / 4 := by omega
+        have e0 : o + (1 + (k - (d.size + 4)) / 4) = o + (k - d.size) / 4 := by omega
         have e1 : k - d.size = k - (d.size + 4) + 4 := by omega
         simp only [not_lt.mpr ge, ↓reduceIte, Nat.succ_eq_add_one, e0, e1, lt0, Nat.cast_add,
           Fin.nat_cast_self, add_zero]
@@ -112,24 +115,100 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) (k : 
       omega
 
 /-- `push_colors` fills in the right values, `get` version -/
-lemma get_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray)
-    (k : Fin (push_colors f n d).size) :
-    (push_colors f n d)[k] = (if h : k < d.size then d[k]'h else
-      (f (d.size / 4 + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
+lemma get_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray)
+    (k : Fin (push_colors f n o d).size) :
+    (push_colors f n o d)[k] = (if h : k < d.size then d[k]'h else
+      (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
   simp only [getElem_fin, ByteArray.getElemNat_eq_get!, dite_eq_ite]
   apply get!_push_colors; convert k.prop; simp only [size_push_colors]
 
-/-- Build an image -/
-@[irreducible] def ofFn (w h : ℕ) (f : ℕ → ℕ → Color UInt8) : Image :=
-  ⟨push_colors (fun i ↦ f (i % w) (h - 1 - i / w)) (h * w) (.mkEmpty (h * w * 4)), w, h, by
-    simp only [size_push_colors, ByteArray.size_mkEmpty, zero_add]⟩
+/-!
+### Build packed color arrays in parallel
+-/
 
-@[simp] lemma width_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ) : (ofFn w h f).width = w := by rw [ofFn]
-@[simp] lemma height_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ) : (ofFn w h f).height = h := by rw [ofFn]
+-- Termination for `parallel_colors`
+lemma n0_lt_n {n chunk : ℕ} (h : ¬n ≤ max 1 chunk) : n / 2 < n := by
+  simp only [le_max_iff] at h; omega
+lemma n1_lt_n {n chunk : ℕ} (h : ¬n ≤ max 1 chunk) : n - n / 2 < n := by
+  simp only [le_max_iff] at h; omega
 
-@[simp] lemma get_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ)
-    (x : Fin (ofFn w h f).width) (y : Fin (ofFn w h f).height) :
-    (ofFn w h f).get x y = f x y := by
+/-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
+def parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) : Task ByteArray :=
+  if n ≤ max 1 chunk then
+    Task.spawn (fun _ ↦ push_colors f n o (.mkEmpty n))
+  else
+    let n0 := n / 2
+    let t0 := parallel_colors' f n0 o chunk
+    let t1 := parallel_colors' f (n - n0) (o + n0) chunk
+    t0.bind fun b0 ↦ t1.bind fun b1 ↦ Task.pure (b0 ++ b1)
+termination_by n decreasing_by
+  · exact n0_lt_n (by assumption)
+  · exact n1_lt_n (by assumption)
+
+/-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
+def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : ByteArray :=
+  (parallel_colors' f n 0 chunk).get
+
+/-- `parallel_colors'` has the right size -/
+@[simp] lemma size_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) :
+    (parallel_colors' f n o chunk).get.size = n * 4 := by
+  induction' n using Nat.strong_induction_on with n i generalizing o
+  rw [parallel_colors']
+  by_cases h : n ≤ max 1 chunk
+  · simp only [h, if_true, Task.spawn, size_push_colors, ByteArray.size_mkEmpty, zero_add]
+  · simp only [h, if_false, Task.bind, ByteArray.size_append, i _ (n0_lt_n h), i _ (n1_lt_n h)]
+    omega
+
+/-- `parallel_colors'` fills in the right values, `get!` version -/
+lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ) (lt : k < n * 4) :
+    (parallel_colors' f n o chunk).get.get! k = (f (o + k/4))[(k : Fin 4)] := by
+  have four : ((4 : ℕ) : Fin 4) = 0 := by decide
+  induction' n using Nat.strong_induction_on with n i generalizing o k
+  rw [parallel_colors']
+  by_cases h : n ≤ max 1 chunk
+  · simp only [h, if_true, Task.spawn]
+    rw [get!_push_colors]
+    · simp only [ByteArray.size_mkEmpty, not_lt_zero', ↓reduceIte, tsub_zero]
+    · simpa only [ByteArray.size_mkEmpty, zero_add]
+  · simp only [h, if_false, Task.bind, ByteArray.get!_append, size_parallel_colors']
+    simp only [le_max_iff, not_or, not_le] at h
+    by_cases c : k < n/2 * 4
+    · simp only [c, ↓reduceIte]
+      rw [i _ (by omega) _ _ (by omega)]
+    · simp only [c, ↓reduceIte]
+      rw [i]
+      · have ke : o + n / 2 + (k - n / 2 * 4) / 4 = o + k / 4 := by omega
+        rw [Nat.cast_sub (by omega), Nat.cast_mul, four, mul_zero, sub_zero, ke]
+      · omega
+      · omega
+
+/-- `parallel_colors` has the right size -/
+@[simp] lemma size_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) :
+    (parallel_colors f n chunk).size = n * 4 := by
+  simp only [parallel_colors, size_parallel_colors']
+
+/-- `parallel_colors` fills in the right values, `get!` version -/
+lemma get!_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) (k : ℕ) (lt : k < n * 4) :
+    (parallel_colors f n chunk).get! k = (f (k/4))[(k : Fin 4)] := by
+  simp only [parallel_colors, zero_add, get!_parallel_colors' f n 0 chunk k lt]
+
+/-!
+### Image construction
+-/
+
+/-- Build an image in parallel -/
+@[irreducible] def ofFn (w h chunk : ℕ) (f : ℕ → ℕ → Color UInt8) : Image :=
+  ⟨parallel_colors (fun i ↦ f (i % w) (h - 1 - i / w)) (h * w) chunk, w, h, by
+    simp only [size_parallel_colors, zero_add]⟩
+
+@[simp] lemma width_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ) :
+    (ofFn w h chunk f).width = w := by rw [ofFn]
+@[simp] lemma height_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ) :
+    (ofFn w h chunk f).height = h := by rw [ofFn]
+
+@[simp] lemma get_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ)
+    (x : Fin (ofFn w h chunk f).width) (y : Fin (ofFn w h chunk f).height) :
+    (ofFn w h chunk f).get x y = f x y := by
   rw [get]
   simp only [ByteArray.getElemNat_eq_get!]
   have xw := x.prop
@@ -146,17 +225,16 @@ lemma get_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray)
   all_goals {
     nth_rw 1 [ofFn]
     simp only
-    rw [get!_push_colors]
+    rw [get!_parallel_colors]
     · simp [base, add_comm _ (x : ℕ), Nat.add_mul_div_right _ _ w0, Nat.div_eq_of_lt xw,
         Nat.sub_sub_self yh', Nat.mod_eq_of_lt xw, m0, add_comm (_ * 4),
         Nat.add_mul_div_right _ _ f0]
-    · simp only [ByteArray.size_mkEmpty, zero_add]
-      have le := base_le xw yh
+    · have le := base_le xw yh
       omega }
 
 /-!
 ### Image construction on a `Grid`
 -/
 
-def ofGrid (g : Grid) (f : ℚ × ℚ → Color UInt8) : Image :=
-  ofFn g.n.1 g.n.2 (fun i j ↦ f (g.center (i,j)))
+def ofGrid (g : Grid) (chunk : ℕ) (f : ℚ × ℚ → Color UInt8) : Image :=
+  ofFn g.n.1 g.n.2 chunk (fun i j ↦ f (g.center (i,j)))

@@ -35,7 +35,7 @@ noncomputable def smooth_image (c : ℂ) : Color ℝ :=
 /-- Transparent at infinity, blue at the Mandelbrot set -/
 noncomputable def potential_image (c : ℂ) : Color ℝ :=
   let p := potential 2 c
-  lerp p clear outside
+  lerp p far outside
 
 /-!
 ### Bad intervals approximations, evaluating at single points only
@@ -51,12 +51,12 @@ def far' : Color Interval := .ofRat far
 def bad_potential_image (n : ℕ) (r : Floating) (c : ℚ × ℚ) : Color UInt8 :=
   let c := Box.ofRat c
   let p := c.potential c n r
-  let i := lerp p clear' outside'
+  let i := lerp p far' outside'
   i.quantize
 
 /-- `potential_image'` is conservative -/
 lemma approx_bad_potential_image {c : ℚ × ℚ} {n : ℕ} {r : Floating} :
     potential_image c ∈ approx (bad_potential_image n r c) := by
   rw [potential_image, bad_potential_image]
-  simp only [clear', outside']
+  simp only [far', outside']
   mono

@@ -22,6 +22,10 @@ variable {α : Type}
       simp only [size_push, lt, dite_false, nn] at kn ⊢
       linarith
 
+/-!
+## `ByteArray` lemmas
+-/
+
 @[simp] lemma ByteArray.size_mkEmpty (c : ℕ) : (ByteArray.mkEmpty c).size = 0 := by
   simp only [ByteArray.size, ByteArray.mkEmpty, Array.size_toArray, List.length_nil]
 
@@ -57,3 +61,23 @@ lemma ByteArray.get!_push (d : ByteArray) (c : UInt8) (i : ℕ) :
     split_ifs with b
     · omega
     · simp only [Option.getD_none]
+
+lemma ByteArray.get!_eq_default (d : ByteArray) (i : ℕ) (le : d.size ≤ i) : d.get! i = default := by
+  simp only [get!, Array.get!_eq_get?, Array.get?_eq_getElem?, Array.getElem?_eq_data_get?,
+    List.get?_len_le le, Option.getD_none]
+
+lemma ByteArray.get!_append (d0 d1 : ByteArray) (i : ℕ) :
+    (d0 ++ d1).get! i = if i < d0.size then d0.get! i else d1.get! (i - d0.size) := by
+  by_cases i0 : i < d0.size
+  · have g := ByteArray.get_append_left i0 (b := d1)
+    simp only [getElemNat_eq_get!] at g
+    simp only [g, i0, ↓reduceIte]
+  · simp only [i0, ↓reduceIte]
+    simp only [not_lt] at i0
+    by_cases i1 : i < (d0 ++ d1).size
+    · have g := ByteArray.get_append_right i0 i1
+      simpa only [getElemNat_eq_get!] using g
+    · simp only [not_lt, ByteArray.size_append] at i1
+      rw [ByteArray.get!_eq_default, ByteArray.get!_eq_default]
+      · omega
+      · simpa only [size_append]

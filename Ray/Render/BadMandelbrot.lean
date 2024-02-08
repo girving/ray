@@ -16,5 +16,6 @@ def grid : Grid :=
   .square ⟨-2.1, -1.3⟩ ⟨0.7, 1.3⟩ 256
 
 def main : IO Unit := do
-  let i := Image.ofGrid grid (bad_potential_image (n := 1000) (r := 1000))
+  let f := bad_potential_image (n := 1000) (r := 1000)
+  let i := Image.ofGrid grid (chunk := 128) f
   i.write_png "bad-mandelbrot.png"
