@@ -208,3 +208,48 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
 @[mono] lemma Box.mem_approx_potential' {c' : ℂ} {c : Box} (cm : c' ∈ approx c) (n : ℕ)
     (r : Floating) : _root_.potential 2 c' ∈ approx (Box.potential c c n r) := by
   simp only [_root_.potential, RiemannSphere.fill_coe, mem_approx_potential cm cm]
+
+/-!
+### Unit tests
+
+The first time I ran this, it failed to compute tight intervals for interior points.  Let's try
+some examples.
+-/
+
+section debug
+/-
+def c : Box := .ofRat (-119/256, -763/1280)
+def cs := c.normSq.hi
+def n := 80
+def r : Floating := 1000
+def i := iterate c c (cs.max 9) n
+def zs' := i.z.normSq
+def zs := i.z.normSq.hi
+#eval i
+#eval zs'
+--#eval i200
+--#eval i200.z.re.lo.abs.log
+--#eval i200.z.re.hi.abs.log
+--#eval i200.z.re.size.abs.log
+--#eval i200.z.im.lo.abs.log
+--#eval i200.z.im.hi.abs.log
+#eval zs = nan ∨ 16 < zs ∨ 16 < cs
+#eval Box.potential_small
+#eval Box.potential_small.iter_sqrt i.n
+#eval Box.potential_small.log
+#eval Box.potential_small.log.scaleB' (-.ofNat0 n)
+#eval Box.potential_small.log.lo.scaleB' (-.ofNat0 n)
+#eval Box.potential_small.log.hi
+#eval Box.potential_small.log.hi.scaleB' (-.ofNat0 n)
+#eval Box.potential c c n r
+-/
+end debug
+
+private def good (x y : ℚ) (n : ℕ) : Bool :=
+  let c : Box := .ofRat (x,y)
+  Box.potential c c n 1000 ≠ nan
+example : good 0 0 100 := by native_decide
+example : good 0.1 0.2 100 := by native_decide
+example : good (-21/160) (-133/160) 100 := by native_decide
+example : good (-119/256) (-763/1280) 80 := by native_decide
+example : good (-1393/1280) (-329/1280) 50 := by native_decide

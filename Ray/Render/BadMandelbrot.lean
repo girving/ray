@@ -13,9 +13,11 @@ over a square, partitioning the plain.  But these we can draw without the Koebe 
 
 /-- A particular grid around the Mandelbrot set -/
 def grid : Grid :=
-  .square ⟨-2.1, -1.3⟩ ⟨0.7, 1.3⟩ 256
+  .square ⟨-2.1, -1.3⟩ ⟨0.7, 1.3⟩ 2048  -- 256
 
 def main : IO Unit := do
-  let f := bad_potential_image (n := 1000) (r := 1000)
+  let f := bad_potential_image (n := 50) (r := 1000)
   let i := Image.ofGrid grid (chunk := 128) f
+  let n := (i.find_grid grid (fun _ c ↦ c == nan))[:10]
+  IO.print ("nans = " ++ repr n)
   i.write_png "bad-mandelbrot.png"

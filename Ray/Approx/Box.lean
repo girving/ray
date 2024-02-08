@@ -37,6 +37,9 @@ instance : LawfulBEq Box where
 lemma ext_iff (z w : Box) : z = w ↔ z.re = w.re ∧ z.im = w.im := by
   induction z; induction w; simp only [mk.injEq]
 
+instance : Repr Box where
+  reprPrec z _ := "(" ++ repr z.re ++ " + " ++ repr z.im ++ "i⟩"
+
 /-- Simplification of `∈ image2` for `Box` -/
 @[simp] lemma mem_image2_iff {z : ℂ} {s t : Set ℝ} :
     z ∈ image2 (fun r i ↦ (⟨r,i⟩ : ℂ)) s t ↔ z.re ∈ s ∧ z.im ∈ t := by

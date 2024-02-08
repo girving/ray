@@ -64,7 +64,7 @@ instance : Nan Floating where
 @[pp_dot] noncomputable def val (x : Floating) : ℝ :=
   ((x.n : ℤ) : ℝ) * (2 : ℝ)^(x.s.toInt - 2^63)
 
-/-- `Fixed` approximates `ℝ` -/
+/-- `Floating` approximates `ℝ` -/
 instance : Approx Floating ℝ where
   approx x := if x = nan then univ else {x.val}
 

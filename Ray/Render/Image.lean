@@ -133,35 +133,35 @@ lemma n1_lt_n {n chunk : ℕ} (h : ¬n ≤ max 1 chunk) : n - n / 2 < n := by
   simp only [le_max_iff] at h; omega
 
 /-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
-def parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) : Task ByteArray :=
+def parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) : ByteArray :=
   if n ≤ max 1 chunk then
-    Task.spawn (fun _ ↦ push_colors f n o (.mkEmpty n))
+    push_colors f n o (.mkEmpty n)
   else
     let n0 := n / 2
-    let t0 := parallel_colors' f n0 o chunk
-    let t1 := parallel_colors' f (n - n0) (o + n0) chunk
-    t0.bind fun b0 ↦ t1.bind fun b1 ↦ Task.pure (b0 ++ b1)
+    let t0 := Task.spawn (fun _ ↦ parallel_colors' f n0 o chunk)
+    let t1 := Task.spawn (fun _ ↦ parallel_colors' f (n - n0) (o + n0) chunk)
+    t0.get ++ t1.get
 termination_by n decreasing_by
   · exact n0_lt_n (by assumption)
   · exact n1_lt_n (by assumption)
 
 /-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
 def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : ByteArray :=
-  (parallel_colors' f n 0 chunk).get
+  parallel_colors' f n 0 chunk
 
 /-- `parallel_colors'` has the right size -/
 @[simp] lemma size_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) :
-    (parallel_colors' f n o chunk).get.size = n * 4 := by
+    (parallel_colors' f n o chunk).size = n * 4 := by
   induction' n using Nat.strong_induction_on with n i generalizing o
   rw [parallel_colors']
   by_cases h : n ≤ max 1 chunk
-  · simp only [h, if_true, Task.spawn, size_push_colors, ByteArray.size_mkEmpty, zero_add]
-  · simp only [h, if_false, Task.bind, ByteArray.size_append, i _ (n0_lt_n h), i _ (n1_lt_n h)]
+  · simp only [h, if_true, size_push_colors, ByteArray.size_mkEmpty, zero_add]
+  · simp only [h, if_false, Task.spawn, ByteArray.size_append, i _ (n0_lt_n h), i _ (n1_lt_n h)]
     omega
 
 /-- `parallel_colors'` fills in the right values, `get!` version -/
 lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ) (lt : k < n * 4) :
-    (parallel_colors' f n o chunk).get.get! k = (f (o + k/4))[(k : Fin 4)] := by
+    (parallel_colors' f n o chunk).get! k = (f (o + k/4))[(k : Fin 4)] := by
   have four : ((4 : ℕ) : Fin 4) = 0 := by decide
   induction' n using Nat.strong_induction_on with n i generalizing o k
   rw [parallel_colors']
@@ -170,7 +170,7 @@ lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ
     rw [get!_push_colors]
     · simp only [ByteArray.size_mkEmpty, not_lt_zero', ↓reduceIte, tsub_zero]
     · simpa only [ByteArray.size_mkEmpty, zero_add]
-  · simp only [h, if_false, Task.bind, ByteArray.get!_append, size_parallel_colors']
+  · simp only [h, if_false, Task.spawn, ByteArray.get!_append, size_parallel_colors']
     simp only [le_max_iff, not_or, not_le] at h
     by_cases c : k < n/2 * 4
     · simp only [c, ↓reduceIte]
@@ -238,3 +238,17 @@ lemma get!_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) (k : ℕ) (
 
 def ofGrid (g : Grid) (chunk : ℕ) (f : ℚ × ℚ → Color UInt8) : Image :=
   ofFn g.n.1 g.n.2 chunk (fun i j ↦ f (g.center (i,j)))
+
+/-!
+### Image analysis
+-/
+
+/-- Find indices that satisfy a predicate -/
+def find (i : Image) (f : ℕ → ℕ → Color UInt8 → Bool) : Array (ℕ × ℕ) :=
+  Fin.foldl i.height (fun (r : Array (ℕ × ℕ)) y ↦
+    Fin.foldl i.width (fun (r : Array (ℕ × ℕ)) x ↦
+      if f x y (i.get x y) then r.push ⟨x,y⟩ else r) r) #[]
+
+/-- Find grid centers that satisfy a predicate -/
+def find_grid (i : Image) (g : Grid) (f : ℚ × ℚ → Color UInt8 → Bool) : Array (ℚ × ℚ) :=
+  (i.find fun x y c ↦ f (g.center (x,y)) c).map g.center

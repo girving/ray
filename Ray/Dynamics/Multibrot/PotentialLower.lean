@@ -84,7 +84,7 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
     rw [one_div, Real.le_rpow_inv_iff_of_pos (by norm_num) x0.le (by norm_num)]
     norm_num; exact x4.le
 
-/-- If `abs c, abs z ≤ 4`, `s.potential c z ≥ 0.216` (for `d = 2`) -/
+/-- If `abs c, abs z ≤ 4`, `0.216 ≤ s.potential c z` (for `d = 2`) -/
 lemma le_potential (c4 : abs c ≤ 4) (z4 : abs z ≤ 4) : 0.216 ≤ (superF 2).potential c z := by
   set s := superF 2
   by_cases m : (c,↑z) ∈ s.basin

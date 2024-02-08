@@ -18,7 +18,7 @@ inductive Exit : Type
   | count
   | large
   | nan
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 /-- An iteration result -/
 structure Iter where
@@ -28,6 +28,7 @@ structure Iter where
   n : ℕ
   /-- Why we stopped iterating -/
   exit : Exit
+  deriving Repr
 
 /-- Helper for `iterate` -/
 def iterate' (c z : Box) (rs : Floating) (k n : ℕ) : Iter := match n with

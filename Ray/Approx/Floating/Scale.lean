@@ -12,6 +12,7 @@ namespace Floating
 
 /-- Scale by changing the exponent -/
 @[irreducible, pp_dot] def scaleB (x : Floating) (t : Int64) : Floating :=
+  bif x == 0 then 0 else
   bif t.isNeg then
     let t := (-t).n
     bif x.s < t then nan else of_ns x.n (x.s - t)
@@ -27,6 +28,13 @@ namespace Floating
     (xm : x' ∈ approx x) : x' * 2^(t : ℤ) ∈ approx (x.scaleB t) := by
   rw [scaleB]
   have t0 : 0 < (2 : ℝ) := by norm_num
+  simp only [bif_eq_if, decide_eq_true_eq, beq_iff_eq]
+  by_cases x0 : x = 0
+  · simp only [x0, ne_eq, zero_ne_nan, not_false_eq_true, approx_eq_singleton, val_zero,
+    mem_singleton_iff] at xm
+    simp only [xm, zero_mul, x0, ↓reduceIte, ne_eq, zero_ne_nan, not_false_eq_true,
+      approx_eq_singleton, val_zero, mem_singleton_iff]
+  simp only [x0, ↓reduceIte]
   by_cases xn : x = nan
   · simp only [Bool.cond_decide, xn, s_nan, decide_True, n_nan, cond_true, of_ns_nan, ite_self,
       Bool.cond_self, approx_nan, rounds_univ, mem_univ]
@@ -70,9 +78,8 @@ lemma val_scaleB {x : Floating} {t : Int64} (n : x.scaleB t ≠ nan) :
 /-- `scaleB` propagates `nan` -/
 @[simp] lemma nan_scaleB {t : Int64} : (nan : Floating).scaleB t = nan := by
   rw [scaleB]
-  simp only [bif_eq_if, decide_true_eq_true, if_true]
-  split_ifs
-  all_goals simp only [n_nan, s_nan, of_ns_nan]
+  simp only [bif_eq_if, s_nan, decide_eq_true_eq, n_nan, of_ns_nan, ite_self, Bool.cond_self,
+    beq_iff_eq, nan_ne_zero, ↓reduceIte]
 
 /-- `scaleB` propagates `nan` -/
 @[simp] lemma ne_nan_of_scaleB {x : Floating} {t : Int64} (n : x.scaleB t ≠ nan) : x ≠ nan := by
