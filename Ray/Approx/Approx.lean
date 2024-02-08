@@ -40,6 +40,11 @@ class ApproxMul (A R : Type) [Mul R] [Mul A] [Approx A R] where
 class ApproxDiv (A R : Type) [Div R] [Div A] [Approx A R] where
   approx_div (x y : A) : approx x / approx y ⊆ approx (x / y)
 
+/-- `A • B` is conservative -/
+class ApproxSMul (A B A' B' : Type) [SMul A B] [SMul A' B'] [Approx A A'] [Approx B B'] where
+  mem_approx_smul {s' : A'} {x' : B'} {s : A} {x : B} (sm : s' ∈ approx s) (xm : x' ∈ approx x) :
+      s' • x' ∈ approx (s • x)
+
 /-- `A` approximates the additive group `R` -/
 class ApproxAddGroup (A : Type) (R : outParam Type) [AddGroup R] extends
   Neg A, Add A, Sub A, Approx A R, ApproxNeg A R, ApproxAdd A R, ApproxSub A R where
@@ -57,6 +62,7 @@ export ApproxAdd (approx_add)
 export ApproxSub (approx_sub)
 export ApproxMul (approx_mul)
 export ApproxDiv (approx_div)
+export ApproxSMul (mem_approx_smul)
 
 /-!
 ## Typeclass for `nan`
@@ -111,6 +117,8 @@ lemma subset_rounds [Preorder R] (s : Set R) (up : Bool) : s ⊆ rounds s up := 
 
 -- Make `mono` handle `s ⊆ s`
 attribute [mono] subset_refl
+
+attribute [mono] mem_approx_smul
 
 @[mono] lemma subset_approx_neg [Neg R] [Neg A] [Approx A R] [ApproxNeg A R] {a : Set R} (x : A)
     (ax : a ⊆ approx x) : -a ⊆ approx (-x) := by

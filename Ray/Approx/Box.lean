@@ -1,5 +1,6 @@
 import Mathlib.Data.Complex.Basic
 import Ray.Approx.Interval.Basic
+import Ray.Approx.Interval.Conversion
 import Ray.Approx.Interval.Mul
 import Ray.Approx.Interval.Scale
 
@@ -201,3 +202,19 @@ lemma abs_le_sqrt_normSq {z' : ℂ} {z : Box} (m : z' ∈ approx z) (n : z.normS
   apply Real.le_sqrt_of_sq_le
   apply Interval.le_hi n
   mono
+
+/-!
+### Conversion
+-/
+
+@[coe] def _root_.Complex.ofRat (z : ℚ × ℚ) : ℂ := ⟨z.1, z.2⟩
+
+noncomputable instance : Coe (ℚ × ℚ) ℂ where
+  coe z := Complex.ofRat z
+
+def ofRat (z : ℚ × ℚ) : Box :=
+  ⟨.ofRat z.1, .ofRat z.2⟩
+
+@[mono] lemma approx_ofRat (z : ℚ × ℚ) : ↑z ∈ approx (ofRat z) := by
+  simp only [instApprox, ofRat, mem_image2, Complex.mk.injEq, exists_eq_right_right,
+    Interval.approx_ofRat, true_and, exists_eq_right, Complex.ofRat]

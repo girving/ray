@@ -391,7 +391,7 @@ lemma le_ofRat {x : ℚ} (h : ofRat x true ≠ nan) : x ≤ (ofRat x true).val :
   | some (y, s) =>
     let t : Int64 := s
     if s ≠ (t : ℤ) then nan else
-    (ofInt y up).scaleB t up
+    (ofInt y up).scaleB t
 
 /-- `ofFloat` rounding is self-consistent -/
 lemma ofFloat_le_ofFloat {x : Float} (n0 : ofFloat x false ≠ nan) (n1 : ofFloat x true ≠ nan) :
@@ -403,7 +403,7 @@ lemma ofFloat_le_ofFloat {x : Float} (n0 : ofFloat x false ≠ nan) (n1 : ofFloa
   · simp only [le_refl]
   · simp only [ite_not] at n0 n1 ⊢
     split_ifs at n0 n1 ⊢ with e
-    · refine le_trans (scaleB_le n0) (le_trans ?_ (le_scaleB n1))
-      simp only [gt_iff_lt, two_zpow_pos, mul_le_mul_right]
-      refine le_trans (ofInt_le (ne_nan_of_scaleB n0)) (le_ofInt (ne_nan_of_scaleB n1))
+    · simp only [ne_eq, n0, not_false_eq_true, val_scaleB, n1, gt_iff_lt, two_zpow_pos,
+        mul_le_mul_right]
+      exact le_trans (ofInt_le (ne_nan_of_scaleB n0)) (le_ofInt (ne_nan_of_scaleB n1))
     · simp only [le_refl]

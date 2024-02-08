@@ -375,8 +375,7 @@ where intersections are guaranteed nonempty.
 instance instAdd : Add Interval where
   add x y := mix (x.lo.add y.lo false) (x.hi.add y.hi true) (by
     intro ln hn
-    exact le_trans (Floating.val_add_le ln) (le_trans (add_le_add x.le y.le)
-      (Floating.le_add hn)))
+    exact le_trans (Floating.add_le ln) (le_trans (add_le_add x.le y.le) (Floating.le_add hn)))
 
 /-- Subtraction -/
 instance instSub : Sub Interval where
@@ -409,7 +408,7 @@ instance : ApproxAdd Interval ℝ where
     simp only [approx, lo_eq_nan, ne_nan_of_add n, ite_false, n]
     simp only [HAdd.hAdd, Add.add] at n ⊢
     refine subset_trans (Icc_add_Icc_subset _ _ _ _) (Icc_subset_Icc ?_ ?_)
-    · simp only [lo_mix n, Floating.val_add_le (ne_nan_of_mix n).1]
+    · simp only [lo_mix n, Floating.add_le (ne_nan_of_mix n).1]
     · simp only [hi_mix n, Floating.le_add (ne_nan_of_mix n).2]
 
 /-- `sub` respects `approx` -/

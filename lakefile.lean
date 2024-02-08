@@ -20,6 +20,12 @@ lean_exe gradient_test {
   moreLinkArgs := #["-L/opt/homebrew/lib", "-lpng"]
 }
 
+@[default_target]
+lean_exe bad_mandelbrot {
+  root := `Ray.Render.BadMandelbrot
+  moreLinkArgs := #["-L/opt/homebrew/lib", "-lpng"]
+}
+
 target png.o pkg : FilePath := do
   let o := pkg.buildDir / "Ray/Render/png.o"
   let src ← inputFile <| pkg.dir / "Ray/Render/png.cc"

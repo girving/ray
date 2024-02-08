@@ -412,12 +412,12 @@ variable {g : X → ℂ → ℂ}
 variable {y : 𝕊} {x : X} {z : ℂ}
 
 -- Values of `fill` and `lift` at `coe` and `∞`
-theorem fill_coe {f : ℂ → X} {y : X} : fill f y z = f z := rfl
-theorem fill_inf {f : ℂ → X} {y : X} : fill f y ∞ = y := rfl
-theorem lift_coe : lift f y z = ↑(f z) := rfl
-theorem lift_coe' : lift' g y x z = ↑(g x z) := rfl
-theorem lift_inf : lift f y ∞ = y := rfl
-theorem lift_inf' : lift' g y x ∞ = y := rfl
+@[simp] lemma fill_coe {f : ℂ → X} {y : X} : fill f y z = f z := rfl
+@[simp] lemma fill_inf {f : ℂ → X} {y : X} : fill f y ∞ = y := rfl
+@[simp] lemma lift_coe : lift f y z = ↑(f z) := rfl
+@[simp] lemma lift_coe' : lift' g y x z = ↑(g x z) := rfl
+@[simp] lemma lift_inf : lift f y ∞ = y := rfl
+@[simp] lemma lift_inf' : lift' g y x ∞ = y := rfl
 
 /-- `lift` in terms of `fill` -/
 theorem lift_eq_fill : lift f y = fill (fun z ↦ (f z : 𝕊)) y := rfl

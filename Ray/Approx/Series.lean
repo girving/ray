@@ -370,7 +370,7 @@ set the final precision.
 @[irreducible] def Floating.untrusted_log_shift (x : Floating) : Fixed 0 :=
   -- we make an initial guess that puts us in [1,2], then add 1 if we're not small enough
   let g := x.log2
-  let y := x.scaleB' (-g) false
+  let y := x.scaleB' (-g)
   bif y ≤ untrusted_four_thirds then g else g+1
 
 /-- `log x` for arbitrary `x`, via argument reduction -/

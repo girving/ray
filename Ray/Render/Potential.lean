@@ -189,13 +189,13 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
       simp only [hj, ← Function.iterate_add_apply, add_comm _ i.n, hn, hw'] at jl
       simp only [ne_eq, Floating.max_eq_nan, not_or] at jrn
       rw [Floating.val_max jrn.1 (Floating.max_ne_nan.mpr jrn.2),
-        Floating.val_max jrn.2.1 jrn.2.2, max_le_iff, max_le_iff, Floating.val_ofNat,
+        Floating.val_max jrn.2.1 jrn.2.2, max_lt_iff, max_lt_iff, Floating.val_ofNat,
         Nat.cast_eq_ofNat] at jl
       apply approx_potential_large
-      · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.1) ?_)
+      · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.1.le) ?_)
         · simp only [← hcs, Interval.hi_eq_nan] at csn ⊢; exact abs_le_sqrt_normSq cm csn
         · simp only [map_nonneg, Real.sqrt_sq, le_refl]
-      · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.2) ?_)
+      · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.2.le) ?_)
         · have e : (36 : ℝ) = 6 ^ 2 := by norm_num
           rw [e, Real.sqrt_sq (by norm_num)]
         · simp only [map_nonneg, Real.sqrt_sq, le_refl]
@@ -203,3 +203,8 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
         exact mem_approx_iterate cm izm _
     · simp only [Interval.approx_nan, mem_univ]
   · simp only [Interval.approx_nan, mem_univ]
+
+/-- `Box.potential` is conservative, diagonal version -/
+@[mono] lemma Box.mem_approx_potential' {c' : ℂ} {c : Box} (cm : c' ∈ approx c) (n : ℕ)
+    (r : Floating) : _root_.potential 2 c' ∈ approx (Box.potential c c n r) := by
+  simp only [_root_.potential, RiemannSphere.fill_coe, mem_approx_potential cm cm]

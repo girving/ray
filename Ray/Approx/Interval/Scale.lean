@@ -13,10 +13,10 @@ namespace Interval
 
 /-- Scale by changing the exponent -/
 @[irreducible, pp_dot] def scaleB (x : Interval) (t : Int64) : Interval :=
-  mix (x.lo.scaleB t false) (x.hi.scaleB t true) (by
+  mix (x.lo.scaleB t) (x.hi.scaleB t) (by
     intro n0 n1
-    refine le_trans (Floating.scaleB_le n0) (le_trans ?_ (Floating.le_scaleB n1))
-    exact mul_le_mul_of_nonneg_right x.le two_zpow_pos.le)
+    simp only [ne_eq, n0, not_false_eq_true, Floating.val_scaleB, n1, gt_iff_lt, two_zpow_pos,
+      mul_le_mul_right, le])
 
 /-- Scale by changing the exponent -/
 @[irreducible, pp_dot] def scaleB' (x : Interval) (t : Fixed 0) : Interval :=
@@ -57,9 +57,8 @@ lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
   have xn := Floating.ne_nan_of_scaleB n.1
   simp only [ne_eq, lo_eq_nan] at xn
   simp only [xn, not_false_eq_true, forall_true_left] at xm
-  constructor
-  · exact le_trans (Floating.scaleB_le n.1) (mul_le_mul_of_nonneg_right xm.1 two_zpow_pos.le)
-  · exact le_trans (mul_le_mul_of_nonneg_right xm.2 two_zpow_pos.le) (Floating.le_scaleB n.2)
+  simpa only [ne_eq, n.1, not_false_eq_true, Floating.val_scaleB, gt_iff_lt, two_zpow_pos,
+    mul_le_mul_right, n.2]
 
 /-- `scaleB'` is conservative -/
 @[mono] lemma mem_approx_scaleB' {x : Interval} {t : Fixed 0} {x' t' : ℝ}
@@ -78,11 +77,21 @@ lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
 ### Dividing by two
 -/
 
-@[irreducible] def div2 (x : Interval) : Interval := scaleB x (-1)
+@[irreducible] def div2 (x : Interval) : Interval :=
+  mix (x.lo.div2) (x.hi.div2) (by
+    intro n0 n1
+    simp only [ne_eq, n0, not_false_eq_true, Floating.val_div2, n1]
+    exact div_le_div_of_le (by norm_num) x.le)
 
 @[mono] lemma mem_approx_div2 {x : Interval} {x' : ℝ} (xm : x' ∈ approx x) :
     x' / 2 ∈ approx (div2 x) := by
-  have e : x' / 2 = x' * 2^(-1 : ℤ) := by
-    simp only [div_eq_mul_inv, Int.reduceNeg, zpow_neg, zpow_one]
-  rw [e, div2]
-  exact mem_approx_scaleB xm
+  rw [div2]
+  simp only [approx, lo_eq_nan, mem_ite_univ_left, mem_Icc] at xm ⊢
+  intro n
+  simp only [lo_mix n, hi_mix n]
+  simp only [mix_eq_nan, not_or] at n
+  have xn := Floating.ne_nan_of_div2 n.1
+  simp only [ne_eq, lo_eq_nan] at xn
+  simp only [xn, not_false_eq_true, forall_true_left] at xm
+  simpa only [ne_eq, n.1, not_false_eq_true, Floating.val_div2, n.2,
+    div_le_div_right (by norm_num : (0 : ℝ) < 2)]

@@ -1,17 +1,18 @@
 import Ray.Misc.Array
 import Ray.Render.Color
+import Ray.Render.Grid
 
 /-!
-## Images (2D arrays of `Color32`)
+## Images: 2D arrays of colors
 
 We build these on top of `ByteArray` for speed.
 -/
 
 open Set
 
-/-- Packed array of `Color32` -/
+/-- Packed array of `Color UInt8` -/
 structure Image where
-  /-- Packed RGBA bytes, corresponding to `Color32`.
+  /-- Packed RGBA bytes, corresponding to `Color UInt88888888`.
       These are in `y`-major order from top to bottom, to match libpng,
       though the accessors use correct `x`-major bottom-to-top order. -/
   data : ByteArray
@@ -44,7 +45,7 @@ namespace Image
     Nat.sub_add_cancel le1, le_refl]
 
 /-- Get a pixel -/
-@[irreducible, pp_dot] def get (i : Image) (x : Fin i.width) (y : Fin i.height) : Color32 :=
+@[irreducible, pp_dot] def get (i : Image) (x : Fin i.width) (y : Fin i.height) : Color UInt8 :=
   let b := base i.width i.height x y
   have lt : b + 4 ≤ i.data.size := by rw [i.size_eq]; exact base_le x.prop y.prop
   ⟨i.data[b]'(by omega),
@@ -53,7 +54,7 @@ namespace Image
    i.data[b + 3]'(by omega)⟩
 
 /-- Get a pixel -/
-@[irreducible] def get? (i : Image) (x y : ℕ) : Option Color32 :=
+@[irreducible] def get? (i : Image) (x y : ℕ) : Option (Color UInt8) :=
   if h : x < i.width ∧ y < i.height then
   some (i.get ⟨x, h.1⟩ ⟨y, h.2⟩) else none
 
@@ -62,13 +63,13 @@ namespace Image
 -/
 
 /-- Append a bunch of colors to a `ByteArray` -/
-def push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray) : ByteArray :=
+def push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) : ByteArray :=
   if n = 0 then d else
   let c := f (d.size / 4)
   push_colors f (n-1) ((((d.push c.r).push c.g).push c.b).push c.a)
 
 /-- `push_colors` has the right size -/
-@[simp] lemma size_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray) :
+@[simp] lemma size_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) :
     (push_colors f n d).size = d.size + n * 4 := by
   induction' n with n h generalizing d
   · simp only [Nat.zero_eq, push_colors, ↓reduceIte, zero_mul, add_zero]
@@ -78,7 +79,7 @@ def push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray) : ByteArray :=
     omega
 
 /-- `push_colors` fills in the right values, `get!` version -/
-lemma get!_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray) (k : ℕ) (lt : k < d.size + n * 4) :
+lemma get!_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray) (k : ℕ) (lt : k < d.size + n * 4) :
     (push_colors f n d).get! k = (if k < d.size then d.get! k else
       (f (d.size / 4 + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
   induction' n with n h generalizing d
@@ -111,7 +112,7 @@ lemma get!_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray) (k : ℕ)
       omega
 
 /-- `push_colors` fills in the right values, `get` version -/
-lemma get_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray)
+lemma get_push_colors (f : ℕ → Color UInt8) (n : ℕ) (d : ByteArray)
     (k : Fin (push_colors f n d).size) :
     (push_colors f n d)[k] = (if h : k < d.size then d[k]'h else
       (f (d.size / 4 + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
@@ -119,21 +120,21 @@ lemma get_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray)
   apply get!_push_colors; convert k.prop; simp only [size_push_colors]
 
 /-- Build an image -/
-@[irreducible] def ofFn (w h : ℕ) (f : ℕ → ℕ → Color32) : Image :=
+@[irreducible] def ofFn (w h : ℕ) (f : ℕ → ℕ → Color UInt8) : Image :=
   ⟨push_colors (fun i ↦ f (i % w) (h - 1 - i / w)) (h * w) (.mkEmpty (h * w * 4)), w, h, by
     simp only [size_push_colors, ByteArray.size_mkEmpty, zero_add]⟩
 
-@[simp] lemma width_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn w h f).width = w := by rw [ofFn]
-@[simp] lemma height_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ) : (ofFn w h f).height = h := by rw [ofFn]
+@[simp] lemma width_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ) : (ofFn w h f).width = w := by rw [ofFn]
+@[simp] lemma height_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ) : (ofFn w h f).height = h := by rw [ofFn]
 
-@[simp] lemma get_ofFn (f : ℕ → ℕ → Color32) (w h : ℕ)
+@[simp] lemma get_ofFn (f : ℕ → ℕ → Color UInt8) (w h : ℕ)
     (x : Fin (ofFn w h f).width) (y : Fin (ofFn w h f).height) :
     (ofFn w h f).get x y = f x y := by
   rw [get]
   simp only [ByteArray.getElemNat_eq_get!]
   have xw := x.prop
   have yh := y.prop
-  simp only [width_ofFn, height_ofFn, Color32.ext_iff] at xw yh ⊢
+  simp only [width_ofFn, height_ofFn, Color.ext_iff] at xw yh ⊢
   have w0 : 0 < w := by omega
   have yh' : y ≤ h - 1 := by omega
   have m0 : ∀ x : Fin 4, (x * 4 : Fin 4) = 0 := by
@@ -152,3 +153,10 @@ lemma get_push_colors (f : ℕ → Color32) (n : ℕ) (d : ByteArray)
     · simp only [ByteArray.size_mkEmpty, zero_add]
       have le := base_le xw yh
       omega }
+
+/-!
+### Image construction on a `Grid`
+-/
+
+def ofGrid (g : Grid) (f : ℚ × ℚ → Color UInt8) : Image :=
+  ofFn g.n.1 g.n.2 (fun i j ↦ f (g.center (i,j)))
