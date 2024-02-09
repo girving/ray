@@ -26,6 +26,11 @@ lean_exe bad_mandelbrot {
   moreLinkArgs := #["-L/opt/homebrew/lib", "-lpng"]
 }
 
+@[default_target]
+lean_exe primes {
+  root := `Ray.Experimental.Primes
+}
+
 target png.o pkg : FilePath := do
   let o := pkg.buildDir / "Ray/Render/png.o"
   let src ← inputFile <| pkg.dir / "Ray/Render/png.cc"
