@@ -12,7 +12,7 @@ Arithmetic wraps, so beware (not really, our uses are formally checked).
 open Set
 
 /-- 64-bit two's complement integers -/
-structure Int64 where
+@[unbox] structure Int64 where
   n : UInt64
   deriving DecidableEq, BEq
 

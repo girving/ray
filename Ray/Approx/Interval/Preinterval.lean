@@ -13,7 +13,7 @@ open Set
 open scoped Real
 
 /-- `Interval` without the correctness properties. -/
-structure Preinterval where
+@[unbox] structure Preinterval where
   /-- Lower bound -/
   lo : Floating
   /-- Upper bound -/

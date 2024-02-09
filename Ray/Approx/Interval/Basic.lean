@@ -20,7 +20,7 @@ open scoped Real
 -/
 
 /-- Floating point intervals -/
-structure Interval where
+@[unbox] structure Interval where
   /-- Lower bound -/
   lo : Floating
   /-- Upper bound -/

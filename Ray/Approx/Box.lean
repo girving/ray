@@ -15,7 +15,7 @@ open Set
 open scoped Real
 
 /-- Rectangular boxes of complex numbers -/
-structure Box where
+@[unbox] structure Box where
   re : Interval
   im : Interval
   deriving DecidableEq, BEq

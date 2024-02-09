@@ -13,8 +13,7 @@ open Classical
 ### Definitions and basics
 -/
 
-@[ext]
-structure UInt128 where
+@[ext, unbox] structure UInt128 where
   lo : UInt64
   hi : UInt64
   deriving DecidableEq, BEq

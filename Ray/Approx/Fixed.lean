@@ -23,7 +23,7 @@ variable {s t : Int64}
 /-- A 64-bit fixed point number, corresponding to either
     1. `n * 2^s`, if `n ≠ nan`
     2. Arbitrary, if `n = nan` -/
-structure Fixed (s : Int64) where
+@[unbox] structure Fixed (s : Int64) where
   n : Int64
   deriving DecidableEq, BEq
 

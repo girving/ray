@@ -23,7 +23,7 @@ open scoped Real
 -/
 
 /-- Floating point number -/
-structure Floating where
+@[unbox] structure Floating where
   /-- Unscaled value -/
   n : Int64
   /-- Binary exponent + `2^63` -/

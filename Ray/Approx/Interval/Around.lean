@@ -13,7 +13,7 @@ open Set
 open scoped Real
 
 /-- An `Interval` containing a value. -/
-structure Around (c : ℝ) where
+@[unbox] structure Around (c : ℝ) where
   /-- The interval -/
   i : Interval
   /-- We contain `c` -/
