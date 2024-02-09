@@ -60,3 +60,13 @@ generally, which means detours along the way. The main results are
 
 1. Install [`elan`](https://github.com/leanprover/elan) (`brew install elan-init` on Mac)
 2. `lake build`
+
+## Optimization and debugging tricks
+
+I'm going to keep a list here, since otherwise I will forget them.
+
+```
+-- Print compiler IR, such as to see how well inlining worked:
+set_option trace.compiler.ir.result true in
+def ...
+```
