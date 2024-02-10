@@ -50,7 +50,7 @@ theorem uniformVanishing_to_summable {f : ℕ → ℂ → ℂ} {s : Set ℂ} {z 
   rcases h e ep with ⟨m, hm⟩
   use Finset.range m; intro A d
   calc ‖A.sum (fun n ↦ f n z)‖
-    _ ≤ A.sum (fun n ↦ ‖f n z‖) := by bound [norm_sum_le]
+    _ ≤ A.sum (fun n ↦ ‖f n z‖) := by bound
     _ < e := hm _ _ (late_iff_disjoint_range.mpr d) zs
 
 /-- Uniformly vanishing series results in uniform Cauchy sequences of finite sums -/

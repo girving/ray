@@ -30,3 +30,4 @@ import Ray.Render.Image
 import Ray.Render.Iterate
 import Ray.Render.Potential
 import Ray.Tactic.Bound
+import Ray.Tactic.BoundTests

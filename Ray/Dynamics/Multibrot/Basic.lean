@@ -37,15 +37,19 @@ variable {c : ℂ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
-lemma two_le_d [h : Fact (2 ≤ d)] : 2 ≤ d := h.elim
-lemma two_le_cast_d [h : Fact (2 ≤ d)] : 2 ≤ (d :ℝ) :=
-  le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
-lemma d_pos : 0 < d := lt_trans (by norm_num) two_le_d
-lemma d_ne_zero : d ≠ 0 := d_pos.ne'
-lemma d_minus_one_pos : 0 < d - 1 := Nat.sub_pos_of_lt (lt_of_lt_of_le one_lt_two two_le_d)
-lemma d_minus_one_ge_one : 1 ≤ d - 1 := Nat.succ_le_iff.mpr d_minus_one_pos
-lemma d_gt_one : 1 < d := lt_of_lt_of_le (by norm_num) two_le_d
-lemma d_ge_one : 1 ≤ d := d_gt_one.le
+lemma two_le_d (d : ℕ) [h : Fact (2 ≤ d)] : 2 ≤ d := h.elim
+lemma d_pos (d : ℕ) [Fact (2 ≤ d)] : 0 < d := by linarith [two_le_d d]
+lemma d_ne_zero (d : ℕ) [Fact (2 ≤ d)] : d ≠ 0 := (d_pos d).ne'
+lemma d_gt_one (d : ℕ) [Fact (2 ≤ d)] : 1 < d := by linarith [two_le_d d]
+lemma d_ge_one (d : ℕ) [Fact (2 ≤ d)] : 1 ≤ d := (d_gt_one _).le
+lemma d_minus_one_pos (d : ℕ) [Fact (2 ≤ d)] : 0 < d - 1 := by have h := two_le_d d; omega
+lemma one_le_d_minus_one (d : ℕ) [Fact (2 ≤ d)] : 1 ≤ d - 1 := by have h := two_le_d d; omega
+lemma two_le_cast_d (d : ℕ) [Fact (2 ≤ d)] : (2 : ℝ) ≤ d :=
+  le_trans (by norm_num) (Nat.cast_le.mpr (two_le_d d))
+
+-- Teach `bound` about `d`
+attribute [aesop norm apply (rule_sets [bound])] two_le_d d_gt_one d_ge_one d_pos d_ne_zero
+  two_le_cast_d one_le_d_minus_one
 
 /-!
 ## The defining iteration, the Multibrot set, and its complement
@@ -85,10 +89,10 @@ In particular, we show that `f d` has a superattracting fixpoint at `∞`.
 
 -- Basic properties of f
 theorem f_0' (d : ℕ) [Fact (2 ≤ d)] : f' d c 0 = c := by
-  simp only [lift_coe', f', zero_pow d_ne_zero, zero_add]
+  simp only [lift_coe', f', zero_pow (d_ne_zero _), zero_add]
 
 theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
-  simp only [f, ← coe_zero, lift_coe', f', zero_pow d_ne_zero, zero_add]
+  simp only [f, ← coe_zero, lift_coe', f', zero_pow (d_ne_zero _), zero_add]
 
 theorem analytic_f' : AnalyticOn ℂ (uncurry (f' d)) univ := fun _ _ ↦
   ((analyticAt_snd _).pow _).add (analyticAt_fst _)
@@ -106,7 +110,8 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
     simp only [Complex.norm_eq_abs] at h; exact h
   · intro e ec z h; simp only [Complex.dist_eq] at ec
     have zz : abs z ≤ abs (z ^ d) := by
-      rw [Complex.abs.map_pow]; refine' le_self_pow _ d_ne_zero
+      rw [Complex.abs.map_pow]
+      refine le_self_pow ?_ (d_ne_zero _)
       exact le_trans (le_add_of_nonneg_left (add_nonneg (le_max_right _ _) (Complex.abs.nonneg _)))
         h.le
     calc abs (f' d e z)
@@ -114,7 +119,7 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
       _ = abs (z ^ d + (c + (e - c))) := by ring_nf
       _ ≥ abs (z ^ d) - abs (c + (e - c)) := by bound
       _ ≥ abs (z ^ d) - (abs c + abs (e - c)) := by bound
-      _ ≥ abs z - (abs c + 1) := by bound [zz]
+      _ ≥ abs z - (abs c + 1) := by bound
       _ > max r 0 + abs c + 1 - (abs c + 1) := by bound
       _ = max r 0 := by ring_nf
       _ ≥ r := le_max_left _ _
@@ -135,7 +140,7 @@ theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
     add_zero, sub_zero]
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', f, lift_inf', RiemannSphere.inv_inf, toComplex_zero,
-      zero_pow d_ne_zero, zero_div]
+      zero_pow (d_ne_zero _), zero_div]
   simp only [f, f', inv_coe z0, lift_coe', inv_pow]
   have zd := pow_ne_zero d z0
   by_cases h : (z ^ d)⁻¹ + c = 0
@@ -156,19 +161,20 @@ def gl (d : ℕ) (c z : ℂ) :=
 theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
   simp only [fl_f, gl, g]
   by_cases z0 : z = 0
-  simp only [if_pos, z0, zero_pow d_ne_zero, MulZeroClass.mul_zero, add_zero, inv_one]
+  simp only [if_pos, z0, zero_pow (d_ne_zero _), MulZeroClass.mul_zero, add_zero, inv_one]
   rw [if_neg z0, div_eq_mul_inv _ (_ + _), mul_comm, mul_div_assoc, div_self (pow_ne_zero _ z0),
     mul_one]
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
   apply (analyticAt_const.add (analyticAt_const.mul ((analyticAt_id _ _).pow _))).inv
-  simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow d_ne_zero, mul_zero, add_zero,
+  simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow (d_ne_zero _), mul_zero, add_zero,
     one_ne_zero, not_false_eq_true]
 
 theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
   funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
 
-theorem gl_zero : gl d c 0 = 1 := by simp only [gl, zero_pow d_ne_zero, MulZeroClass.mul_zero]; norm_num
+theorem gl_zero : gl d c 0 = 1 := by
+  simp only [gl, zero_pow (d_ne_zero _), MulZeroClass.mul_zero]; norm_num
 
 theorem gl_frequently_ne_zero : ∃ᶠ z in 𝓝 0, gl d c z ≠ 0 := by
   refine' (analyticAt_gl.continuousAt.eventually_ne _).frequently; simp only [gl_zero]
@@ -186,7 +192,7 @@ theorem f_inf : f d c ∞ = ∞ := by simp only [f, f', lift_inf', eq_self_iff_t
 
 -- f has a superattracting fixpoint at ∞
 theorem superF (d : ℕ) [Fact (2 ≤ d)] : Super (f d) d ∞ :=
-  { d2 := two_le_d
+  { d2 := two_le_d d
     fa := holomorphicF
     fc := fun _ ↦ fc_f
     fd := fun _ ↦ fd_f
@@ -204,7 +210,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     trans abs c * (max 16 (abs c / 2))⁻¹ ^ d; bound
     rw [inv_pow, mul_inv_le_iff]; swap; bound
     rw [mul_one_div]; rw [le_div_iff, mul_comm]; swap; norm_num
-    refine' le_trans _ (pow_le_pow_right (le_max_of_le_left (by norm_num)) two_le_d)
+    refine le_trans ?_ (pow_le_pow_right (le_max_of_le_left (by norm_num)) (two_le_d d))
     by_cases cb : abs c / 2 ≤ 16
     rw [max_eq_left cb, pow_two]; linarith
     rw [max_eq_right (not_le.mp cb).le, pow_two]; nlinarith
@@ -218,7 +224,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     intro z m; rw [← ht] at m; refine le_trans (le_of_lt m) ?_
     rw [one_div]; exact inv_le_inv_of_le (by norm_num) (le_trans (by norm_num) (le_max_left _ _))
   exact
-    { d2 := two_le_d
+    { d2 := two_le_d d
       fa0 := (s.fla c).along_snd
       fd := fd_f
       fc := fc_f
@@ -235,7 +241,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
         simp only [fl_f, mem_setOf, map_div₀, Complex.abs.map_pow, ← ht] at m ⊢
         refine lt_of_le_of_lt ?_ m; rw [div_le_iff (lt_of_lt_of_le (by norm_num) cz1)]
         refine le_trans (pow_le_pow_of_le_one (Complex.abs.nonneg _)
-          (le_trans zb (by norm_num)) two_le_d) ?_
+          (le_trans zb (by norm_num)) (two_le_d d)) ?_
         rw [pow_two]; refine' mul_le_mul_of_nonneg_left _ (Complex.abs.nonneg _)
         exact le_trans zb (le_trans (by norm_num) cz1)
       gs' := by
@@ -266,10 +272,10 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
       one_mul, ContinuousLinearMap.zero_apply, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero,
-      false_or_iff, pow_eq_zero_iff d_minus_one_pos.ne']
+      false_or_iff, pow_eq_zero_iff (d_minus_one_pos d).ne']
     dsimp [TangentSpace]
     simp only [ge_iff_le, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, tsub_pos_iff_lt,
-      pow_eq_zero_iff d_minus_one_pos.ne', false_or]
+      pow_eq_zero_iff (d_minus_one_pos d).ne', false_or]
     constructor
     · intro h; specialize h 1
       simp only [one_mul, mul_eq_zero, one_ne_zero, false_or_iff] at h
@@ -313,7 +319,7 @@ theorem multibrotPost (m : c ∉ multibrot d) : Postcritical (superF d) c c := b
   simp only [Postcritical, multibrot_p, ← f_0 d, s.potential_eqn]
   simp only [multibrot_basin, not_not] at m
   exact pow_lt_self_of_lt_one ((s.potential_pos c).mpr inf_ne_zero.symm)
-    (s.potential_lt_one m) d_gt_one
+    (s.potential_lt_one m) (d_gt_one d)
 
 /-!
 ## The diagonal Böttcher map
@@ -343,21 +349,20 @@ lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b)
   · simp only [Function.iterate_succ_apply']
     generalize hw : (f' d c)^[n] z = w; rw [hw] at h; clear hw
     have z1 : 1 ≤ abs z := le_trans (by norm_num) (le_trans b2 bz)
-    have d1 : 1 ≤ d := d_ge_one
     have b1 : 1 ≤ b - 1 := by linarith
     have b0 : 0 ≤ b - 1 := by linarith
-    have nd : n + 1 ≤ n * d + 1 := by bound [le_mul_of_one_le_right]
+    have nd : n + 1 ≤ n * d + 1 := by bound
     calc abs (w ^ d + c)
       _ ≥ abs (w ^ d) - abs c := by bound
       _ = abs w ^ d - abs c := by rw [Complex.abs.map_pow]
       _ ≥ ((b-1) ^ n * abs z) ^ d - abs c := by bound
       _ = (b-1) ^ (n*d) * abs z ^ d - abs c := by rw [mul_pow, pow_mul]
-      _ ≥ (b-1) ^ (n*d) * abs z ^ 2 - abs c := by bound [pow_le_pow_right z1 two_le_d]
+      _ ≥ (b-1) ^ (n*d) * abs z ^ 2 - abs c := by bound
       _ = (b-1) ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
       _ ≥ (b-1) ^ (n*d) * (b * abs z) - abs c := by bound
       _ = (b-1) ^ (n*d) * (b-1) * abs z + ((b-1) ^ (n*d) * abs z - abs c) := by ring
       _ = (b-1) ^ (n*d + 1) * abs z + ((b-1) ^ (n * d) * abs z - abs c) := by rw [pow_succ']
-      _ ≥ (b-1) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound [pow_le_pow_right]
+      _ ≥ (b-1) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound
       _ = (b-1) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
       _ ≥ (b-1) ^ (n + 1) * abs z := by bound
 
@@ -459,16 +464,16 @@ theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < abs ((f' d c)^[n] c)) : c ∉
     · simp only [pow_zero, mul_one, zero_add, Nat.zero_eq, hs, le_refl]
     · simp only [Nat.succ_add, Function.iterate_succ_apply']
       generalize hz : (f' d c)^[k + n] c = z; rw [hz] at p
-      have ss1 : 1 ≤ s * (s - 1) ^ k := by bound [one_le_mul_of_one_le_of_one_le]
+      have ss1 : 1 ≤ s * (s - 1) ^ k := by bound
       have k2 : k ≤ k * 2 := by linarith
       calc abs (f' d c z)
         _ = abs (z ^ d + c) := rfl
         _ ≥ abs (z ^ d) - abs c := by bound
         _ = abs z ^ d - abs c := by rw [Complex.abs.map_pow]
-        _ ≥ (s * (s - 1) ^ k) ^ d - 2 := by bound [pow_le_pow_left]
-        _ ≥ (s * (s - 1) ^ k) ^ 2 - 2 := by bound [pow_le_pow_right, two_le_d]
+        _ ≥ (s * (s - 1) ^ k) ^ d - 2 := by bound
+        _ ≥ (s * (s - 1) ^ k) ^ 2 - 2 := by bound
         _ = s ^ 2 * (s - 1) ^ (k * 2) - 2 * 1 := by rw [mul_pow, pow_mul, mul_one]
-        _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound [pow_le_pow_right, one_le_pow_of_one_le]
+        _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound
         _ = s * ((s - 1) ^ k * (s - 1)) := by ring
         _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ']
   simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
@@ -546,7 +551,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
   rw [e0, e1] at eq; clear e0 e1 iter
   have ae : abs (bottcher' d c) = abs (bottcherNear g d c⁻¹) := by
     apply (pow_left_inj (Complex.abs.nonneg _) (Complex.abs.nonneg _)
-      (pow_ne_zero n d_ne_zero : d^n ≠ 0)).mp
+      (pow_ne_zero n (d_ne_zero d))).mp
     simp only [← Complex.abs.map_pow, eq]
   rw [ae, ← hg]; exact bottcherNear_le (superNearF d c) ct
 

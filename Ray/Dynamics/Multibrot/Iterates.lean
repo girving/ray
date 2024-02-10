@@ -71,7 +71,7 @@ lemma f_ne_zero {c z : ℂ} (cz : abs c ≤ abs z) (z3 : 3 ≤ abs z) : z^d + c 
   calc abs (z ^ d + c)
     _ ≥ abs (z ^ d) - abs c := by bound
     _ = abs z ^ d - abs c := by rw [Complex.abs.map_pow]
-    _ ≥ abs z ^ 2 - abs z := by bound [pow_le_pow_right _ two_le_d]
+    _ ≥ abs z ^ 2 - abs z := by bound
     _ = abs z * (abs z - 1) := by ring
     _ ≥ 3 * (3 - 1) := by bound
     _ > 0 := by norm_num
@@ -107,7 +107,7 @@ lemma f_error_inner_nonneg (d : ℕ) {z : ℂ} (z3 : 3 ≤ abs z) :
 /-- `0 ≤ f_error` for `3 ≤ abs z` -/
 lemma f_error_nonneg {d : ℕ} [Fact (2 ≤ d)] {z : ℂ} (z3 : 3 ≤ abs z) : 0 ≤ f_error d z := by
   rw [f_error, le_neg, neg_zero]
-  have d0 : 0 < d := d_pos
+  have d0 : 0 < d := d_pos d
   have  l1 : 1 ≤ log (abs z) := le_trans (by norm_num) (le_log_abs_z z3)
   apply Real.log_nonpos
   · simp only [one_div, neg_div, sub_nonneg, neg_le]
@@ -116,7 +116,7 @@ lemma f_error_nonneg {d : ℕ} [Fact (2 ≤ d)] {z : ℂ} (z3 : 3 ≤ abs z) : 0
     · refine le_trans (neg_log_one_sub_le_linear (c := 2) (by positivity) (by norm_num) ?_) ?_
       · exact le_trans (inv_le_inv_of_le (by positivity) z3) (by norm_num)
       · simp only [zero_lt_two, mul_le_iff_le_one_right]; apply inv_le_one; linarith
-    · exact le_trans (by norm_num) (mul_le_mul two_le_cast_d l1 zero_le_one (by positivity))
+    · exact le_trans (by norm_num) (mul_le_mul (two_le_cast_d d) l1 zero_le_one (by positivity))
   · linarith [f_error_inner_nonneg d z3]
 
 /-- `f_error` bound if `b ≤ abs z`, with tunable parameters to adjust for each `b`.
@@ -137,8 +137,7 @@ lemma f_error_le_generic (d : ℕ) [Fact (2 ≤ d)] (b l s t c g : ℝ) {z : ℂ
     rw [one_div, div_eq_mul_inv]
     apply neg_log_one_sub_le_linear (by positivity) s1
     exact le_trans (inv_le_inv_of_le (by positivity) bz) bs
-  have dm : 2 * log (abs z) ≤ d * log (abs z) :=
-    mul_le_mul_of_nonneg_right two_le_cast_d (by positivity)
+  have dm : 2 * log (abs z) ≤ d * log (abs z) := by bound
   have div_le : -log (1 - 1 / abs z) / (d * log (abs z)) ≤ t := by
     have sz : s / abs z ≤ s / b := div_le_div_of_le_left (by positivity) (by positivity) bz
     exact le_trans (div_le_div (by positivity) (le_trans inner_le sz) (by positivity)
@@ -302,7 +301,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
     calc abs (f' d c z)
       _ ≥ (abs z)^d - abs c := fz
       _ ≥ (abs z)^d - abs z := by bound
-      _ = (abs z)^(d-1) * abs z - abs z := by rw [←pow_succ', Nat.sub_add_cancel d_ge_one]
+      _ = (abs z)^(d-1) * abs z - abs z := by rw [←pow_succ', Nat.sub_add_cancel (d_ge_one d)]
       _ = ((abs z)^(d-1) - 1) * abs z := by rw [sub_one_mul]
       _ ≥ (b^(d-1)-1) * abs z := by bound
   have zfz : abs z ≤ abs (f' d c z) := le_self_iter d z3 cz 1
@@ -314,7 +313,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
       _ = (abs (f' d c z))^d - abs c := by rw [Complex.abs.map_pow]
       _ ≥ ((b^(d-1)-1) * abs z)^d - abs z := by bound
       _ = (b^(d-1)-1)^d * (abs z)^(d-1) * abs z - abs z := by
-          rw [mul_assoc, ←pow_succ', mul_pow, Nat.sub_add_cancel d_ge_one]
+          rw [mul_assoc, ←pow_succ', mul_pow, Nat.sub_add_cancel (d_ge_one d)]
       _ ≥ (b^(d-1)-1)^d * b^(d-1) * abs z - abs z := by bound
       _ = bb * abs z := by rw [←hbb, sub_one_mul]
   have e0 : f_error d z ≤ s0 / (abs z * log (abs z)) := bs0 bz
@@ -344,10 +343,9 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
 /-- `iter_error_string` for `3 ≤ abs z` -/
 lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
     iter_error d c z ≤ 1.03 / (abs z * log (abs z)) := by
-  have d2 : 2 ≤ d := two_le_d
   have b3 : (3:ℝ) ≤ 3^(d-1) := by
     calc (3:ℝ)^(d-1)
-      _ ≥ 3^(2-1) := by bound [pow_le_pow_right]
+      _ ≥ 3^(2-1) := by bound
       _ = 3 := by norm_num
   generalize hb3 : (3:ℝ)^(d-1) = t3 at b3
   have b2 : (2:ℝ) ≤ t3 - 1 := by linarith
@@ -357,7 +355,7 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
   have b11 : (11:ℝ) ≤ t2^d * t3 - 1 := by
     calc t2^d * t3 - 1
       _ ≥ 2^d * 3 - 1 := by bound
-      _ ≥ 2^2 * 3 - 1 := by bound [pow_le_pow_right]
+      _ ≥ 2^2 * 3 - 1 := by bound
       _ = 11 := by norm_num
   generalize hb11 : t2^d * t3 - 1 = t11 at b11
   have b33 : (33:ℝ) ≤ t11 * 3 := by linarith
@@ -382,10 +380,9 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
 /-- `iter_error_string` for `4 ≤ abs z` -/
 lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
     iter_error d c z ≤ 0.8095 / (abs z * log (abs z)) := by
-  have d2 : 2 ≤ d := two_le_d
   have b3 : (4:ℝ) ≤ 4^(d-1) := by
     calc (4:ℝ)^(d-1)
-      _ ≥ 4^(2-1) := by bound [pow_le_pow_right]
+      _ ≥ 4^(2-1) := by bound
       _ = 4 := by norm_num
   generalize hb3 : (4:ℝ)^(d-1) = t3 at b3
   have b2 : (3:ℝ) ≤ t3 - 1 := by linarith
@@ -395,7 +392,7 @@ lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs
   have b11 : (35:ℝ) ≤ t2^d * t3 - 1 := by
     calc t2^d * t3 - 1
       _ ≥ 3^d * 4 - 1 := by bound
-      _ ≥ 3^2 * 4 - 1 := by bound [pow_le_pow_right]
+      _ ≥ 3^2 * 4 - 1 := by bound
       _ = 35 := by norm_num
   generalize hb11 : t2^d * t3 - 1 = t11 at b11
   have b33 : (140:ℝ) ≤ t11 * 4 := by linarith
@@ -424,16 +421,16 @@ lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs
 /-- The approximate change of `log (log (abs z))` across one iterate -/
 theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
     |log (log (abs (z ^ d + c))) - log (log (abs z)) - log d| ≤ f_error d z := by
-  have dp : 0 < d := d_pos
-  have d2 : 2 ≤ (d : ℝ) := two_le_cast_d
+  have dp : 0 < d := d_pos d
+  have d2 : 2 ≤ (d : ℝ) := two_le_cast_d d
   have z1' : 1 < abs z := lt_of_lt_of_le (by norm_num) z3
   have z0' : 0 < abs z := by positivity
   have iz1 : 1 / abs z < 1 := (div_lt_one z0').mpr z1'
   have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp (by positivity)
   have cz_le : abs (c / z ^ d) ≤ 1 / abs z := by
-    have d1 : z^d = z^(d - 1 + 1) := by rw [Nat.sub_add_cancel d_ge_one]
+    have d1 : z^d = z^(d - 1 + 1) := by rw [Nat.sub_add_cancel (d_ge_one d)]
     simp only [d1, map_div₀, Complex.abs.map_pow, pow_succ, Complex.abs.map_mul, div_mul_eq_div_div]
-    bound [d_minus_one_pos (d := d)]
+    bound
   have l0s : 1 ≤ log (abs z) := by
     rw [Real.le_log_iff_exp_le z0']; exact le_trans Real.exp_one_lt_3.le z3
   have l0 : 0 < log (abs z) := by positivity
@@ -456,7 +453,7 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
     apply lt_of_le_of_lt (neg_le_neg_iff.mpr (abs_le.mp l2).1); simp only [neg_neg]
     exact lt_of_le_of_lt (neg_log_one_sub_le_two i2) dl2
   rw [log_abs_add (z ^ d) c (pow_ne_zero _ z0) (f_ne_zero cz z3), Complex.abs.map_pow, Real.log_pow,
-    log_add _ _ l1 l3, Real.log_mul (Nat.cast_ne_zero.mpr d_ne_zero) l0.ne']
+    log_add _ _ l1 l3, Real.log_mul (Nat.cast_ne_zero.mpr (d_ne_zero d)) l0.ne']
   generalize hu : log (abs (1 + c / z ^ d)) / (d * log (abs z)) = u
   ring_nf
   have inner : |u| ≤ -log (1 - 1/abs z) / (d * log (abs z)) := by

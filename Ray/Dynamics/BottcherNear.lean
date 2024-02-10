@@ -72,6 +72,10 @@ theorem SuperAt.drz (s : SuperAt f d) : (d : ℝ) ≠ 0 := s.drp.ne'
 theorem SuperAt.dz (s : SuperAt f d) : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr s.dp.ne'
 theorem SuperAt.dr2 (s : SuperAt f d) : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr s.d2)
 
+-- Teach `bound` that `0 < d` and `2 ≤ d`
+attribute [aesop safe forward (rule_sets [bound])] SuperAt.d2 SuperAt.dp SuperAt.dr2
+  SuperNear.toSuperAt
+
 /-- `g` such that `f z = z^d * g z` -/
 def g (f : ℂ → ℂ) (d : ℕ) : ℂ → ℂ := fun z ↦ if z = 0 then 1 else f z / z ^ d
 
@@ -170,8 +174,7 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
         _ ≤ 5 / 4 * r ^ (d - 1) * r := by
           rw [mul_assoc, ← pow_succ', Nat.sub_add_cancel (le_trans one_le_two s.d2)]; norm_num
         _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (d - 1) * r := by bound
-        _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (2 - 1) * r := by
-          bound [pow_le_pow_of_le_one, Nat.sub_le_sub_right s.d2 1]
+        _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (2 - 1) * r := by bound
         _ = 5 / 8 * r := by norm_num
         _ < r := by linarith }
 
@@ -268,7 +271,7 @@ theorem f_converges (s : SuperNear f d t) : z ∈ t → abs (f z) ≤ 5 / 8 * ab
       _ ≤ 5 / 4 := by norm_num
   have az1 : abs z ≤ 1 := le_trans (s.t2 zt) (by norm_num)
   calc abs z ^ d * abs (g f d z)
-    _ ≤ abs z ^ 2 * (5 / 4) := by bound [pow_le_pow_of_le_one _ az1 s.d2]
+    _ ≤ abs z ^ 2 * (5 / 4) := by bound
     _ = abs z * abs z * (5 / 4) := by ring_nf
     _ ≤ 1 / 2 * abs z * (5 / 4) := by bound [s.t2 zt]
     _ = 5 / 8 * abs z := by ring
@@ -328,7 +331,9 @@ theorem term_converges (s : SuperNear f d t) :
   · have gs : abs (g f d (f^[n] z) - 1) ≤ 1 / 4 := s.gs (s.mapsTo n zt)
     have ps : abs (1 / (d:ℂ) ^ (n + 1) : ℂ) ≤ 1/2 * (1/2 : ℝ) ^ n := by
       have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ _ _).symm
-      rw [nn]; simp; apply inv_le_inv_of_le; bound; bound [s.dr2]
+      rw [nn]
+      simp only [one_div, map_inv₀, map_pow, Complex.abs_natCast, inv_pow, ge_iff_le]
+      bound
     calc (4:ℝ) * abs (g f d (f^[n] z) - 1) * abs ((1:ℂ) / (d ^ (n + 1) : ℕ) : ℂ)
       _ = (4:ℝ) * abs (g f d (f^[n] z) - 1) * abs ((1:ℂ) / (d:ℂ) ^ (n + 1) : ℂ) := by
         rw [Nat.cast_pow]
@@ -427,7 +432,7 @@ theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
   simp only [lt_div_iff (Complex.abs.pos z0)] at Nb
   use N; intro n nN
   refine' lt_of_le_of_lt (iterates_converge s n zt) (lt_of_le_of_lt _ Nb)
-  bound [pow_le_pow_of_le_one]
+  bound
 
 /-- `bottcherNear < 1` -/
 theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : abs (bottcherNear f d z) < 1 := by

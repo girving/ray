@@ -1,63 +1,82 @@
-import Lean.Elab.Tactic.Basic
-import Lean.Elab.Term
-import Lean.Expr
-import Lean.Parser.Syntax
-import Mathlib.Analysis.Calculus.TangentCone
+import Aesop
+import Mathlib.Analysis.Analytic.Basic
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Algebra.GroupPower.Order
-import Mathlib.Algebra.Order.AbsoluteValue
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
-import Mathlib.Data.Complex.Basic
-import Mathlib.Tactic.NormNum.Core
 import Ray.Misc.AbsoluteValue
-import Ray.Tactic.BoundRules
-import Std.Tactic.LabelAttr
-import Std.Util.Cache
+import Ray.Tactic.BoundRuleSet
 
 /-!
 ## The `bound` tactic
 
-`bound` iteratively applies "straightforward" inequalities, for example proving that `f x ≤ f y`
-given `x ≤ y` for monotonic `f` of various kinds (arithmetic, `Complex.exp`, etc.).  This
-functionality overlaps with `mono` and `positivity`, but was (1) written before I knew about those
-and (2) even now that I do it seems more optimized for working with nontrivial calculations.  A
-common use is within `calc`, by alternating equational rewrites with `bound` such that each `bound`
-steps is a staightforward consequence of assumptions and the structure of the expression.
+`bound` is an `aesop` wrapper that proves inequalities which follow by straightforward recursion on
+structure, assuming that intermediate terms are nonnegative or positive as needed.  It also has some
+report for guessing where it is unclear where to recurse, such as which side of a `min` or `max` to
+use as the bound or whether to assume a power is less than or greater than one.
 
-`bound` uses `DiscrTree` internally for speed.
+The functionality of `bound` overlaps with `positivity` and `gcongr`, but can jump back and forth
+between `0 ≤ x` and `x ≤ y`-type inequalities.  For example, `bound` proves
+  `0 ≤ c → b ≤ a → 0 ≤ a * c - b * c`
+By turning the goal into `b * c ≤ a * c`, then using `mul_le_mul_of_nonneg_right`.  `bound` also
+has used specialized lemmas for goals of the form `1 ≤ x, 1 < x, x ≤ 1, x < 1`.
 
-References:
-1. Lean 3 tactic tutorial: https://leanprover-community.github.io/extras/tactic_writing.html
-2. Lean 4 metaprogramming book: https://github.com/leanprover-community/lean4-metaprogramming-book
+Additional hypotheses can be passed as `bound [h0, h1 n, ...]`.  This is equivalent to declaring
+them via `have` before calling `bound`.
+
+See `Ray.Tactic.BoundTests` for tests.
+
+### Aesop heuristics
+
+`bound` uses a `bound` aesop rule set, with rules organized as follows:
+
+#### High-confidence apply rules
+
+1. `norm apply`: Lemmas which close inequalities immediately, such as `le_refl, Real.exp_pos`,
+    triangle inequalities, etc.
+2. `safe 2 apply`: High-confidence lemmas which produce one new goal, such as `inv_le_one`.  Here by
+    high-confidence we mean roughly "are how one would naively prove the inequality, assuming
+    intermediate terms are nonnegative or positive when necessary".  It is important that these are
+    `safe 2`, not `safe 1`, so that `assumption` can fire early in case the naive proof is wrong
+    and we have an assumption that can close the goal immediately.
+3. `safe 3 apply`; High-confidence lemmas which produce one new general inequality goal, but
+    possibly additional nonnegativity goals.  The standard example is `mul_le_mul_of_nonneg_left`.
+4. `safe 4 apply`: High-confidence lemmas which produce multiple general inequality goals, such as
+    `add_le_add` and `mul_le_mul`.  Note that we still declare these as `safe` for speed, even
+    though they can certainly be wrong (e.g., we could have `0 ≤ x * y` because `x, y ≤ 0`),
+    following the general heuristic of `bound` to assume nonnegativity where useful.
+
+### Guessing apply rules
+
+There are several cases where there two standard ways to recurse down an inequality, and not obvious
+which is correct without more information.  For example, `a ≤ min b c` is registered as a `norm`
+rule, since we always need to prove `a ≤ b ∧ a ≤ c`.  But if we see `min a b ≤ c`, either
+`a ≤ b` and `a ≤ c` suffices, and we don't know which.
+
+In these cases we register the pair of rules as `unsafe apply 50%`, so that `aesop` tries both.
+
+Currently the two types of guessing rules are
+1. `min` and `max` rules, for both `≤` and `<`
+2. `pow` and `rpow` monotonicity rules which branch on `1 ≤ a` or `a ≤ 1`.
+
+
+### Forward rules
+
+1. `le_of_lt`: Most importantly, we register `le_of_lt` as a forward rule so that weak inequalities
+   can be proved from strict inequalities.  Note that we treat weak vs. strict separately for
+   apply rules, as usually the hypotheses needed to prove weak inequalities are importantly weaker.
+2. Inequalities from structures: We register lemmas which extract inequalities from structures.
+   In this file, the only example is `HasFPowerSeriesOnBall.r_pos`, so that `bound` knows that any
+   power series in the context have positive radii of convergence, but other theories in this repo
+   add further forward rules of this type.
+
+### Tactics
+
+We close numerical goals with `norm_num`.
 -/
 
-open Complex (abs)
 open Parser
 open Lean Elab Meta Term Mathlib.Tactic Mathlib.Meta Syntax
 open Lean.Elab.Tactic (liftMetaTactic liftMetaTactic' TacticM getMainGoal)
-open scoped NNReal
-
-variable {m : Type → Type} [Monad m]
-
-/-- Pull the array out of an optional `"[" term,* "]"` syntax, or return `#[]` -/
-def maybeTerms : Syntax → Array Syntax
-  | node _ _ #[_, node _ _ s, _] => s.getEvenElems
-  | _ => #[]
-
-/-- Depth-limited `repeat1'` in `TacticM` -/
-def repeatD (t : TacticM Unit) : ℕ → TacticM Unit
-| 0 => return
-| n+1 => Tactic.andThenOnSubgoals t (repeatD t n)
-
-/-- `f x`, elaborated -/
-def call (f x : Expr) : TermElabM Expr :=
-  Term.elabAppArgs f #[] #[.expr x] none false false
-
-/-- `f x`, elaborated -/
-def call' (f : Name) (x : Expr) : TermElabM Expr := do
-  call (←elabTerm (mkIdent f) none) x
 
 -- Extra bound lemmas
 lemma NNReal.coe_pos_of_lt {r : NNReal} : 0 < r → 0 < (r : ℝ) := NNReal.coe_pos.mpr
@@ -90,245 +109,111 @@ lemma Nat.cast_pos_of_pos {R : Type} [OrderedSemiring R] [Nontrivial R] {n : ℕ
 lemma le_self_pow_of_pos {R : Type} [OrderedSemiring R] {a : R} {m : ℕ} (ha : 1 ≤ a) (h : 0 < m) :
     a ≤ a^m :=
   le_self_pow ha h.ne'
+lemma Nat.one_le_cast_of_le {α : Type} [AddCommMonoidWithOne α] [PartialOrder α]
+    [CovariantClass α α (fun (x y : α) => x + y) fun (x y : α) => x ≤ y] [ZeroLEOneClass α]
+    [CharZero α] {n : ℕ} (n1 : 1 ≤ n) : 1 ≤ (n : α) := by rwa [Nat.one_le_cast]
 
--- Basics
-attribute [bound_rules] le_rfl
+-- `bound` apply rules, starting with the basics
+attribute [aesop norm apply (rule_sets [bound])] le_refl
 -- 0 ≤, 0 <
-attribute [bound_rules] sq_nonneg mul_pos mul_nonneg div_pos div_nonneg pow_pos Real.rpow_pos_of_pos
-  pow_nonneg sub_nonneg_of_le add_nonneg sub_pos_of_lt inv_nonneg_of_nonneg inv_pos_of_pos
-  NNReal.coe_pos_of_lt Nat.cast_nonneg NNReal.coe_nonneg abs_nonneg AbsoluteValue.nonneg norm_nonneg
-  dist_nonneg Nat.zero_lt_succ Real.exp_pos Real.exp_nonneg Real.pi_pos Real.pi_nonneg
-  Int.ceil_lt_add_one Real.sqrt_pos_of_pos ENNReal.ofReal_pos_of_pos Real.log_pos
-  Real.rpow_nonneg Real.log_nonneg
+attribute [aesop norm apply (rule_sets [bound])] sq_nonneg Nat.cast_nonneg NNReal.coe_nonneg
+  abs_nonneg AbsoluteValue.nonneg norm_nonneg dist_nonneg Nat.zero_lt_succ Real.exp_pos
+  Real.exp_nonneg Real.pi_pos Real.pi_nonneg Int.ceil_lt_add_one
+attribute [aesop safe apply 2 (rule_sets [bound])] pow_pos pow_nonneg sub_nonneg_of_le sub_pos_of_lt
+  inv_nonneg_of_nonneg inv_pos_of_pos NNReal.coe_pos_of_lt Real.sqrt_pos_of_pos
+  ENNReal.ofReal_pos_of_pos Real.log_pos Real.rpow_nonneg Real.log_nonneg tsub_pos_of_lt
+attribute [aesop safe apply 3 (rule_sets [bound])] mul_pos mul_nonneg div_pos div_nonneg add_nonneg
+  Real.rpow_pos_of_pos
+-- 1 ≤, ≤ 1
+attribute [aesop safe apply 2 (rule_sets [bound])] inv_le_one Nat.one_le_cast_of_le
+attribute [aesop safe apply 3 (rule_sets [bound])] one_le_pow_of_one_le
+  one_le_mul_of_one_le_of_one_le div_le_one_of_le mul_inv_le_one_of_le
+  mul_inv_le_one_of_nonneg_of_le pow_le_one
 -- ≤
-attribute [bound_rules] sub_le_sub add_le_add pow_le_pow_left Real.rpow_le_rpow
-  div_le_div_of_le div_le_div mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right
-  mul_le_mul div_le_one_of_le mul_inv_le_one_of_le mul_inv_le_one_of_nonneg_of_le div_le_self
-  le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le Real.exp_le_exp_of_le le_abs_self
-  Real.sqrt_le_sqrt neg_le_neg Real.one_lt_exp_of_pos le_self_pow_of_pos pow_le_one
-  one_le_pow_of_one_le le_mul_of_one_le_right mul_le_of_le_one_right le_div_self
-  tsub_le_tsub_right inv_le_one Real.log_le_log
+attribute [aesop norm apply (rule_sets [bound])] le_abs_self norm_smul_le Int.le_ceil neg_abs_le
+  Complex.abs_re_le_abs Complex.abs_im_le_abs Real.abs_rpow_le_abs_rpow
+attribute [aesop safe apply 2 (rule_sets [bound])] Real.exp_le_exp_of_le neg_le_neg Real.sqrt_le_sqrt
+  Real.one_lt_exp_of_pos tsub_le_tsub_right Real.log_le_log ENNReal.ofReal_le_ofReal
+attribute [aesop safe apply 3 (rule_sets [bound])] pow_le_pow_left Real.rpow_le_rpow
+  div_le_div_of_le mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right div_le_self
+  le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le le_self_pow_of_pos
+  le_mul_of_one_le_right mul_le_of_le_one_right le_div_self Finset.sum_le_sum
+attribute [aesop safe apply 4 (rule_sets [bound])] sub_le_sub add_le_add div_le_div mul_le_mul
 -- Triangle inequalities
-attribute [bound_rules] dist_triangle AbsoluteValue.le_add AbsoluteValue.le_sub AbsoluteValue.add_le
-  AbsoluteValue.sub_le' AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le
+attribute [aesop norm apply (rule_sets [bound])] dist_triangle AbsoluteValue.le_add
+  AbsoluteValue.le_sub AbsoluteValue.add_le AbsoluteValue.sub_le'
+  AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le norm_sum_le
 -- <
-attribute [bound_rules] mul_lt_mul_left_of_pos_of_lt mul_lt_mul_right_of_pos_of_lt
-  div_lt_div_of_lt_left div_lt_div_of_lt pow_lt_pow_left Real.rpow_lt_rpow div_lt_self
-  add_lt_add_left add_lt_add_right one_lt_div_of_pos_of_lt div_lt_one_of_pos_of_lt
-  NNReal.coe_lt_coe_of_lt sub_lt_sub_left sub_lt_sub_right Real.sqrt_lt_sqrt neg_lt_neg
-  Nat.cast_pos_of_pos
+attribute [aesop norm apply (rule_sets [bound])] Nat.cast_pos_of_pos NNReal.coe_lt_coe_of_lt
+attribute [aesop safe apply 2 (rule_sets [bound])] neg_lt_neg
+  Real.sqrt_lt_sqrt sub_lt_sub_left sub_lt_sub_right add_lt_add_left add_lt_add_right
+attribute [aesop safe apply 3 (rule_sets [bound])] mul_lt_mul_left_of_pos_of_lt
+  mul_lt_mul_right_of_pos_of_lt div_lt_div_of_lt_left div_lt_div_of_lt pow_lt_pow_left
+  Real.rpow_lt_rpow div_lt_self one_lt_div_of_pos_of_lt
+  div_lt_one_of_pos_of_lt
 -- min and max
-attribute [bound_rules] min_le_right min_le_left le_max_left le_max_right le_min max_le lt_min
-  max_lt
+attribute [aesop norm apply (rule_sets [bound])] min_le_right min_le_left le_max_left le_max_right
+attribute [aesop safe apply 4 (rule_sets [bound])] le_min max_le lt_min max_lt
+-- Memorize a few constants to avoid going to `norm_num`
+attribute [aesop norm apply (rule_sets [bound])] zero_le_one zero_lt_one zero_le_two zero_lt_two
 
-/-- Lemma information for use in `bound`'s `DiscrTrees` -/
-inductive Lemma where
-  | expr : Expr → Lemma
-  | syn : Syntax → Bool → Lemma  -- If the Bool is true, the syntax for <, but we want ≤
-  deriving BEq
+-- Bound applies `le_of_lt` to all hypotheses
+attribute [aesop safe forward (rule_sets [bound])] le_of_lt
 
-/-- How to print Lemma -/
-instance : ToFormat Lemma where
-  format lem := match lem with
-    | .expr e => format e
-    | .syn e _ => format e
+-- Power series have positive radius
+attribute [aesop safe forward (rule_sets [bound])] HasFPowerSeriesOnBall.r_pos
 
-/-- Configuration for our `DiscrTree` -/
-def discrTreeConfig : WhnfCoreConfig := {}
+-- Guessing rules: when we don't know which side to branch down.
+-- Each line is a pair where we expect exactly one side to work.
+attribute [aesop unsafe apply 50% (rule_sets [bound])]
+  -- Which side of the `max` should we use as the lower bound?
+  le_max_of_le_left le_max_of_le_right
+  lt_max_of_lt_left lt_max_of_lt_right
+  -- Which side of the `min` should we use as the upper bound?
+  min_le_of_left_le min_le_of_right_le
+  min_lt_of_left_lt min_lt_of_right_lt
+  -- Given `a^m ≤ a^n`, is `1 ≤ a` or `a ≤ 1`?
+  pow_le_pow_right pow_le_pow_of_le_one
+  Real.rpow_le_rpow_of_exponent_le Real.rpow_le_rpow_of_exponent_ge
 
-/-- Cache a `DiscrTree` of bound lemmas.  Ideally this would update if new lemmas are added
-    to `bound_rules`, but for now it does not.
+-- Close numerical goals with `norm_num`
+def boundNormNum : Aesop.RuleTac :=
+  Aesop.SingleRuleTac.toRuleTac fun i => do
+    let tac := do NormNum.elabNormNum .missing .missing
+    let goals ← Lean.Elab.Tactic.run i.goal tac |>.run'
+    if !goals.isEmpty then failure
+    return (#[], some (.ofTactic 1  `(tactic| norm_num)), some .hundred)
+attribute [aesop unsafe 10% tactic (rule_sets [bound])] boundNormNum
 
-    Example of how to make it update: https://github.com/leanprover-community/mathlib4/blob/9fbca06f59749829b28b94be963b5592d591dc6a/Mathlib/Tactic/Relation/Rfl.lean#L20-L26
-    -/
-def boundDiscrTree : IO (Std.Tactic.Cache (DiscrTree Lemma)) := Std.Tactic.Cache.mk do
-  let mut tree := DiscrTree.empty
-  for rule in (←Std.Tactic.LabelAttr.labelled "bound_rules").reverse do
-    tree ← withNewMCtxDepth do withReducible do
-      let (_, _, type) ← forallMetaTelescope (←getConstInfo rule).type
-      return tree.insertCore (←DiscrTree.mkPath type discrTreeConfig) (.syn (mkIdent rule) false)
-  return tree
+/-- Pull the array out of an optional `"[" term,* "]"` syntax, or return `#[]` -/
+def maybeTerms : Syntax → Array Syntax
+  | node _ _ #[_, node _ _ s, _] => s.getEvenElems
+  | _ => #[]
 
-/-- Check if a name is an inequality operator -/
-def Lean.Name.isIneq : Name → Bool
-| `LT.lt => true
-| `LE.le => true
-| `GT.gt => true
-| `GE.ge => true
-| _ => false
+/-- Add extra hypotheses -/
+def addHyps (xs : Array Syntax) : TacticM Unit :=
+  if xs.isEmpty then pure () else Tactic.withMainContext do
+    for x in xs do
+      let v ← elabTerm x none
+      let t ← inferType v
+      liftMetaTactic fun g ↦ do
+        let g ← g.assert `h t v
+        let (_, g) ← g.intro1P
+        return [g]
 
-/-- Check if an expression is an inequality -/
-def Lean.Expr.isIneq : Expr → Bool
-  | .app (.const n _) _ => n.isIneq
-  | _ => false
-
-/-- Insert a type into our discrimination tree, adjusting <,≥,> for generality -/
-def insertLemma (tree : DiscrTree Lemma) (type : Expr) (lem : Lemma) :
-    TacticM (DiscrTree Lemma) := do
-  let type ← withReducible (whnf type)
-  match type with
-  | .app (.app (.app (.app (.const n l) α) i) x) y => do
-    let mut tree := tree
-    if n == ``LT.lt || n == ``LE.le then
-      tree ← tree.insert type lem discrTreeConfig
-    else if n == ``GT.gt || n == ``GE.ge then
-      let r := if n == ``GT.gt then ``LT.lt else ``LE.le  -- Swap ≥,> to ≤,<
-      tree ← tree.insert (Lean.mkApp4 (.const r l) α i y x) lem discrTreeConfig
-    if n == ``LT.lt || n == ``GT.gt then  -- Record le_of_lt version as well
-      match lem with
-      | .expr e => do
-        let e ← call' ``le_of_lt e
-        tree ← tree.insert (←inferType e) (.expr e) discrTreeConfig
-      | .syn e _ => do
-        let (x,y) := if n == `LT.lt then (x,y) else (y,x)
-        let i ← mkFreshExprMVar (some (.app (.const ``LE l) α))
-        tree ← tree.insert (Lean.mkApp4 (.const ``LE.le l) α i x y) (.syn e true) discrTreeConfig
-    return tree
-  | _ => return tree
-
-/-- Straightforward propagation of inequalities.
-    Roughly, handles a bunch of cases of the form `f x {≤,<} f y`
-    where `f` is increasing and `x ≤ y` is immediate or handled recursively. -/
-def bound (lemmas : Array Syntax) : TacticM Unit := Tactic.withMainContext do
-  -- Start out with cached lemmas, then add assumptions and explicit lemmas.
-  -- Explicit lemmas will have higher priority.
-  let mut tree ← (←boundDiscrTree).get
-  for d in ←getLCtx do
-    if !d.isImplementationDetail then
-      tree ← insertLemma tree d.type (.expr d.toExpr)
-  let s ← saveState
-  for s in lemmas.reverse do
-    tree ← withNewMCtxDepth do withReducible do
-      let (_, _, type) ← forallMetaTelescope (←inferType (←elabTerm s none))
-      insertLemma tree type (.syn s false)
-  s.restore  -- Forget tree generation mvars
-  -- Inner loop apply machinery
-  let cfg : ApplyConfig := {allowSynthFailures := true, approx := false}
-  --let apply (e : Syntax) (g : MVarId) := g.withContext do g.apply (←elabTerm e none) cfg
-  let apply (e : Syntax) (g : MVarId) : TacticM (List MVarId) := g.withContext do
-    let gs ← withTransparency .default (g.apply (←elabTerm e none) cfg)
-    gs.filterM (fun g ↦ try g.inferInstance; pure false catch _ => pure true)
-  -- Find matches and try to apply them
-  let search (g : MVarId) : TacticM Unit := g.withContext do
-    let s ← saveState
-    let t ← g.getType
-    -- Loop over matches in reverse order
-    for v in (←tree.getMatch t discrTreeConfig).reverse do match v with
-      | .expr e =>
-        g.assign e
-        Tactic.setGoals []
-        return
-      | .syn e lt => do
-        try
-          if lt then
-            let [g] ← apply (mkIdent ``le_of_lt) g | failure
-            Tactic.setGoals (←apply e g)
-          else
-            Tactic.setGoals (←apply e g)
-          return
-        catch _ => s.restore
-    failure
-  -- norm_num as a finishing tactic
-  let norm_num := do NormNum.elabNormNum .missing .missing; Tactic.done
-  -- Iterate!
-  let step := do
-    search (←getMainGoal) <|> norm_num
-  repeatD step 10
+def boundConfig : Aesop.Options := {
+  maxRuleApplicationDepth := 32
+  enableSimp := false
+}
 
 /-- `bound` tactic for proving inequalities via straightforward recursion on expression structure -/
 elab "bound" lemmas:(("[" term,* "]")?) : tactic => do
-  bound (maybeTerms lemmas)
+  addHyps (maybeTerms lemmas)
+  let tac ← `(tactic| aesop (rule_sets [bound, -default]) (config := boundConfig))
+  liftMetaTactic fun g ↦ do return (←Lean.Elab.runTactic g tac.raw).1
 
-section positive_tests
-variable {n : ℕ}
-variable {x y : ℝ}
-variable {u : ℝ≥0}
-variable {z : ℂ}
-lemma test_pos_lt_sq (h : 0 < x) : x^2 > 0 := by bound
-lemma test_pos_gt_sq (h : x > 0) : x^2 > 0 := by bound
-lemma test_pos_mul (p : x > 0) (q : y > 0) : x * y > 0 := by bound
-lemma test_pos_div (p : x > 0) (q : y > 0) : x / y > 0 := by bound
-lemma test_pos_4 : 0 < 4 := by bound
-lemma test_pos_7 : 0 < 7 := by bound
-lemma test_pos_4_real : 0 < (4 : ℝ) := by bound
-lemma test_pos_7_real : 0 < (7 : ℝ) := by bound
-lemma test_pos_zero_one : 0 < (1 : ℝ) := by bound
-lemma test_pos_nnreal (h : u > 0) : 0 < (u : ℝ) := by bound
-lemma test_pos_pow : 0 < 2^n := by bound
-lemma test_pos_inv : 0 < (1 : ℝ)⁻¹ := by bound
-end positive_tests
-
-section nonneg_tests
-variable {n : ℕ}
-variable {x y : ℝ}
-variable {u : ℝ≥0}
-variable {z : ℂ}
-lemma test_abs : 0 ≤ abs z := by bound
-lemma test_abs_ge : abs z ≥ 0 := by bound
-lemma test_nn_sq : x^2 ≥ 0 := by bound
-lemma test_mul (p : x ≥ 0) (q : y ≥ 0) : x * y ≥ 0 := by bound
-lemma test_div (p : x ≥ 0) (q : y ≥ 0) : x / y ≥ 0 := by bound
-lemma test_add (p : x ≥ 0) (q : y ≥ 0) : x + y ≥ 0 := by bound
-lemma test_nat : (n : ℝ) ≥ 0 := by bound
-lemma test_num : 0 ≤ 7 := by bound
-lemma test_num_real : 0 ≤ (7 : ℝ) := by bound
-lemma test_zero_one : 0 ≤ (1 : ℝ) := by bound
-lemma test_nnreal : 0 ≤ (u : ℝ) := by bound
-lemma test_zero : 0 ≤ (0 : ℝ) := by bound
-lemma test_pow : 0 ≤ 2^n := by bound
-lemma test_inv : 0 ≤ (0 : ℝ)⁻¹ := by bound
-end nonneg_tests
-
-section bound_tests
-variable {a b c x y : ℝ}
-variable {z : ℂ}
-variable {n : ℕ}
-lemma test_sq (n : x ≥ 0) (h : x ≤ y) : x^2 ≤ y^2 := by bound
-lemma test_sq_ge (n : x ≥ 0) (h : x ≤ y) : y^2 ≥ x^2 := by bound
-lemma test_mul_left (n : a ≥ 0) (h : x ≤ y) : a * x ≤ a * y := by bound
-lemma test_mul_right (n : a ≥ 0) (h : x ≤ y) : x * a ≤ y * a := by bound
-lemma test_mul_both (bp : b ≥ 0) (xp : x ≥ 0) (ab : a ≤ b) (xy : x ≤ y) : a * x ≤ b * y := by bound
-lemma test_abs_mul (h : x ≤ y) : abs z * x ≤ abs z * y := by bound
-lemma test_add_left (h : x ≤ y) : a + x ≤ a + y := by bound
-lemma test_add_right (h : x ≤ y) : x + a ≤ y + a := by bound
-lemma test_add_both (ab : a ≤ b) (xy : x ≤ y) : a + x ≤ b + y := by bound
-lemma test_sub_left (h : x ≥ y) : a - x ≤ a - y := by bound
-lemma test_sub_right (h : x ≤ y) : x - a ≤ y - a := by bound
-lemma test_sub_both (ab : a ≤ b) (xy : x ≥ y) : a - x ≤ b - y := by bound
-lemma test_sub_pos (h : x < y) : y - x > 0 := by bound
-lemma test_le_of_lt (h : x > 0) : x ≥ 0 := by bound
-lemma test_extra (f : ℕ → ℝ) (h : ∀ n, f n ≥ 0) : f n ≥ 0 := by bound [h n]
-lemma test_1_4 : (1 : ℝ) < 4 := by bound
-lemma test_2_4 : (2 : ℝ) < 4 := by bound
-lemma test_div_left (hc : c ≥ 0) (h : a ≤ b) : a / c ≤ b / c := by bound
-lemma test_div_right (ha : a ≥ 0) (hc : c > 0) (h : b ≥ c) : a / b ≤ a / c := by bound
-lemma test_coe (x y : ℝ≥0) (h : x < y) : (x : ℝ) < y := by bound
-lemma test_dist : dist a c ≤ dist a b + dist b c := by bound
-lemma test_log (x y : ℝ) (x0 : 0 < x) (h : x ≤ y) : x.log ≤ y.log := by bound [Real.log_le_log]
-end bound_tests
-
--- This breaks without appropriate g.withContext use
-lemma test_with_context {s : Set ℂ} (o : IsOpen s) (z) (h : z ∈ s) : ∃ r : ℝ, r > 0 := by
-  rw [Metric.isOpen_iff] at o
-  rcases o z h with ⟨t, tp, bs⟩
-  exists t/2
-  clear o h bs z s
-  bound
-
--- Test various elaboration issues
-lemma test_try_elab {f : ℂ → ℂ} {z w : ℂ} {s r c e : ℝ}
-      (sc : ∀ {w}, abs (w - z) < s → abs (f w - f z) < e) (wz : abs (w - z) < s) (wr : abs w < r)
-      (h : ∀ z : ℂ, abs z < r → abs (f z) ≤ c * abs z) :
-      abs (f z) ≤ c * abs w + e := by
-  calc abs (f z) = abs (f w - (f w - f z)) := by ring_nf
-    _ ≤ abs (f w) + abs (f w - f z) := Complex.abs.sub_le' _ _
-    _ ≤ c * abs w + e := by bound [h w wr, sc wz]
-
--- Test a lemma that requires function inference
-lemma test_fun_inference {α : Type} {s : Finset α} {f g : α → ℂ} :
-    ‖s.sum (fun x ↦ f x + g x)‖ ≤ s.sum (fun x ↦ ‖f x + g x‖) := by
-  bound [norm_sum_le]
-
--- A test that requires reduction to weak head normal form to work (surfaced by `Hartogs.lean`)
-lemma test_whnf (x y : ℝ) (h : x < y ∧ True) : x ≤ y := by
-  bound [h.1]
+/-- `bound?`, but return a proof script -/
+elab "bound?" lemmas:(("[" term,* "]")?) : tactic => do
+  addHyps (maybeTerms lemmas)
+  let tac ← `(tactic| aesop? (rule_sets [bound, -default]) (config := boundConfig))
+  liftMetaTactic fun g ↦ do return (←Lean.Elab.runTactic g tac.raw).1

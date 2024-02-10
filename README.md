@@ -66,6 +66,9 @@ generally, which means detours along the way. The main results are
 I'm going to keep a list here, since otherwise I will forget them.
 
 ```
+-- Tracing options
+set_option trace.aesop true in
+
 -- Print compiler IR, such as to see how well inlining worked:
 set_option trace.compiler.ir.result true in
 def ...

@@ -39,7 +39,6 @@ variable {f : ℂ → S → S}
 variable {c : ℂ}
 variable {a z : S}
 variable {d n : ℕ}
-variable {p : ℂ × S}
 
 /-- `z` tends to `a` under `f`-iteration -/
 def Attracts (f : S → S) (z a : S) :=
@@ -71,6 +70,9 @@ theorem Super.dp (s : Super f d a) : 0 < d := lt_trans (by norm_num) s.d2
 theorem Super.dnp (s : Super f d a) {n : ℕ} : 0 < d ^ n := pow_pos s.dp _
 theorem Super.d1 (s : Super f d a) : 1 < d := lt_of_lt_of_le (by norm_num) s.d2
 theorem Super.d0 (s : Super f d a) : d ≠ 0 := s.dp.ne'
+
+-- Teach `bound` about `Super` and `d`
+attribute [aesop safe forward (rule_sets [bound])] Super.dp Super.d1
 
 /-- `s.fl` is `fl` with a few arguments filled in -/
 @[nolint unusedArguments] def Super.fl (_ : Super f d a) := _root_.fl f a
@@ -161,9 +163,9 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
     simp only [Complex.norm_eq_abs, Complex.abs.map_pow]
     rw [← Nat.sub_add_cancel s.d2, pow_add, pow_two]
     calc abs z ^ (d - 2) * (abs z * abs z)
-      _ ≤ (1:ℝ) ^ (d - 2) * (abs z * abs z) := by bound [b.1]
+      _ ≤ (1:ℝ) ^ (d - 2) * (abs z * abs z) := by bound
       _ = abs z * abs z := by simp only [one_pow, one_mul]
-      _ ≤ e * abs z := by bound [b.2]
+      _ ≤ e * abs z := by bound
   have p' := (p.trans od).add od
   simp only [sub_add_cancel] at p'
   refine p'.congr_left ?_
@@ -493,7 +495,7 @@ theorem Super.bottcherNear_eqn_iter (s : Super f d a) (m : (c, z) ∈ s.near) {n
     pow_mul, ← pow_succ']
 
 /-- The defining equation in terms of `s.bottcherNearp` and `s.fp` -/
-theorem Super.bottcherNearp_eqn (s : Super f d a) (m : p ∈ s.near) :
+theorem Super.bottcherNearp_eqn (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :
     s.bottcherNearp (s.fp p) = s.bottcherNearp p ^ d := by
   rcases p with ⟨c, z⟩; exact s.bottcherNear_eqn m
 

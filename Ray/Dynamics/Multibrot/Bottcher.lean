@@ -89,7 +89,6 @@ theorem inv_mem_t {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z) :
 theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z)
     (n : ℕ) : abs (term (fl (f d) ∞ c) d n z⁻¹ - 1) ≤ 2 * (1 / 2 : ℝ) ^ n * (abs z)⁻¹ := by
   set s := superF d
-  have d2 : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr two_le_d)
   have z0 : abs z ≠ 0 := (lt_of_lt_of_le (lt_trans (by norm_num) c16) cz).ne'
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
     rw [one_div]; apply inv_le_inv_of_le; norm_num
@@ -105,16 +104,16 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
     simp only [Complex.abs.map_mul, Complex.abs.map_pow]
     calc abs c * abs w ^ d
       _ ≤ abs z * (abs z)⁻¹ ^ d := by bound
-      _ ≤ abs z * (abs z)⁻¹ ^ 2 := by bound [pow_le_pow_of_le_one, (two_le_d : 2 ≤ d)]
+      _ ≤ abs z * (abs z)⁻¹ ^ 2 := by bound
       _ = (abs z)⁻¹ := by rw [pow_two]; field_simp [z0]
   have cw2 : abs (c * w ^ d) ≤ 1 / 2 := le_trans cw (le_trans i8 (by norm_num))
   simp only [gl_f, gl]; rw [Complex.inv_cpow, ← Complex.cpow_neg]; swap
   · refine (lt_of_le_of_lt (le_abs_self _) (lt_of_le_of_lt ?_ (half_lt_self Real.pi_pos))).ne
     rw [Complex.abs_arg_le_pi_div_two_iff, Complex.add_re, Complex.one_re]
     calc 1 + (c * w ^ d).re
-      _ ≥ 1 + -|(c * w ^ d).re| := by bound [neg_abs_le]
+      _ ≥ 1 + -|(c * w ^ d).re| := by bound
       _ = 1 - |(c * w ^ d).re| := by ring
-      _ ≥ 1 - abs (c * w ^ d) := by bound [Complex.abs_re_le_abs]
+      _ ≥ 1 - abs (c * w ^ d) := by bound
       _ ≥ 1 - 1 / 2 := by linarith
       _ ≥ 0 := by norm_num
   · have dn : abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ))) ≤ (1 / 2 : ℝ) ^ (n + 1) := by
@@ -150,7 +149,7 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs
   refine le_trans (Finset.sum_le_sum fun n _ ↦ term_approx d (by linarith) cz n) ?_
   simp only [mul_comm _ _⁻¹, ← mul_assoc, ← Finset.mul_sum]
   calc (abs z)⁻¹ * 2 * A.sum (fun n ↦ (1/2:ℝ)^n)
-    _ ≤ (abs z)⁻¹ * 2 * (1 - 1 / 2)⁻¹ := by bound [partial_geometric_bound]
+    _ ≤ (abs z)⁻¹ * 2 * (1 - 1 / 2)⁻¹ := by gcongr; apply partial_geometric_bound; repeat norm_num
     _ = (abs z)⁻¹ * 4 := by ring
 
 /-- `bottcher' d c = c⁻¹ + O(c⁻¹^2)` -/

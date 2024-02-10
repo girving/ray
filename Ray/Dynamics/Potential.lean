@@ -49,7 +49,6 @@ variable {f : ℂ → S → S}
 variable {c : ℂ}
 variable {a z : S}
 variable {d n : ℕ}
-variable {p : ℂ × S}
 
 /-- The potential function if `z` reaches s.near after `n` iterations -/
 def Super.potential' (s : Super f d a) (c : ℂ) (z : S) (n : ℕ) : ℝ :=
@@ -112,7 +111,7 @@ theorem Super.potential_eq_one (s : Super f d a) (a : ∀ n, (c, (f c)^[n] z) �
 theorem Super.potential_lt_one (s : Super f d a) (a : ∃ n, (c, (f c)^[n] z) ∈ s.near) :
     s.potential c z < 1 := by
   simp only [Super.potential, a, dif_pos, Super.potential']
-  refine Real.rpow_lt_one (Complex.abs.nonneg _) ?_ (by bound [s.dp])
+  refine Real.rpow_lt_one (Complex.abs.nonneg _) ?_ (by bound)
   exact s.bottcherNear_lt_one (Nat.find_spec a)
 
 /-- `z` reaches `s.near` iff `potential < 1` -/
@@ -129,6 +128,7 @@ theorem Super.potential_le_one (s : Super f d a) : s.potential c z ≤ 1 := by
   exact le_of_eq (s.potential_eq_one (not_exists.mp a))
 
 /-- `0 ≤ potential` -/
+@[aesop norm apply (rule_sets [bound])]
 theorem Super.potential_nonneg (s : Super f d a) : 0 ≤ s.potential c z := by
   by_cases r : ∃ n, (c, (f c)^[n] z) ∈ s.near
   rcases r with ⟨n, r⟩; simp only [s.potential_eq r, Super.potential']; bound
@@ -182,7 +182,7 @@ theorem ContinuousAt.potential_of_reaches (s : Super f d a) (a : ∃ n, (c, (f c
   · apply Complex.continuous_abs.continuousAt.comp
     refine' ((s.bottcherNear_holomorphic _ _).comp (s.iter_holomorphic n (c, z))).continuousAt
     exact a
-  · right; bound [s.dp]
+  · right; bound
 
 /-- `s.potential = 0` exactly on iterated preimages of `a` -/
 theorem Super.potential_eq_zero (s : Super f d a) : s.potential c z = 0 ↔ ∃ n, (f c)^[n] z = a := by
@@ -400,7 +400,7 @@ theorem Continuous.potential (s : Super f d a) [OnePreimage s] :
       simp only [not_exists] at r; rw [s.potential_eq_one r] at py; linarith
     rcases h z (not_mem_compl_iff.mpr m) za with ⟨o, oh⟩
     by_cases no : n ≤ o
-    · have pyo : s.potential e z ^ d ^ o ≤ y ^ d ^ o := by bound [s.potential_nonneg]
+    · have pyo : s.potential e z ^ d ^ o ≤ y ^ d ^ o := by bound
       rw [← s.potential_eqn_iter o] at pyo
       have ryo : r ≤ y ^ d ^ o := _root_.trans (rt _ _ oh) pyo
       have kdo : k ≤ d ^ o := _root_.trans nk (Nat.pow_le_pow_of_le_right s.dp no)

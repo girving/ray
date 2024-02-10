@@ -206,7 +206,7 @@ theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi
   have ib := set_integral_mono_on fi bi sn.measurable fb
   simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, ge_iff_le] at ib ⊢
   trans (volume s).toReal⁻¹ * ((volume s).toReal * b)
-  · bound [sn.pos]; apply le_trans ib
+  · gcongr; apply le_trans ib
     simp only [integral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
       smul_eq_mul, le_refl]
   · rw [←mul_assoc _ _ b, inv_mul_cancel sn.real_nonneg, one_mul]

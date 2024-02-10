@@ -105,12 +105,12 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
   generalize hu : min (r / 2) (e * r / b / 24) = u; rw [hu] at wz
   have up : 0 < u := by
     rw [← hu]; simp only [gt_iff_lt, lt_min_iff]
-    exact ⟨by bound [h.rp], by bound [h.rp]⟩
+    exact ⟨by bound, by bound⟩
   have ur : u ≤ r / 2 := by rw [← hu]; exact min_le_left _ _
   have ue : 6 * b / r * u ≤ e / 4 := by
     rw [← hu]
     calc 6 * b / r * min (r / 2) (e * r / b / 24)
-      _ ≤ 6 * b / r * (e * r / b / 24) := by bound [bp, rp, min_le_right]
+      _ ≤ 6 * b / r * (e * r / b / 24) := by bound
       _ = b / b * (r / r) * (e / 4) := by ring
       _ = e / 4 := by field_simp [bp.ne', rp.ne']
   rw [ball_prod_same'] at rs
@@ -134,7 +134,7 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
   have L := Complex.dist_le_div_mul_dist_of_mapsTo_ball d m wf; simp only [Prod.mk.eta] at L
   refine' _root_.trans L (_root_.trans _ ue); simp only [Metric.mem_ball] at wz
   rw [div_eq_mul_inv _ (2 : ℝ), div_mul_eq_div_div]; ring_nf
-  bound [h.rp, wz.1]
+  bound
 
 /-- If `f` is bounded, moving along the second axis changes the value only slightly -/
 theorem Bounded.dist1 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b) (ep : e > 0) (rp : r > 0)
@@ -164,7 +164,7 @@ theorem of_bounded (h : Har f s) (o : IsOpen s) {b : ℝ} (fb : ∀ z, z ∈ s �
   intro z zs
   rcases Metric.isOpen_iff.mp o z zs with ⟨r, rp, rs⟩
   rw [Metric.continuousWithinAt_iff]; intro e ep
-  have up : min (r / 2) (e * r / b / 24) > 0 := by bound [lt_min, h.rp]
+  have up : min (r / 2) (e * r / b / 24) > 0 := by bound
   use min (r / 2) (e * r / b / 24), up
   intro w _ wz
   have s0 : dist (f w) (f (z.fst, w.snd)) ≤ e / 4 :=
@@ -285,6 +285,9 @@ structure Uneven (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r0 r1 : ℝ) : Prop where
   r01 : r0 ≤ r1
   h : Har f (closedBall (c0, c1) r1)
   a : AnalyticOn ℂ f (ball c0 r0 ×ˢ ball c1 r1)
+
+-- Teach `bound` about `Uneven`
+attribute [aesop safe forward (rule_sets [bound])] Uneven.r0p Uneven.r1p Uneven.r01
 
 /-- Exact diameter of complex ball -/
 theorem diam_ball_eq {c : ℂ} {r : ℝ} (rp : r ≥ 0) : Metric.diam (ball c r) = 2 * r := by
@@ -596,8 +599,8 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     set s' := r1 - dist z1 c1
     set s := min r (ENNReal.ofReal s')
     have s'p : s' > 0 := by simp only [Metric.mem_ball] at z1s; bound
-    have sp : s > 0 := by bound [hp.r_pos]
-    have sr : s ≤ r := min_le_left _ _
+    have sp : s > 0 := by bound
+    have sr : s ≤ r := by bound
     have sb : EMetric.ball z1 s ⊆ ball c1 r1 := by
       rw [Set.subset_def]; intro x xs
       simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal] at xs z1s ⊢
@@ -642,21 +645,25 @@ def unevenLog (u : Uneven f c0 c1 r0 r1) (n : ℕ) (z1 : ℂ) : ℝ :=
 /-- Uniform bound on `unevenTerm` in terms of `unevenLog` -/
 theorem unevenLog_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r1) :
     ∃ b : ℝ, ∀ n z1, z1 ∈ closedBall c1 s → unevenLog u n z1 ≤ b := by
-  rcases unevenSeries_uniform_bound u sr with ⟨c, a, cp, ap, h⟩
+  rcases unevenSeries_uniform_bound u sr with ⟨c, a, _, ap, h⟩
   use maxLog 0 (r1 * (max 1 c * a)); intro n z zs; specialize h n z zs
   simp_rw [unevenSeries_norm] at h; rw [unevenLog]
   by_cases n0 : n = 0
   · simp only [n0, CharP.cast_eq_zero, inv_zero, pow_zero, one_smul, zero_mul, ge_iff_le, le_maxLog]
   have np : n ≥ 1 := Nat.one_le_of_lt (Nat.pos_of_ne_zero n0)
   rw [inv_mul_le_iff (Nat.cast_pos.mpr (Nat.pos_of_ne_zero n0) : 0 < (n : ℝ))]
-  apply maxLog_le; trans (0 : ℝ); norm_num; bound [le_maxLog]
+  apply maxLog_le; trans (0 : ℝ); norm_num; bound
   simp only [norm_smul, abs_of_pos u.r1p, norm_pow, Real.norm_eq_abs]
-  trans r1 ^ n * (c * a ^ n); bound [u.r1p]
+  trans r1 ^ n * (c * a ^ n); bound
   rw [Real.exp_nat_mul]
-  trans (r1 * (max 1 c * a)) ^ n; simp only [mul_pow]; bound [u.r1p]
-  trans max 1 c ^ 1; simp only [pow_one, le_max_iff, le_refl, or_true_iff]
-  exact pow_le_pow_right (le_max_left 1 c) np
-  bound [le_exp_maxLog, u.r1p, le_max_of_le_right cp.le]
+  trans (r1 * (max 1 c * a)) ^ n
+  simp only [mul_pow]
+  gcongr
+  · bound
+  · trans max 1 c ^ 1
+    · simp only [pow_one, le_max_iff, le_refl, or_true_iff]
+    · bound
+  · bound
 
 /-- Nonuniform bound on `unevenTerm` in terms of `unevenLog` -/
 theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ closedBall c1 r1) :
@@ -664,8 +671,8 @@ theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ clos
   intro d dp
   rcases exists_between dp with ⟨e, ep, ed⟩
   set s := r1 / e.exp
-  have sp : s > 0 := by bound [u.r1p]
-  have sr : s < r1 := by bound [u.r1p]
+  have sp : s > 0 := by bound
+  have sr : s < r1 := by bound
   rcases unevenSeries_nonuniform_bound u sp sr z1s with ⟨c, cp, us⟩
   -- Choose m large enough to make c negligible
   rcases exists_nat_gt (max 1 (c.log / (d - e))) with ⟨m, mb⟩
@@ -682,7 +689,7 @@ theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ clos
     _ = r1 ^ n * t := by
       simp only [← ht, norm_smul, abs_of_pos u.r1p, norm_pow, Real.norm_eq_abs, mul_eq_mul_left_iff,
         eq_self_iff_true, true_or_iff, abs_pow]
-    _ ≤ r1 ^ n * (c * s⁻¹ ^ n) := by bound [u.r1p]
+    _ ≤ r1 ^ n * (c * s⁻¹ ^ n) := by bound
     _ = r1 ^ n * (c * (e.exp ^ n / r1 ^ n)) := by rw [inv_div, div_pow]
     _ = r1 ^ n / r1 ^ n * c * e.exp ^ n := by ring
     _ = c * e.exp ^ n := by field_simp [(pow_pos u.r1p _).ne']
@@ -726,7 +733,7 @@ theorem unevenSeries_strong_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 <
   rw [Real.exp_nat_mul, Real.exp_log (div_pos u.r1p sp), div_eq_mul_inv, mul_pow] at a
   --rw [Real.exp_nat_mul, Real.exp_log (div_pos u.r1p sp), div_eq_mul_inv, mul_pow, abs_pow,
   --  abs_of_pos u.r1p] at a
-  exact (mul_le_mul_left (by bound [u.r1p])).mp a
+  exact (mul_le_mul_left (by bound)).mp a
 
 /-- The nonuniform bound holds uniformly, without `∀ᶠ` -/
 theorem unevenSeries_strong_bound' (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s < r1) :

@@ -103,7 +103,7 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
 theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ abs c) (cz : abs c ≤ abs z) :
     Postcritical (superF d) c z := by
   -- Record a variety of inequalities
-  have d0 : 0 < d := d_pos
+  have d0 : 0 < d := d_pos d
   have lcz : log (log (abs c)) ≤ log (log (abs z)) := log_log_mono (by linarith) cz
   -- Reduce to s.potential c (f' d c z) < s.potential c ↑c
   simp only [Postcritical, multibrot_p]

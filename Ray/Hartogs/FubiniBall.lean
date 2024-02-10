@@ -103,7 +103,7 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
         _ = a / a * t + a := by ring
         _ = t + a := by field_simp [ap.ne']
     · calc a + a * ⌈t / a⌉
-        _ ≥ a + a * (t / a) := by bound [Int.le_ceil]
+        _ ≥ a + a * (t / a) := by bound
         _ = a / a * t + a := by ring
         _ = t + a := by field_simp [ap.ne']
   · simp only [←ht, circleMap, Complex.ofReal_sub, Complex.ofReal_add, Complex.ofReal_mul,

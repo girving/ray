@@ -742,7 +742,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
       itau_real_volume, smul_eq_mul] at e
     generalize hi : ∫ t in itau, f (circleMap c s t) = i; rw [hi] at e
     calc 2 * π * s * f c
-      _ ≤ 2 * π * s * ((2 * π)⁻¹ * i) := mul_le_mul_of_nonneg_left e (by bound [sr.1.le])
+      _ ≤ 2 * π * s * ((2 * π)⁻¹ * i) := by bound
       _ = s * (2 * π * (2 * π)⁻¹) * i := by ring_nf
       _ ≤ s * i := by field_simp [Real.two_pi_pos.ne']
   have im := integral_mono_ae ?_ ?_ m
@@ -765,8 +765,8 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     simp only [uncurry, Set.Icc_prod_Icc]
     refine' fs.cont.comp (Continuous.continuousOn (by continuity)) _
     intro (a,b) ts
-    simp only [ge_iff_le, Prod.mk_le_mk, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left, not_and, not_le,
-      Prod.mk_lt_mk, Set.mem_Icc] at ts
+    simp only [ge_iff_le, Prod.mk_le_mk, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
+      not_and, not_le, Prod.mk_lt_mk, Set.mem_Icc] at ts
     simp only [Metric.mem_closedBall, Complex.dist_eq, circleMap_sub_center, abs_circleMap_zero,
       abs_of_nonneg ts.1.1, ts.2.1]
 
@@ -1069,7 +1069,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
     refine' (fc _ dc').mp (Filter.eventually_of_forall _); intro n fb
     calc
       g n z = ENNReal.ofReal (b - f n z) := by simp only [← hg, ← hf', neg_sub]
-      _ ≥ ENNReal.ofReal (b - (b - d.toReal)) := by bound [ENNReal.ofReal_le_ofReal]
+      _ ≥ ENNReal.ofReal (b - (b - d.toReal)) := by bound
       _ = ENNReal.ofReal d.toReal := by ring_nf
       _ = d := by rw [ENNReal.ofReal_toReal df]
   -- Apply Hartogs's lemma to g

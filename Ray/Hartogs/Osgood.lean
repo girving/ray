@@ -77,6 +77,9 @@ structure Separate (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r b : ℝ) (s : Set (�
   bp : 0 ≤ b
   fb : ∀ {z0 z1}, z0 ∈ sphere c0 r → z1 ∈ sphere c1 r → ‖f (z0, z1)‖ ≤ b
 
+-- Teach `bound` about the positivity fields of `Separate`
+attribute [aesop safe forward (rule_sets [bound])] Separate.rp Separate.bp
+
 theorem spheres_subset_closedBall {c0 c1 : ℂ} {r : ℝ} :
     sphere c0 r ×ˢ sphere c1 r ⊆ closedBall (c0, c1) r := by
   rw [←closedBall_prod_same, Set.subset_def]; intro z
@@ -348,7 +351,7 @@ theorem cauchy1_bound' {f : ℂ → E} {r : ℝ} {c : ℂ} (rp : r > 0) (b : ℝ
     exact Real.pi_pos.le
   rw [norm_smul, Complex.norm_eq_abs, a]
   calc (2*π)⁻¹ * ‖∮ z in C(c, r), (z - c)⁻¹ ^ n • (z - c)⁻¹ • f z‖
-    _ ≤ (2*π)⁻¹ * (2*π * b * r⁻¹ ^ n) := by bound [cauchy1_bound rp fc bh n, rp, Real.pi_pos]
+    _ ≤ (2*π)⁻¹ * (2*π * b * r⁻¹ ^ n) := by bound [cauchy1_bound rp fc bh n]
     _ = (2*π)⁻¹ * (2*π) * b * r⁻¹ ^ n := by ring
     _ = b * r⁻¹ ^ n := by field_simp [Real.pi_pos.ne']
 
@@ -368,17 +371,16 @@ theorem cauchy2_hasSum_n1n0_bound (h : Separate f c0 c1 r b s) (w0m : w0 ∈ bal
       _ ≥ abs (z0 - c0) - abs (-w0) := by bound
       _ = r - abs w0 := by rw [z0s]; simp only [map_neg_eq_map]
   have zcw' : (abs (z0 - (c0 + w0)))⁻¹ ≤ (r - abs w0)⁻¹ := by bound
-  have pp := Real.pi_pos
   have a : (abs (2 * π * I : ℂ))⁻¹ = (2 * π)⁻¹ := by
     simp only [map_mul, Complex.abs_two, Complex.abs_ofReal, Complex.abs_I, mul_one, mul_inv_rev,
       mul_eq_mul_right_iff, inv_inj, abs_eq_self, inv_eq_zero, OfNat.ofNat_ne_zero, or_false]
-    linarith
+    bound
   rw [norm_smul, norm_smul, norm_smul, Complex.norm_eq_abs, Complex.norm_eq_abs,
     Complex.norm_eq_abs, Complex.abs.map_pow, map_inv₀, map_inv₀, a]
   calc abs w1 ^ n * ((2*π)⁻¹ * ((abs (z0 - (c0 + w0)))⁻¹ *
       ‖∮ z1 in C(c1, r), (z1 - c1)⁻¹ ^ n • (z1 - c1)⁻¹ • f (z0, z1)‖))
     _ ≤ abs w1 ^ n * ((2 * π)⁻¹ * ((abs (z0 - (c0 + w0)))⁻¹ * (2 * π * b * r⁻¹ ^ n))) := by bound
-    _ ≤ abs w1 ^ n * ((2 * π)⁻¹ * ((r - abs w0)⁻¹ * (2 * π * b * r⁻¹ ^ n))) := by bound [h.bp, h.rp]
+    _ ≤ abs w1 ^ n * ((2 * π)⁻¹ * ((r - abs w0)⁻¹ * (2 * π * b * r⁻¹ ^ n))) := by bound
     _ = 2 * π * (2 * π)⁻¹ * (r - abs w0)⁻¹ * b * (abs w1 ^ n * r⁻¹ ^ n) := by ring
     _ = (r - abs w0)⁻¹ * b * (abs w1 / r) ^ n := by
       rw [mul_inv_cancel Real.two_pi_pos.ne', ← mul_pow, ← div_eq_mul_inv _ r, one_mul]
@@ -453,9 +455,9 @@ theorem series2_norm (h : Separate f c0 c1 r b s) (n : ℕ) :
     rw [← Nat.add_sub_assoc (Nat.le_of_lt_succ n0n) n0, Nat.add_sub_cancel_left] at sb
     assumption
   trans (Finset.range (n + 1)).sum fun n0 ↦ ‖termCmmap ℂ n n0 (h.series2Coeff n0 (n - n0))‖
-  · bound [norm_sum_le]
+  · bound
   · trans (Finset.range (n + 1)).sum fun _ ↦ b * r⁻¹ ^ n
-    · bound [Finset.sum_le_sum, norm_smul_le]; intro _ m; exact tb _ m
+    · bound
     · clear tb; rw [Finset.sum_const]
       simp only [Finset.card_range, inv_pow, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
       ring_nf; rfl
@@ -505,10 +507,10 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
     refine .of_norm_bounded _ ?_ fb
     simp_rw [mul_assoc]; apply Summable.mul_left; simp_rw [mul_comm ((abs w0 / r) ^ _) _]
     apply Summable.mul_of_nonneg
-    · exact summable_geometric_of_lt_one (by bound [h.rp]) ((div_lt_one h.rp).mpr w1m)
-    · exact summable_geometric_of_lt_one (by bound [h.rp]) ((div_lt_one h.rp).mpr w0m)
-    · intro n; simp only [Pi.zero_apply, div_pow]; bound [h.rp]
-    · intro n; simp only [Pi.zero_apply, div_pow]; bound [h.rp]
+    · exact summable_geometric_of_lt_one (by bound) ((div_lt_one h.rp).mpr w1m)
+    · exact summable_geometric_of_lt_one (by bound) ((div_lt_one h.rp).mpr w0m)
+    · intro n; simp only [Pi.zero_apply, div_pow]; bound
+    · intro n; simp only [Pi.zero_apply, div_pow]; bound
   have fs' : HasSum f a' := by rw [← ha']; exact sf.hasSum
   have gs' := HasSum.prod_fiberwise fs' fs; simp at gs'
   rwa [HasSum.unique gs gs']

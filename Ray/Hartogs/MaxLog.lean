@@ -1,4 +1,3 @@
--- fun x, max b (log x)
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
@@ -24,10 +23,10 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 def maxLog (b x : ℝ) : ℝ :=
   (max b.exp x).log
 
-theorem max_exp_pos {b x : ℝ} : 0 < max b.exp x :=
-  lt_of_lt_of_le (Real.exp_pos _) (by bound)
+theorem max_exp_pos {b x : ℝ} : 0 < max b.exp x := by
+  bound
 
-@[simp]
+@[simp, aesop norm apply (rule_sets [bound])]
 theorem le_maxLog (b x : ℝ) : b ≤ maxLog b x := by
   rw [maxLog, Real.le_log_iff_exp_le max_exp_pos]; bound
 
@@ -40,6 +39,7 @@ theorem maxLog_le {b x y : ℝ} (yb : b ≤ y) (xy : x ≤ y.exp) : maxLog b x �
   rw [maxLog, Real.log_le_iff_le_exp max_exp_pos]; apply max_le
   apply Real.exp_le_exp.mpr yb; exact xy
 
+@[aesop norm apply (rule_sets [bound])]
 theorem le_exp_maxLog (b x : ℝ) : x ≤ (maxLog b x).exp := by
   rw [maxLog, Real.exp_log max_exp_pos]; bound
 

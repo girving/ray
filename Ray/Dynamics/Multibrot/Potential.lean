@@ -39,7 +39,7 @@ lemma tendsto_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z) (cz : abs 
     replace h := h.mul_const (s.potential c z)
     simp only [div_mul_cancel _ potential_pos.ne', one_mul, ← f_f'_iter, s.potential_eqn_iter,
       Real.mul_rpow (Complex.abs.nonneg _) (pow_nonneg s.potential_nonneg _),
-      Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero _ d_ne_zero),
+      Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero _ (d_ne_zero d)),
       Real.rpow_neg (pow_nonneg s.potential_nonneg _), ← div_eq_mul_inv] at h
     exact h
   simp only [← s.abs_bottcher, ← Complex.abs.map_mul, mul_comm _ (s.bottcher _ _)]
@@ -58,8 +58,7 @@ lemma tendsto_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z) (cz : abs 
   have am : a ∈ ball (1 : ℝ) (1 / 2) := by
     simp only [mem_ball, Real.dist_eq]; exact (lt_min_iff.mp a1).1
   have b0 : 0 ≤ b := by rw [← hb]; bound
-  have b1 : b ≤ 1 := by
-    rw [← hb]; exact inv_le_one (Nat.one_le_cast.mpr (one_le_pow_of_one_le d_ge_one _))
+  have b1 : b ≤ 1 := by rw [← hb]; bound
   have hd : ∀ x, x ∈ ball (1 : ℝ) (1 / 2) →
       HasDerivAt (fun x ↦ x ^ (-b)) (1 * -b * x ^ (-b - 1) + 0 * x ^ (-b) * log x) x := by
     intro x m; apply HasDerivAt.rpow (hasDerivAt_id _) (hasDerivAt_const _ _)
@@ -72,11 +71,11 @@ lemma tendsto_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z) (cz : abs 
     norm_num at m
     have x0 : 0 < x := by linarith
     calc b * |x ^ (-b - 1)|
-      _ ≤ 1 * |x| ^ (-b - 1) := by bound [Real.abs_rpow_le_abs_rpow]
+      _ ≤ 1 * |x| ^ (-b - 1) := by bound
       _ = (x ^ (b + 1))⁻¹ := by rw [← Real.rpow_neg x0.le, neg_add', one_mul, abs_of_pos x0]
-      _ ≤ ((1 / 2 : ℝ) ^ (b + 1))⁻¹ := by bound [m.1.le]
+      _ ≤ ((1 / 2 : ℝ) ^ (b + 1))⁻¹ := by bound
       _ = 2 ^ (b + 1) := by rw [one_div, Real.inv_rpow zero_le_two, inv_inv]
-      _ ≤ 2 ^ (1 + 1 : ℝ) := by bound [Real.rpow_le_rpow_of_exponent_le]
+      _ ≤ 2 ^ (1 + 1 : ℝ) := by bound
       _ ≤ 4 := by norm_num
   have le := Convex.norm_image_sub_le_of_norm_deriv_le (fun x m ↦ (hd x m).differentiableAt) bound
       (convex_ball _ _) (mem_ball_self (by norm_num)) am
@@ -95,7 +94,7 @@ lemma tendsto_log_neg_log_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z
     intro n; exact lt_of_lt_of_le (by norm_num) (le_trans z3 (le_self_iter d z3 cz _))
   have zn0 : ∀ {n}, 0 < abs ((f' d c)^[n] z) := fun {_} ↦ lt_trans zero_lt_one zn1
   have ln0 : ∀ {n}, 0 < log (abs ((f' d c)^[n] z)) := fun {_} ↦ Real.log_pos zn1
-  have dn0 : ∀ {n}, (d:ℝ)^n ≠ 0 := fun {_} ↦ pow_ne_zero _ (Nat.cast_ne_zero.mpr d_ne_zero)
+  have dn0 : ∀ {n}, (d:ℝ)^n ≠ 0 := fun {_} ↦ pow_ne_zero _ (Nat.cast_ne_zero.mpr (d_ne_zero d))
   have p0 : 0 < s.potential c z := potential_pos
   have p1 : s.potential c z < 1 := potential_lt_one_of_two_lt (by linarith) cz
   set f := fun x ↦ log (log x⁻¹)

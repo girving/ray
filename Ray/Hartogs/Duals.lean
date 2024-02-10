@@ -34,6 +34,7 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [SecondCountableT
 def dualVector (x : E) : E →L[ℂ] ℂ :=
   choose (exists_dual_vector'' ℂ x)
 
+@[aesop norm apply (rule_sets [bound])]
 theorem dualVector_norm (x : E) : ‖dualVector x‖ ≤ 1 :=
   (choose_spec (exists_dual_vector'' ℂ x)).1
 
@@ -48,7 +49,7 @@ theorem dualVector_le (x y : E) : abs (dualVector x y) ≤ ‖y‖ := by
   rw [← Complex.norm_eq_abs]
   calc ‖dualVector x y‖
     _ ≤ ‖dualVector x‖ * ‖y‖ := (dualVector x).le_op_norm y
-    _ ≤ 1 * ‖y‖ := by bound [dualVector_norm x]
+    _ ≤ 1 * ‖y‖ := by bound
     _ = ‖y‖ := by simp only [one_mul]
 
 /-- Dual vectors of a dense subset of `E` -/

@@ -140,8 +140,8 @@ theorem sub_near (a z : ℂ) : |abs (a - z) - abs a| ≤ abs z := by
   rw [abs_le]; constructor
   · simp only [neg_le_sub_iff_le_add]
     calc abs (a - z) + abs z
-      _ ≥ |abs a - abs z| + abs z := by bound [Complex.abs.abs_abv_sub_le_abv_sub a z]
-      _ ≥ abs a - abs z + abs z := by bound [le_abs_self (abs a - abs z)]
+      _ ≥ |abs a - abs z| + abs z := by bound
+      _ ≥ abs a - abs z + abs z := by bound
       _ = abs a := by simp only [sub_add_cancel]
   · calc
       abs (a - z) - abs a ≤ abs a + abs z - abs a := by bound
