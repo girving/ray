@@ -47,10 +47,10 @@ See `Ray.Tactic.BoundTests` for tests.
 
 ### Guessing apply rules
 
-There are several cases where there two standard ways to recurse down an inequality, and not obvious
-which is correct without more information.  For example, `a ≤ min b c` is registered as a `norm`
-rule, since we always need to prove `a ≤ b ∧ a ≤ c`.  But if we see `min a b ≤ c`, either
-`a ≤ b` and `a ≤ c` suffices, and we don't know which.
+There are several cases where there two standard ways to recurse down an inequality, and it is not
+obvious which is correct without more information.  For example, `a ≤ min b c` is registered as a
+a `safe apply 4` rule, since we always need to prove `a ≤ b ∧ a ≤ c`.  But if we see `min a b ≤ c`,
+either `a ≤ b` and `a ≤ c` suffices, and we don't know which.
 
 In these cases we register the pair of rules as `unsafe apply 50%`, so that `aesop` tries both.
 
