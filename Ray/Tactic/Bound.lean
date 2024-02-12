@@ -58,7 +58,6 @@ Currently the two types of guessing rules are
 1. `min` and `max` rules, for both `≤` and `<`
 2. `pow` and `rpow` monotonicity rules which branch on `1 ≤ a` or `a ≤ 1`.
 
-
 ### Forward rules
 
 1. `le_of_lt`: Most importantly, we register `le_of_lt` as a forward rule so that weak inequalities
