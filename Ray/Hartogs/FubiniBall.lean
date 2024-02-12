@@ -13,6 +13,8 @@ import Ray.Misc.Prod
 
 We rewrite integration over the closed disk in polar coordinates, so that we can relate
 disk integrals to `intervalIntegral`s of `circleIntegral`s.
+
+We extend the result for annuli as well, since we use that for the Koebe quarter theorem.
 -/
 
 open Complex (abs arg exp I)
@@ -20,7 +22,7 @@ open LinearMap (toMatrix_apply)
 open MeasureTheory
 open Metric (ball closedBall sphere)
 open Real (cos sin)
-open Set (Icc Ioc)
+open Set
 open scoped Real
 noncomputable section
 
@@ -78,25 +80,25 @@ end realCircleMap
 theorem Metric.sphere_eq_empty {S : Type} [IsROrC S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
   constructor
   · intro rp; contrapose rp; simp at rp
-    refine' Set.Nonempty.ne_empty ⟨c + r, _⟩
+    refine' Nonempty.ne_empty ⟨c + r, _⟩
     simpa only [mem_sphere_iff_norm, add_sub_cancel', IsROrC.norm_ofReal, abs_eq_self]
   · intro n; contrapose n
-    rw [← Set.not_nonempty_iff_eq_empty] at n
+    rw [← not_nonempty_iff_eq_empty] at n
     simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
 
 /-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
 theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     ∃ t, t ∈ Ioc 0 (2 * π) ∧ z = circleMap c r t := by
   by_cases rp : r < 0
-  · simp only [Metric.sphere_eq_empty.mpr rp, Set.mem_empty_iff_false] at zs
+  · simp only [Metric.sphere_eq_empty.mpr rp, mem_empty_iff_false] at zs
   simp only [not_lt] at rp
-  rw [←abs_of_nonneg rp, ← range_circleMap, Set.mem_range] at zs
+  rw [←abs_of_nonneg rp, ← range_circleMap, mem_range] at zs
   rcases zs with ⟨t, ht⟩
   generalize ha : 2 * π = a
   have ap : a > 0 := by rw [←ha]; bound
   set s := t + a - a * ⌈t / a⌉
   use s; constructor
-  · simp only [Set.mem_Ioc, sub_pos, tsub_le_iff_right]
+  · simp only [mem_Ioc, sub_pos, tsub_le_iff_right]
     constructor
     · calc a * ⌈t / a⌉
         _ < a * (t / a + 1) := by bound
@@ -116,20 +118,27 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
 section FubiniHelper
 
 /-- The square that we'll map onto the ball -/
-def square (r : ℝ) : Set (ℝ × ℝ) :=
-  Set.Ioc 0 r ×ˢ Ioc 0 (2 * π)
+def square (r0 r1 : ℝ) : Set (ℝ × ℝ) :=
+  Ioc r0 r1 ×ˢ Ioc 0 (2 * π)
 
-theorem square.rp {r : ℝ} {x : ℝ × ℝ} : x ∈ square r → x.1 > 0 := by
-  simp only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left, Set.mem_prod,
-    Set.mem_Ioc, and_imp]
-  intro h _ _ _; assumption
+theorem square.rp {r0 r1 : ℝ} {x : ℝ × ℝ} (r0p : 0 ≤ r0) : x ∈ square r0 r1 → 0 < x.1 := by
+  simp only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left,
+    mem_prod, mem_Ioc, and_imp]
+  intro h _ _ _; linarith
 
-theorem Measurable.square {r : ℝ} : MeasurableSet (square r) := by
+theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
   apply_rules [MeasurableSet.prod, measurableSet_Ioc]
 
-theorem square_eq {c : ℂ} {r : ℝ} :
-    Complex.measurableEquivRealProd.symm ⁻¹' (closedBall c r \ {c}) =
-      realCircleMap c '' square r := by
+def annulus_oc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ closedBall c r0
+def annulus_cc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ ball c r0
+
+lemma annulus_oc_subset_annulus_cc {c : ℂ} {r0 r1 : ℝ} :
+    annulus_oc c r0 r1 ⊆ annulus_cc c r0 r1 :=
+  diff_subset_diff (subset_refl _) Metric.ball_subset_closedBall
+
+theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
+    Complex.measurableEquivRealProd.symm ⁻¹' (annulus_oc c r0 r1) =
+      realCircleMap c '' square r0 r1 := by
   rw [← MeasurableEquiv.image_eq_preimage]
   have e : realCircleMap c =
       fun x : ℝ × ℝ ↦ Complex.measurableEquivRealProd (circleMap c x.1 x.2) := by
@@ -137,26 +146,31 @@ theorem square_eq {c : ℂ} {r : ℝ} :
     simp only [realCircleMap_eq_circleMap, Complex.measurableEquivRealProd,
       Complex.equivRealProd_apply, Homeomorph.toMeasurableEquiv_coe,
       ContinuousLinearEquiv.coe_toHomeomorph, Complex.equivRealProdCLM_apply]
-  have i : (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2) '' square r = closedBall c r \ {c} := by
-    apply Set.ext; intro z; rw [Set.mem_image]; constructor
+  have i : (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2) '' square r0 r1 = annulus_oc c r0 r1 := by
+    ext z
+    rw [mem_image]
+    constructor
     · intro gp; rcases gp with ⟨⟨s, t⟩, ss, tz⟩
       simp only at tz
-      simp only [square, Set.prod_mk_mem_set_prod_eq, Set.mem_Ioc] at ss
+      simp only [square, prod_mk_mem_set_prod_eq, mem_Ioc] at ss
       rw [← tz]
-      simp only [Set.mem_diff, Metric.mem_closedBall, Set.mem_singleton_iff,
-        circleMap_eq_center_iff]
-      exact ⟨by simp [circleMap, abs_of_pos ss.1.1, ss.1.2], ss.1.1.ne'⟩
-    · intro zr; simp only [Set.mem_diff, Metric.mem_closedBall, Set.mem_singleton_iff] at zr
+      have s0 : 0 < s := by linarith
+      simp only [circleMap, add_comm c, annulus_oc, mem_diff, Metric.mem_closedBall,
+        dist_add_self_left, norm_mul, Complex.norm_eq_abs, Complex.abs_ofReal,
+        Complex.abs_exp_ofReal_mul_I, mul_one, not_le, abs_of_pos s0, ss.1, true_and]
+    · intro zr
+      simp only [mem_diff, Metric.mem_closedBall, mem_singleton_iff, annulus_oc,
+        not_le] at zr
       rw [dist_comm] at zr
       have zz : z ∈ sphere c (dist c z) := by
         simp only [Complex.dist_eq, mem_sphere_iff_norm, Complex.norm_eq_abs, Complex.abs.map_sub]
       rcases circleMap_Ioc zz with ⟨t, ts, tz⟩
       use (dist c z, t)
-      simpa only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left, Set.mem_prod,
-        Set.mem_Ioc, dist_pos, ne_eq, Ne.symm zr.2, not_false_eq_true, zr, and_self, true_and,
+      simpa only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left,
+        mem_prod, mem_Ioc, dist_pos, ne_eq, not_false_eq_true, zr, and_self, true_and,
         tz.symm, and_true] using ts
-  have im := Set.image_comp Complex.measurableEquivRealProd (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2)
-    (square r)
+  have im := image_comp Complex.measurableEquivRealProd (fun x : ℝ × ℝ ↦ circleMap c x.1 x.2)
+    (square r0 r1)
   simp only [Function.comp] at im
   simp only [e, im, i]
 
@@ -177,7 +191,7 @@ theorem arg_exp_of_im (t : ℝ) : ∃ n : ℤ, arg (exp (t * I)) = t - 2 * π * 
   have e : exp (t * I) = exp (↑(t - 2 * π * n) * I) := by
     simp [mul_sub_right_distrib, Complex.exp_sub, en]
   have ts : t - 2 * π * n ∈ Ioc (-π) π := by
-    simp only [Set.mem_Ioc, neg_lt_sub_iff_lt_add, tsub_le_iff_right]
+    simp only [mem_Ioc, neg_lt_sub_iff_lt_add, tsub_le_iff_right]
     constructor
     · have h : ↑n < t * (2 * π)⁻¹ - 1 / 2 + 1 := by rw [← hn]; exact Int.ceil_lt_add_one _
       calc 2 * π * ↑n
@@ -192,14 +206,17 @@ theorem arg_exp_of_im (t : ℝ) : ∃ n : ℤ, arg (exp (t * I)) = t - 2 * π * 
   rw [e, exp_of_im, ← Complex.cos_eq_cos, ← Complex.sin_eq_sin, Complex.arg_cos_add_sin_mul_I ts]
 
 /-- `realCircleMap` is injective on the square -/
-theorem rcm_inj {c : ℂ} {r : ℝ} : Set.InjOn (realCircleMap c) (square r) := by
+theorem rcm_inj {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) : InjOn (realCircleMap c) (square r0 r1) := by
   intro x xs y ys e; simp [square] at xs ys
   simp_rw [realCircleMap_eq_circleMap, Equiv.apply_eq_iff_eq] at e
   simp_rw [circleMap] at e; simp at e
   have re : abs (↑x.1 * exp (x.2 * I)) = abs (↑y.1 * exp (y.2 * I)) := by rw [e]
-  simp [abs_of_pos xs.1.1, abs_of_pos ys.1.1] at re
+  have x0 : 0 < x.1 := by linarith
+  have y0 : 0 < y.1 := by linarith
+  simp only [map_mul, Complex.abs_ofReal, abs_of_pos x0, Complex.abs_exp_ofReal_mul_I, mul_one,
+    abs_of_pos y0] at re
   have ae : arg (↑x.1 * exp (x.2 * I)) = arg (↑y.1 * exp (y.2 * I)) := by rw [e]
-  simp [Complex.arg_real_mul _ xs.1.1, Complex.arg_real_mul _ ys.1.1] at ae
+  simp [Complex.arg_real_mul _ x0, Complex.arg_real_mul _ y0] at ae
   rcases arg_exp_of_im x.2 with ⟨nx, hx⟩
   rcases arg_exp_of_im y.2 with ⟨ny, h⟩
   rw [← ae, hx] at h; clear e ae hx
@@ -237,42 +254,55 @@ theorem invert_toReal {x : ENNReal} {y : ℝ} (yp : y > 0) : x.toReal = y → x 
   contrapose yp; simp only [ne_eq, not_not] at yp; simp only [yp, ENNReal.top_toReal] at h
   simp only [← h, lt_self_iff_false, not_false_eq_true]
 
-/-- Integration over a complex ball using polar coordinates -/
-theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-    {f : ℂ → E} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (closedBall c r)) :
-    ∫ z in closedBall c r, f z =
-      ∫ s in Set.Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
-  have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
-  rw [MeasureTheory.set_integral_congr_set_ae center]; clear center
+/-- Integration over a complex annulus using polar coordinates -/
+theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    {f : ℂ → E} {c : ℂ} {r0 r1 : ℝ} (fc : ContinuousOn f (annulus_cc c r0 r1)) (r0p : 0 ≤ r0) :
+    ∫ z in annulus_oc c r0 r1, f z =
+      ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have im := MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod
   rw [←MeasurePreserving.set_integral_preimage_emb im
     Complex.measurableEquivRealProd.symm.measurableEmbedding f _]
   clear im
-  rw [square_eq]
-  have dc : ∀ x, x ∈ square r → HasFDerivWithinAt (realCircleMap c) (rcmDeriv x) (square r) x :=
+  rw [square_eq r0p]
+  have dc : ∀ x, x ∈ square r0 r1 →
+      HasFDerivWithinAt (realCircleMap c) (rcmDeriv x) (square r0 r1) x :=
     fun _ _ ↦ realCircleMap.fderiv.hasFDerivWithinAt
-  rw [integral_image_eq_integral_abs_det_fderiv_smul volume Measurable.square dc rcm_inj]; clear dc
+  rw [integral_image_eq_integral_abs_det_fderiv_smul volume Measurable.square dc (rcm_inj r0p)]
+  clear dc
   simp_rw [rcmDeriv.det]
   simp_rw [realCircleMap_eq_circleMap]
   simp_rw [measurable_symm_equiv_inverse]
-  have e : ∀ x : ℝ × ℝ, x ∈ square r → |x.1| • f (circleMap c x.1 x.2) =
+  have e : ∀ x : ℝ × ℝ, x ∈ square r0 r1 → |x.1| • f (circleMap c x.1 x.2) =
       x.1 • f (circleMap c x.1 x.2) := by
-    intro x xs; rw [abs_of_pos (square.rp xs)]
+    intro x xs; rw [abs_of_pos (square.rp r0p xs)]
   rw [MeasureTheory.set_integral_congr Measurable.square e]; clear e
   rw [square, Measure.volume_eq_prod, MeasureTheory.set_integral_prod]
   simp [integral_smul]
   have fi : IntegrableOn (fun x : ℝ × ℝ ↦ x.1 • f (circleMap c x.1 x.2))
-      (Icc 0 r ×ˢ Icc 0 (2 * π)) := by
+      (Icc r0 r1 ×ˢ Icc 0 (2 * π)) := by
     apply ContinuousOn.integrableOn_compact
-    exact IsCompact.prod isCompact_Icc isCompact_Icc
-    apply ContinuousOn.smul
-    exact continuous_fst.continuousOn
-    apply fc.comp continuous_circleMap_full.continuousOn
-    intro x xs; simp only
-    simp only [Set.Icc_prod_Icc, Set.mem_Icc] at xs
-    apply Metric.closedBall_subset_closedBall xs.2.1
-    apply circleMap_mem_closedBall _ xs.1.1
-  exact fi.mono_set (Set.prod_mono Set.Ioc_subset_Icc_self Set.Ioc_subset_Icc_self)
+    · exact IsCompact.prod isCompact_Icc isCompact_Icc
+    · apply ContinuousOn.smul continuous_fst.continuousOn
+      apply fc.comp continuous_circleMap_full.continuousOn
+      intro x xs
+      simp only [Icc_prod_Icc, mem_Icc, Prod.le_def] at xs
+      have x0 : 0 ≤ x.1 := by linarith
+      simp only [circleMap, annulus_cc, mem_diff, Metric.mem_closedBall, dist_self_add_left,
+        norm_mul, Complex.norm_eq_abs, Complex.abs_ofReal, abs_of_nonneg x0,
+        Complex.abs_exp_ofReal_mul_I, mul_one, xs.2.1, Metric.mem_ball, not_lt, xs.1.1, and_self]
+  exact fi.mono_set (prod_mono Ioc_subset_Icc_self Ioc_subset_Icc_self)
+
+/-- Integration over a complex ball using polar coordinates -/
+theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    {f : ℂ → E} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (closedBall c r)) :
+    ∫ z in closedBall c r, f z =
+      ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
+  have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
+  rw [MeasureTheory.set_integral_congr_set_ae center]; clear center
+  rw [←Metric.closedBall_zero, ←annulus_oc]
+  apply fubini_annulus
+  · simpa only [annulus_cc, Metric.ball_zero, diff_empty]
+  · rfl
 
 /-- The volume of the complex closed ball is `π r^2` -/
 theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
@@ -281,7 +311,7 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
   have f := fubini_ball c; clear c
   simp only [ENNReal.toReal_ofReal Real.two_pi_pos.le, ←
     intervalIntegral.integral_of_le rp, integral_const, Measure.restrict_apply, MeasurableSet.univ,
-    Set.univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
+    univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
     intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne.def, bit0_eq_zero,
     Nat.one_ne_zero, not_false_iff] at f
   ring_nf at f ⊢; exact f
