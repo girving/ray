@@ -9,10 +9,10 @@ import Ray.Tactic.BoundRuleSet
 /-!
 ## The `bound` tactic
 
-`bound` is an `aesop` wrapper that proves inequalities which follow by straightforward recursion on
-structure, assuming that intermediate terms are nonnegative or positive as needed.  It also has some
-report for guessing where it is unclear where to recurse, such as which side of a `min` or `max` to
-use as the bound or whether to assume a power is less than or greater than one.
+`bound` is an `aesop` wrapper that proves inequalities by straightforward recursion on structure,
+assuming that intermediate terms are nonnegative or positive as needed.  It also has some report
+for guessing where it is unclear where to recurse, such as which side of a `min` or `max` to use
+as the bound or whether to assume a power is less than or greater than one.
 
 The functionality of `bound` overlaps with `positivity` and `gcongr`, but can jump back and forth
 between `0 ≤ x` and `x ≤ y`-type inequalities.  For example, `bound` proves
@@ -24,6 +24,22 @@ Additional hypotheses can be passed as `bound [h0, h1 n, ...]`.  This is equival
 them via `have` before calling `bound`.
 
 See `Ray.Tactic.BoundTests` for tests.
+
+### Calc usage
+
+Since `bound` requires the inequality proof to exactly match the structure of the expression, it is
+often useful to iterate between `bound` and `rw / simp` using `calc`.  Here is an example:
+
+```
+-- Calc example: A weak lower bound for `z ← z^2 + c`
+lemma le_sqr_add {c z : ℂ} (cz : abs c ≤ abs z) (z3 : 3 ≤ abs z) :
+    2 * abs z ≤ Complex.abs (z^2 + c) := by
+  calc Complex.abs (z^2 + c)
+    _ ≥ Complex.abs (z^2) - abs c := by bound
+    _ ≥ Complex.abs (z^2) - abs z := by bound
+    _ ≥ (abs z - 1) * abs z := by rw [mul_comm, mul_sub_one, ←pow_two, ←Complex.abs.map_pow]
+    _ ≥ 2 * abs z := by bound
+```
 
 ### Aesop heuristics
 
@@ -52,7 +68,8 @@ obvious which is correct without more information.  For example, `a ≤ min b c`
 a `safe apply 4` rule, since we always need to prove `a ≤ b ∧ a ≤ c`.  But if we see `min a b ≤ c`,
 either `a ≤ b` and `a ≤ c` suffices, and we don't know which.
 
-In these cases we register the pair of rules as `unsafe apply 50%`, so that `aesop` tries both.
+In these cases we declare a new loop with an `∨` hypotheses that covers the two cases, and register
+it as `safe apply 5`.  Aesop will then try both ways by splitting on the resulting `∨` hypothesis.
 
 Currently the two types of guessing rules are
 1. `min` and `max` rules, for both `≤` and `<`
@@ -68,14 +85,16 @@ Currently the two types of guessing rules are
    power series in the context have positive radii of convergence, but other theories in this repo
    add further forward rules of this type.
 
-### Tactics
+### Closing tactics
 
-We close numerical goals with `norm_num`.
+We close numerical goals with `norm_num` and `linarith`.
 -/
 
 open Parser
 open Lean Elab Meta Term Mathlib.Tactic Mathlib.Meta Syntax
 open Lean.Elab.Tactic (liftMetaTactic liftMetaTactic' TacticM getMainGoal)
+
+namespace Bound
 
 -- Extra bound lemmas
 lemma NNReal.coe_pos_of_lt {r : NNReal} : 0 < r → 0 < (r : ℝ) := NNReal.coe_pos.mpr
@@ -91,15 +110,15 @@ lemma mul_inv_le_one_of_nonneg_of_le {α : Type} [LinearOrderedSemifield α] {a 
     simp only [mul_inv_le_iff bp, mul_one, ab]
 lemma mul_lt_mul_left_of_pos_of_lt {α : Type} {a b c : α} [Mul α] [Zero α] [Preorder α]
     [PosMulStrictMono α] [PosMulReflectLT α] (a0 : 0 < a) (bc : b < c) : a * b < a * c := by
-  rw [mul_lt_mul_left]; repeat assumption
+  rwa [mul_lt_mul_left]; assumption
 lemma mul_lt_mul_right_of_pos_of_lt {α : Type} {a b c : α} [Mul α] [Zero α] [Preorder α]
     [MulPosStrictMono α] [MulPosReflectLT α] (ab : a < b) (c0 : 0 < c) : a * c < b * c := by
-  rw [mul_lt_mul_right]; repeat assumption
+  rwa [mul_lt_mul_right]; assumption
 lemma one_lt_div_of_pos_of_lt {α : Type} [LinearOrderedSemifield α] {a b : α} (b0 : 0 < b)
     (ba : b < a) : 1 < a / b := by rwa [one_lt_div]; assumption
 lemma div_lt_one_of_pos_of_lt {α : Type} [LinearOrderedSemifield α] {a b : α} (b0 : 0 < b)
     (ab : a < b) : a / b < 1 := by rwa [div_lt_one]; assumption
-lemma Real.pi_nonneg : 0 ≤ (Real.pi:ℝ) := Real.pi_pos.le
+lemma Real.pi_nonneg : 0 ≤ (Real.pi : ℝ) := Real.pi_pos.le
 lemma ENNReal.ofReal_pos_of_pos {p : ℝ} (h : 0 < p) : 0 < ENNReal.ofReal p := by
   rwa [ENNReal.ofReal_pos]
 lemma Real.one_lt_exp_of_pos {x : ℝ} (x0 : 0 < x) : 1 < Real.exp x := by rwa [Real.one_lt_exp_iff]
@@ -163,17 +182,34 @@ attribute [aesop safe forward (rule_sets [bound])] le_of_lt
 attribute [aesop safe forward (rule_sets [bound])] HasFPowerSeriesOnBall.r_pos
 
 -- Guessing rules: when we don't know which side to branch down.
--- Each line is a pair where we expect exactly one side to work.
-attribute [aesop unsafe apply 50% (rule_sets [bound])]
+lemma le_max_of_le_left_or_le_right{α : Type} [LinearOrder α] {a b c : α} (h : a ≤ b ∨ a ≤ c) :
+    a ≤ max b c := by rwa [le_max_iff]
+lemma lt_max_of_lt_left_or_lt_right {α : Type} [LinearOrder α] {a b c : α} (h : a < b ∨ a < c) :
+    a < max b c := by rwa [lt_max_iff]
+lemma min_le_of_left_le_or_right_le {α : Type} [LinearOrder α] {a b c : α} (h : a ≤ c ∨ b ≤ c) :
+    min a b ≤ c := by rwa [min_le_iff]
+lemma min_lt_of_left_lt_or_right_lt {α : Type} [LinearOrder α] {a b c : α} (h : a < c ∨ b < c) :
+    min a b < c := by rwa [min_lt_iff]
+lemma pow_le_pow_right_of_le_one_or_one_le {R : Type} [OrderedSemiring R] {a : R} {n m : ℕ}
+    (h : 1 ≤ a ∧ n ≤ m ∨ 0 ≤ a ∧ a ≤ 1 ∧ m ≤ n) : a ^ n ≤ a ^ m := by
+  rcases h with ⟨a1,nm⟩ | ⟨a0,a1,mn⟩
+  · exact pow_le_pow_right a1 nm
+  · exact pow_le_pow_of_le_one a0 a1 mn
+lemma Real.rpow_le_rpow_of_exponent_le_or_ge {x y z : ℝ}
+    (h : 1 ≤ x ∧ y ≤ z ∨ 0 < x ∧ x ≤ 1 ∧ z ≤ y) : x ^ y ≤ x ^ z := by
+  rcases h with ⟨x1,yz⟩ | ⟨x0,x1,zy⟩
+  · exact Real.rpow_le_rpow_of_exponent_le x1 yz
+  · exact Real.rpow_le_rpow_of_exponent_ge x0 x1 zy
+attribute [aesop safe apply 5 (rule_sets [bound])]
   -- Which side of the `max` should we use as the lower bound?
-  le_max_of_le_left le_max_of_le_right
-  lt_max_of_lt_left lt_max_of_lt_right
+  le_max_of_le_left_or_le_right
+  lt_max_of_lt_left_or_lt_right
   -- Which side of the `min` should we use as the upper bound?
-  min_le_of_left_le min_le_of_right_le
-  min_lt_of_left_lt min_lt_of_right_lt
+  min_le_of_left_le_or_right_le
+  min_lt_of_left_lt_or_right_lt
   -- Given `a^m ≤ a^n`, is `1 ≤ a` or `a ≤ 1`?
-  pow_le_pow_right pow_le_pow_of_le_one
-  Real.rpow_le_rpow_of_exponent_le Real.rpow_le_rpow_of_exponent_ge
+  pow_le_pow_right_of_le_one_or_one_le
+  Real.rpow_le_rpow_of_exponent_le_or_ge
 
 -- Close numerical goals with `norm_num`
 def boundNormNum : Aesop.RuleTac :=
@@ -183,6 +219,13 @@ def boundNormNum : Aesop.RuleTac :=
     if !goals.isEmpty then failure
     return (#[], some (.ofTactic 1  `(tactic| norm_num)), some .hundred)
 attribute [aesop unsafe 10% tactic (rule_sets [bound])] boundNormNum
+
+-- Close numerical goals with `linarith`
+def boundLinarith : Aesop.RuleTac :=
+  Aesop.SingleRuleTac.toRuleTac fun i => do
+    Linarith.linarith false [] {} i.goal
+    return (#[], some (.ofTactic 1  `(tactic| linarith)), some .hundred)
+attribute [aesop unsafe 5% tactic (rule_sets [bound])] boundLinarith
 
 /-- Pull the array out of an optional `"[" term,* "]"` syntax, or return `#[]` -/
 def maybeTerms : Syntax → Array Syntax
@@ -200,19 +243,22 @@ def addHyps (xs : Array Syntax) : TacticM Unit :=
         let (_, g) ← g.intro1P
         return [g]
 
+/-- Aesop configuration for `bound` -/
 def boundConfig : Aesop.Options := {
   maxRuleApplicationDepth := 32
   enableSimp := false
 }
 
+end Bound
+
 /-- `bound` tactic for proving inequalities via straightforward recursion on expression structure -/
 elab "bound" lemmas:(("[" term,* "]")?) : tactic => do
-  addHyps (maybeTerms lemmas)
-  let tac ← `(tactic| aesop (rule_sets [bound, -default]) (config := boundConfig))
+  Bound.addHyps (Bound.maybeTerms lemmas)
+  let tac ← `(tactic| aesop (rule_sets [bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (←Lean.Elab.runTactic g tac.raw).1
 
 /-- `bound?`, but return a proof script -/
 elab "bound?" lemmas:(("[" term,* "]")?) : tactic => do
-  addHyps (maybeTerms lemmas)
-  let tac ← `(tactic| aesop? (rule_sets [bound, -default]) (config := boundConfig))
+  Bound.addHyps (Bound.maybeTerms lemmas)
+  let tac ← `(tactic| aesop? (rule_sets [bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (←Lean.Elab.runTactic g tac.raw).1

@@ -121,3 +121,12 @@ lemma test_whnf (x y : ℝ) (h : x < y ∧ True) : x ≤ y := by
 -- Used to fail with `unknown identifier n`, since I wasn't elaborating [] inside the goal
 theorem test_unknown_identifier {f : ℕ → ℝ} (le : ∀ n, f n ≤ n) : ∀ n : ℕ, f n ≤ n := by
   intro n; bound [le n]
+
+-- Calc example: A weak lower bound for `z ← z^2 + c`
+lemma le_sqr_add {c z : ℂ} (cz : abs c ≤ abs z) (z3 : 3 ≤ abs z) :
+    2 * abs z ≤ Complex.abs (z^2 + c) := by
+  calc Complex.abs (z^2 + c)
+    _ ≥ Complex.abs (z^2) - abs c := by bound
+    _ ≥ Complex.abs (z^2) - abs z := by bound
+    _ ≥ (abs z - 1) * abs z := by rw [mul_comm, mul_sub_one, ←pow_two, ←Complex.abs.map_pow]
+    _ ≥ 2 * abs z := by bound
