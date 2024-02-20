@@ -860,7 +860,7 @@ lemma Fixed.approx_ofNat (n : ℕ) (up : Bool) :
           Nat.cast_ofNat, zero_mul]
       rw [←Ne.def, ←Nat.pos_iff_ne_zero] at np
       have n0'' : 0 < n + 2 ^ Int.toNat t - 1 := by
-        have le : 1 ≤ 2 ^ Int.toNat t := Nat.one_le_two_pow _
+        have le : 1 ≤ 2 ^ Int.toNat t := Nat.one_le_two_pow
         simp only [Nat.add_sub_assoc le]
         exact lt_of_lt_of_le np (by omega)
       by_cases zero : (n + 2 ^ Int.toNat t - 1) / 2 ^ Int.toNat t = 0

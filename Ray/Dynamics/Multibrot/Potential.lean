@@ -152,7 +152,7 @@ lemma dene_anti {x y : ℝ} (x0 : 0 ≤ x) (xy : x ≤ y) : dene x ≥ dene y :=
     have hd : ∀ x, HasDerivAt (fun x ↦ x - exp x) (1 - exp x) x :=
       fun x ↦ (hasDerivAt_id x).sub (Real.hasDerivAt_exp x)
     have d : Differentiable ℝ (fun x ↦ x - exp x) := fun x ↦ (hd x).differentiableAt
-    apply (convex_Ici _).antitoneOn_of_deriv_nonpos
+    apply antitoneOn_of_deriv_nonpos (convex_Ici _)
     · exact d.continuous.continuousOn
     · exact d.differentiableOn
     · intro x m; simp only [nonempty_Iio, interior_Ici', mem_Ioi] at m

@@ -2,7 +2,6 @@ import Mathlib.MeasureTheory.Integral.FundThmCalculus
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Ray.Misc.AbsoluteValue
 import Ray.Dynamics.Multibrot.Specific
 
 /-!

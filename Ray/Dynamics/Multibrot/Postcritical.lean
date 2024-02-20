@@ -48,7 +48,7 @@ lemma log_ratio_mono : MonotoneOn (fun x ↦ log (x-1) / log x) (Ici 2) := by
     exact HasDerivAt.log ((hasDerivAt_id _).sub_const _) (by linarith)
   have d : DifferentiableOn ℝ (fun x ↦ log (x-1) / log x) (Ici 2) :=
     fun x m ↦ (hd x m).differentiableAt.differentiableWithinAt
-  apply (convex_Ici _).monotoneOn_of_deriv_nonneg
+  apply monotoneOn_of_deriv_nonneg (convex_Ici _)
   · exact d.continuousOn
   · exact d.mono interior_subset
   · intro x m

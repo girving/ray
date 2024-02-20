@@ -195,7 +195,7 @@ def normSq (z : Box) : Interval :=
 /-- Lower bounds on `normSq` produce lower bounds on contained radii -/
 lemma sqrt_normSq_le_abs {z' : ℂ} {z : Box} (m : z' ∈ approx z) (n : z.normSq ≠ nan) :
     Real.sqrt z.normSq.lo.val ≤ Complex.abs z' := by
-  simp only [Real.sqrt_le_iff, map_nonneg, true_and]
+  simp only [Real.sqrt_le_iff, apply_nonneg, true_and]
   apply Interval.lo_le n
   mono
 

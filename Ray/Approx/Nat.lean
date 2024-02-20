@@ -20,6 +20,11 @@ lemma Nat.add_sub_lt_left {m n k : ℕ} (m0 : m ≠ 0) : m + n - k < m ↔ n < k
   · simp only [ge_iff_le, nk, iff_false, not_lt]
     simp only [not_lt] at nk; rw [Nat.add_sub_assoc nk]; exact le_add_right _ _
 
+@[simp] lemma Nat.bit_div_two (n : ℕ) (a : Bool) : Nat.bit a n / 2 = n := by
+  induction a
+  · apply Nat.bit0_div_two
+  · apply Nat.bit1_div_two
+
 lemma Nat.bit_div2_eq (n : ℕ) : Nat.bit (Nat.bodd n) (Nat.div2 n) = n := by
   induction' n with n h
   · rfl
@@ -44,7 +49,7 @@ lemma Nat.bit_le_bit {a b : Bool} {m n : ℕ} (ab : a ≤ b) (mn : m ≤ n) : bi
 
 lemma Nat.testBit_zero_eq_bodd {n : ℕ} : testBit n 0 = bodd n := by
   nth_rw 1 [←Nat.bit_div2_eq n]
-  simp only [testBit_zero]
+  simp only [testBit_zero, bit_mod_two_eq_one_iff, Bool.decide_coe]
 
 lemma Nat.div2_eq_shiftRight_one {n : ℕ} : n.div2 = n >>> 1 := by
   simp only [div2_val, shiftRight_succ, shiftRight_eq_div_pow, _root_.pow_zero, Nat.div_one]
@@ -225,9 +230,10 @@ lemma Nat.lor_eq_add {a b : ℕ} (h : ∀ i, testBit a i = false ∨ testBit b i
       refine congr_arg₂ _ (congr_arg₂ _ rfl ?_) ?_
       · apply ha
         intro i
-        simpa only [testBit_succ] using h (i+1)
+        simpa only [testBit_succ, bit_div_two] using h (i + 1)
       · specialize h 0
-        simp only [testBit_zero] at h
+        simp only [testBit_zero, bit_mod_two, ite_eq_left_iff, Bool.not_eq_true, zero_ne_one,
+          imp_false, Bool.not_eq_false, Bool.decide_coe] at h
         cases' h with h h
         · simp only [h, Bool.false_or, cond_false, zero_add]
         · simp only [h, Bool.or_false, cond_false, add_zero]

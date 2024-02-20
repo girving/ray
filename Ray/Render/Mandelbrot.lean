@@ -1,4 +1,3 @@
-import Mathlib.Data.Pi.Algebra
 import Ray.Approx.Box
 import Ray.Approx.Interval.Conversion
 import Ray.Dynamics.Mandelbrot

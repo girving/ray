@@ -3,7 +3,6 @@ import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Ray.Misc.AbsoluteValue
 import Ray.Tactic.BoundRuleSet
 
 /-!
@@ -159,7 +158,7 @@ attribute [aesop safe apply 3 (rule_sets [bound])] pow_le_pow_left Real.rpow_le_
 attribute [aesop safe apply 4 (rule_sets [bound])] sub_le_sub add_le_add div_le_div mul_le_mul
 -- Triangle inequalities
 attribute [aesop norm apply (rule_sets [bound])] dist_triangle AbsoluteValue.le_add
-  AbsoluteValue.le_sub AbsoluteValue.add_le AbsoluteValue.sub_le'
+  AbsoluteValue.le_sub AbsoluteValue.add_le AbsoluteValue.sub_le_add
   AbsoluteValue.abs_abv_sub_le_abv_sub norm_sub_le norm_sum_le
 -- <
 attribute [aesop norm apply (rule_sets [bound])] Nat.cast_pos_of_pos NNReal.coe_lt_coe_of_lt
@@ -214,7 +213,7 @@ attribute [aesop safe apply 5 (rule_sets [bound])]
 -- Close numerical goals with `norm_num`
 def boundNormNum : Aesop.RuleTac :=
   Aesop.SingleRuleTac.toRuleTac fun i => do
-    let tac := do NormNum.elabNormNum .missing .missing
+    let tac := do NormNum.elabNormNum .missing .missing .missing
     let goals ← Lean.Elab.Tactic.run i.goal tac |>.run'
     if !goals.isEmpty then failure
     return (#[], some (.ofTactic 1  `(tactic| norm_num)), some .hundred)

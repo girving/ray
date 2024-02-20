@@ -1,4 +1,3 @@
-import Mathlib.Data.Pi.Algebra
 import Ray.Dynamics.Mandelbrot
 import Ray.Render.Color
 
@@ -66,7 +65,7 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
   simp only [ge_iff_le] at kp hp
   have d : DifferentiableOn ℝ (fun x ↦ 1 / x - k / x^p) (Ici 4) :=
     fun x m ↦ (hd x m).differentiableAt.differentiableWithinAt
-  apply (convex_Ici _).antitoneOn_of_deriv_nonpos
+  apply antitoneOn_of_deriv_nonpos (convex_Ici _)
   · exact d.continuousOn
   · exact d.mono interior_subset
   · intro x x4

@@ -381,7 +381,7 @@ def unevenTerm (u : Uneven f c0 c1 r0 r1) :=
 
 /-- Power series along the first coordinate, arbitrary radius -/
 def unevenSeries' (u : Uneven f c0 c1 r0 r1) (r : ℝ) (z1 : ℂ) : FormalMultilinearSeries ℂ ℂ E :=
-  fun n ↦ ContinuousMultilinearMap.mkPiField ℂ _ (unevenTerm' u r z1 n)
+  fun n ↦ ContinuousMultilinearMap.mkPiRing ℂ _ (unevenTerm' u r z1 n)
 
 /-- Power series along the first coordinate, `radius = r1` -/
 def unevenSeries (u : Uneven f c0 c1 r0 r1) :=
@@ -389,7 +389,7 @@ def unevenSeries (u : Uneven f c0 c1 r0 r1) :=
 
 theorem unevenSeries_apply (u : Uneven f c0 c1 r0 r1) (r : ℝ) (z1 : ℂ) (n : ℕ) :
     (unevenSeries' u r z1 n fun _ ↦ 1) = unevenTerm' u r z1 n := by
-  simp only [unevenSeries', ContinuousMultilinearMap.mkPiField_apply, Finset.prod_const_one,
+  simp only [unevenSeries', ContinuousMultilinearMap.mkPiRing_apply, Finset.prod_const_one,
     one_smul]
 
 theorem uneven_is_cauchy {u : Uneven f c0 c1 r0 r1} {r : ℝ} :
@@ -425,7 +425,7 @@ theorem unevenSeries_eq (u : Uneven f c0 c1 r0 r1) {r : ℝ} (rp : r > 0) (rr1 :
 
 theorem unevenSeries_norm (u : Uneven f c0 c1 r0 r1) {n : ℕ} :
     ‖unevenSeries u z1 n‖ = ‖unevenTerm u z1 n‖ := by
-  rw [unevenSeries, unevenSeries', unevenTerm, ContinuousMultilinearMap.norm_mkPiField]
+  rw [unevenSeries, unevenSeries', unevenTerm, ContinuousMultilinearMap.norm_mkPiRing]
 
 /-- Our power series terms are uniformly bounded (away from the edges) -/
 theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r1) :
@@ -502,9 +502,9 @@ theorem Along0.norm {n : ℕ} (p : ContinuousMultilinearMap ℂ (fun _ : Fin n �
     ContinuousMultilinearMap.compContinuousLinearMap_apply, Complex.norm_eq_abs]
   have e : ∀ i : Fin n, abs (m i) = ‖idZeroLm (m i)‖ := by
     intro i
-    simp only [idZeroLm, Prod.norm_def, ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id',
-      id.def, ContinuousLinearMap.zero_apply, Complex.norm_eq_abs, AbsoluteValue.map_zero,
-      max_eq_left, map_nonneg]
+    simp only [idZeroLm, ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id_eq,
+      ContinuousLinearMap.zero_apply, Prod.norm_def, Complex.norm_eq_abs, norm_zero, ge_iff_le,
+      apply_nonneg, max_eq_left]
   simp_rw [e]
   exact ContinuousMultilinearMap.le_opNorm p _
 
@@ -814,8 +814,8 @@ theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [Comp
   rcases uneven_bounded u (lt_of_le_of_lt (Complex.abs.nonneg _) vc) vr with ⟨b, _, fb⟩
   have fa := of_bounded (h.mono ?_) Metric.isOpen_ball fb
   · apply fa
-    simp only [Prod.dist_eq, Complex.dist_eq, Metric.mem_ball, sub_self, AbsoluteValue.map_zero,
-      max_eq_left, map_nonneg, vc]
+    simp only [Metric.mem_ball, Prod.dist_eq, Complex.dist_eq, dist_self, ge_iff_le, apply_nonneg,
+      max_eq_left, vc]
   · refine' _root_.trans _ bs
     simp_rw [← ball_prod_same, ← closedBall_prod_same, Set.prod_subset_prod_iff]; apply Or.inl
     use _root_.trans (Metric.ball_subset_ball vr.le) us

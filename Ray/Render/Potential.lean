@@ -194,11 +194,11 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
       apply approx_potential_large
       · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.1.le) ?_)
         · simp only [← hcs, Interval.hi_eq_nan] at csn ⊢; exact abs_le_sqrt_normSq cm csn
-        · simp only [map_nonneg, Real.sqrt_sq, le_refl]
+        · simp only [apply_nonneg, Real.sqrt_sq, le_refl]
       · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.2.le) ?_)
         · have e : (36 : ℝ) = 6 ^ 2 := by norm_num
           rw [e, Real.sqrt_sq (by norm_num)]
-        · simp only [map_nonneg, Real.sqrt_sq, le_refl]
+        · simp only [apply_nonneg, Real.sqrt_sq, le_refl]
       · rw [←hw', ←hn, add_comm _ j.n, Function.iterate_add_apply, ←hj]
         exact mem_approx_iterate cm izm _
     · simp only [Interval.approx_nan, mem_univ]

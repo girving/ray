@@ -8,7 +8,6 @@ import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Topology.MetricSpace.Basic
-import Ray.Misc.AbsoluteValue
 import Ray.Misc.Finset
 import Ray.Tactic.Bound
 
@@ -116,7 +115,7 @@ theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → ℂ) :
   · have ha := finset_complex_abs_sum_le (A \ B) f
     have hb := finset_complex_abs_sum_le (B \ A) f
     calc abs ((A \ B).sum f - (B \ A).sum f)
-      _ ≤ abs ((A \ B).sum f) + abs ((B \ A).sum f) := Complex.abs.sub_le' _ _
+      _ ≤ abs ((A \ B).sum f) + abs ((B \ A).sum f) := by bound
       _ ≤ (A \ B).sum (fun n ↦ abs (f n)) + (B \ A).sum (fun n ↦ abs (f n)) := by bound
   · apply le_of_eq
     rw [←Finset.sum_union (sdiff_sdiff_disjoint A B), symmDiff_union]
@@ -180,12 +179,6 @@ theorem derivWithin.clog {f : ℂ → ℂ} {z : ℂ} {s : Set ℂ} (o : IsOpen s
   have h := HasDerivWithinAt.clog hz hx
   have u := o.uniqueDiffWithinAt (𝕜 := ℂ) zs
   rw [HasDerivWithinAt.derivWithin h u]
-
-theorem DifferentiableOn.cpow {f : ℂ → ℂ} {g : ℂ → ℂ} {s : Set ℂ} (df : DifferentiableOn ℂ f s)
-    (dg : DifferentiableOn ℂ g s) (h : ∀ z, z ∈ s → 0 < (f z).re ∨ (f z).im ≠ 0) :
-    DifferentiableOn ℂ (fun z ↦ f z ^ g z) s := by
-  intro z zs
-  exact DifferentiableWithinAt.cpow (df z zs) (dg z zs) (h z zs)
 
 theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
     abs (log (1 + z)) ≤ 1/(1 - r) * abs z := by
@@ -301,7 +294,7 @@ theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0
   rcases slightly_smaller nz sp with ⟨w,wz,awz⟩
   have wr : abs w < r := lt_of_lt_of_le awz zr
   calc abs (f z) = abs (f w - (f w - f z)) := by ring_nf
-    _ ≤ abs (f w) + abs (f w - f z) := Complex.abs.sub_le' _ _
+    _ ≤ abs (f w) + abs (f w - f z) := by bound
     _ ≤ c * abs w + e := by bound [h w wr, sc wz]
     _ ≤ c * abs z + e := by bound
 

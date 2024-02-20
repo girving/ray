@@ -647,7 +647,6 @@ lemma UInt128.toNat_shiftLeft (x : UInt128) {s : UInt64} (sl : s < 128) :
   · simp_all [apply_decide]; split_ifs
     · omega
     · omega
-    · intro; omega
   · simp_all
   · simp_all; omega
   · simp_all

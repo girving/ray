@@ -224,18 +224,11 @@ theorem HasFPowerSeriesAt.unshiftIter {f : 𝕜 → E} {p : FormalMultilinearSer
     exact h.unshift
 
 /-- Power series terms are zero iff their coeffs are zero -/
-theorem FormalMultilinearSeries.zero_iff_coeff_zero (p : FormalMultilinearSeries 𝕜 𝕜 E) {n : ℕ} :
-    p n = 0 ↔ p.coeff n = 0 := by
-  constructor
-  · intro h; rw [FormalMultilinearSeries.coeff, h]; simp only [ContinuousMultilinearMap.zero_apply]
-  · intro h; rw [←p.mkPiField_coeff_eq n, h]; simp only [ContinuousMultilinearMap.mkPiField_zero]
-
-/-- Power series terms are zero iff their coeffs are zero -/
 theorem FormalMultilinearSeries.ne_zero_iff_coeff_ne_zero (p : FormalMultilinearSeries 𝕜 𝕜 E)
     {n : ℕ} : p n ≠ 0 ↔ p.coeff n ≠ 0 := by
   constructor
-  · intro h; contrapose h; simp only [not_not] at h ⊢; exact p.zero_iff_coeff_zero.mpr h
-  · intro h; contrapose h; simp only [not_not] at h ⊢; exact p.zero_iff_coeff_zero.mp h
+  · intro h; contrapose h; simp only [not_not] at h ⊢; exact coeff_eq_zero.mp h
+  · intro h; contrapose h; simp only [not_not] at h ⊢; exact coeff_eq_zero.mpr h
 
 /-- The order of `(z - n)^n • f z` is `n` greater than `f`'s -/
 theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
@@ -255,14 +248,14 @@ theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : Analyt
   rw [FormalMultilinearSeries.order_eq_find pe, FormalMultilinearSeries.order_eq_find pne]
   rw [Nat.find_eq_iff]; constructor
   · have s := Nat.find_spec pe
-    simp only [p.zero_iff_coeff_zero, Ne.def] at s
-    simp only [p.unshiftIter_coeff, FormalMultilinearSeries.zero_iff_coeff_zero, s, Ne.def,
+    simp only [← p.coeff_eq_zero, Ne.def] at s
+    simp only [p.unshiftIter_coeff, ←FormalMultilinearSeries.coeff_eq_zero, s, Ne.def,
       add_lt_iff_neg_left, not_lt_zero', add_tsub_cancel_left, if_false, not_false_iff, true_and,
       not_not]
-  · intro m mp; simp [FormalMultilinearSeries.zero_iff_coeff_zero, p.unshiftIter_coeff]; intro mn
+  · intro m mp; simp [← FormalMultilinearSeries.coeff_eq_zero, p.unshiftIter_coeff]; intro mn
     generalize ha : m - n = a; have hm : m = n + a := by rw [← ha, add_comm, Nat.sub_add_cancel mn]
     simp only [hm, add_lt_add_iff_left, Nat.lt_find_iff, not_not] at mp
-    specialize mp a (le_refl _); rwa [← FormalMultilinearSeries.zero_iff_coeff_zero]
+    specialize mp a (le_refl _); rwa [FormalMultilinearSeries.coeff_eq_zero]
 
 /-- The leading coefficient of `(z - n)^n • f z` is the same as `f`'s -/
 theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
