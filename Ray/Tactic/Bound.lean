@@ -57,7 +57,7 @@ lemma as an `apply` rule, tag it with `@[bound]`.  It will be automatically conv
 2. Other inequalities get score 10.
 3. Disjunctions `a ∨ b` gets score 100, plus the score of `a` and `b`.
 
-Score 0 lemmas turn into `norm apply` rules, and score `0 < s` lemmas turn into `safe apply s`
+Score `0` lemmas turn into `norm apply` rules, and score `0 < s` lemmas turn into `safe apply s`
 rules.  The score is roughly lexicographic ordering on the counts of the three type (guessing,
 general, involving-zero), and tries to minimize the complexity of hypotheses we have to prove.
 See `Mathlib.Tactic.Bound.Attribute` for the full algorithm.
