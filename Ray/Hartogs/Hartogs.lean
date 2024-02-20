@@ -287,7 +287,7 @@ structure Uneven (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r0 r1 : ℝ) : Prop where
   a : AnalyticOn ℂ f (ball c0 r0 ×ˢ ball c1 r1)
 
 -- Teach `bound` about `Uneven`
-attribute [aesop safe forward (rule_sets [bound])] Uneven.r0p Uneven.r1p Uneven.r01
+attribute [bound_forward] Uneven.r0p Uneven.r1p Uneven.r01
 
 /-- Exact diameter of complex ball -/
 theorem diam_ball_eq {c : ℂ} {r : ℝ} (rp : r ≥ 0) : Metric.diam (ball c r) = 2 * r := by

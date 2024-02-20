@@ -1015,7 +1015,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
     (ENNReal.mul_lt_mul_right n.ne_zero n.ne_top).mpr ec
   have fatou := le_liminf.simple.mp (_root_.trans im fatou') (e * volume (closedBall z r1)) vec
   rw [Complex.volume_closedBall, NNReal.pi_eq_ofReal_pi, ←ENNReal.ofReal_pow r1p.le,
-    ←ENNReal.ofReal_mul' Bound.Real.pi_nonneg, mul_comm _ π] at fatou
+    ←ENNReal.ofReal_mul' Real.pi_nonneg, mul_comm _ π] at fatou
   clear fatou' im fc vec
   -- Within radius r2-r1, Fatou's lemma implies local Hartogs's
   use closedBall z (r2 - r1),

@@ -73,8 +73,7 @@ theorem SuperAt.dz (s : SuperAt f d) : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr s
 theorem SuperAt.dr2 (s : SuperAt f d) : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr s.d2)
 
 -- Teach `bound` that `0 < d` and `2 ≤ d`
-attribute [aesop safe forward (rule_sets [bound])] SuperAt.d2 SuperAt.dp SuperAt.dr2
-  SuperNear.toSuperAt
+attribute [bound_forward] SuperAt.d2 SuperAt.dp SuperAt.dr2 SuperNear.toSuperAt
 
 /-- `g` such that `f z = z^d * g z` -/
 def g (f : ℂ → ℂ) (d : ℕ) : ℂ → ℂ := fun z ↦ if z = 0 then 1 else f z / z ^ d

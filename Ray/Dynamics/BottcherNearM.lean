@@ -72,7 +72,7 @@ theorem Super.d1 (s : Super f d a) : 1 < d := lt_of_lt_of_le (by norm_num) s.d2
 theorem Super.d0 (s : Super f d a) : d ≠ 0 := s.dp.ne'
 
 -- Teach `bound` about `Super` and `d`
-attribute [aesop safe forward (rule_sets [bound])] Super.dp Super.d1
+attribute [bound_forward] Super.dp Super.d1
 
 /-- `s.fl` is `fl` with a few arguments filled in -/
 @[nolint unusedArguments] def Super.fl (_ : Super f d a) := _root_.fl f a

@@ -78,7 +78,7 @@ structure Separate (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r b : ℝ) (s : Set (�
   fb : ∀ {z0 z1}, z0 ∈ sphere c0 r → z1 ∈ sphere c1 r → ‖f (z0, z1)‖ ≤ b
 
 -- Teach `bound` about the positivity fields of `Separate`
-attribute [aesop safe forward (rule_sets [bound])] Separate.rp Separate.bp
+attribute [bound_forward] Separate.rp Separate.bp
 
 theorem spheres_subset_closedBall {c0 c1 : ℂ} {r : ℝ} :
     sphere c0 r ×ˢ sphere c1 r ⊆ closedBall (c0, c1) r := by

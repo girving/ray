@@ -128,8 +128,7 @@ theorem Super.potential_le_one (s : Super f d a) : s.potential c z ≤ 1 := by
   exact le_of_eq (s.potential_eq_one (not_exists.mp a))
 
 /-- `0 ≤ potential` -/
-@[aesop norm apply (rule_sets [bound])]
-theorem Super.potential_nonneg (s : Super f d a) : 0 ≤ s.potential c z := by
+@[bound] theorem Super.potential_nonneg (s : Super f d a) : 0 ≤ s.potential c z := by
   by_cases r : ∃ n, (c, (f c)^[n] z) ∈ s.near
   rcases r with ⟨n, r⟩; simp only [s.potential_eq r, Super.potential']; bound
   simp only [s.potential_eq_one (not_exists.mp r), zero_le_one]

@@ -48,8 +48,8 @@ lemma two_le_cast_d (d : ℕ) [Fact (2 ≤ d)] : (2 : ℝ) ≤ d :=
   le_trans (by norm_num) (Nat.cast_le.mpr (two_le_d d))
 
 -- Teach `bound` about `d`
-attribute [aesop norm apply (rule_sets [bound])] two_le_d d_gt_one d_ge_one d_pos d_ne_zero
-  two_le_cast_d one_le_d_minus_one
+attribute [bound] two_le_d d_gt_one d_ge_one d_pos two_le_cast_d one_le_d_minus_one
+attribute [aesop norm apply (rule_sets [Bound])] d_ne_zero  -- TODO: Make `@[bound]` work for this
 
 /-!
 ## The defining iteration, the Multibrot set, and its complement

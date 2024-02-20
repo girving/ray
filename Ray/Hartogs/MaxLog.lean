@@ -26,8 +26,7 @@ def maxLog (b x : ℝ) : ℝ :=
 theorem max_exp_pos {b x : ℝ} : 0 < max b.exp x := by
   bound
 
-@[simp, aesop norm apply (rule_sets [bound])]
-theorem le_maxLog (b x : ℝ) : b ≤ maxLog b x := by
+@[simp, bound] lemma le_maxLog (b x : ℝ) : b ≤ maxLog b x := by
   rw [maxLog, Real.le_log_iff_exp_le max_exp_pos]; bound
 
 theorem maxLog_eq_b {b x : ℝ} (h : x ≤ b.exp) : maxLog b x = b := by simp [maxLog, max_eq_left h]
@@ -39,8 +38,7 @@ theorem maxLog_le {b x y : ℝ} (yb : b ≤ y) (xy : x ≤ y.exp) : maxLog b x �
   rw [maxLog, Real.log_le_iff_le_exp max_exp_pos]; apply max_le
   apply Real.exp_le_exp.mpr yb; exact xy
 
-@[aesop norm apply (rule_sets [bound])]
-theorem le_exp_maxLog (b x : ℝ) : x ≤ (maxLog b x).exp := by
+@[bound] lemma le_exp_maxLog (b x : ℝ) : x ≤ (maxLog b x).exp := by
   rw [maxLog, Real.exp_log max_exp_pos]; bound
 
 /-- Extract underlying bounds from `maxLog` bounds -/
