@@ -246,7 +246,8 @@ theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0)
         (mem_interior.mpr ⟨ball c0 re, _, Metric.isOpen_ball, Metric.mem_ball_self (lt_min rp ep)⟩)
     rw [Set.subset_def]; intro z0 z0s; rw [Set.mem_iUnion]
     have z0s' := esub (mem_open_closed z0s)
-    rcases (h.on1 z0s').continuousOn.norm.bounded (isCompact_closedBall _ _) with ⟨b, _, fb⟩
+    rcases (isCompact_closedBall _ _).bddAbove_image (h.on1 z0s').continuousOn.norm with ⟨b, fb⟩
+    simp only [mem_upperBounds, Set.ball_image_iff] at fb
     use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
     refine' ⟨mem_open_closed z0s, _⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
@@ -437,8 +438,9 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
     have rh : r0 / 2 < r0 := by linarith [u.r0p]
     exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
     exact Metric.closedBall_subset_ball (by linarith [u.r1p])
-  rcases fc.norm.bounded (IsCompact.prod (isCompact_sphere _ _) (isCompact_closedBall _ _)) with
-    ⟨b, bp, fb⟩
+  rcases (((isCompact_sphere _ _).prod (isCompact_closedBall _ _)).bddAbove_image
+    fc.norm).exists_ge 0 with ⟨b, bp, fb⟩
+  simp only [Set.ball_image_iff] at fb
   use b + 1, (r0 / 2)⁻¹, lt_of_le_of_lt bp (lt_add_one _), inv_pos.mpr (half_pos u.r0p)
   intro n z1 z1s
   have r0hp : r0 / 2 > 0 := by linarith [u.r0p]
@@ -587,7 +589,7 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
   have pa := (p.hasFPowerSeriesOnBall_changeOrigin n (lt_of_lt_of_le hp.r_pos hp.r_le)).analyticAt
   set g := fun w1 ↦ ((0 : ℂ), w1 - z1)
   have ga : AnalyticOn ℂ g univ := by
-    rw [← Differentiable.entire]
+    rw [analyticOn_univ_iff_differentiable]
     exact (differentiable_const _).prod (differentiable_id.sub (differentiable_const _))
   have g0 : 0 = g z1 := by
     simp only [Prod.ext_iff, Prod.fst_zero, Prod.snd_zero, sub_self, and_self_iff]
@@ -706,8 +708,9 @@ theorem uneven_nonuniform_subharmonic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
   refine' SubharmonicOn.constMul _ (by bound)
   apply AnalyticOn.maxLog_norm_subharmonicOn _ (-1)
-  rw [← differentiable_iff_analytic Metric.isOpen_ball]
-  apply DifferentiableOn.const_smul; rw [differentiable_iff_analytic Metric.isOpen_ball]
+  rw [analyticOn_iff_differentiableOn Metric.isOpen_ball]
+  apply DifferentiableOn.const_smul
+  rw [← analyticOn_iff_differentiableOn Metric.isOpen_ball]
   apply unevenTerm.analytic u
 
 /-- The nonuniform bound holds uniformly -/
@@ -744,8 +747,8 @@ theorem unevenSeries_strong_bound' (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s 
     apply ContinuousOn.partialSups; intro n; apply ContinuousOn.mul continuousOn_const
     apply ContinuousOn.norm
     exact (unevenSeries_analytic u n).continuousOn.mono (Metric.closedBall_subset_ball sr)
-  rcases gc.bounded (isCompact_closedBall _ _) with ⟨b, bp, gb⟩
-  simp_rw [partialSups_le_iff] at gb
+  rcases ((isCompact_closedBall _ _).bddAbove_image gc).exists_ge 0 with ⟨b, bp, gb⟩
+  simp_rw [Set.ball_image_iff, partialSups_le_iff] at gb
   use max 1 b, le_max_of_le_right bp; intro k z zs
   by_cases kn : k ≤ n
   · specialize gb z zs k kn

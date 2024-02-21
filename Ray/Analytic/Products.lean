@@ -95,7 +95,9 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
   have expfl : ∀ n z, z ∈ s → exp (fl n z) = f n z := by
     intro n z zs; refine' Complex.exp_log _
     exact near_one_avoids_zero (near1' n z zs)
-  have hl : ∀ n, AnalyticOn ℂ (fl n) s := fun n ↦ log_analytic_near_one o (h n) (near1' n)
+  have hl : ∀ n, AnalyticOn ℂ (fl n) s := fun n ↦
+    (h n).log (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
+    --fun n ↦ log_analytic_near_one o (h n) (near1' n)
   set c2 := 2 * c
   have hfl : ∀ n z, z ∈ s → abs (fl n z) ≤ c2 * a ^ n := by
     intro n z zs

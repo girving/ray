@@ -113,7 +113,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     apply DifferentiableOn.div (fa.mono (Set.diff_subset _ _)).differentiableOn
     exact (Differentiable.pow differentiable_id _).differentiableOn
     intro z zs; exact pow_ne_zero _ (Set.mem_diff_singleton.mp zs).2
-  rw [← differentiable_iff_analytic o]
+  rw [analyticOn_iff_differentiableOn o]
   by_cases t0 : (0 : ℂ) ∉ t; · rw [Set.diff_singleton_eq_self t0] at ga; exact ga
   simp only [Set.not_not_mem] at t0
   have gc : ContinuousAt (g f d) 0 := by
@@ -313,7 +313,7 @@ theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ (term f d n)
   intro n z zt
   refine' AnalyticAt.cpow _ analyticAt_const _
   · exact (s.ga _ (s.mapsTo n zt)).comp (iterates_analytic s n z zt)
-  · exact near_one_avoids_negative_reals (lt_of_le_of_lt (s.gs (s.mapsTo n zt)) (by norm_num))
+  · exact mem_slitPlane_of_near_one (lt_of_le_of_lt (s.gs (s.mapsTo n zt)) (by norm_num))
 
 /-- term converges to 1 exponentially, sufficiently close to 0:
 
@@ -645,7 +645,7 @@ theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, 
   · have e : (fun c ↦ g (f c) d ((f c)^[n] z)) = fun c ↦ g2 f d (c, (f c)^[n] z) := rfl
     rw [e]; refine' (s.ga _ _).comp _; exact (s.ts m).mapsTo n m
     apply (analyticAt_id _ _).prod (iterates_analytic_c s n m)
-  · refine' near_one_avoids_negative_reals _
+  · refine mem_slitPlane_of_near_one ?_
     exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (by norm_num)
 
 /-- `term` prod is analytic in `c` -/

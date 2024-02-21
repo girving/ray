@@ -5,7 +5,6 @@ import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.Semicontinuous
-import Ray.Tactic.Bound
 
 /-!
 ## Various topology lemmas
@@ -22,11 +21,6 @@ noncomputable section
 theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x :=
   Iff.rfl
 
-/-- Continuous functions on compact sets are bounded above -/
-theorem ContinuousOn.bounded {X : Type} [TopologicalSpace X] {f : X → ℝ} {s : Set X}
-    (fc : ContinuousOn f s) (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ x, x ∈ s → f x ≤ b := by
-  simpa using (sc.bddAbove_image fc).exists_ge 0
-
 /-- Uniform cauchy sequences are cauchy sequences at points -/
 theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) :
@@ -41,10 +35,11 @@ theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
 /-- Uniform cauchy sequences on compact sets are uniformly bounded -/
 theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) (fc : ∀ n, ContinuousOn (f n) s)
-    (sc : IsCompact s) : ∃ b : ℝ, b ≥ 0 ∧ ∀ n x, x ∈ s → ‖f n x‖ ≤ b := by
-  set c := fun n ↦ Classical.choose ((fc n).norm.bounded sc)
-  have cs : ∀ n, 0 ≤ c n ∧ ∀ x, x ∈ s → ‖f n x‖ ≤ c n := fun n ↦
-    Classical.choose_spec ((fc n).norm.bounded sc)
+    (sc : IsCompact s) : ∃ b : ℝ, 0 ≤ b ∧ ∀ n x, x ∈ s → ‖f n x‖ ≤ b := by
+  set c := fun n ↦ Classical.choose ((sc.bddAbove_image (fc n).norm).exists_ge 0)
+  have cs : ∀ n, 0 ≤ c n ∧ ∀ x, x ∈ s → ‖f n x‖ ≤ c n := fun n ↦ by
+    simpa only [mem_image, forall_exists_index, and_imp, forall_apply_eq_imp_iff₂] using
+      Classical.choose_spec ((sc.bddAbove_image (fc n).norm).exists_ge 0)
   rw [Metric.uniformCauchySeqOn_iff] at u
   rcases u 1 (by norm_num) with ⟨N, H⟩; clear u
   set bs := Finset.image c (Finset.range (N + 1))
@@ -55,9 +50,10 @@ theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddC
   · intro n x xs
     by_cases nN : n ≤ N
     · have cn : c n ∈ bs := by simp; exists n; simp [Nat.lt_add_one_iff.mpr nN]
-      exact _root_.trans ((cs n).2 x xs) (_root_.trans (Finset.le_max' _ _ cn) (by bound))
+      exact _root_.trans ((cs n).2 x xs) (_root_.trans (Finset.le_max' _ _ cn)
+        (by simp only [le_add_iff_nonneg_left, zero_le_one]))
     · simp at nN
-      specialize H N le_rfl n (by bound) x xs
+      specialize H N le_rfl n nN.le x xs
       have cN : c N ∈ bs := by simp; exists N; simp
       have bN := _root_.trans ((cs N).2 x xs) (Finset.le_max' _ _ cN)
       rw [dist_eq_norm] at H

@@ -1,4 +1,5 @@
 import Ray.Misc.Connected
+import Ray.Tactic.Bound
 
 /-!
 ## Continuation of a function from a convex set to its closure

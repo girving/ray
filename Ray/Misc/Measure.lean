@@ -6,6 +6,7 @@ import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Ray.Misc.Topology
+import Ray.Tactic.Bound
 
 /-!
 ## Miscellaneous measure theory lemmas
@@ -310,7 +311,8 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
 theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : ℝ}
     (fc : ContinuousOn (uncurry f) (s ×ˢ Icc a b)) (sc : IsCompact s) (ab : a ≤ b) :
     ContinuousOn (fun x ↦ ∫ t in a..b, f x t) s := by
-  rcases fc.norm.bounded (sc.prod isCompact_Icc) with ⟨c, _, fb⟩
+  rcases ((sc.prod isCompact_Icc).bddAbove_image fc.norm).exists_ge 0 with ⟨c, _, fb⟩
+  simp only [Set.ball_image_iff] at fb
   simp only [Set.forall_prod_set, uncurry] at fb
   have e : ∀ x t, f x t = (uncurry f) (x, t) := by
     simp only [Function.uncurry_apply_pair, eq_self_iff_true, forall_const, imp_true_iff]

@@ -16,7 +16,7 @@ import Ray.Tactic.Bound
 -/
 
 open Classical
-open Complex (abs exp log I)
+open Complex (abs exp log I slitPlane)
 open Filter (atTop)
 open scoped Real NNReal Topology symmDiff
 
@@ -151,7 +151,7 @@ theorem add_near (a z : ℂ) : |abs (a + z) - abs a| ≤ abs z := by
   simp only [sub_neg_eq_add, map_neg_eq_map] at h
   assumption
 
-theorem near_one_avoids_negative_reals {z : ℂ} : abs (z - 1) < 1 → z.re > 0 ∨ z.im ≠ 0 := by
+theorem mem_slitPlane_of_near_one {z : ℂ} : abs (z - 1) < 1 → z ∈ slitPlane := by
   intro h; apply Or.inl
   have hr : (1 - z).re < 1 := by
     calc
@@ -163,10 +163,7 @@ theorem near_one_avoids_negative_reals {z : ℂ} : abs (z - 1) < 1 → z.re > 0 
   assumption
 
 theorem near_one_avoids_zero {z : ℂ} : abs (z - 1) < 1 → z ≠ 0 := by
-  intro h
-  have g := near_one_avoids_negative_reals h
-  by_contra h; rw [h] at g
-  simp only [Complex.zero_re, lt_self_iff_false, Complex.zero_im, ne_eq, not_true, or_self] at g
+  intro h; exact Complex.slitPlane_ne_zero (mem_slitPlane_of_near_one h)
 
 theorem derivWithin.cid {z : ℂ} {s : Set ℂ} (o : IsOpen s) (zs : z ∈ s) :
     derivWithin (fun z ↦ z) s z = 1 :=
@@ -195,7 +192,7 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
       have s1 : (1:ℂ) ∈ s := by simp; assumption
       have sp : ∀ w : ℂ, w ∈ s → w.re > 0 ∨ w.im ≠ 0 := by
         intro w ws
-        apply near_one_avoids_negative_reals
+        apply mem_slitPlane_of_near_one
         simp only [Metric.mem_ball, Complex.dist_eq] at ws
         calc abs (w - 1) < r := by assumption
           _ < 1 := r1
@@ -308,7 +305,7 @@ theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : abs z ≤ r) :
   simp only [not_le] at r0
   have fc : ContinuousAt (fun z ↦ log (1 + z)) z := by
     apply ContinuousAt.clog; apply ContinuousAt.add; exact continuousAt_const; exact continuousAt_id
-    refine' near_one_avoids_negative_reals _
+    refine mem_slitPlane_of_near_one ?_
     simp only [add_sub_cancel', lt_of_le_of_lt zr r1]
   apply weak_to_strong_small r0 (by bound) zr fc
   intro w wr

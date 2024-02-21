@@ -1,4 +1,5 @@
 import Mathlib.Analysis.Analytic.Basic
+import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.Data.Complex.Basic
@@ -7,8 +8,8 @@ import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.SmoothManifoldWithCorners
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
-import Ray.Analytic.Analytic
-import Ray.Analytic.Holomorphic
+import Ray.Analytic.HolomorphicUpstream
+import Ray.Misc.Topology
 
 /-!
 ## Analytic manifolds

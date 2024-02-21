@@ -1,4 +1,7 @@
+import Ray.Analytic.Analytic
 import Ray.AnalyticManifold.AnalyticManifold
+import Ray.Hartogs.Osgood
+import Ray.Misc.Multilinear
 import Ray.Tactic.Bound
 
 /-!

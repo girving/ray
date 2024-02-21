@@ -583,7 +583,7 @@ theorem toCircle_smul {T : ℝ} (n : ℕ) (x : AddCircle T) : (n • x).toCircle
 theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
   have mh : ∀ n : ℕ, HarmonicOn (fun z ↦ ((↑r)⁻¹ * (z - c)) ^ n) (closedBall c r) := by
     intro n; apply AnalyticOn.harmonicOn; refine' AnalyticOn.mono _ (Set.subset_univ _)
-    rw [← differentiable_iff_analytic isOpen_univ]; apply Differentiable.differentiableOn
+    rw [analyticOn_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
     apply Differentiable.pow; apply Differentiable.mul (differentiable_const _)
     apply Differentiable.sub differentiable_id (differentiable_const _)
   induction' n using Int.induction_overlap with n n
