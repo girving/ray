@@ -173,7 +173,7 @@ theorem ContinuousAt.potential_of_reaches (s : Super f d a) (a : ∃ n, (c, (f c
   rcases a with ⟨n, a⟩
   have e : uncurry s.potential =ᶠ[𝓝 (c, z)] fun p : ℂ × S ↦ s.potential' p.1 p.2 n := by
     have a' : ∀ᶠ p : ℂ × S in 𝓝 (c, z), (p.1, (f p.1)^[n] p.2) ∈ s.near :=
-      (s.iter_holomorphic n _).continuousAt.eventually_mem s.isOpen_near a
+      (s.iter_holomorphic n _).continuousAt.eventually_mem (s.isOpen_near.mem_nhds a)
     refine' a'.mp (eventually_of_forall fun p h ↦ _)
     simp only [uncurry, s.potential_eq h]
   simp only [continuousAt_congr e, Super.potential']

@@ -57,7 +57,7 @@ theorem Nonseparating.complexManifold {t : Set S}
       simp only [not_not] at zt
       set v := (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' u
       have vo : IsOpen v :=
-        (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (extChartAt_open_target I z) uo
+        (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target I z) uo
       have vn : v.Nonempty := by
         use extChartAt I z z
         simp only [mem_inter_iff, mem_extChartAt_target, true_and_iff, mem_preimage,
@@ -74,7 +74,7 @@ theorem Nonseparating.complexManifold {t : Set S}
           PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt]
       have n : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' u ∈ 𝓝 (extChartAt I z z) := by
         apply Filter.inter_mem
-        exact (extChartAt_open_target I z).mem_nhds (mem_extChartAt_target I z)
+        exact (isOpen_extChartAt_target I z).mem_nhds (mem_extChartAt_target I z)
         exact extChartAt_preimage_mem_nhds _ un
       rcases (h z).loc _ _ m n with ⟨c, cs, cn, cp⟩
       have e : (extChartAt I z).source ∩ extChartAt I z ⁻¹' c = (extChartAt I z).symm '' c := by

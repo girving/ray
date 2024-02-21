@@ -251,7 +251,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   have fm : ∀ᶠ x : ℂ × T in 𝓝 (c, f c z),
       f x.1 ((extChartAt I z).symm (i.he.symm (x.1, extChartAt I (f c z) x.2)).2) ∈
         (extChartAt I (f c z)).source := by
-    refine' ContinuousAt.eventually_mem _ (isOpen_extChartAt_source _ _) _
+    refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' I ?_)
     · apply i.fa.continuousAt.comp₂_of_eq continuousAt_fst
       · refine' ContinuousAt.comp _ _
         simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _

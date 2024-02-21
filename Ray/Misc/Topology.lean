@@ -74,27 +74,19 @@ theorem IsClosed.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpac
   c.preimage (Continuous.Prod.mk a)
 
 /-- Tendsto commutes with ⁻¹ away from zero -/
-theorem tendsto_iff_tendsto_inv {A B : Type} [NontriviallyNormedField B]
+theorem tendsto_inv_iff_tendsto {A B : Type} [NontriviallyNormedField B]
     {l : Filter A} {f : A → B} {a : B} (a0 : a ≠ 0) :
     Tendsto (fun x ↦ (f x)⁻¹) l (𝓝 a⁻¹) ↔ Tendsto f l (𝓝 a) := by
-  refine' ⟨fun h ↦ _, fun h ↦ h.inv₀ a0⟩
+  refine ⟨fun h ↦ ?_, fun h ↦ h.inv₀ a0⟩
   have h := h.inv₀ (inv_ne_zero a0)
   field_simp [a0] at h; exact h
-
-/-- `ContinuousAt` in terms of `𝓝[{x}ᶜ] x` (useful when `f x` is a special case) -/
-theorem continuousAt_iff_tendsto_nhdsWithin {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    {f : A → B} {x : A} : ContinuousAt f x ↔ Tendsto f (𝓝[{x}ᶜ] x) (𝓝 (f x)) := by
-  rw [ContinuousAt]; constructor
-  exact fun t ↦ t.mono_left nhdsWithin_le_nhds
-  intro t; rw [← nhdsWithin_compl_singleton_sup_pure]
-  exact Filter.Tendsto.sup t (tendsto_pure_nhds _ _)
 
 /-- If `f x ∈ s` for `s` open and `f` continuous at `z`, `∈` holds locally.
     This is `IsOpen.eventually_mem`, but assuming only `ContinuousAt`. -/
 theorem ContinuousAt.eventually_mem {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (o : IsOpen s) (m : f x ∈ s) :
-    ∀ᶠ y in 𝓝 x, f y ∈ s := by
-  exact fc (o.mem_nhds m)
+    {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
+    ∀ᶠ y in 𝓝 x, f y ∈ s :=
+  fc m
 
 /-- If `f x ∈ s` for `s ∈ 𝓝 (f x)` and `f` continuous at `z`, `∈` holds locally -/
 theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]

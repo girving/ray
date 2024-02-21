@@ -187,8 +187,7 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
     Filter.eventually_map] at c ⊢
   apply c.mp
   apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-  apply (n.holomorphicAt.continuousAt.eventually_mem (isOpen_extChartAt_source I (f z))
-    (mem_extChartAt_source I (f z))).mp
+  apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
   refine' eventually_of_forall fun w fm m fn ↦ _
   simp only at fm m fn
   rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
@@ -218,8 +217,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
     have e : (fun w ↦ (extChartAt I (f z)).symm
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
       apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-      apply (n.holomorphicAt.continuousAt.eventually_mem (isOpen_extChartAt_source I (f z))
-        (mem_extChartAt_source I (f z))).mp
+      apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
       refine' eventually_of_forall fun w fm m ↦ _
       simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
@@ -252,8 +250,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c 
   refine _root_.trans (le_of_eq pe) (_root_.trans h (le_of_eq ?_)); clear h pe
   rw [←nhds_prod_eq, Filter.map_map]; apply Filter.map_congr
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source II (c, z))).mp
-  apply (fa.continuousAt.eventually_mem (isOpen_extChartAt_source I (f c z))
-    (mem_extChartAt_source I (f c z))).mp
+  apply (fa.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f c z))).mp
   apply eventually_of_forall; intro ⟨e, w⟩ fm m
   simp only [Function.comp, uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
   simp only [Function.comp, PartialEquiv.left_inv _ m.2, PartialEquiv.left_inv _ fm]

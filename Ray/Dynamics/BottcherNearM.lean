@@ -222,7 +222,7 @@ theorem Super.fr_prop (s : Super f d a) (c : ℂ) :
   set s := ch.target ∩ ch.symm ⁻¹' t
   have os : IsOpen s :=
     (continuousOn_extChartAt_symm II (c, a)).isOpen_inter_preimage
-      (extChartAt_open_target II (c, a)) ot
+      (isOpen_extChartAt_target II (c, a)) ot
   have m : ch (c, a) ∈ s := by
     apply Set.mem_inter (mem_extChartAt_target _ _)
     rw [Set.mem_preimage, ch.left_inv (mem_extChartAt_source _ _)]
@@ -557,7 +557,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
   have em := ((isOpen_extChartAt_source I a).eventually_mem am).prod_inr (𝓝 c)
   simp only [← nhds_prod_eq] at em; apply em.mp
   have ezm : ∀ᶠ p : ℂ × S in 𝓝 (c, a), f p.1 p.2 ∈ (extChartAt I a).source := by
-    apply (s.fa _).continuousAt.eventually_mem (isOpen_extChartAt_source I a)
+    refine (s.fa _).continuousAt.eventually_mem (extChartAt_source_mem_nhds' I ?_)
     simp only [uncurry, s.f0, mem_extChartAt_source I a]
   apply ezm.mp
   apply eventually_of_forall; clear t em

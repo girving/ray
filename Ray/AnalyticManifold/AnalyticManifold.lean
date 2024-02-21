@@ -9,6 +9,7 @@ import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.SmoothManifoldWithCorners
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Ray.Analytic.HolomorphicUpstream
+import Ray.Misc.Manifold
 import Ray.Misc.Topology
 
 /-!
@@ -272,10 +273,10 @@ theorem HolomorphicAt.comp {f : N → O} {g : M → N} {x : M} (fh : Holomorphic
   simp only [Function.comp]
   have m : ∀ᶠ y in 𝓝 (extChartAt I x x), g ((extChartAt I x).symm y) ∈
       (extChartAt J (g x)).source := by
-    apply ContinuousAt.eventually_mem_nhd
+    apply ContinuousAt.eventually_mem
     · apply ContinuousAt.comp
-      rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]; exact gh.1
-      exact continuousAt_extChartAt_symm I x
+      · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]; exact gh.1
+      · exact continuousAt_extChartAt_symm I x
     · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
       exact extChartAt_source_mem_nhds _ _
   refine' m.mp (eventually_of_forall fun y m ↦ _)
@@ -314,19 +315,11 @@ theorem HolomorphicAt.comp₂_of_eq {h : N → O → P} {f : M → N} {g : M →
     (ga : HolomorphicAt I K g x) (e : (f x, g x) = y) :
     HolomorphicAt I L (fun x ↦ h (f x) (g x)) x := by rw [← e] at ha; exact ha.comp₂ fa ga
 
-/-- If we're boundaryless, `extChartAt` has open target -/
-theorem extChartAt_open_target (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] [ChartedSpace A M]
-    (x : M) : IsOpen (extChartAt I x).target := by
-  simp only [extChartAt, PartialHomeomorph.extend, ModelWithCorners.range_eq_univ,
-    PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
-    univ_inter]
-  exact IsOpen.preimage (ModelWithCorners.continuous_symm I) (PartialHomeomorph.open_target _)
-
 /-- `id` is holomorphic -/
 theorem holomorphicAt_id {x : M} : HolomorphicAt I I (fun x ↦ x) x := by
   rw [holomorphicAt_iff]; use continuousAt_id; apply (analyticAt_id _ _).congr
-  refine ((extChartAt_open_target I x).eventually_mem (mem_extChartAt_target I x)).mp
-    (eventually_of_forall fun y m ↦ ?_)
+  filter_upwards [((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x))]
+  intro y m
   simp only [Function.comp, PartialEquiv.right_inv _ m, id]
 
 /-- `id` is holomorphic -/
@@ -363,8 +356,8 @@ theorem Holomorphic.along_snd [J.Boundaryless] {f : M → N → O} {x : M}
 theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     HolomorphicAt (I.prod J) I (fun p : M × N ↦ p.fst) x := by
   rw [holomorphicAt_iff]; use continuousAt_fst; refine (analyticAt_fst _).congr ?_
-  refine' ((extChartAt_open_target _ x).eventually_mem (mem_extChartAt_target _ _)).mp
-    (eventually_of_forall fun y m ↦ _)
+  filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
+  intro y m
   rw [extChartAt_prod] at m
   simp only [PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_target, mem_prod] at m
   simp only [extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm]
@@ -374,8 +367,8 @@ theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
 theorem holomorphicAt_snd [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     HolomorphicAt (I.prod J) J (fun p : M × N ↦ p.snd) x := by
   rw [holomorphicAt_iff]; use continuousAt_snd; refine (analyticAt_snd _).congr ?_
-  refine' ((extChartAt_open_target _ x).eventually_mem (mem_extChartAt_target _ _)).mp
-    (eventually_of_forall fun y m ↦ _)
+  filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
+  intro y m
   rw [extChartAt_prod] at m
   simp only [PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_target, mem_prod] at m
   simp only [extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm]
@@ -559,8 +552,8 @@ theorem HolomorphicAt.congr {f g : M → N} {x : M} (fa : HolomorphicAt I J f x)
 /-- If we're holomorphic at a point, we're locally holomorphic -/
 theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
     ∀ᶠ y in 𝓝 x, HolomorphicAt I J f y := by
-  apply (fa.continuousAt.eventually_mem (isOpen_extChartAt_source J (f x))
-    (mem_extChartAt_source J (f x))).eventually_nhds.mp
+  apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source J (f x)).mem_nhds
+    (mem_extChartAt_source J (f x)))).eventually_nhds.mp
   apply ((isOpen_extChartAt_source I x).eventually_mem (mem_extChartAt_source I x)).mp
   apply ((continuousAt_extChartAt I x).eventually
     ((isOpen_analyticAt _ _).eventually_mem (holomorphicAt_iff.mp fa).2)).mp
@@ -685,7 +678,7 @@ def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [Top
     [ChartedSpace A M] (x : M) : PartialHomeomorph M E where
   toPartialEquiv := extChartAt I x
   open_source := isOpen_extChartAt_source I x
-  open_target := extChartAt_open_target I x
+  open_target := isOpen_extChartAt_target I x
   continuousOn_toFun := continuousOn_extChartAt I x
   continuousOn_invFun := continuousOn_extChartAt_symm I x
 
@@ -721,7 +714,7 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
     extChartAt_symm_map_nhds' I x, Filter.frequently_map, true_and_iff,
     mem_compl_singleton_iff] at p ⊢
   apply p.mp
-  apply ((extChartAt_open_target I x).eventually_mem (mem_extChartAt_target I x)).mp
+  apply ((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x)).mp
   refine' eventually_of_forall fun y m h ↦ _
   contrapose h; simp only [not_not] at m h ⊢; nth_rw 2 [← h]
   rw [PartialEquiv.right_inv _ m]

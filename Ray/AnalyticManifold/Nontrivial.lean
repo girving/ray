@@ -1,8 +1,9 @@
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
-import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
 import Ray.AnalyticManifold.OneDimension
+import Ray.Misc.Connected
+import Ray.Misc.Manifold
 import Ray.Misc.TotallyDisconnected
 import Ray.Tactic.Bound
 
@@ -193,17 +194,18 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
     replace e := (continuousAt_extChartAt I z).eventually e
     replace e := Filter.EventuallyEq.fun_comp e (_root_.extChartAt I (f z)).symm
     apply e.congr; simp only [Function.comp]; clear e
-    apply (fc.eventually_mem (isOpen_extChartAt_source I (f z)) (mem_extChartAt_source I (f z))).mp
-    apply (gc.eventually_mem (isOpen_extChartAt_source I (g z)) (mem_extChartAt_source I (g z))).mp
+    apply (fc.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
+    apply (gc.eventually_mem (extChartAt_source_mem_nhds I (g z))).mp
     refine' eventually_nhds_iff.mpr ⟨(_root_.extChartAt I z).source,
       fun x m gm fm ↦ _, isOpen_extChartAt_source _ _, mem_extChartAt_source I z⟩
     simp only at fm gm; rw [← fg] at gm
-    simp only [← fg, PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm, PartialEquiv.left_inv _ gm]
+    simp only [← fg, PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm,
+      PartialEquiv.left_inv _ gm]
   · right; clear fa ga
     simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at e ⊢
     replace e := (continuousAt_extChartAt I z).eventually e
-    apply (fc.eventually_mem (isOpen_extChartAt_source I (f z)) (mem_extChartAt_source I (f z))).mp
-    apply (gc.eventually_mem (isOpen_extChartAt_source I (g z)) (mem_extChartAt_source I (g z))).mp
+    apply (fc.eventually_mem ((extChartAt_source_mem_nhds I (f z)))).mp
+    apply (gc.eventually_mem ((extChartAt_source_mem_nhds I (g z)))).mp
     apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
     refine' e.mp (eventually_of_forall _); clear e
     intro x h xm gm fm xz; rw [← fg] at gm
@@ -312,7 +314,7 @@ theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ 
   rcases mem_nhds_iff.mp sz with ⟨t, ts, ot, zt⟩
   set u := (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t
   have uo : IsOpen u :=
-    (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (extChartAt_open_target _ _) ot
+    (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target _ _) ot
   have zu : extChartAt I z z ∈ u := by
     simp only [mem_inter_iff, mem_extChartAt_target, true_and_iff, mem_preimage,
       PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt]
@@ -402,10 +404,10 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
     · simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq] at h
       refine'
         h.mp (((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp _)
-      apply ((fa _ xs).continuousAt.eventually_mem (isOpen_extChartAt_source _ _)
-          (mem_extChartAt_source K (f x))).mp
-      apply ((ga _ xs).continuousAt.eventually_mem (isOpen_extChartAt_source _ _)
-          (mem_extChartAt_source K (g x))).mp
+      apply ((fa _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
+          (mem_extChartAt_source K (f x)))).mp
+      apply ((ga _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
+          (mem_extChartAt_source K (g x)))).mp
       refine' eventually_of_forall fun y gm fm m e ↦ _
       rw [← hd, Pi.zero_apply, sub_eq_zero, (extChartAt J x).left_inv m, ex] at e
       rw [ex] at fm; exact (extChartAt K (g x)).injOn fm gm e
@@ -417,7 +419,7 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
         refine' eventually_of_forall fun y m e ↦ _; rw [(extChartAt J x).left_inv m]; exact e
       apply (Filter.Tendsto.frequently (p := fun y ↦ (extChartAt J x).symm y ∈ t)
           (continuousAt_extChartAt J x) xt').mp
-      apply ((extChartAt_open_target J x).eventually_mem (mem_extChartAt_target J x)).mp
+      apply ((isOpen_extChartAt_target J x).eventually_mem (mem_extChartAt_target J x)).mp
       refine' eventually_of_forall fun y m e ↦ _; simp only at e
       apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
       refine' eventually_of_forall fun z e ↦ _; simp only at e

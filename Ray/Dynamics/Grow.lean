@@ -73,7 +73,7 @@ theorem eqn_near {s : Super f d a} {n : ℕ} {r : ℂ → ℂ → S} {c x : ℂ}
     (loc : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), s.bottcherNear y.1 ((f y.1)^[n] (r y.1 y.2)) = y.2 ^ d ^ n) :
     ∀ᶠ y in 𝓝 (c, x), Eqn s n r y := by
   have m : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), (y.1, (f y.1)^[n] (r y.1 y.2)) ∈ s.near := by
-    refine' ContinuousAt.eventually_mem _ s.isOpen_near mem
+    refine ContinuousAt.eventually_mem ?_ (s.isOpen_near.mem_nhds mem)
     exact continuousAt_fst.prod (s.continuousAt_iter continuousAt_fst holo.continuousAt)
   apply holo.eventually.mp; apply loc.mp; apply m.mp
   apply eventually_of_forall; intro _ m l h; exact ⟨h, m, l⟩
@@ -218,7 +218,7 @@ theorem Super.grow_start (s : Super f d a) (c : ℂ) : ∃ p r, 0 < p ∧ Grow s
   rcases complex_inverse_fun ba nc with ⟨r, ra, rb, br⟩
   rw [s.bottcherNear_a] at ra br
   have rm : ∀ᶠ x : ℂ × ℂ in 𝓝 (c, 0), (x.1, r x.1 x.2) ∈ s.near := by
-    apply (continuousAt_fst.prod ra.continuousAt).eventually_mem s.isOpen_near
+    refine (continuousAt_fst.prod ra.continuousAt).eventually_mem (s.isOpen_near.mem_nhds ?_)
     have r0 := rb.self_of_nhds; simp only [s.bottcherNear_a] at r0
     simp only [uncurry, r0]; exact s.mem_near c
   rcases eventually_nhds_iff.mp (ra.eventually.and (br.and rm)) with ⟨t, h, o, m⟩
@@ -250,9 +250,10 @@ theorem Grow.open (g : Grow s c p n r) : ∃ p', p < p' ∧ ∀ᶠ c' in 𝓝 c,
   rcases domain_open' bp bo with ⟨q, pq, qb⟩
   use q, pq
   have m : ∀ᶠ c' in 𝓝 c, (c', r c' 0) ∈ s.near := by
-    refine' (continuousAt_id.prod _).eventually_mem s.isOpen_near _
-    exact (g.eqn.filter_mono (nhds_le_nhdsSet (mem_domain c g.nonneg))).self_of_nhds.holo.along_fst.continuousAt
-    simp only [id, g.zero, s.mem_near c]
+    refine (continuousAt_id.prod ?_).eventually_mem (s.isOpen_near.mem_nhds ?_)
+    · exact (g.eqn.filter_mono (nhds_le_nhdsSet (mem_domain c
+        g.nonneg))).self_of_nhds.holo.along_fst.continuousAt
+    · simp only [id, g.zero, s.mem_near c]
   apply m.mp
   apply ((continuousAt_id.prod continuousAt_const).eventually g.start.eventually_nhds).mp
   refine' eventually_nhds_iff.mpr ⟨a, _, ao, am⟩

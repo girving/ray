@@ -229,7 +229,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
   simp only [mfderiv, d, if_true, writtenInExtChartAt, Function.comp,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
-    apply ((extChartAt_open_target I z).eventually_mem (mem_extChartAt_target I z)).mp
+    apply ((isOpen_extChartAt_target I z).eventually_mem (mem_extChartAt_target I z)).mp
     refine' eventually_of_forall fun w m ↦ _
     simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne.def, ContinuousLinearMap.ext_iff, not_forall,
@@ -306,8 +306,8 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : HolomorphicAt II I (uncurry f) (c, z)) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z),
       mfderiv I I (f p.1) p.2 = 0 ↔ deriv (inChart f c z p.1) (extChartAt I z p.2) = 0 := by
-  apply (fa.continuousAt.eventually_mem (isOpen_extChartAt_source I (f c z))
-    (mem_extChartAt_source I (f c z))).mp
+  apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source I (f c z)).mem_nhds
+    (mem_extChartAt_source I (f c z)))).mp
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
   refine' fa.eventually.mp (eventually_of_forall _); intro ⟨e, w⟩ fa m fm
   simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
@@ -382,11 +382,11 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
   rw [holomorphic_iff]; use fc; intro p; apply osgood_at'
   have fm : ∀ᶠ q in 𝓝 (extChartAt II p p),
       f ((extChartAt II p).symm q) ∈ (extChartAt I (f p)).source := by
-    refine ContinuousAt.eventually_mem (fc.continuousAt.comp (continuousAt_extChartAt_symm II p))
-        (isOpen_extChartAt_source I (f p)) ?_
+    refine (fc.continuousAt.comp (continuousAt_extChartAt_symm II p)).eventually_mem
+        ((isOpen_extChartAt_source I (f p)).mem_nhds ?_)
     simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
     apply mem_extChartAt_source
-  apply ((extChartAt_open_target II p).eventually_mem (mem_extChartAt_target II p)).mp
+  apply ((isOpen_extChartAt_target II p).eventually_mem (mem_extChartAt_target II p)).mp
   refine' fm.mp (eventually_of_forall fun q fm m ↦ ⟨_, _, _⟩)
   · exact (continuousAt_extChartAt' I fm).comp_of_eq
         (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl

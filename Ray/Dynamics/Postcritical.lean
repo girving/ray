@@ -212,7 +212,7 @@ theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z)
   rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
   have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
     (continuousAt_const.prod (s.continuousAt_iter continuousAt_const
-      continuousAt_id)).eventually_mem s.isOpen_near r
+      continuousAt_id)).eventually_mem (s.isOpen_near.mem_nhds r)
   refine' (h.and er).mp (eventually_of_forall _); intro x ⟨e, m⟩
   simp only [Super.bottcherNearIter] at e
   simp only [Super.bottcherNearIter, Function.iterate_add_apply, s.bottcherNear_eqn_iter m,

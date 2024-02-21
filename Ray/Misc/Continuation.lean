@@ -141,7 +141,7 @@ theorem Convex.inter_ball (c : Convex ℝ s) (x0 x1 : closure s) {r0 r1 : ℝ} (
     rw [div_mul_cancel _ (add_pos r0p r1p).ne']
   have e : ∀ᶠ p : E × E in 𝓝 (x0, x1),
       (r1 / (r0 + r1)) • p.1 + (r0 / (r0 + r1)) • p.2 ∈ ball x0 r0 ∩ ball x1 r1 := by
-    refine ContinuousAt.eventually_mem ?_ (isOpen_ball.inter isOpen_ball) ?_
+    refine ContinuousAt.eventually_mem ?_ ((isOpen_ball.inter isOpen_ball).mem_nhds ?_)
     · exact ((continuous_fst.const_smul _).add (continuous_snd.const_smul _)).continuousAt
     · simp only [mem_inter_iff, mem_ball, dist_eq_norm, ← sub_add_eq_add_sub _ x0 _,
         add_sub_assoc _ _ x1]

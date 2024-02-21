@@ -485,7 +485,7 @@ theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, 
     exact fa.comp (holomorphicAt_id.inv z0)
   · refine' (continuousAt_extChartAt' I _).comp _
     · simp only [eq_self_iff_true, if_pos, mem_extChartAt_source]
-    · simp [continuousAt_iff_tendsto_nhdsWithin]
+    · simp only [← continuousWithinAt_compl_self, ContinuousWithinAt]
       apply tendsto_nhdsWithin_congr (f := fun z ↦ f z⁻¹)
       intro z z0; simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at z0
       simp only [z0, if_false]

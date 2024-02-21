@@ -2,6 +2,7 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 import Ray.AnalyticManifold.Inverse
 import Ray.AnalyticManifold.LocalInj
 import Ray.Dynamics.BottcherNear
+import Ray.Misc.Manifold
 
 /-!
 ## Non-injectivity near multiple roots
@@ -83,7 +84,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
       repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0]
     have t2 : ContinuousAt f 0 := s.fa0.continuousAt
     have m0 : ∀ᶠ z in 𝓝 0, i (a * bottcherNear f d z) ∈ t := by
-      refine ContinuousAt.eventually_mem (ia.continuousAt.comp_of_eq t0 ?_) s.o ?_
+      refine (ia.continuousAt.comp_of_eq t0 ?_).eventually_mem (s.o.mem_nhds ?_)
       repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0, s.t0, Function.comp]
     have m1 : ∀ᶠ z in 𝓝 0, z ∈ t := s.o.eventually_mem s.t0
     simp only [ContinuousAt, bottcherNear_zero, MulZeroClass.mul_zero, i0, s.f0] at t0 t1 t2
@@ -198,18 +199,19 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
     apply ((continuousAt_extChartAt I c).eventually e).mp
     apply ((isOpen_extChartAt_source I c).eventually_mem (mem_extChartAt_source I c)).mp
     have m1 : ∀ᶠ z in 𝓝 c, h (extChartAt I c z) ∈ (extChartAt I c).target := by
-      apply ContinuousAt.eventually_mem _ (extChartAt_open_target I c)
-      rw [h0]; exact mem_extChartAt_target I c
-      exact ha.continuousAt.comp_of_eq (continuousAt_extChartAt I c) rfl
+      refine ContinuousAt.eventually_mem ?_ (extChartAt_target_mem_nhds' I ?_)
+      · exact ha.continuousAt.comp_of_eq (continuousAt_extChartAt I c) rfl
+      · rw [h0]; exact mem_extChartAt_target I c
     have m2 : ∀ᶠ z in 𝓝 c, f z ∈ (extChartAt I (f c)).source :=
-      fa.1.eventually_mem (isOpen_extChartAt_source I _) (mem_extChartAt_source I _)
+      fa.1.eventually_mem (extChartAt_source_mem_nhds I _)
     have m3 : ∀ᶠ z in 𝓝 c,
         f ((extChartAt I c).symm (h (extChartAt I c z))) ∈ (extChartAt I (f c)).source := by
-      refine' ContinuousAt.eventually_mem _ (isOpen_extChartAt_source I _) _
-      apply fa.1.comp_of_eq; apply (continuousAt_extChartAt_symm I _).comp_of_eq
-      apply ha.continuousAt.comp_of_eq; exact continuousAt_extChartAt I _
-      rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
-      rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]; exact mem_extChartAt_source I _
+      refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' I ?_)
+      · apply fa.1.comp_of_eq; apply (continuousAt_extChartAt_symm I _).comp_of_eq
+        apply ha.continuousAt.comp_of_eq; exact continuousAt_extChartAt I _
+        rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
+      · rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
+        apply mem_extChartAt_source
     refine' m1.mp (m2.mp (m3.mp (eventually_of_forall _)))
     simp only [mem_compl_singleton_iff]
     intro z m3 m2 m1 m0 even zc
@@ -229,7 +231,7 @@ theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (s
   contrapose inj; simp only [not_not, InjOn, not_forall] at inj ⊢
   rcases not_local_inj_of_mfderiv_zero fa inj with ⟨g, ga, gc, fg⟩
   have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=
-    ContinuousAt.eventually_mem ga.continuousAt so (by simp only [gc, m])
+    ga.continuousAt.eventually_mem (so.mem_nhds (by simp only [gc, m]))
   replace fg := fg.and (((so.eventually_mem m).and gm).filter_mono nhdsWithin_le_nhds)
   rcases @Filter.Eventually.exists _ _ _ (AnalyticManifold.punctured_nhds_neBot I c) fg
     with ⟨z, ⟨gz, fg⟩, zs, gs⟩
