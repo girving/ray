@@ -27,27 +27,9 @@ variable {X : Type} [MeasureSpace X] [MetricSpace X] [BorelSpace X]
 variable {Y : Type} [MeasureSpace Y] [MetricSpace Y] [BorelSpace Y]
 variable {A : Type} [TopologicalSpace A]
 
-theorem ENNReal.le_zero_iff {x : ENNReal} : x ≤ 0 ↔ x = 0 := by
-  rw [← ENNReal.bot_eq_zero]; exact le_bot_iff
-
-/-- Implication works under ∀ᵐ -/
-theorem ae_imp {f g : X → Prop} : (∀ᵐ x, f x) → (∀ x, f x → g x) → ∀ᵐ x, g x := by
-  intro h i
-  rw [ae_iff, ← ENNReal.le_zero_iff] at h ⊢
-  have i' := fun x (ng : ¬g x) ↦ mt (i x) ng
-  rw [← Set.setOf_subset_setOf] at i'
-  exact _root_.trans (measure_mono i') h
-
-/-- We can ignore hypotheses under ∀ᵐ -/
-theorem ae_drop_imp {f g : X → Prop} : (∀ᵐ x, g x) → ∀ᵐ x, f x → g x := by
-  intro h
-  rw [ae_iff] at h ⊢; simp only [not_forall, exists_prop]; rw [Set.setOf_and]
-  rw [← ENNReal.le_zero_iff] at h ⊢
-  exact _root_.trans (measure_mono (Set.inter_subset_right _ _)) h
-
 /-- If a set has measure 0, any subset does too -/
 theorem null_subset {s t : Set ℝ} (h : s ⊆ t) : volume t = 0 → volume s = 0 := by
-  simp_rw [← ENNReal.le_zero_iff]; exact _root_.trans (measure_mono h)
+  simp_rw [← le_zero_iff]; exact le_trans (measure_mono h)
 
 /-- Two functions are `ae =` on a set if the expected ae statement holds -/
 theorem ae_eq_on_def {Y : Type} {f g : X → Y} {s : Set X} (m : MeasurableSet s) :
@@ -59,7 +41,8 @@ theorem ae_minus_null {s t : Set X} (tz : volume t = 0) : s =ᵐ[volume] s \ t :
   simp only [Filter.EventuallyEq._eq_1, Pi.sdiff_apply, eq_iff_iff]
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
     intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true_iff]
-  simp_rw [Set.mem_def] at e; refine' ae_imp _ e
+  simp_rw [Set.mem_def] at e
+  refine Filter.Eventually.mono ?_ e
   rw [ae_iff]; simpa [Set.setOf_set]
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
