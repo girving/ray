@@ -172,16 +172,16 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
     (p.unshift' c).radius = p.radius := by
   simp_rw [FormalMultilinearSeries.radius]
   apply le_antisymm
-  · refine' iSup₂_le _; intro r k; refine' iSup_le _; intro h
-    refine' le_trans _ (le_iSup₂ r (k * ↑r⁻¹))
+  · refine iSup₂_le ?_; intro r k; refine iSup_le ?_; intro h
+    refine le_trans ?_ (le_iSup₂ r (k * ↑r⁻¹))
     have h := fun n ↦ mul_le_mul_of_nonneg_right (h (n + 1)) (NNReal.coe_nonneg r⁻¹)
     by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero_eq_zero, le_zero_iff]
     simp only [pow_succ', ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
       mul_inv_cancel (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
     simp only [NNReal.coe_inv]
     convert le_iSup _ h; rfl
-  · refine' iSup₂_le _; intro r k; refine' iSup_le _; intro h
-    refine' le_trans _ (le_iSup₂ r (max ‖c‖ (k * ↑r)))
+  · refine iSup₂_le ?_; intro r k; refine iSup_le ?_; intro h
+    refine le_trans ?_ (le_iSup₂ r (max ‖c‖ (k * ↑r)))
     have h' : ∀ n, ‖p.unshift' c n‖ * (r:ℝ)^n ≤ max ‖c‖ (k * ↑r) := by
       intro n; induction' n with n _
       · simp only [FormalMultilinearSeries.unshift_coeff_zero,
@@ -291,7 +291,7 @@ theorem AnalyticAt.deriv {f : 𝕜 → 𝕜} {c : 𝕜} (fa : AnalyticAt 𝕜 f 
   simp only [← fderiv_deriv]
   have a1 : ∀ g, AnalyticAt 𝕜 (fun g : 𝕜 →L[𝕜] 𝕜 ↦ ContinuousLinearMap.apply 𝕜 𝕜 1 g) g := fun g ↦
     ContinuousLinearMap.analyticAt _ _
-  refine' (a1 _).comp fa.fderiv
+  refine (a1 _).comp fa.fderiv
 
 /-- `deriv` in the second variable is analytic -/
 theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E × 𝕜}
@@ -299,7 +299,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
     AnalyticAt 𝕜 (fun x : E × 𝕜 ↦ _root_.deriv (f x.1) x.2) c := by
   set p : (E × 𝕜 →L[𝕜] 𝕜) →L[𝕜] 𝕜 := ContinuousLinearMap.apply 𝕜 𝕜 (0, 1)
   have e : ∀ᶠ x : E × 𝕜 in 𝓝 c, _root_.deriv (f x.1) x.2 = p (_root_.fderiv 𝕜 (uncurry f) x) := by
-    refine' fa.eventually_analyticAt.mp (eventually_of_forall _)
+    refine fa.eventually_analyticAt.mp (eventually_of_forall ?_)
     intro ⟨x, y⟩ fa; simp only [← fderiv_deriv]
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
     rw [e]; rw [fderiv.comp]
@@ -315,7 +315,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
 /-- Scaling commutes with power series -/
 theorem HasFPowerSeriesAt.const_smul {f : 𝕜 → E} {c a : 𝕜} {p : FormalMultilinearSeries 𝕜 𝕜 E}
     (fp : HasFPowerSeriesAt f p c) : HasFPowerSeriesAt (fun z ↦ a • f z) (fun n ↦ a • p n) c := by
-  rw [hasFPowerSeriesAt_iff] at fp ⊢; refine' fp.mp (eventually_of_forall fun z h ↦ _)
+  rw [hasFPowerSeriesAt_iff] at fp ⊢; refine fp.mp (eventually_of_forall fun z h ↦ ?_)
   simp only [FormalMultilinearSeries.coeff, ContinuousMultilinearMap.smul_apply, smul_comm _ a]
   exact h.const_smul a
 

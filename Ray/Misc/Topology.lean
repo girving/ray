@@ -146,7 +146,7 @@ theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
         Set.mem_Ioc] at so ⊢
       rcases so (ofDual x) ⟨m.1, m.2.2, m.2.1⟩ with ⟨n, h, o, nx⟩
       use ofDual ⁻¹' n
-      refine' ⟨_, o.preimage continuous_ofDual, mem_preimage.mpr nx⟩
+      refine ⟨?_, o.preimage continuous_ofDual, mem_preimage.mpr nx⟩
       intro y m xy; simp only [Set.mem_Ioi] at xy; simp only [Set.mem_preimage]
       simp only [Set.mem_Iio, Set.mem_preimage, OrderDual.ofDual_lt_ofDual] at h
       exact h _ m xy

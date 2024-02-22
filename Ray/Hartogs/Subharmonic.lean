@@ -318,7 +318,7 @@ theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : 
         rw [← hg]; apply AnalyticOn.reSubharmonicOn; intro z zs
         exact r0a (Metric.ball_subset_ball (by bound) zs)
       rw [subharmonicOn_congr fg.symm] at gs
-      refine' gs.submean' c _
+      refine gs.submean' c ?_
       rw [Metric.isOpen_ball.interior_eq]; exact Metric.mem_ball_self (by bound) }
 
 /-- If a subharmonic function is maximal at the center of a ball, it is constant on the ball. -/
@@ -344,7 +344,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   have us : u ∈ s := by
     refine IsClosed.mem_of_ge_of_forall_exists_gt ?_ s0 u0.le ?_
     · rw [← hs]; rw [Set.inter_comm]
-      refine' ContinuousOn.preimage_isClosed_of_isClosed _ isClosed_Icc isClosed_singleton
+      refine ContinuousOn.preimage_isClosed_of_isClosed ?_ isClosed_Icc isClosed_singleton
       apply fs.cont.comp (Continuous.continuousOn _) _
       · exact continuous_const.add (Continuous.mul Complex.continuous_ofReal continuous_const)
       · intro t ts; simp only [Set.mem_Icc] at ts
@@ -393,7 +393,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
       specialize fw a as; simp only [← aey] at fw
       use t + e'
       simp only [Set.mem_inter_iff, Set.mem_Ioc, lt_add_iff_pos_right]
-      refine' ⟨_, e'p, teu⟩
+      refine ⟨?_, e'p, teu⟩
       simp only [← hs, right_distrib, Set.mem_preimage, Complex.ofReal_add, Set.mem_singleton_iff]
       rw [← add_assoc]; exact fw
   simp only [← hs, ← hy, Set.mem_preimage, Set.mem_singleton_iff] at us
@@ -561,7 +561,7 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
     { gh := uniform_harmonic_lim (fun n ↦ (gs n).gh) gG
       b := by
         intro z
-        refine' (Filter.Tendsto.limUnder_eq _).symm
+        refine (Filter.Tendsto.limUnder_eq ?_).symm
         simp_rw [← (gs _).b]
         exact fF.tendsto_at z }
 
@@ -582,7 +582,7 @@ theorem toCircle_smul {T : ℝ} (n : ℕ) (x : AddCircle T) : (n • x).toCircle
 /-- Fourier terms extend -/
 theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
   have mh : ∀ n : ℕ, HarmonicOn (fun z ↦ ((↑r)⁻¹ * (z - c)) ^ n) (closedBall c r) := by
-    intro n; apply AnalyticOn.harmonicOn; refine' AnalyticOn.mono _ (Set.subset_univ _)
+    intro n; apply AnalyticOn.harmonicOn; refine AnalyticOn.mono ?_ (Set.subset_univ _)
     rw [analyticOn_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
     apply Differentiable.pow; apply Differentiable.mul (differentiable_const _)
     apply Differentiable.sub differentiable_id (differentiable_const _)
@@ -758,12 +758,12 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
       _ = π⁻¹ * r⁻¹^2 * (π * r^2 * f c) := by ring_nf; field_simp [rp.ne', Real.pi_pos.ne']
       _ ≤ π⁻¹ * r⁻¹^2 * i := by bound
   · apply Continuous.integrableOn_Ioc; continuity
-  · refine' IntegrableOn.mono_set _ Set.Ioc_subset_Icc_self
+  · refine IntegrableOn.mono_set ?_ Set.Ioc_subset_Icc_self
     apply ContinuousOn.integrableOn_Icc; apply ContinuousOn.smul continuousOn_id
     simp_rw [← intervalIntegral.integral_of_le Real.two_pi_pos.le]
-    refine' ContinuousOn.intervalIntegral _ isCompact_Icc Real.two_pi_pos.le
+    refine ContinuousOn.intervalIntegral ?_ isCompact_Icc Real.two_pi_pos.le
     simp only [uncurry, Set.Icc_prod_Icc]
-    refine' fs.cont.comp (Continuous.continuousOn (by continuity)) _
+    refine fs.cont.comp (Continuous.continuousOn (by continuity)) ?_
     intro (a,b) ts
     simp only [ge_iff_le, Prod.mk_le_mk, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
       not_and, not_le, Prod.mk_lt_mk, Set.mem_Icc] at ts
@@ -856,7 +856,7 @@ theorem AnalyticOn.maxLog_norm_subharmonicOn {f : ℂ → H} {s : Set ℂ} (fa :
   have fs : ∀ n, SubharmonicOn (fun z ↦ partialSups (fun k ↦ maxLog b ‖duals k (f z)‖) n) s := by
     intro m; apply SubharmonicOn.partialSups; intro n; simp_rw [Complex.norm_eq_abs]
     exact ((duals n).comp_analyticOn fa).maxLogAbsSubharmonicOn b
-  refine' SubharmonicOn.monotone_lim fs _ ft gc
+  refine SubharmonicOn.monotone_lim fs ?_ ft gc
   · intro a b ab z; simp only [Complex.norm_eq_abs]; apply (partialSups _).monotone ab
 
 /-- limsup -f = -liminf f -/
@@ -870,7 +870,7 @@ theorem Limsup.neg {f : ℕ → ℝ} : (atTop.limsup fun n ↦ f n) = -atTop.lim
 /-- `p : ENNReal → Prop` is true for all `ENNReal`s if it is true for `⊤` and positive reals -/
 theorem ENNReal.induction {p : ENNReal → Prop} (pi : p ⊤)
     (pf : ∀ (x : ℝ), 0 ≤ x → p (ENNReal.ofReal x)) : ∀ e, p e := by
-  rw [ENNReal.forall_ennreal]; refine' ⟨_, pi⟩; rw [NNReal.forall]
+  rw [ENNReal.forall_ennreal]; refine ⟨?_, pi⟩; rw [NNReal.forall]
   simpa only [← ENNReal.ofReal_eq_coe_nnreal]
 
 theorem le_of_lt_imp_le {L : Type} [LinearOrder L] [DenselyOrdered L] {a b : L}
@@ -957,10 +957,10 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   · simp only [Set.mem_empty_iff_false, IsEmpty.forall_iff, Filter.eventually_atTop, imp_true_iff,
       exists_const]
   · intro k0 k1 k01 h1
-    refine' h1.mp (Filter.eventually_of_forall _)
+    refine h1.mp (Filter.eventually_of_forall ?_)
     exact fun n a1 z z0 ↦ a1 z (k01 z0)
   · intro k0 k1 h0 h1
-    refine' (h0.and h1).mp (Filter.eventually_of_forall _)
+    refine (h0.and h1).mp (Filter.eventually_of_forall ?_)
     intro n h z zs; cases' zs with zs zs; exact h.1 z zs; exact h.2 z zs
   -- Base case: Hartogs's lemma near a point.  We choose radii r1 < r2 within s, apply
   -- Fatou's lemma at r1, use monotonicity to bound by r2 integrals, and apply the submean
@@ -995,7 +995,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
     intro w wr; apply Metric.closedBall_subset_closedBall'
     simp only [dist_comm, Metric.mem_closedBall, le_sub_iff_add_le] at wr; rwa [add_comm]
   have r2s : ∀ w, w ∈ closedBall z (r2 - r1) → closedBall w r2 ⊆ s := by
-    intro w ws; refine' _root_.trans _ (_root_.trans rs interior_subset)
+    intro w ws; refine _root_.trans ?_ (_root_.trans rs interior_subset)
     simp only [Complex.dist_eq, ← hr2, Metric.mem_closedBall] at ws ⊢
     apply Metric.closedBall_subset_ball'; simp only [Complex.dist_eq]
     calc r / 2 + abs (w - z)
@@ -1057,7 +1057,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
   have gs : ∀ n, SuperharmonicOn (g n) (interior s) := by
     rw [← hg]; exact fun n ↦ ((fs' n).mono interior_subset).neg (fn' n) measurableSet_interior
   have gc : ∀ z, z ∈ interior s → (atTop.liminf fun n ↦ g n z) ≥ ENNReal.ofReal (b - c) := by
-    intro z zs; specialize fc z (interior_subset zs); refine' le_liminf.simple.mpr _
+    intro z zs; specialize fc z (interior_subset zs); refine le_liminf.simple.mpr ?_
     intro d dc
     have df : d ≠ ⊤ := ne_top_of_lt dc
     have dc' : b - d.toReal > c := by
@@ -1066,7 +1066,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
           sub_lt_sub_left ((ENNReal.toReal_lt_toReal df ENNReal.ofReal_ne_top).mpr dc) b
         _ = b - (b - c) := by rw [ENNReal.toReal_ofReal (sub_pos.mpr bc).le]
         _ = c := by ring_nf
-    refine' (fc _ dc').mp (Filter.eventually_of_forall _); intro n fb
+    refine (fc _ dc').mp (Filter.eventually_of_forall ?_); intro n fb
     calc
       g n z = ENNReal.ofReal (b - f n z) := by simp only [← hg, ← hf', neg_sub]
       _ ≥ ENNReal.ofReal (b - (b - d.toReal)) := by bound
@@ -1080,7 +1080,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
   intro d dc
   have dc' : ENNReal.ofReal (b - d) < ENNReal.ofReal (b - c) := by
     rw [ENNReal.ofReal_lt_ofReal_iff (sub_pos.mpr bc)]; simpa only [sub_lt_sub_iff_left]
-  refine' (h _ dc').mp (Filter.eventually_of_forall _)
+  refine (h _ dc').mp (Filter.eventually_of_forall ?_)
   intro n hn z zk; specialize hn z zk
   simp only [← hg, ← hf', neg_sub, ge_iff_le] at hn
   rw [ENNReal.ofReal_le_ofReal_iff (sub_nonneg.mpr (fb n z (interior_subset (ks zk))))] at hn

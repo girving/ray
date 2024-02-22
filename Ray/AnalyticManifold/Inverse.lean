@@ -111,13 +111,13 @@ lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := 
     apply MDifferentiableAt.hasMFDerivAt_comp2 (J := I) (co := cms)
     rw [i.zz]; exact i.fa.mdifferentiableAt
     apply hasMFDerivAt_fst
-    refine' HasMFDerivAt.comp _ _ (hasMFDerivAt_snd _ _ _)
+    refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _ _ _)
     exact (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
     rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
     rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
 
 lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
-  refine' HasMFDerivAt.prod _ i.has_df'; apply hasMFDerivAt_fst
+  refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst
 
 -- dh is invertible
 --   dh (u,v) = (a,b)
@@ -253,20 +253,21 @@ theorem Cinv.right_inv (i : Cinv f c z) :
         (extChartAt I (f c z)).source := by
     refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' I ?_)
     · apply i.fa.continuousAt.comp₂_of_eq continuousAt_fst
-      · refine' ContinuousAt.comp _ _
-        simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _
-        apply continuousAt_snd.comp
-        · refine' (PartialHomeomorph.continuousAt i.he.symm _).comp _
-          · simp only [m', (he i).symm_source]
-          · apply continuousAt_fst.prod
-            apply (continuousAt_extChartAt I _).comp_of_eq
-            · exact continuousAt_snd
-            · rfl
+      · refine ContinuousAt.comp ?_ ?_
+        · simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _
+        · apply continuousAt_snd.comp
+          · refine (PartialHomeomorph.continuousAt i.he.symm ?_).comp ?_
+            · simp only [m', (he i).symm_source]
+            · apply continuousAt_fst.prod
+              apply (continuousAt_extChartAt I _).comp_of_eq
+              · exact continuousAt_snd
+              · rfl
       · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _),
           PartialEquiv.invFun_as_coe]
     · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
       apply mem_extChartAt_source
-  refine' fm.mp (Filter.eventually_of_mem (o.mem_nhds m) _); intro x m mf
+  refine fm.mp (Filter.eventually_of_mem (o.mem_nhds m) ?_)
+  intro x m mf
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
     PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
@@ -277,7 +278,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   have q1 : (q (x.1, extChartAt I (f c z) x.2)).1 = x.1 := by simp only [← hq, i.inv_fst _ m.2]
   simp only [Cinv.h, Cinv.f', Prod.eq_iff_fst_eq_snd_eq, q1] at inv
   nth_rw 2 [← PartialEquiv.left_inv _ m.1]; nth_rw 2 [← inv.2]
-  refine' (PartialEquiv.left_inv _ mf).symm
+  refine (PartialEquiv.left_inv _ mf).symm
 
 theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.symm (c, i.fz') := by
   apply AnalyticAt.holomorphicAt
@@ -291,10 +292,12 @@ theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.sym
 /-- Our inverse `g` is holomorphic -/
 theorem Cinv.ga (i : Cinv f c z) : HolomorphicAt II I (uncurry i.g) (c, f c z) := by
   apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq
-  refine' holomorphicAt_snd.comp (i.he_symm_holomorphic.comp_of_eq _ _)
-  apply holomorphicAt_fst.prod
-  refine' (HolomorphicAt.extChartAt _).comp holomorphicAt_snd
-  exact mem_extChartAt_source _ _; rfl; exact i.inv_at
+  · refine holomorphicAt_snd.comp (i.he_symm_holomorphic.comp_of_eq ?_ ?_)
+    · apply holomorphicAt_fst.prod
+      refine (HolomorphicAt.extChartAt ?_).comp holomorphicAt_snd
+      exact mem_extChartAt_source _ _
+    · rfl
+  · exact i.inv_at
 
 end ComplexInverseFun
 

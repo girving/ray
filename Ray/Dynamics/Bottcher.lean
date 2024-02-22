@@ -185,7 +185,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
-    refine' eventually_of_forall fun w m e0 e1 ↦ _; simp only at m e0 e1
+    refine eventually_of_forall fun w m e0 e1 ↦ ?_; simp only at m e0 e1
     simp only [e0, e1]; exact s.bottcherNear_eqn m
   by_cases p : (c, z) ∈ s.post; simp only [h0 p]
   by_cases m : (c, z) ∈ s.basin

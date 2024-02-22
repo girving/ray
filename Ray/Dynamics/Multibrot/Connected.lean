@@ -61,11 +61,11 @@ theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected 
     exact ⟨⟨y, ⟨le_trans potential_nonneg py.le, y1⟩⟩, py⟩
   rw [e]; apply IsPreconnected.directed_iInter
   · intro ⟨a, a0, a1⟩ ⟨b, b0, b1⟩
-    refine' ⟨⟨max a b, mem_Ico.mpr ⟨le_max_of_le_left a0, max_lt a1 b1⟩⟩, _, _⟩
-    intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.1
-    intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.2
+    refine ⟨⟨max a b, mem_Ico.mpr ⟨le_max_of_le_left a0, max_lt a1 b1⟩⟩, ?_, ?_⟩
+    · intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.1
+    · intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.2
   · intro ⟨p, m⟩; simp only [Subtype.coe_mk]
-    refine' IsConnected.isPreconnected (IsPathConnected.isConnected _)
+    refine IsConnected.isPreconnected (IsPathConnected.isConnected ?_)
     apply IsPathConnected.of_frontier
     · rw [frontier_Ici]; exact isPathConnected_potential_levelset _ m.1 m.2
     · exact potential_continuous
@@ -83,7 +83,7 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
     · contrapose m; simp only [not_not, multibrotExt_inf]
     · simp only [multibrotExt_coe, not_not, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply (isConnected_compl_multibrotExt d).image
-  refine' continuousOn_toComplex.mono _; intro z m
+  refine continuousOn_toComplex.mono ?_; intro z m
   contrapose m; simp only [mem_compl_iff, mem_singleton_iff, not_not] at m
   simp only [m, not_mem_compl_iff, multibrotExt_inf]
 
@@ -106,5 +106,5 @@ theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_r
       · contrapose wi; simp only [mem_singleton_iff, not_not]
       · simp only [multibrotExt_coe, toComplex_coe, mem_diff] at m wz; rwa [← wz]
   rw [e]; apply dc.image
-  refine' continuousOn_toComplex.mono _; intro z ⟨_, i⟩
+  refine continuousOn_toComplex.mono ?_; intro z ⟨_, i⟩
   simp only [mem_singleton_iff, mem_compl_iff] at i ⊢; exact i

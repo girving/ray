@@ -93,7 +93,7 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] :
   -- Add a bit of slack
   apply le_of_forall_lt'
   intro q' pq'
-  rcases exists_between pq' with ⟨q, pq, qq⟩; refine' lt_of_le_of_lt _ qq; clear qq pq' q'
+  rcases exists_between pq' with ⟨q, pq, qq⟩; refine lt_of_le_of_lt ?_ qq; clear qq pq' q'
   by_cases q1 : 1 ≤ q; exact _root_.trans s.p_le_one q1
   simp only [not_le] at q1
   -- Use closedness of the set of non-a critical points
@@ -106,13 +106,13 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] :
     rcases(mem_image _ _ _).mp m with ⟨⟨c', z⟩, ⟨zp, zc, za⟩, cc⟩
     simp only at cc za zc zp; simp only [cc] at za zc zp; clear cc c'
     simp only [Ne.def, ← s.potential_eq_zero_of_onePreimage c] at za
-    refine' _root_.trans (csInf_le s.bddBelow_ps _) zp; right; use za, z, rfl, zc
-  refine' Filter.Frequently.mem_of_closed _ cu
-  refine' h.mp (eventually_of_forall fun e h ↦ _)
+    refine _root_.trans (csInf_le s.bddBelow_ps ?_) zp; right; use za, z, rfl, zc
+  refine Filter.Frequently.mem_of_closed ?_ cu
+  refine h.mp (eventually_of_forall fun e h ↦ ?_)
   rcases exists_lt_of_csInf_lt s.nonempty_ps (lt_of_le_of_lt h pq) with ⟨r, m, rq⟩
   cases' m with m m; linarith; rcases m with ⟨r0, z, zr, zc⟩
   rw [← zr, Ne.def, s.potential_eq_zero_of_onePreimage] at r0; rw [mem_image]
-  refine' ⟨(e, z), ⟨_, zc, r0⟩, rfl⟩; simp only [zr]; exact rq.le
+  refine ⟨(e, z), ⟨?_, zc, r0⟩, rfl⟩; simp only [zr]; exact rq.le
 
 /-- `z : S` is postcritical if its potential is smaller than any critical point (except for `a`) -/
 def Postcritical (s : Super f d a) (c : ℂ) (z : S) : Prop :=
@@ -132,7 +132,7 @@ theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential 
     ¬Precritical (f c) z := by
   contrapose p; simp only [Postcritical, not_not, not_forall, not_lt] at p ⊢
   rcases p with ⟨n, p⟩; trans s.potential c ((f c)^[n] z)
-  · refine' csInf_le s.bddBelow_ps (Or.inr ⟨_, (f c)^[n] z, rfl, p⟩)
+  · refine csInf_le s.bddBelow_ps (Or.inr ⟨?_, (f c)^[n] z, rfl, p⟩)
     simp only [s.potential_eqn_iter]; exact pow_ne_zero _ p0
   · simp only [s.potential_eqn_iter]
     exact pow_le_of_le_one s.potential_nonneg s.potential_le_one (pow_ne_zero _ s.d0)
@@ -160,7 +160,7 @@ theorem Super.isOpen_post (s : Super f d a) [OnePreimage s] : IsOpen s.post := b
 /-- Postcritical holds locally -/
 theorem Postcritical.eventually (p : Postcritical s c z) [OnePreimage s] :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z), Postcritical s p.1 p.2 := by
-  refine' (s.isOpen_post.eventually_mem _).mp (eventually_of_forall fun _ m ↦ m); exact p
+  refine (s.isOpen_post.eventually_mem ?_).mp (eventually_of_forall fun _ m ↦ m); exact p
 
 /-- Postcritical points are in the basin -/
 theorem Super.post_basin (s : Super f d a) : s.post ⊆ s.basin := fun _ m ↦
@@ -207,13 +207,13 @@ theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z)
     · exact nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic r').along_snd
           (s.bottcherNearIter_mfderiv_ne_zero mc (p.not_precritical p0))
   replace h := h.nonconst
-  refine' ⟨(s.bottcherNearIter_holomorphic r).along_snd, _⟩
+  refine ⟨(s.bottcherNearIter_holomorphic r).along_snd, ?_⟩
   contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
   rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
   have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
     (continuousAt_const.prod (s.continuousAt_iter continuousAt_const
       continuousAt_id)).eventually_mem (s.isOpen_near.mem_nhds r)
-  refine' (h.and er).mp (eventually_of_forall _); intro x ⟨e, m⟩
+  refine (h.and er).mp (eventually_of_forall ?_); intro x ⟨e, m⟩
   simp only [Super.bottcherNearIter] at e
   simp only [Super.bottcherNearIter, Function.iterate_add_apply, s.bottcherNear_eqn_iter m,
     s.bottcherNear_eqn_iter r, e]
@@ -235,7 +235,7 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] (p : Pos
   rw [o, Filter.frequently_map] at e
   apply e.mp
   apply (((s.isOpen_preimage _).snd_preimage c).eventually_mem near).mp
-  refine' eventually_of_forall fun w m lt ↦ _
+  refine eventually_of_forall fun w m lt ↦ ?_
   simp only at m lt; rw [mem_setOf, mem_setOf] at m; simp only at m
   simp only [s.potential_eq m, s.potential_eq near, Super.potential']
   exact Real.rpow_lt_rpow (Complex.abs.nonneg _) lt

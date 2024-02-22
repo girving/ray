@@ -106,7 +106,7 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
   simp only [atInf_basis.tendsto_right_iff, Complex.norm_eq_abs, Set.mem_setOf_eq,
     forall_true_left, uncurry, Metric.eventually_nhds_prod_iff]
   intro r; use 1, zero_lt_one, fun z ↦ max r 0 + abs c + 1 < abs z; constructor
-  · refine' (eventually_atInf (max r 0 + abs c + 1)).mp (eventually_of_forall fun w h ↦ _)
+  · refine (eventually_atInf (max r 0 + abs c + 1)).mp (eventually_of_forall fun w h ↦ ?_)
     simp only [Complex.norm_eq_abs] at h; exact h
   · intro e ec z h; simp only [Complex.dist_eq] at ec
     have zz : abs z ≤ abs (z ^ d) := by
@@ -177,7 +177,7 @@ theorem gl_zero : gl d c 0 = 1 := by
   simp only [gl, zero_pow (d_ne_zero _), MulZeroClass.mul_zero]; norm_num
 
 theorem gl_frequently_ne_zero : ∃ᶠ z in 𝓝 0, gl d c z ≠ 0 := by
-  refine' (analyticAt_gl.continuousAt.eventually_ne _).frequently; simp only [gl_zero]
+  refine (analyticAt_gl.continuousAt.eventually_ne ?_).frequently; simp only [gl_zero]
   exact one_ne_zero
 
 theorem fc_f : leadingCoeff (fl (f d) ∞ c) 0 = 1 := by
@@ -242,13 +242,13 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
         refine lt_of_le_of_lt ?_ m; rw [div_le_iff (lt_of_lt_of_le (by norm_num) cz1)]
         refine le_trans (pow_le_pow_of_le_one (Complex.abs.nonneg _)
           (le_trans zb (by norm_num)) (two_le_d d)) ?_
-        rw [pow_two]; refine' mul_le_mul_of_nonneg_left _ (Complex.abs.nonneg _)
+        rw [pow_two]; refine mul_le_mul_of_nonneg_left ?_ (Complex.abs.nonneg _)
         exact le_trans zb (le_trans (by norm_num) cz1)
       gs' := by
         intro z z0 m; simp only [fl_f, div_div_cancel_left' (pow_ne_zero d z0)]
         specialize cz1 m
         have czp : 0 < abs (1 + c * z ^ d) := lt_of_lt_of_le (by norm_num) cz1
-        refine' le_of_mul_le_mul_right _ czp
+        refine le_of_mul_le_mul_right ?_ czp
         rw [← Complex.abs.map_mul, mul_sub_right_distrib, one_mul,
           inv_mul_cancel (Complex.abs.ne_zero_iff.mp czp.ne'), ← sub_sub, sub_self, zero_sub,
           Complex.abs.map_neg]
@@ -478,7 +478,7 @@ theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < abs ((f' d c)^[n] c)) : c ∉
         _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ']
   simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
   rw [← Filter.tendsto_add_atTop_iff_nat n]; apply Filter.tendsto_atTop_mono b
-  refine' Filter.Tendsto.mul_atTop (by linarith) tendsto_const_nhds _
+  refine Filter.Tendsto.mul_atTop (by linarith) tendsto_const_nhds ?_
   apply tendsto_pow_atTop_atTop_of_one_lt; linarith
 
 theorem multibrot_eq_le_two :
@@ -493,9 +493,9 @@ theorem multibrot_eq_le_two :
 
 /-- `multibrot d` is compact -/
 theorem isCompact_multibrot : IsCompact (multibrot d) := by
-  refine' IsCompact.of_isClosed_subset (isCompact_closedBall _ _) _ multibrot_subset_closedBall
+  refine IsCompact.of_isClosed_subset (isCompact_closedBall _ _) ?_ multibrot_subset_closedBall
   rw [multibrot_eq_le_two]; apply isClosed_iInter; intro n
-  refine' IsClosed.preimage _ Metric.isClosed_ball
+  refine IsClosed.preimage ?_ Metric.isClosed_ball
   induction' n with n h; simp only [Function.iterate_zero_apply]; exact continuous_id
   simp only [Function.iterate_succ_apply']; rw [continuous_iff_continuousAt]; intro c
   exact (analytic_f' _ (mem_univ _)).continuousAt.comp₂ continuousAt_id h.continuousAt
@@ -573,7 +573,7 @@ theorem bottcher_analytic : AnalyticOn ℂ (bottcher' d) (multibrot d)ᶜ := by
 theorem bottcherHolomorphic (d : ℕ) [Fact (2 ≤ d)] :
     HolomorphicOn I I (bottcher d) (multibrotExt d) := by
   intro c m; induction c using OnePoint.rec
-  · refine' holomorphicAt_fill_inf _ bottcher_tendsto_zero
+  · refine holomorphicAt_fill_inf ?_ bottcher_tendsto_zero
     rw [atInf_basis.eventually_iff]; use 2
     simp only [true_and_iff, mem_setOf, Complex.norm_eq_abs]
     intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).holomorphicAt I I
@@ -597,7 +597,7 @@ theorem abs_bottcher {c : 𝕊} : abs (bottcher d c) = potential d c := by
 theorem potential_continuous : Continuous (potential d) := by
   set s := superF d; rw [continuous_iff_continuousAt]; intro c; induction c using OnePoint.rec
   · have e : potential d =ᶠ[𝓝 ∞] fun c ↦ abs (bottcher d c) := by
-      refine' eventually_of_forall fun c ↦ _; rw [← abs_bottcher]
+      refine eventually_of_forall fun c ↦ ?_; rw [← abs_bottcher]
     rw [continuousAt_congr e]
     exact Complex.continuous_abs.continuousAt.comp
       (bottcherHolomorphic d _ multibrotExt_inf).continuousAt
@@ -650,11 +650,11 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
       have pb : potential d x = abs b := by
         apply tendsto_nhds_unique_of_frequently_eq potential_continuous.continuousAt
           continuousAt_const
-        refine' e.mp (eventually_of_forall _); intro z ⟨_, h⟩; rw [← h.self_of_nhds, abs_bottcher]
+        refine e.mp (eventually_of_forall ?_); intro z ⟨_, h⟩; rw [← h.self_of_nhds, abs_bottcher]
       rw [← pb, potential_lt_one] at b1
       have e' : ∃ᶠ y in 𝓝[{x}ᶜ] x, y ∈ t := by
         simp only [frequently_nhdsWithin_iff, mem_compl_singleton_iff]
-        refine' e.mp (eventually_of_forall fun z zt ↦ ⟨zt, _⟩)
+        refine e.mp (eventually_of_forall fun z zt ↦ ⟨zt, ?_⟩)
         contrapose xt; simp only [not_not] at xt ⊢; rwa [← xt]
       contrapose xt; simp only [not_not]; use b1
       cases' HolomorphicAt.eventually_eq_or_eventually_ne (bottcherHolomorphic d _ b1)
@@ -682,7 +682,7 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
       simp only [bottcher, fill_coe, bottcher', mem_ball, Complex.dist_eq, sub_zero]
       exact s.bottcher_lt_one (multibrotPost m)
   · refine _root_.trans ?_ interior_subset
-    refine' IsPreconnected.relative_clopen (convex_ball _ _).isPreconnected _ _ _
+    refine IsPreconnected.relative_clopen (convex_ball _ _).isPreconnected ?_ ?_ ?_
     · use 0, mem_ball_self one_pos, ∞
       simp only [multibrotExt_inf, bottcher, fill_inf, true_and_iff]
     · -- Relative openness
@@ -702,12 +702,12 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
         rw [mem_closure_iff_frequently] at m ⊢; apply m.mp
         have lt : ∀ᶠ y : ℂ in 𝓝 x, abs y < b :=
           Complex.continuous_abs.continuousAt.eventually_lt continuousAt_const xb
-        refine' lt.mp (eventually_of_forall fun y lt m ↦ _)
+        refine lt.mp (eventually_of_forall fun y lt m ↦ ?_)
         rcases m with ⟨c, _, cy⟩; rw [← cy]; rw [← cy, abs_bottcher] at lt
         exact ⟨c, lt.le, rfl⟩
       apply image_subset _ ts; rw [IsClosed.closure_eq] at mt; exact mt
       apply IsCompact.isClosed; apply IsCompact.image_of_continuousOn ct
-      refine' ContinuousOn.mono _ ts; exact (bottcherHolomorphic d).continuousOn
+      refine ContinuousOn.mono ?_ ts; exact (bottcherHolomorphic d).continuousOn
 
 /-!
 ### Ineffective approximations

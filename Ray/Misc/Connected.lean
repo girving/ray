@@ -131,11 +131,11 @@ theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {
   set s := fun t : Ioc a b ↦ closure (r '' Ioc a t)
   have n : Nonempty (Ioc a b) := ⟨b, right_mem_Ioc.mpr ab⟩
   have m : Monotone s := by
-    intro a b ab; refine' closure_mono (monotone_image _)
+    intro a b ab; refine closure_mono (monotone_image ?_)
     exact Ioc_subset_Ioc (le_refl _) (Subtype.coe_le_coe.mpr ab)
   have d : Directed Superset s := fun a b ↦ ⟨min a b, m (min_le_left _ _), m (min_le_right _ _)⟩
   have p : ∀ t, IsPreconnected (s t) := by
-    intro ⟨t, m⟩; refine' (isPreconnected_Ioc.image _ (rc.mono _)).closure
+    intro ⟨t, m⟩; refine (isPreconnected_Ioc.image _ (rc.mono ?_)).closure
     simp only [mem_Ioc] at m
     simp only [Subtype.coe_mk, Ioc_subset_Ioc_iff m.1, m.2, le_refl, true_and_iff]
   have c : ∀ t, IsCompact (s t) := fun t ↦ isClosed_closure.isCompact
@@ -173,8 +173,8 @@ theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s) (ne
     simp only [mem_interior_iff_mem_nhds, preimage_coe_mem_nhds_subtype, Subtype.coe_mk] at n ⊢
     exact nhdsWithin_le_nhds n
   have uc : IsClosed u := by
-    rw [← closure_eq_iff_isClosed]; refine' subset_antisymm _ subset_closure
-    refine' _root_.trans (continuous_subtype_val.closure_preimage_subset _) _
+    rw [← closure_eq_iff_isClosed]; refine subset_antisymm ?_ subset_closure
+    refine _root_.trans (continuous_subtype_val.closure_preimage_subset _) ?_
     intro ⟨x, m⟩ h; exact cl ⟨m, h⟩
   have p : IsPreconnected (univ : Set s) := (Subtype.preconnectedSpace sp).isPreconnected_univ
   cases' disjoint_or_subset_of_isClopen p ⟨uc, uo⟩ with h h
@@ -202,7 +202,7 @@ theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] 
 /-- Circles are path connected -/
 theorem isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) : IsPathConnected (sphere z r) := by
   rw [← abs_of_nonneg r0, ← image_circleMap_Ioc z r]
-  refine' IsPathConnected.image _ (continuous_circleMap _ _)
+  refine IsPathConnected.image ?_ (continuous_circleMap _ _)
   exact (convex_Ioc 0 (2 * π)).isPathConnected (nonempty_Ioc.mpr Real.two_pi_pos)
 
 /-- Path connectedness of `f ⁻¹' frontier s` implies path connectedness of `f ⁻¹' s`,
@@ -255,10 +255,10 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
       simp only [subset_def, mem_Ioo, and_imp, mem_preimage, Function.comp] at xt ty h
       rcases exists_between (lt_min ty t1) with ⟨z, tz, zy1⟩; rcases lt_min_iff.mp zy1 with ⟨zy, z1⟩
       suffices h : z ∈ u by linarith [le_csSup bdd h]
-      rw [← hu]; refine' ⟨⟨_root_.trans m.1 tz.le, z1.le⟩, _⟩
+      rw [← hu]; refine ⟨⟨_root_.trans m.1 tz.le, z1.le⟩, ?_⟩
       simp only [mem_iInter₂, mem_Iic]; intro w ws
       contrapose ws; simp only [not_not, not_le] at ws ⊢
-      by_cases xw : x < w; refine' interior_subset (h _ xw (_root_.trans ws zy))
+      by_cases xw : x < w; refine interior_subset (h _ xw (_root_.trans ws zy))
       simp only [not_lt] at xw; exact lo _ (_root_.trans xw xt.le)
   -- Walk from b to p t
   refine ((pc.joinedIn _ ft b fb).mono (preimage_mono sc.frontier_subset)).symm.trans

@@ -293,7 +293,7 @@ theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : �
   intro x xs
   apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := fun _ ↦ c)
   · apply eventually_nhdsWithin_of_forall; intro y ys
-    refine' ContinuousOn.aestronglyMeasurable _ measurableSet_Ioc
+    refine ContinuousOn.aestronglyMeasurable ?_ measurableSet_Ioc
     rw [Set.uIoc_of_le ab]; simp_rw [e]; apply fc.comp
     · apply Continuous.continuousOn; exact Continuous.Prod.mk y
     · intro t ts; exact Set.mk_mem_prod ys (Set.Ioc_subset_Icc_self ts)
@@ -311,7 +311,7 @@ theorem aEMeasurable_liminf' {I I' : Type} {u : Filter I} {f : I → X → ENNRe
     {p : I' → Prop} {s : I' → Set I} (fm : ∀ n, AEMeasurable (f n) μ) (uc : u.HasCountableBasis p s)
     (sc : ∀ i, (s i).Countable) : AEMeasurable (fun x ↦ u.liminf fun n ↦ f n x) μ := by
   simp_rw [uc.toHasBasis.liminf_eq_iSup_iInf]
-  refine' aemeasurable_biSup _ uc.countable _
+  refine aemeasurable_biSup _ uc.countable ?_
   intro i _; exact aemeasurable_biInf _ (sc i) (fun n _ ↦ fm n)
 
 /-- `liminf` preserves ae measurability, `ℕ` version -/

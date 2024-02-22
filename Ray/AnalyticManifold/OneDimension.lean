@@ -83,7 +83,7 @@ def mderivToScalar (z : S) (w : T) : (TangentSpace I z →L[ℂ] TangentSpace I 
     simp only [mderivToScalar']
     rw [Metric.continuous_iff]; intro x e ep; use e / 2, half_pos ep; intro y xy
     simp only [dist_eq_norm, Complex.norm_eq_abs] at xy ⊢
-    refine' lt_of_le_of_lt _ (half_lt_self ep)
+    refine lt_of_le_of_lt ?_ (half_lt_self ep)
     apply ContinuousLinearMap.opNorm_le_bound' _ (half_pos ep).le; intro s _
     -- Something's wrong with the type at this point, so rewrite it to make things go through
     have h : ‖(y • ContinuousLinearMap.id ℂ ℂ - x • ContinuousLinearMap.id ℂ ℂ) s‖ ≤
@@ -230,7 +230,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
     apply ((isOpen_extChartAt_target I z).eventually_mem (mem_extChartAt_target I z)).mp
-    refine' eventually_of_forall fun w m ↦ _
+    refine eventually_of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne.def, ContinuousLinearMap.ext_iff, not_forall,
     ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply]
@@ -309,7 +309,7 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source I (f c z)).mem_nhds
     (mem_extChartAt_source I (f c z)))).mp
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
-  refine' fa.eventually.mp (eventually_of_forall _); intro ⟨e, w⟩ fa m fm
+  refine fa.eventually.mp (eventually_of_forall ?_); intro ⟨e, w⟩ fa m fm
   simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
     mem_prod, mem_univ, true_and_iff] at m
   simp only [uncurry] at fm
@@ -340,7 +340,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
   set g := inChart f c z
   have g0 := inChart_critical fa
   have g0n : ∀ᶠ p : ℂ × S in 𝓝 (c, z), deriv (g p.1) (extChartAt I z p.2) ≠ 0 := by
-    refine' ContinuousAt.eventually_ne _ _
+    refine ContinuousAt.eventually_ne ?_ ?_
     · have e : (fun p : ℂ × S ↦ deriv (g p.1) (extChartAt I z p.2)) =
         (fun p : ℂ × ℂ ↦ deriv (g p.1) p.2) ∘ fun p : ℂ × S ↦ (p.1, extChartAt I z p.2) := rfl
       rw [e]
@@ -348,7 +348,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
         (continuousAt_fst.prod ((continuousAt_extChartAt I z).comp_of_eq continuousAt_snd rfl))
         rfl
     · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
-  refine' g0.mp (g0n.mp (eventually_of_forall fun w g0 e ↦ _))
+  refine g0.mp (g0n.mp (eventually_of_forall fun w g0 e ↦ ?_))
   rw [Ne.def, e]; exact g0
 
 /-- `mfderiv` is nonzero near where it is nonzero -/
@@ -387,17 +387,17 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
     simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
     apply mem_extChartAt_source
   apply ((isOpen_extChartAt_target II p).eventually_mem (mem_extChartAt_target II p)).mp
-  refine' fm.mp (eventually_of_forall fun q fm m ↦ ⟨_, _, _⟩)
+  refine fm.mp (eventually_of_forall fun q fm m ↦ ⟨?_, ?_, ?_⟩)
   · exact (continuousAt_extChartAt' I fm).comp_of_eq
         (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl
   · apply HolomorphicAt.analyticAt I I
-    refine' (HolomorphicAt.extChartAt fm).comp_of_eq _ rfl
+    refine (HolomorphicAt.extChartAt fm).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢
     exact (f0 _ _).comp (HolomorphicAt.extChartAt_symm m.1)
   · apply HolomorphicAt.analyticAt I I
-    refine' (HolomorphicAt.extChartAt fm).comp_of_eq _ rfl
+    refine (HolomorphicAt.extChartAt fm).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢

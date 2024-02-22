@@ -116,7 +116,7 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
   rw [ball_prod_same'] at rs
   rw [← Metric.mem_ball, ball_prod_same', Set.mem_prod] at wz
   have d : DifferentiableOn ℂ (fun t ↦ f (t, w.snd)) (ball z.fst (r / 2)) := by
-    intro t ts; refine' (h.fa0 t w.snd _).differentiableWithinAt
+    intro t ts; refine (h.fa0 t w.snd ?_).differentiableWithinAt
     exact rs (Set.mk_mem_prod ts (Metric.ball_subset_ball ur wz.right))
   have wf : w.fst ∈ ball z.fst (r / 2) := Metric.ball_subset_ball ur wz.left
   have m : Set.MapsTo (fun t ↦ f (t, w.snd)) (ball z.fst (r / 2))
@@ -132,7 +132,7 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
       _ = 2 * b := by ring
       _ < 3 * b := mul_lt_mul_of_pos_right (by norm_num) bp
   have L := Complex.dist_le_div_mul_dist_of_mapsTo_ball d m wf; simp only [Prod.mk.eta] at L
-  refine' _root_.trans L (_root_.trans _ ue); simp only [Metric.mem_ball] at wz
+  refine _root_.trans L (_root_.trans ?_ ue); simp only [Metric.mem_ball] at wz
   rw [div_eq_mul_inv _ (2 : ℝ), div_mul_eq_div_div]; ring_nf
   bound
 
@@ -141,7 +141,7 @@ theorem Bounded.dist1 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
     (rs : ball z r ⊆ s) (wz : dist w z < min (r / 2) (e * r / b / 24))
     (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) : dist (f (z.fst, w.snd)) (f z) ≤ e / 4 := by
   have wrs : ball w (r / 2) ⊆ s := by
-    refine' _root_.trans _ rs; apply Metric.ball_subset_ball'
+    refine _root_.trans ?_ rs; apply Metric.ball_subset_ball'
     have rr := _root_.trans wz.le (min_le_left _ _)
     trans r / 2 + r / 2; linarith; ring_nf; apply le_refl
   have rs' : ball (swap w) (r / 2) ⊆ swap '' s := by rw [ball_swap]; exact Set.image_subset _ wrs
@@ -191,7 +191,7 @@ theorem NonemptyInterior.nonempty_interior_of_iUnion_of_closed {A B : Type} [Top
   have hc' : ∀ k, IsClosed (f' k) := by
     rw [Option.forall]; exact ⟨isOpen_interior.isClosed_compl, fun k ↦ hc k⟩
   have hU' : (⋃ k, f' k) = Set.univ := by
-    apply Set.ext; intro x; refine' ⟨fun _ ↦ Set.mem_univ _, _⟩; intro _; rw [Set.mem_iUnion]
+    apply Set.ext; intro x; refine ⟨fun _ ↦ Set.mem_univ _, ?_⟩; intro _; rw [Set.mem_iUnion]
     by_cases m : x ∈ s
     · rcases Set.mem_iUnion.mp (interior_subset m) with ⟨k, mk⟩
       use some k
@@ -238,18 +238,18 @@ theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0)
     · simp only [z1r, false_imp_iff, and_true_iff, Set.setOf_mem_eq, Metric.isClosed_ball]
     · rw [Set.not_not_mem] at z1r
       simp only [z1r, true_imp_iff]
-      refine' ContinuousOn.isClosed_le Metric.isClosed_ball _ continuousOn_const
+      refine ContinuousOn.isClosed_le Metric.isClosed_ball ?_ continuousOn_const
       apply ContinuousOn.norm
       exact ContinuousOn.mono (h.on0 z1r).continuousOn esub
   have hU : (interior (⋃ b, S b)).Nonempty := by
-    refine' Set.nonempty_of_mem
-        (mem_interior.mpr ⟨ball c0 re, _, Metric.isOpen_ball, Metric.mem_ball_self (lt_min rp ep)⟩)
+    refine Set.nonempty_of_mem
+        (mem_interior.mpr ⟨ball c0 re, ?_, Metric.isOpen_ball, Metric.mem_ball_self (lt_min rp ep)⟩)
     rw [Set.subset_def]; intro z0 z0s; rw [Set.mem_iUnion]
     have z0s' := esub (mem_open_closed z0s)
     rcases (isCompact_closedBall _ _).bddAbove_image (h.on1 z0s').continuousOn.norm with ⟨b, fb⟩
     simp only [mem_upperBounds, Set.ball_image_iff] at fb
     use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
-    refine' ⟨mem_open_closed z0s, _⟩
+    refine ⟨mem_open_closed z0s, ?_⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
     exact _root_.trans (fb z1 z1r) (Nat.le_ceil _)
   rcases NonemptyInterior.nonempty_interior_of_iUnion_of_closed hc hU with ⟨b, bi⟩
@@ -272,7 +272,7 @@ theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0)
     have zb' := zb.right z.snd zs.right.le
     simp only [Prod.mk.eta] at zb'; exact zb'
   use t, tp, c0e
-  refine' of_bounded (h.mono _) (IsOpen.prod isOpen_ball isOpen_ball) fb
+  refine of_bounded (h.mono ?_) (IsOpen.prod isOpen_ball isOpen_ball) fb
   rw [← closedBall_prod_same]
   exact Set.prod_mono (_root_.trans tr esub) Metric.ball_subset_closedBall
 
@@ -356,7 +356,7 @@ theorem to_uneven (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) :
   have c0m : c0 ∈ ball c0' (r / 2) := by
     simp only [Metric.mem_ball]; rw [dist_comm]; apply lt_of_le_of_lt m; bound
   have h' : Har f (closedBall (c0', c1) (r / 2)) := by
-    refine' Har.mono _ h; simp only [← closedBall_prod_same]; apply Set.prod_mono
+    refine Har.mono ?_ h; simp only [← closedBall_prod_same]; apply Set.prod_mono
     assumption; apply Metric.closedBall_subset_closedBall; linarith
   have a' : AnalyticOn ℂ f (ball c0' (min r0 (r / 2)) ×ˢ ball c1 (r / 2)) := by
     apply a.mono; apply Set.prod_mono
@@ -405,9 +405,9 @@ theorem Uneven.has_series (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr1
   have snp : sn > 0 := Real.toNNReal_pos.mpr sp
   rw [uneven_is_cauchy]
   rw [sns, ← ENNReal.coe_nnreal_eq]
-  refine' DifferentiableOn.hasFPowerSeriesOnBall _ snp
+  refine DifferentiableOn.hasFPowerSeriesOnBall ?_ snp
   rw [← sns]
-  refine' DifferentiableOn.mono _ (Metric.closedBall_subset_closedBall sr1)
+  refine DifferentiableOn.mono ?_ (Metric.closedBall_subset_closedBall sr1)
   exact AnalyticOn.differentiableOn (u.h.on0 z1s)
 
 theorem unevenTerm_eq (u : Uneven f c0 c1 r0 r1) {r : ℝ} (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
@@ -434,10 +434,10 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
       ‖unevenSeries u z1 n‖ ≤ c * a ^ n := by
   have fc : ContinuousOn f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) := by
     suffices fa' : AnalyticOn ℂ f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) by exact fa'.continuousOn
-    refine' u.a.mono (Set.prod_mono _ _)
-    have rh : r0 / 2 < r0 := by linarith [u.r0p]
-    exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
-    exact Metric.closedBall_subset_ball (by linarith [u.r1p])
+    refine u.a.mono (Set.prod_mono ?_ ?_)
+    · have rh : r0 / 2 < r0 := by linarith [u.r0p]
+      exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
+    · exact Metric.closedBall_subset_ball (by linarith [u.r1p])
   rcases (((isCompact_sphere _ _).prod (isCompact_closedBall _ _)).bddAbove_image
     fc.norm).exists_ge 0 with ⟨b, bp, fb⟩
   simp only [Set.ball_image_iff] at fb
@@ -530,7 +530,7 @@ def Along0.linearMap (n : ℕ) :
 def Along0.continuousLinearMap (n : ℕ) :
     ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ × ℂ) E →L[ℂ]
       ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ) E := by
-  refine' LinearMap.mkContinuous (Along0.linearMap n) 1 _
+  refine LinearMap.mkContinuous (Along0.linearMap n) 1 ?_
   intro p; simp only [one_mul, Along0.linearMap]; exact Along0.norm p
 
 /-- `.along0` for a whole power series -/
@@ -540,9 +540,9 @@ def FormalMultilinearSeries.along0 (p : FormalMultilinearSeries ℂ (ℂ × ℂ)
 /-- `.along0` increases radius of convergence -/
 theorem Along0.radius (p : FormalMultilinearSeries ℂ (ℂ × ℂ) E) : p.radius ≤ p.along0.radius := by
   simp_rw [FormalMultilinearSeries.radius]
-  refine' iSup_mono _; intro r
-  refine' iSup_mono _; intro C
-  refine' iSup_mono' _; intro h
+  refine iSup_mono ?_; intro r
+  refine iSup_mono ?_; intro C
+  refine iSup_mono' ?_; intro h
   have h' : ∀ n, ‖p.along0 n‖ * (r:ℝ)^n ≤ C := by
     intro n; refine le_trans ?_ (h n); apply mul_le_mul_of_nonneg_right
     exact Along0.norm (p n); bound
@@ -556,10 +556,10 @@ theorem HasFPowerSeriesAt.along0 {f : ℂ × ℂ → E} {c0 c1 : ℂ}
   rcases fp with ⟨r, fpr⟩
   suffices h : HasFPowerSeriesOnBall (fun z0 ↦ f (z0, c1)) p.along0 c0 r by
     exact h.hasFPowerSeriesAt
-  refine'
+  refine
     { r_le := le_trans fpr.r_le (Along0.radius p)
       r_pos := fpr.r_pos
-      hasSum := _ }
+      hasSum := ?_ }
   · intro w0 w0r
     simp_rw [FormalMultilinearSeries.along0, ContinuousMultilinearMap.along0, idZeroLm]
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
@@ -612,11 +612,11 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
         _ = r1 - dist z1 c1 + dist z1 c1 := rfl
         _ = r1 := by ring_nf
     use EMetric.ball z1 s
-    refine' ⟨_, EMetric.isOpen_ball, EMetric.mem_ball_self sp⟩
+    refine ⟨?_, EMetric.isOpen_ball, EMetric.mem_ball_self sp⟩
     intro w1 w1s
     have p0 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (unevenSeries u w1) c0 := by
       have w1c : w1 ∈ closedBall c1 r1 := mem_open_closed (sb w1s)
-      refine' (Uneven.has_series u u.r1p (le_refl _) w1c).hasFPowerSeriesAt
+      refine (Uneven.has_series u u.r1p (le_refl _) w1c).hasFPowerSeriesAt
     have p1 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (p.changeOrigin (g w1)).along0 c0 := by
       have wz : ↑‖((0 : ℂ), w1 - z1)‖₊ < r := by
         simp only [EMetric.mem_ball, edist_dist, Complex.dist_eq] at w1s
@@ -706,7 +706,7 @@ theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ clos
 /-- Our `maxLog` function is subharmonic -/
 theorem uneven_nonuniform_subharmonic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
-  refine' SubharmonicOn.constMul _ (by bound)
+  refine SubharmonicOn.constMul ?_ (by bound)
   apply AnalyticOn.maxLog_norm_subharmonicOn _ (-1)
   rw [analyticOn_iff_differentiableOn Metric.isOpen_ball]
   apply DifferentiableOn.const_smul
@@ -727,7 +727,7 @@ theorem unevenSeries_strong_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 <
   have H := SubharmonicOn.hartogs (fun n ↦ (uneven_nonuniform_subharmonic u n).mono trs) fb
       (fun z zs ↦ unevenLog_nonuniform_bound u (cs zs)) (isCompact_closedBall _ _) ks
   specialize H (r1 / s).log (by bound)
-  refine' H.mp ((Filter.eventually_gt_atTop 0).mp (Filter.eventually_of_forall _))
+  refine H.mp ((Filter.eventually_gt_atTop 0).mp (Filter.eventually_of_forall ?_))
   intro n np h z zs; specialize h z zs
   rw [unevenSeries_norm]
   rw [unevenLog, inv_mul_le_iff (Nat.cast_pos.mpr np : 0 < (n : ℝ))] at h
@@ -809,7 +809,7 @@ theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [Comp
   rcases Metric.isOpen_iff.mp so c cs with ⟨r, rp, rs⟩
   rcases exists_between rp with ⟨t, tp, tr⟩
   have bs : closedBall (c.1, c.2) t ⊆ s := by
-    refine' _root_.trans _ rs; simp only [fst_snd_eq]; exact Metric.closedBall_subset_ball tr
+    refine _root_.trans ?_ rs; simp only [fst_snd_eq]; exact Metric.closedBall_subset_ball tr
   rcases to_uneven (h.mono bs) tp with ⟨c0', r0, r1, us, c0s, u⟩
   have cr : abs (c.1 - c0') < r1 := by
     simp only [Complex.dist_eq, Metric.mem_ball] at c0s; exact c0s
@@ -819,7 +819,7 @@ theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [Comp
   · apply fa
     simp only [Metric.mem_ball, Prod.dist_eq, Complex.dist_eq, dist_self, ge_iff_le, apply_nonneg,
       max_eq_left, vc]
-  · refine' _root_.trans _ bs
+  · refine _root_.trans ?_ bs
     simp_rw [← ball_prod_same, ← closedBall_prod_same, Set.prod_subset_prod_iff]; apply Or.inl
     use _root_.trans (Metric.ball_subset_ball vr.le) us
     have r1t := le_of_ball_subset_closedBall u.r1p.le tp.le us

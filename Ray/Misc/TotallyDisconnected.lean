@@ -51,7 +51,7 @@ theorem isTotallyDisconnected_iff_totally_disconnected_subtype {X : Type} [Topol
           rw [← yx, ← zy]; exact zt
       rw [e]; exact q.image _
     · simp only [not_nonempty_iff_eq_empty] at ne; rw [ne]; exact isTotallyDisconnected_empty
-  · intro h; refine' ⟨_⟩; apply embedding_subtype_val.isTotallyDisconnected
+  · intro h; refine ⟨?_⟩; apply embedding_subtype_val.isTotallyDisconnected
     rw [Subtype.coe_image_univ]; exact h
 
 /-- `Ioo` on the reals is not countable if it is nonempty -/
@@ -66,7 +66,7 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
     have e : R = range (uncurry dist) := by
       apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry]; rfl
     rw [e]; exact countable_range _
-  refine' ⟨_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
+  refine ⟨?_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
   rw [← dist_pos] at xy
   have h : ¬Ioo 0 (dist x y) ⊆ R := by by_contra h; exact not_countable_Ioo xy (rc.mono h)
   simp only [not_subset, mem_Ioo] at h; rcases h with ⟨r, ⟨rp, rxy⟩, rr⟩

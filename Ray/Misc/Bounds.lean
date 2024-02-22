@@ -246,9 +246,9 @@ theorem Metric.continuous_near {f : ℂ → ℂ} {z : ℂ} {r : ℝ} (fc : Conti
   by_cases sr : s ≤ r; exists s
   simp only [not_le] at sr
   exists r
-  refine' ⟨rp, by bound, _⟩
+  refine ⟨rp, by bound, ?_⟩
   intro w wr
-  refine' @sc w _
+  refine @sc w ?_
   trans r; assumption; assumption
 
 theorem slightly_smaller {z : ℂ} (nz : z ≠ 0) {r : ℝ} (rp : 0 < r) :
@@ -284,7 +284,7 @@ theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, 
 theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0) (cp : c > 0)
     (zr : abs z ≤ r) (fc : ContinuousAt f z) (h : ∀ z : ℂ, abs z < r → abs (f z) ≤ c * abs z) :
     abs (f z) ≤ c * abs z := by
-  by_cases nz : z = 0; · refine' h z _; rw [nz]; simpa
+  by_cases nz : z = 0; · refine h z ?_; rw [nz]; simpa
   apply le_of_forall_small_le_add zero_lt_one
   intro e ep _
   rcases Metric.continuous_near fc rp e ep with ⟨s,sp,_,sc⟩
@@ -320,7 +320,7 @@ theorem Real.log1p_small' {x r : ℝ} (r1 : r < 1) (xr : |x| ≤ r) :
   set z := (x : ℂ)
   have zx : abs z = |x| := Complex.abs_ofReal _
   simp only [← Complex.log_ofReal_re, ← zx] at xr ⊢
-  refine' _root_.trans (_root_.trans (Complex.abs_re_le_abs _) _) (_root_.log1p_small' r1 xr)
+  refine _root_.trans (_root_.trans (Complex.abs_re_le_abs _) ?_) (_root_.log1p_small' r1 xr)
   simp only [Complex.ofReal_add, Complex.ofReal_one, le_refl]
 
 /-- `log (1+x)` is small for small `x` -/
@@ -330,7 +330,7 @@ theorem Real.log1p_small {x : ℝ} (xr : |x| ≤ 1/2) : |Real.log (1 + x)| ≤ 2
 /-- `log z` is small for `z ≈ 1` -/
 theorem log_small {z : ℂ} (zs : abs (z - 1) ≤ 1 / 2) : abs (log z) ≤ 2 * abs (z - 1) := by
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
-  rw [wz]; refine' log1p_small _; rw [← zw]; assumption
+  rw [wz]; refine log1p_small ?_; rw [← zw]; assumption
 
 theorem weak_exp_small {z : ℂ} (h : abs z < 1) : abs (exp z - 1) ≤ 2 * abs z := by
   have hr : 0 ≤ (1 : ℝ) := by norm_num
@@ -375,7 +375,7 @@ theorem pow1p_small {z w : ℂ} (zs : abs z ≤ 1/2) (ws : abs w ≤ 1) :
 theorem pow_small {z w : ℂ} (zs : abs (z - 1) ≤ 1 / 2) (ws : abs w ≤ 1) :
     abs (z ^ w - 1) ≤ 4 * abs (z - 1) * abs w := by
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
-  rw [wz]; refine' pow1p_small _ ws; rw [← zw]; assumption
+  rw [wz]; refine pow1p_small ?_ ws; rw [← zw]; assumption
 
 /-- `a + b ≠ 0` from `abs b < abs a` -/
 theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : abs b < abs a) : a + b ≠ 0 := by
@@ -403,7 +403,7 @@ theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
 /-- `e^(1/4) ≤ 4/3` -/
 theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by
   rw [←Real.exp_one_rpow, one_div, ←@Real.pow_rpow_inv_natCast (4/3) 4 (by norm_num) (by norm_num)]
-  refine' Real.rpow_lt_rpow (Real.exp_pos _).le _ (by norm_num)
+  refine Real.rpow_lt_rpow (Real.exp_pos _).le ?_ (by norm_num)
   exact _root_.trans Real.exp_one_lt_d9 (by norm_num)
 
 /-- Bound `abs (product - 1)` in terms of `abs (sum)` -/
@@ -411,14 +411,14 @@ theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
     (le : s.sum (fun n ↦ abs (f n - 1)) ≤ c) (c1 : c ≤ 1/2) : abs (s.prod f - 1) ≤ 4 * c := by
   set g := fun n ↦ Complex.log (f n)
   have b : ∀ n, n ∈ s → abs (f n - 1) ≤ c := by
-    intro n m; refine' _root_.trans _ le
+    intro n m; refine _root_.trans ?_ le
     exact Finset.single_le_sum (f := fun n ↦ abs (f n - 1)) (fun _ _ ↦ Complex.abs.nonneg _) m
   have f0 : ∀ n, n ∈ s → f n ≠ 0 := by
     intro n m; specialize b n m; contrapose b; simp only [not_not] at b
     simp only [b, not_le]; norm_num; linarith
   have sg : abs (s.sum g) ≤ 2 * c := by
-    refine' _root_.trans (Complex.abs.sum_le _ _) _
-    refine' _root_.trans (Finset.sum_le_sum (fun n m ↦ log_small (_root_.trans (b n m) c1))) _
+    refine _root_.trans (Complex.abs.sum_le _ _) ?_
+    refine _root_.trans (Finset.sum_le_sum (fun n m ↦ log_small (_root_.trans (b n m) c1))) ?_
     rw [← Finset.mul_sum]; bound
   have e : s.prod f = Complex.exp (s.sum g) := by
     rw [Complex.exp_sum]; apply Finset.prod_congr rfl

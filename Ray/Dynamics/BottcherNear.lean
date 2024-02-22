@@ -311,7 +311,7 @@ theorem iterates_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ f^[n] t 
 /-- `term` is analytic close to 0 -/
 theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ (term f d n) t := by
   intro n z zt
-  refine' AnalyticAt.cpow _ analyticAt_const _
+  refine AnalyticAt.cpow ?_ analyticAt_const ?_
   · exact (s.ga _ (s.mapsTo n zt)).comp (iterates_analytic s n z zt)
   · exact mem_slitPlane_of_near_one (lt_of_le_of_lt (s.gs (s.mapsTo n zt)) (by norm_num))
 
@@ -430,7 +430,7 @@ theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
   rcases exists_pow_lt_of_lt_one xp (by norm_num : (5 / 8 : ℝ) < 1) with ⟨N, Nb⟩
   simp only [lt_div_iff (Complex.abs.pos z0)] at Nb
   use N; intro n nN
-  refine' lt_of_le_of_lt (iterates_converge s n zt) (lt_of_le_of_lt _ Nb)
+  refine lt_of_le_of_lt (iterates_converge s n zt) (lt_of_le_of_lt ?_ Nb)
   bound
 
 /-- `bottcherNear < 1` -/
@@ -439,8 +439,8 @@ theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : abs (bottcher
     with ⟨r, rp, rs⟩
   simp only [Complex.dist_eq, sub_zero, bottcherNear_zero] at rs
   have b' : ∀ᶠ n in atTop, abs (bottcherNear f d (f^[n] z)) < 1 := by
-    refine' (Metric.tendsto_nhds.mp (iterates_tendsto s zt) r rp).mp
-        (Filter.eventually_of_forall fun n h ↦ _)
+    refine (Metric.tendsto_nhds.mp (iterates_tendsto s zt) r rp).mp
+        (Filter.eventually_of_forall fun n h ↦ ?_)
     rw [Complex.dist_eq, sub_zero] at h; exact rs h
   rcases b'.exists with ⟨n, b⟩
   contrapose b; simp only [not_lt] at b ⊢
@@ -450,7 +450,7 @@ theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : abs (bottcher
 theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
     abs (bottcherNear f d z) ≤ 3 * abs z := by
   simp only [bottcherNear, Complex.abs.map_mul]; rw [mul_comm]
-  refine' mul_le_mul_of_nonneg_right _ (Complex.abs.nonneg _)
+  refine mul_le_mul_of_nonneg_right ?_ (Complex.abs.nonneg _)
   rcases term_prod_exists s _ zt with ⟨p, h⟩; rw [h.tprod_eq]; simp only [HasProd] at h
   apply le_of_tendsto' (Filter.Tendsto.comp Complex.continuous_abs.continuousAt h)
   intro A; clear h; simp only [Function.comp, Complex.abs.map_prod]
@@ -466,8 +466,8 @@ theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
     fun n ↦ le_trans (Real.log_le_sub_one_of_pos (p n)) (le_of_eq (by ring))
   refine le_trans (Finset.prod_le_prod (fun _ _ ↦ Complex.abs.nonneg _) fun n _ ↦ tb n) ?_
   rw [← Real.exp_log (Finset.prod_pos fun n _ ↦ p n), Real.log_prod _ _ fun n _ ↦ (p n).ne']
-  refine' le_trans (Real.exp_le_exp.mpr (Finset.sum_le_sum fun n _ ↦ lb n)) _
-  refine' le_trans (Real.exp_le_exp.mpr _) Real.exp_one_lt_3.le
+  refine le_trans (Real.exp_le_exp.mpr (Finset.sum_le_sum fun n _ ↦ lb n)) ?_
+  refine le_trans (Real.exp_le_exp.mpr ?_) Real.exp_one_lt_3.le
   have geom := partial_scaled_geometric_bound (1 / 2) A one_half_pos.le one_half_lt_one
   simp only [NNReal.coe_div, NNReal.coe_one, NNReal.coe_two] at geom
   exact le_trans geom (by norm_num)
@@ -526,14 +526,14 @@ def g2 (f : ℂ → ℂ → ℂ) (d : ℕ) := fun p : ℂ × ℂ ↦ g (f p.1) d
 theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpen t)
     (fa : AnalyticOn ℂ (uncurry f) t) (tc : ∀ {p : ℂ × ℂ}, p ∈ t → p.1 ∈ u) :
     AnalyticOn ℂ (g2 f d) t := by
-  refine' Pair.hartogs o _ _
+  refine Pair.hartogs o ?_ ?_
   · intro c z m
     simp only [g2, g]
     by_cases zero : z = 0; · simp only [zero, eq_self_iff_true, if_true]; exact analyticAt_const
-    · simp only [zero, if_false]; refine' AnalyticAt.div _ analyticAt_const (pow_ne_zero _ zero)
-      refine' (fa _ _).comp₂ (analyticAt_id _ _) analyticAt_const; exact m
+    · simp only [zero, if_false]; refine AnalyticAt.div ?_ analyticAt_const (pow_ne_zero _ zero)
+      refine (fa _ ?_).comp₂ (analyticAt_id _ _) analyticAt_const; exact m
   · intro c z m; apply (s.s (tc m)).ga_of_fa
-    refine' (fa _ _).comp₂ analyticAt_const (analyticAt_id _ _); exact m
+    refine (fa _ ?_).comp₂ analyticAt_const (analyticAt_id _ _); exact m
 
 /-- `g2` is jointly analytic -/
 theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOn ℂ (g2 f d) t :=
@@ -636,15 +636,17 @@ theorem iterates_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : 
     AnalyticAt ℂ (fun c ↦ (f c)^[n] z) c := by
   induction' n with n nh; · simp only [Function.iterate_zero, id.def]; exact analyticAt_const
   · simp_rw [Function.iterate_succ']; simp only [Function.comp_apply]
-    refine' (s.fa _ _).comp ((analyticAt_id _ _).prod nh)
+    refine (s.fa _ ?_).comp ((analyticAt_id _ _).prod nh)
     exact (s.ts m).mapsTo n m
 
 theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ term (f c) d n z) c := by
-  refine' AnalyticAt.cpow _ analyticAt_const _
+  refine AnalyticAt.cpow ?_ analyticAt_const ?_
   · have e : (fun c ↦ g (f c) d ((f c)^[n] z)) = fun c ↦ g2 f d (c, (f c)^[n] z) := rfl
-    rw [e]; refine' (s.ga _ _).comp _; exact (s.ts m).mapsTo n m
-    apply (analyticAt_id _ _).prod (iterates_analytic_c s n m)
+    rw [e]
+    refine (s.ga _ ?_).comp ?_
+    · exact (s.ts m).mapsTo n m
+    · apply (analyticAt_id _ _).prod (iterates_analytic_c s n m)
   · refine mem_slitPlane_of_near_one ?_
     exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (by norm_num)
 
@@ -662,7 +664,8 @@ theorem term_prod_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z) �
 /-- `term` prod is jointly analytic (using Hartogs's theorem for simplicity) -/
 theorem term_prod_analytic (s : SuperNearC f d u t) :
     AnalyticOn ℂ (fun p : ℂ × ℂ ↦ tprod fun n ↦ term (f p.1) d n p.2) t := by
-  refine' Pair.hartogs s.o _ _; · intro c z m; simp only; exact term_prod_analytic_c s m
+  refine Pair.hartogs s.o ?_ ?_
+  · intro c z m; simp only; exact term_prod_analytic_c s m
   · intro c z m; simp only; exact term_prod_analytic_z (s.ts m) _ m
 
 /-- `bottcherNear` is analytic in `c` -/

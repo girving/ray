@@ -104,18 +104,18 @@ theorem center_not_in_sphere {c z : ℂ} {r : ℝ} (rp : r > 0) (zs : z ∈ sphe
 /-- `f` is continuous in `z0` -/
 theorem Separate.fc0 (h : Separate f c0 c1 r b s) (w1m : w1 ∈ ball c1 r) :
     ContinuousOn (fun z0 ↦ f (z0, w1)) (closedBall c0 r) := by
-  refine' ContinuousOn.comp h.fc _ _
-  exact ContinuousOn.prod continuousOn_id continuousOn_const
-  intro z0 z0m; apply h.rs
-  rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨z0m, mem_open_closed w1m⟩
+  refine ContinuousOn.comp h.fc ?_ ?_
+  · exact ContinuousOn.prod continuousOn_id continuousOn_const
+  · intro z0 z0m; apply h.rs
+    rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨z0m, mem_open_closed w1m⟩
 
 /-- `f` is continuous in `z1` -/
 theorem Separate.fc1 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ closedBall c0 r) :
     ContinuousOn (fun z1 ↦ f (w0, z1)) (closedBall c1 r) := by
-  refine' ContinuousOn.comp h.fc _ _
-  exact ContinuousOn.prod continuousOn_const continuousOn_id
-  intro z1 z1m; apply h.rs
-  rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨w0m, z1m⟩
+  refine ContinuousOn.comp h.fc ?_ ?_
+  · exact ContinuousOn.prod continuousOn_const continuousOn_id
+  · intro z1 z1m; apply h.rs
+    rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨w0m, z1m⟩
 
 /-- `f` is differentiable in `z0` -/
 theorem Separate.fd0 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ closedBall c0 r)
@@ -135,8 +135,8 @@ theorem Separate.fd1 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ closedBall c0 r)
 theorem cauchy1 {r : ℝ} {c w : ℂ} {f : ℂ → E} (wm : w ∈ ball c r)
     (fc : ContinuousOn f (closedBall c r)) (fd : ∀ z, z ∈ ball c r → DifferentiableAt ℂ f z) :
     (2*π*I : ℂ)⁻¹ • (∮ z in C(c, r), (z - w)⁻¹ • f z) = f w := by
-  refine' Complex.two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
-    Set.countable_empty wm fc _
+  refine Complex.two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
+    Set.countable_empty wm fc ?_
   intro z zm; apply fd z _; simp only [Metric.mem_ball, Set.diff_empty] at zm ⊢; assumption
 
 /-- The 2D Cauchy integral formula -/
@@ -205,7 +205,7 @@ theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : 
     simp only [uncurry] at bx
     calc |r| * ‖f x (circleMap c1 r t)‖ ≤ |r| * b := by bound
       _ = r * b := by rw [abs_of_pos rp]
-  refine' intervalIntegral.continuousWithinAt_of_dominated_interval _ fb (by simp) _
+  refine intervalIntegral.continuousWithinAt_of_dominated_interval ?_ fb (by simp) ?_
   · apply eventually_nhdsWithin_of_forall; intro x xs
     apply ContinuousOn.aestronglyMeasurable
     apply ContinuousOn.smul; simp
@@ -233,7 +233,7 @@ theorem ContinuousOn.inv_sphere {c : ℂ} {r : ℝ} (rp : r > 0) :
 /-- Shifted inverses are continuous on the sphere -/
 theorem ContinuousOn.inv_sphere_ball {c w : ℂ} {r : ℝ} (wr : w ∈ ball (0 : ℂ) r) :
     ContinuousOn (fun z ↦ (z - (c + w))⁻¹) (sphere c r) := by
-  refine' ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun z zs ↦ _
+  refine ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun z zs ↦ ?_
   rw [←Complex.abs.ne_zero_iff]
   simp only [mem_ball_zero_iff, Complex.norm_eq_abs, mem_sphere_iff_norm] at zs wr
   apply ne_of_gt
@@ -284,7 +284,7 @@ theorem sum_integral_commute {f : ℕ → ℂ → E} {g : ℂ → E} {c : ℂ} {
     exact measurableSet_uIoc
   · intro n; apply MeasureTheory.ae_of_all; intro t _; rw [norm_smul, Complex.norm_eq_abs]; simp
     rw [abs_of_pos rp]
-    refine' mul_le_mul_of_nonneg_left _ rp.le
+    refine mul_le_mul_of_nonneg_left ?_ rp.le
     exact fb n (circleMap c r t) (circleMap_mem_sphere _ (by linarith) _)
   · apply MeasureTheory.ae_of_all; intro t _
     exact Summable.mul_left _ bs
@@ -302,7 +302,7 @@ theorem bounded_circleIntegral {f : ℂ → E} {c : ℂ} {r b : ℝ} (rp : r > 0
   have ib : ‖(∫ t in (0)..(2*π), (circleMap 0 r t * I) • f (circleMap c r t))‖ ≤
       (∫ t in (0)..(2*π), ‖(circleMap 0 r t * I) • f (circleMap c r t)‖) :=
     intervalIntegral.norm_integral_le_integral_norm nonneg_2π
-  refine' le_trans ib _; clear ib
+  refine le_trans ib ?_; clear ib
   simp_rw [norm_smul, Complex.norm_eq_abs]
   simp only [map_mul, abs_circleMap_zero, Complex.abs_I, mul_one, integral_const_mul]
   have mo : ∀ t, t ∈ Set.Icc 0 (2 * π) → ‖f (circleMap c r t)‖ ≤ b := fun t _ ↦
@@ -311,7 +311,7 @@ theorem bounded_circleIntegral {f : ℂ → E} {c : ℂ} {r b : ℝ} (rp : r > 0
       0 (2*π) := by
     apply ContinuousOn.intervalIntegrable
     have ca : ContinuousOn (norm : E → ℝ) Set.univ := Continuous.continuousOn continuous_norm
-    refine' ContinuousOn.comp ca _ (Set.mapsTo_univ _ _)
+    refine ContinuousOn.comp ca ?_ (Set.mapsTo_univ _ _)
     apply ContinuousOn.comp fc
     exact Continuous.continuousOn (continuous_circleMap _ _)
     intro t _; exact circleMap_mem_sphere _ (by linarith) _

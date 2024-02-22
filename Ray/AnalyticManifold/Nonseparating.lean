@@ -41,9 +41,9 @@ theorem Nonseparating.univ_prod [LocallyConnectedSpace X] {t : Set Y} (n : Nonse
     rcases n.loc x u1 m n1 with ⟨c1, cs1, cn1, cp1⟩
     rcases locallyConnectedSpace_iff_open_connected_subsets.mp (by infer_instance) a u0 n0 with
       ⟨c0, cs0, co0, cm0, cc0⟩
-    use c0 ×ˢ c1; refine' ⟨_, _, _⟩
+    use c0 ×ˢ c1; refine ⟨?_, ?_, ?_⟩
     · intro ⟨b, y⟩ m'; simp only [mem_prod_eq, mem_diff, mem_univ, true_and_iff] at m' ⊢
-      refine' ⟨_, (cs1 m'.2).2⟩; apply uu; use cs0 m'.1, (cs1 m'.2).1
+      refine ⟨?_, (cs1 m'.2).2⟩; apply uu; use cs0 m'.1, (cs1 m'.2).1
     · rw [e, nhdsWithin_prod_eq, nhdsWithin_univ]; exact Filter.prod_mem_prod (co0.mem_nhds cm0) cn1
     · exact cc0.isPreconnected.prod cp1
 
@@ -79,12 +79,12 @@ theorem Nonseparating.complexManifold {t : Set S}
       rcases (h z).loc _ _ m n with ⟨c, cs, cn, cp⟩
       have e : (extChartAt I z).source ∩ extChartAt I z ⁻¹' c = (extChartAt I z).symm '' c := by
         apply Set.ext; intro x; simp only [mem_inter_iff, mem_preimage, mem_image]; constructor
-        · intro ⟨xz, xc⟩; refine' ⟨_, xc, _⟩; simp only [PartialEquiv.left_inv _ xz]
+        · intro ⟨xz, xc⟩; refine ⟨_, xc, ?_⟩; simp only [PartialEquiv.left_inv _ xz]
         · intro ⟨y, yc, yx⟩; rw [← yx]
           have xc := cs yc; simp only [mem_diff, mem_inter_iff, mem_preimage] at xc
           have yz := xc.1.1; use PartialEquiv.map_target _ yz
           simp only [PartialEquiv.right_inv _ yz, yc]
-      use(extChartAt I z).source ∩ extChartAt I z ⁻¹' c; refine' ⟨_, _, _⟩
+      use(extChartAt I z).source ∩ extChartAt I z ⁻¹' c; refine ⟨?_, ?_, ?_⟩
       · intro x xm; simp only [mem_inter_iff, mem_preimage] at xm; rcases xm with ⟨xz, xc⟩
         replace xc := cs xc
         simp only [mem_diff, mem_inter_iff, mem_preimage, PartialEquiv.map_source _ xz, true_and_iff,
@@ -99,7 +99,7 @@ theorem Nonseparating.complexManifold {t : Set S}
         apply nhdsWithin_eq_nhdsWithin (mem_extChartAt_source I z) (isOpen_extChartAt_source I z)
         apply Set.ext; intro x
         simp only [mem_inter_iff, mem_compl_iff, mem_image, mem_preimage]; constructor
-        · intro ⟨xt, xz⟩; refine' ⟨⟨extChartAt I z x, _⟩, xz⟩
+        · intro ⟨xt, xz⟩; refine ⟨⟨extChartAt I z x, ?_⟩, xz⟩
           simp only [PartialEquiv.left_inv _ xz, xt, PartialEquiv.map_source _ xz, not_false_iff,
             and_self_iff, eq_self_iff_true]
         · intro ⟨⟨y, ⟨⟨yz, yt⟩, yx⟩⟩, _⟩
@@ -128,7 +128,7 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     have n := m
     simp only [mem_union, xt, xu, false_or_iff, true_and_iff, mem_setOf,
       eventually_nhdsWithin_iff] at n
-    refine' (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (eventually_of_forall fun y n m ↦ _))
+    refine (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (eventually_of_forall fun y n m ↦ ?_))
     by_cases yt : y ∈ t
     simp only [mem_union, mem_setOf, eventually_nhdsWithin_iff]; right; use m, yt, n
     exact mono _ (n.self_of_nhds yt)
@@ -210,7 +210,7 @@ theorem Complex.nonseparating_singleton (a : ℂ) : Nonseparating ({a} : Set ℂ
     loc := by
       intro z u m n; simp only [mem_singleton_iff] at m; simp only [m] at n ⊢; clear m z
       rcases Metric.mem_nhds_iff.mp n with ⟨r, rp, rs⟩
-      use ball a r \ {a}; refine' ⟨diff_subset_diff_left rs, _, IsPreconnected.ball_diff_center⟩
+      use ball a r \ {a}; refine ⟨diff_subset_diff_left rs, ?_, IsPreconnected.ball_diff_center⟩
       exact diff_mem_nhdsWithin_compl (Metric.ball_mem_nhds _ rp) _ }
 
 /-- `{z}ᶜ` is nonseparating in 1D complex manifolds -/

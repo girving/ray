@@ -48,7 +48,7 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz]
   have a0 : HolomorphicOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
     intro z m
-    refine' (s.bottcher_holomorphicOn _ _).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
+    refine (s.bottcher_holomorphicOn _ ?_).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
     simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
     rw [inv_coe z0]; refine postcritical_large (by linarith) ?_
@@ -57,16 +57,16 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
     intro z m; apply AnalyticAt.holomorphicAt
     apply bottcherNear_analytic_z (superNearF d c)
     simp only [mem_setOf, mem_closedBall, Complex.dist_eq, sub_zero] at m ⊢
-    refine' lt_of_le_of_lt m _
-    refine' inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) _
+    refine lt_of_le_of_lt m ?_
+    refine inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
     exact max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))
-  refine' (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected _).self_of_nhdsSet
+  refine (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected ?_).self_of_nhdsSet
   use 0, mem_closedBall_self (by bound)
   have e : ∀ᶠ z in 𝓝 0, bottcherNear (fl (f d) ∞ c) d z = s.bottcherNear c (z : 𝕊)⁻¹ := by
     simp only [Super.bottcherNear, extChartAt_inf_apply, inv_inv, toComplex_coe,
       RiemannSphere.inv_inf, toComplex_zero, sub_zero, Super.fl, eq_self_iff_true,
       Filter.eventually_true]
-  refine' Filter.EventuallyEq.trans _ (Filter.EventuallyEq.symm e)
+  refine Filter.EventuallyEq.trans ?_ (Filter.EventuallyEq.symm e)
   have i : Tendsto (fun z : ℂ ↦ (z : 𝕊)⁻¹) (𝓝 0) (𝓝 ∞) := by
     have h : ContinuousAt (fun z : ℂ ↦ (z : 𝕊)⁻¹) 0 :=
       (RiemannSphere.continuous_inv.comp continuous_coe).continuousAt
@@ -82,7 +82,7 @@ theorem bottcher_eq_bottcherNear {c : ℂ} (c16 : 16 < abs c) :
 theorem inv_mem_t {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z) :
     z⁻¹ ∈ {z : ℂ | abs z < (max 16 (abs c / 2))⁻¹} := by
   simp only [mem_setOf, map_inv₀]
-  refine' inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) _
+  refine inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
   exact lt_of_lt_of_le (max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))) cz
 
 /-- Terms in the `bottcherNear` product are close to 1 -/
@@ -174,7 +174,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
   have b : abs (bottcher' d z⁻¹ - z⁻¹⁻¹) ≤ (16:ℝ) * (abs z⁻¹)⁻¹ ^ 2 := bottcher_approx d ?_
   · simp only [inv_inv] at b; apply le_trans b
     simp only [map_inv₀, inv_inv, pow_two, ← mul_assoc]
-    refine' mul_le_mul_of_nonneg_right _ (Complex.abs.nonneg _)
+    refine mul_le_mul_of_nonneg_right ?_ (Complex.abs.nonneg _)
     calc 16 * abs z
       _ ≤ 16 * (k / 16) := by linarith [le.2]
       _ = k := by ring

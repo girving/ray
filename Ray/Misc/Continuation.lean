@@ -154,7 +154,7 @@ theorem Convex.inter_ball (c : Convex ℝ s) (x0 x1 : closure s) {r0 r1 : ℝ} (
     simp only [nhds_prod_eq]; rw [Prod.frequently (p := fun x ↦ x ∈ s) (q := fun x ↦ x ∈ s)]
     use mem_closure_iff_frequently.mp m0, mem_closure_iff_frequently.mp m1
   rcases(f.and_eventually e).exists with ⟨⟨z0, z1⟩, ⟨m0, m1⟩, m⟩
-  refine' ⟨_, ⟨_, m.1⟩, m.2⟩
+  refine ⟨_, ⟨?_, m.1⟩, m.2⟩
   apply c m0 m1; bound; bound
   simp only [← add_div, add_comm r1 r0, div_self (add_pos r0p r1p).ne']
 
@@ -187,7 +187,7 @@ theorem Base.uf (b : Base p s f) : b.u =ᶠ[𝓝ˢ s] f := by
 /-- `u` is valid in `𝓝ˢ (closure s)` -/
 theorem Base.up (b : Base p s f) : ∀ᶠ z in 𝓝ˢ (closure s), p b.u z := by
   apply Filter.eventually_of_mem (b.ot.mem_nhdsSet.mpr b.cover)
-  intro x m; refine' b.congr (b.gp (b.y m) (b.yt m)) _
+  intro x m; refine b.congr (b.gp (b.y m) (b.yt m)) ?_
   exact ((b.ug _).eventuallyEq_of_mem ((b.ot.inter isOpen_ball).mem_nhds ⟨m, b.yt m⟩)).symm
 
 end Continuation

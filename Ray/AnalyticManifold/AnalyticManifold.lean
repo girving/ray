@@ -334,7 +334,7 @@ theorem HolomorphicAt.comp {f : N → O} {g : M → N} {x : M} (fh : Holomorphic
       · exact continuousAt_extChartAt_symm I x
     · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
       exact extChartAt_source_mem_nhds _ _
-  refine' m.mp (eventually_of_forall fun y m ↦ _)
+  refine m.mp (eventually_of_forall fun y m ↦ ?_)
   simp_rw [PartialEquiv.left_inv _ m]
 
 /-- Holomorphic functions compose -/
@@ -351,7 +351,7 @@ theorem HolomorphicAt.comp_of_eq {f : N → O} {g : M → N} {x : M} {y : N}
 theorem HolomorphicAt.prod {f : M → N} {g : M → O} {x : M} (fh : HolomorphicAt I J f x)
     (gh : HolomorphicAt I K g x) : HolomorphicAt I (J.prod K) (fun x ↦ (f x, g x)) x := by
   rw [holomorphicAt_iff] at fh gh ⊢; use fh.1.prod gh.1
-  refine' (fh.2.prod gh.2).congr (eventually_of_forall fun y ↦ _)
+  refine (fh.2.prod gh.2).congr (eventually_of_forall fun y ↦ ?_)
   funext; simp only [extChartAt_prod, Function.comp, PartialEquiv.prod_coe]
 
 /-- `Holomorphic` for `x ↦ (f x, g x)` -/
@@ -566,7 +566,7 @@ theorem extChartAt_mderiv_left_inverse {x y : M} (m : y ∈ (extChartAt I x).sou
   have m' : extChartAt I x y ∈ (extChartAt I x).target := PartialEquiv.map_source _ m
   have c := mfderiv_comp y (HolomorphicAt.extChartAt_symm m').mdifferentiableAt
     (HolomorphicAt.extChartAt m).mdifferentiableAt
-  refine' _root_.trans c.symm _; clear c; rw [←mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
+  refine _root_.trans c.symm ?_; clear c; rw [←mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).source
   use extChartAt_source_mem_nhds' I m
   intro z zm; simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
@@ -579,7 +579,7 @@ theorem extChartAt_mderiv_right_inverse {x : M} {y : E} (m : y ∈ (extChartAt I
   have m' : (extChartAt I x).symm y ∈ (extChartAt I x).source := PartialEquiv.map_target _ m
   have c := mfderiv_comp y (HolomorphicAt.extChartAt m').mdifferentiableAt
     (HolomorphicAt.extChartAt_symm m).mdifferentiableAt
-  refine' _root_.trans c.symm _; clear c; rw [← mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
+  refine _root_.trans c.symm ?_; clear c; rw [← mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).target
   have n := extChartAt_target_mem_nhdsWithin' I m'
   simp only [ModelWithCorners.range_eq_univ, nhdsWithin_univ,
@@ -599,7 +599,7 @@ theorem extChartAt_mderiv_right_inverse' {x y : M} (m : y ∈ (extChartAt I x).s
 theorem HolomorphicAt.congr {f g : M → N} {x : M} (fa : HolomorphicAt I J f x) (e : f =ᶠ[𝓝 x] g) :
     HolomorphicAt I J g x := by
   rw [holomorphicAt_iff] at fa ⊢; use fa.1.congr e; apply fa.2.congr
-  rw [e.self_of_nhds]; refine' Filter.EventuallyEq.fun_comp _ (_root_.extChartAt J (g x))
+  rw [e.self_of_nhds]; refine Filter.EventuallyEq.fun_comp ?_ (_root_.extChartAt J (g x))
   have t := (continuousAt_extChartAt_symm I x).tendsto
   rw [PartialEquiv.left_inv _ (mem_extChartAt_source I x)] at t
   exact e.comp_tendsto t
@@ -612,7 +612,7 @@ theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f
   apply ((isOpen_extChartAt_source I x).eventually_mem (mem_extChartAt_source I x)).mp
   apply ((continuousAt_extChartAt I x).eventually
     ((isOpen_analyticAt _ _).eventually_mem (holomorphicAt_iff.mp fa).2)).mp
-  refine' eventually_of_forall fun y a m fm ↦ _
+  refine eventually_of_forall fun y a m fm ↦ ?_
   simp only at a m fm; rw [mem_setOf] at a
   have h := a.holomorphicAt (modelWithCornersSelf 𝕜 E) (modelWithCornersSelf 𝕜 F); clear a
   have h' := (HolomorphicAt.extChartAt_symm (PartialEquiv.map_source _ fm.self_of_nhds)).comp_of_eq
@@ -620,7 +620,7 @@ theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f
   swap; simp only [Function.comp, PartialEquiv.left_inv _ m]
   apply h'.congr; clear h h'; simp only [Function.comp]
   apply ((isOpen_extChartAt_source I x).eventually_mem m).mp
-  refine' fm.mp (eventually_of_forall fun z mf m ↦ _)
+  refine fm.mp (eventually_of_forall fun z mf m ↦ ?_)
   simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ mf]
 
 /-- The domain of holomorphicity is open -/
@@ -770,7 +770,7 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
     mem_compl_singleton_iff] at p ⊢
   apply p.mp
   apply ((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x)).mp
-  refine' eventually_of_forall fun y m h ↦ _
+  refine eventually_of_forall fun y m h ↦ ?_
   contrapose h; simp only [not_not] at m h ⊢; nth_rw 2 [← h]
   rw [PartialEquiv.right_inv _ m]
 

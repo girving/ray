@@ -85,21 +85,21 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [@analyticAt_iff_holomorphicAt _ _ (ℂ × ℂ) (ModelProd ℂ ℂ) _ _ _ ℂ ℂ _ _ _ II I]
-  refine' (((analyticAt_id _ _).sub analyticAt_const).holomorphicAt I I).comp _
-  refine' (HolomorphicAt.extChartAt _).comp _
-  simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
-    ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
-    PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm, ModelWithCorners.toPartialEquiv_coe_symm,
-    ModelWithCorners.left_inv, PartialHomeomorph.left_inv, mem_chart_source, PartialEquiv.trans_source,
-    ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
-  refine' (s.fa _).comp₂ holomorphicAt_fst _
-  refine' (HolomorphicAt.extChartAt_symm _).comp _
-  simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
-    ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
-    PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
-    Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
-    PartialHomeomorph.map_source, mem_chart_source, and_self_iff]
-  exact ((analyticAt_snd _).add analyticAt_const).holomorphicAt _ _
+  refine (((analyticAt_id _ _).sub analyticAt_const).holomorphicAt I I).comp ?_
+  refine (HolomorphicAt.extChartAt ?_).comp ?_
+  · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
+      ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
+      PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm, ModelWithCorners.toPartialEquiv_coe_symm,
+      ModelWithCorners.left_inv, PartialHomeomorph.left_inv, mem_chart_source, PartialEquiv.trans_source,
+      ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
+  · refine (s.fa _).comp₂ holomorphicAt_fst ?_
+    refine (HolomorphicAt.extChartAt_symm ?_).comp ?_
+    · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
+        ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
+        PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
+        Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
+        PartialHomeomorph.map_source, mem_chart_source, and_self_iff]
+    · exact ((analyticAt_snd _).add analyticAt_const).holomorphicAt _ _
 
 /-- `(f c)^[k]` is holomorphic -/
 theorem Super.holomorphicAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
@@ -158,7 +158,7 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   have od : (fun z : ℂ ↦ z ^ d) =o[𝓝 0] (fun z ↦ z) := by
     rw [Asymptotics.isLittleO_iff]; intro e ep
     apply ((@Metric.isOpen_ball ℂ _ 0 (min 1 e)).eventually_mem (mem_ball_self (by bound))).mp
-    refine' eventually_of_forall fun z b ↦ _
+    refine eventually_of_forall fun z b ↦ ?_
     simp only at b; rw [mem_ball_zero_iff, Complex.norm_eq_abs, lt_min_iff] at b
     simp only [Complex.norm_eq_abs, Complex.abs.map_pow]
     rw [← Nat.sub_add_cancel s.d2, pow_add, pow_two]
@@ -189,7 +189,7 @@ theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
 
 /-- `f c` is nontrivial at `a` -/
 theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialHolomorphicAt (f c) a := by
-  refine' ⟨(s.fa _).along_snd, _⟩; simp only [s.f0]
+  refine ⟨(s.fa _).along_snd, ?_⟩; simp only [s.f0]
   have n : ∃ᶠ w in 𝓝 (0 : ℂ), s.fl c w ≠ 0 := by
     have e := (nontrivialHolomorphicAt_of_order (s.fla c).along_snd ?_).nonconst
     · simp only [s.fl0, uncurry] at e; exact e
@@ -197,10 +197,10 @@ theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialHolomorphicAt
   contrapose n
   simp only [Filter.not_frequently, not_not, Super.fl, fl, Function.comp, sub_eq_zero] at n ⊢
   have gc : ContinuousAt (fun x ↦ (extChartAt I a).symm (x + extChartAt I a a)) 0 := by
-    refine' (continuousAt_extChartAt_symm I a).comp_of_eq _ (by simp only [zero_add])
+    refine (continuousAt_extChartAt_symm I a).comp_of_eq ?_ (by simp only [zero_add])
     exact continuousAt_id.add continuousAt_const
   simp only [ContinuousAt, zero_add, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)] at gc
-  refine' (gc.eventually n).mp (eventually_of_forall _)
+  refine (gc.eventually n).mp (eventually_of_forall ?_)
   intro x h; simp only [_root_.fl, Function.comp, h, sub_self]
 
 /-- Close enough to `a`, `f c z ∈ (ext_chart_at I a).source` -/
@@ -275,7 +275,7 @@ theorem Super.superAtC (s : Super f d a) : SuperAtC s.fl d univ :=
 
 /-- `Super → SuperNearC` in charts for a suitable set -/
 theorem Super.exists_superNearC (s : Super f d a) : ∃ t, t ⊆ s.fls ∧ SuperNearC s.fl d univ t := by
-  refine' s.superAtC.superNearC' s.fls_open fun c _ ↦ _
+  refine s.superAtC.superNearC' s.fls_open fun c _ ↦ ?_
   rw [Super.fls, Set.mem_iUnion]; use c; exact mem_ball_self (s.frp c)
 
 /-- The set of points on which `bottcherNear` is defined, in charts -/
@@ -371,15 +371,15 @@ theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.n
   generalize hg : (fun x : ℂ ↦ (extChartAt I a).symm (x + extChartAt I a a)) = g
   have gc : ContinuousAt g 0 := by
     rw [← hg]
-    refine'
-      (continuousAt_extChartAt_symm'' I _).comp (continuous_id.add continuous_const).continuousAt
+    refine (continuousAt_extChartAt_symm'' I ?_).comp
+      (continuous_id.add continuous_const).continuousAt
     simp only [zero_add]; exact mem_extChartAt_target I a
   have g0 : g 0 = a := by
     simp only [← hg]; simp only [zero_add]; exact PartialEquiv.left_inv _ (mem_extChartAt_source _ _)
   have h := gc.tendsto.comp t; clear t gc m
   simp only [Function.comp, g0] at h
   rw [← attracts_shift n]
-  refine' Filter.Tendsto.congr _ h; clear h
+  refine Filter.Tendsto.congr ?_ h; clear h
   intro k; simp only [← hg]; induction' k with k h
   simp only [Function.iterate_zero_apply]; rw [sub_add_cancel]
   exact PartialEquiv.left_inv _ (s.near_subset_chart r)
@@ -548,7 +548,7 @@ theorem Super.bottcherNear_has_inv (s : Super f d a) (c : ℂ) :
 theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, a), Critical (f p.1) p.2 ↔ p.2 = a := by
   have t : ContinuousAt (fun p : ℂ × S ↦ (p.1, extChartAt I a p.2 - extChartAt I a a)) (c, a) := by
-    refine' continuousAt_fst.prod (ContinuousAt.sub _ continuousAt_const)
+    refine continuousAt_fst.prod (ContinuousAt.sub ?_ continuousAt_const)
     exact (continuousAt_extChartAt I a).comp_of_eq continuousAt_snd rfl
   simp only [ContinuousAt, sub_self] at t
   apply (inChart_critical (s.fa (c, a))).mp
@@ -593,11 +593,11 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
     IsClosed {p : ℂ × S | Critical (f p.1) p.2 ∧ p.2 ≠ a} := by
   rw [← isOpen_compl_iff]; rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m
   by_cases za : z = a
-  · rw [za]; refine' (s.f_noncritical_near_a c).mp (eventually_of_forall _); intro ⟨e, w⟩ h
+  · rw [za]; refine (s.f_noncritical_near_a c).mp (eventually_of_forall ?_); intro ⟨e, w⟩ h
     simp only [mem_compl_iff, mem_setOf, not_and, not_not] at h ⊢; exact h.1
   · have o := isOpen_iff_eventually.mp (isOpen_noncritical s.fa)
     simp only [za, mem_compl_iff, mem_setOf, not_and, not_not, imp_false] at m o ⊢
-    refine' (o (c, z) m).mp (eventually_of_forall _); intro ⟨e, w⟩ a b; exfalso; exact a b
+    refine (o (c, z) m).mp (eventually_of_forall ?_); intro ⟨e, w⟩ a b; exfalso; exact a b
 
 /-- If `z ∈ s.basin`, iterating enough takes us to a noncritical point of `s.bottcherNear` -/
 theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
@@ -617,7 +617,7 @@ theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
 theorem Super.iter_nontrivial_a (s : Super f d a) :
     NontrivialHolomorphicAt (fun z ↦ (f c)^[n] z) a := by
   induction' n with n h; simp only [Function.iterate_zero_apply]; apply nontrivialHolomorphicAt_id
-  simp only [Function.iterate_succ_apply']; refine' NontrivialHolomorphicAt.comp _ h
+  simp only [Function.iterate_succ_apply']; refine NontrivialHolomorphicAt.comp ?_ h
   simp only [s.iter_a]; exact s.f_nontrivial c
 
 /-- `s.bottcherNearIter` is nontrivial at `a` -/

@@ -66,10 +66,10 @@ theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedF
   constructor
   · intro h t tl; rcases h t tl with ⟨r, _, m⟩
     by_cases rp : 0 < r
-    · use r⁻¹; simp only [rp, inv_pos, true_and_iff]; intro x xs; refine' m _
+    · use r⁻¹; simp only [rp, inv_pos, true_and_iff]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
       simp only [← lt_inv (norm_pos_iff.mpr xs.2) rp, xs.1, mem_setOf_eq, norm_inv]
-    · use 1; simp only [zero_lt_one, true_and_iff]; intro x xs; refine' m _
+    · use 1; simp only [zero_lt_one, true_and_iff]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
       simp only [mem_setOf_eq, norm_inv]; simp only [not_lt] at rp
       exact lt_of_le_of_lt rp (inv_pos.mpr (norm_pos_iff.mpr xs.2))
@@ -100,7 +100,7 @@ theorem atInf_eq_cocompact {X : Type} [NormedAddCommGroup X] [ProperSpace X] :
   apply le_antisymm atInf_le_cocompact; rw [Filter.le_def]; intro s m
   rcases mem_atInf_iff.mp m with ⟨r, h⟩
   rw [Filter.mem_cocompact]; use closedBall 0 r, isCompact_closedBall _ _
-  refine' _root_.trans _ h; intro x xs
+  refine _root_.trans ?_ h; intro x xs
   simp only [mem_compl_iff, mem_closedBall_zero_iff, not_le] at xs; exact xs
 
 /-- `⁻¹` tendsto `atInf` near `0` -/

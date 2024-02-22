@@ -67,14 +67,14 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
     (un : u ∈ 𝓝 c) (ef : ∀ d, d ∈ u → ∀ w, w ∈ sphere z r → e ≤ ‖f d w - f d z‖) :
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
-    refine' fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono _) rp ep (ef d m)).nonconst
+    refine fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono ?_) rp ep (ef d m)).nonconst
     simp only [← closedBall_prod_same, mem_prod_eq, setOf_mem_eq, iff_true_iff.mpr m,
       true_and_iff, subset_refl]
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
-    intro d du; refine' DiffContOnCl.ball_subset_image_closedBall _ rp (ef d du) (fn d du)
+    intro d du; refine DiffContOnCl.ball_subset_image_closedBall ?_ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
     rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOn.differentiableOn
-    refine' fa.comp (analyticOn_const.prod (analyticOn_id _)) _
+    refine fa.comp (analyticOn_const.prod (analyticOn_id _)) ?_
     intro w wr; simp only [closure_ball _ rp.ne'] at wr
     simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and_iff, du]
   rcases Metric.continuousAt_iff.mp
@@ -82,7 +82,7 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
       (e / 4) (by linarith) with
     ⟨s, sp, sh⟩
   rw [mem_nhds_prod_iff]
-  refine' ⟨u ∩ ball c s, Filter.inter_mem un (Metric.ball_mem_nhds c (by linarith)), _⟩
+  refine ⟨u ∩ ball c s, Filter.inter_mem un (Metric.ball_mem_nhds c (by linarith)), ?_⟩
   use ball (f c z) (e / 4), Metric.ball_mem_nhds _ (by linarith)
   intro ⟨d, w⟩ m
   simp only [mem_inter_iff, mem_prod_eq, mem_image, @mem_ball _ _ c, lt_min_iff] at m op ⊢
@@ -116,7 +116,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
   have ss : s ⊆ s' := by rw [← hs]; apply inter_subset_left
   replace sn : s ∈ 𝓝 (c, z) := by rw [← hs]; exact Filter.inter_mem sn fa.eventually_analyticAt
   replace fa : AnalyticOn ℂ (uncurry f) s := by rw [← hs]; apply inter_subset_right
-  refine' Filter.mem_of_superset _ (image_subset _ ss)
+  refine Filter.mem_of_superset ?_ (image_subset _ ss)
   clear ss hs s'
   rcases Metric.mem_nhds_iff.mp sn with ⟨e, ep, es⟩
   -- Find a radius within s where f c is nontrivial
@@ -130,16 +130,16 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
     · exact _root_.trans (Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_left _ _)
         (half_lt_self ep))) es
     · rcases (mem_image _ _ _).mp h with ⟨w, ws, wz⟩
-      use w; refine' ⟨_, _, wz⟩
-      exact Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_right _ _) (half_lt_self rp))
-        (Metric.sphere_subset_closedBall ws)
-      contrapose ws; simp only [not_not] at ws
-      simp only [ws, Metric.mem_sphere, dist_self]
-      exact ne_of_lt (by bound)
+      use w; refine ⟨?_, ?_, wz⟩
+      · exact Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_right _ _) (half_lt_self rp))
+          (Metric.sphere_subset_closedBall ws)
+      · contrapose ws; simp only [not_not] at ws
+        simp only [ws, Metric.mem_sphere, dist_self]
+        exact ne_of_lt (by bound)
   rcases er with ⟨r, rp, rs, fr⟩
   -- Get a lower bound of f c '' sphere z r, then extend to a neighborhood of c
   have fc : ContinuousOn (fun w ↦ ‖f c w - f c z‖) (sphere z r) := by
-    apply ContinuousOn.norm; refine' ContinuousOn.sub _ continuousOn_const
+    apply ContinuousOn.norm; refine ContinuousOn.sub ?_ continuousOn_const
     apply fa.along_snd.continuousOn.mono; intro x xs; apply rs
     simp only [← closedBall_prod_same, mem_prod_eq]
     use Metric.mem_closedBall_self rp.le, Metric.sphere_subset_closedBall xs
@@ -172,7 +172,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
       _ = e / 2 := by ring
   -- Apply the partially effective parameterized open mapping theorem
   have ss : ball c (min t r) ×ˢ closedBall z r ⊆ s := by
-    refine' _root_.trans _ rs; rw [← closedBall_prod_same]; apply prod_mono_left
+    refine _root_.trans ?_ rs; rw [← closedBall_prod_same]; apply prod_mono_left
     exact _root_.trans (Metric.ball_subset_ball (min_le_right _ _)) Metric.ball_subset_closedBall
   exact Filter.mem_of_superset ((fa.mono ss).ball_subset_image_closedBall_param rp (half_pos ep)
     (Metric.ball_mem_nhds _ (by bound)) ef) (image_subset _ ss)
@@ -188,7 +188,7 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
   apply c.mp
   apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
   apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
-  refine' eventually_of_forall fun w fm m fn ↦ _
+  refine eventually_of_forall fun w fm m fn ↦ ?_
   simp only at fm m fn
   rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
   exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _ _)).mp fn
@@ -198,7 +198,7 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
     `AnalyticAt.eventually_constant_or_nhds_le_map_nhds`. -/
 theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
     (n : NontrivialHolomorphicAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
-  refine' le_antisymm _ n.holomorphicAt.continuousAt
+  refine le_antisymm ?_ n.holomorphicAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ g (extChartAt I z z) := by rw [← hg]; exact n.holomorphicAt.2
   cases' ga.eventually_constant_or_nhds_le_map_nhds with h h
@@ -218,7 +218,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
       apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
       apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
-      refine' eventually_of_forall fun w fm m ↦ _
+      refine eventually_of_forall fun w fm m ↦ ?_
       simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
 
@@ -232,7 +232,7 @@ theorem Filter.prod_map_id_map_eq {A B C : Type} {f : Filter A} {g : Filter B} {
 theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c : ℂ} {z : S}
     (n : NontrivialHolomorphicAt (f c) z) (fa : HolomorphicAt II I (uncurry f) (c, z)) :
     𝓝 (c, f c z) = Filter.map (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
-  refine' le_antisymm _ (continuousAt_fst.prod fa.continuousAt)
+  refine le_antisymm ?_ (continuousAt_fst.prod fa.continuousAt)
   generalize hg : (fun e x ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ (uncurry g) (c, extChartAt I z z) := by
     rw [← hg]; exact (holomorphicAt_iff.mp fa).2

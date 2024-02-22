@@ -26,7 +26,7 @@ theorem ChartedSpace.t1Space [T1Space A] : T1Space M where
         simp only [mem_diff, mem_singleton_iff, mem_inter_iff, mem_preimage]; constructor
         intro ⟨zm, zx⟩; use zm, PartialEquiv.map_source _ zm, (PartialEquiv.injOn _).ne zm xm zx
         intro ⟨zm, _, zx⟩; use zm, ((PartialEquiv.injOn _).ne_iff zm xm).mp zx
-      use t; refine' ⟨_, _, _⟩
+      use t; refine ⟨_, _, _⟩
       simp only [mem_diff, mem_singleton_iff, eq_self_iff_true, not_true, and_false_iff,
         not_false_iff]
       rw [e]
@@ -50,7 +50,7 @@ theorem ChartedSpace.regularSpace [T2Space M] [LocallyCompactSpace A] : RegularS
     apply ((chartAt A x).continuousAt_symm (mem_chart_target _ _)).preimage_mem_nhds
     rw [(chartAt A x).left_inv (mem_chart_source _ _)]; exact Filter.inter_mem cn n
   rcases local_compact_nhds tn with ⟨u, un, ut, uc⟩
-  refine' ⟨(chartAt A x).symm '' u, _, _, _⟩
+  refine ⟨(chartAt A x).symm '' u, _, _, _⟩
   · convert (chartAt A x).symm.image_mem_nhds _ un
     rw [(chartAt A x).left_inv (mem_chart_source _ _)]
     rw [PartialHomeomorph.symm_source]; exact mem_chart_target _ _

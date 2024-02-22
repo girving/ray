@@ -61,7 +61,7 @@ lemma le_self_iter (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz
 theorem tendsto_iter_atInf (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
     Tendsto (fun n ↦ (f' d c)^[n] z) atTop atInf := by
   simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
-  refine' Filter.tendsto_atTop_mono (iter_large_z3 d z3 cz) _
+  refine Filter.tendsto_atTop_mono (iter_large_z3 d z3 cz) ?_
   exact Filter.Tendsto.atTop_mul_const (by linarith) (tendsto_pow_atTop_atTop_of_one_lt one_lt_two)
 
 /-- Large iterates are `≠ 0` -/

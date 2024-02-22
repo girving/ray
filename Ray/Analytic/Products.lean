@@ -93,7 +93,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
   have near1' : ∀ n z, z ∈ s → abs (f n z - 1) < 1 := fun n z zs ↦
     lt_of_le_of_lt (near1 n z zs) (by linarith)
   have expfl : ∀ n z, z ∈ s → exp (fl n z) = f n z := by
-    intro n z zs; refine' Complex.exp_log _
+    intro n z zs; refine Complex.exp_log ?_
     exact near_one_avoids_zero (near1' n z zs)
   have hl : ∀ n, AnalyticOn ℂ (fl n) s := fun n ↦
     (h n).log (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
@@ -109,7 +109,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
       _ = c2 * a ^ n := rfl
   rcases fast_series_converge o a0 a1 hl hfl with ⟨gl, gla, us⟩
   set g := fun z ↦ exp (gl z)
-  use g; refine' ⟨_, _, _⟩
+  use g; refine ⟨?_, ?_, ?_⟩
   · intro z zs
     specialize us z zs; simp at us
     have comp :
@@ -128,7 +128,8 @@ theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : �
     (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a ^ n) :
     ProdExistsOn f s ∧ AnalyticOn ℂ (tprodOn f) s ∧ ∀ z, z ∈ s → tprodOn f z ≠ 0 := by
   rcases fast_products_converge o c12 a0 a1 h hf with ⟨g, gp, ga, g0⟩
-  refine' ⟨_, _, _⟩; · exact fun z zs ↦ ⟨g z, gp z zs⟩
+  refine ⟨?_, ?_, ?_⟩
+  · exact fun z zs ↦ ⟨g z, gp z zs⟩
   · rwa [← analyticOn_congr o fun z zs ↦ (gp.tprodOn_eq z zs).symm]
   · intro z zs; rw [gp.tprodOn_eq z zs]; exact g0 z zs
 

@@ -117,7 +117,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   rw [← xy] at m1 m2 p0i; clear xy ym yp y
   have db : mfderiv I I (bottcher d) x = 0 := by
     contrapose m2; simp only [mem_closure_iff_frequently, Filter.not_frequently]
-    refine' ((bottcherHolomorphic d _ xm).local_inj m2).mp (eventually_of_forall _)
+    refine ((bottcherHolomorphic d _ xm).local_inj m2).mp (eventually_of_forall ?_)
     intro ⟨x, y⟩ inj ⟨xy, e, _⟩; simp only at xy e inj; exact xy (inj e)
   by_cases p0 : p ≠ 0
   · -- Case 2: At a singular point we're not locally injective,
@@ -128,12 +128,12 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     have h := frequently_smaller p0
     rw [(bottcherNontrivial xm).nhds_eq_map_nhds, Filter.frequently_map] at h
     have m : ∃ᶠ z in 𝓝 x, potential d z < p ∧ (z, r z) ∈ t2 := by
-      refine' h.mp (e.mp (eventually_of_forall fun z e lt ↦ _))
+      refine h.mp (e.mp (eventually_of_forall fun z e lt ↦ ?_))
       have zx : z ≠ x := by
         contrapose lt; simp only [not_not, not_lt] at lt ⊢; simp only [lt, le_refl]
       rw [abs_bottcher, abs_bottcher, xp] at lt
       rcases e zx with ⟨rz, e⟩
-      refine' ⟨lt, rz.symm, e.symm, le_trans lt.le pb, _⟩
+      refine ⟨lt, rz.symm, e.symm, le_trans lt.le pb, ?_⟩
       rw [← abs_bottcher, ← e, abs_bottcher] at lt; exact le_trans lt.le pb
     rcases m.exists with ⟨y, yp, m⟩
     linarith [min _ (subset_closure m)]

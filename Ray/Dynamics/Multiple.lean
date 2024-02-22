@@ -62,7 +62,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
   rw [bottcherNear_zero] at bi ia
   have i0 : i 0 = 0 := by nth_rw 1 [← bottcherNear_zero]; rw [ib.self_of_nhds]
   have inj : ∀ᶠ p : ℂ × ℂ in 𝓝 (0, 0), i p.1 = i p.2 → p.1 = p.2 := by
-    refine' ia.local_inj _
+    refine ia.local_inj ?_
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero
     rw [(Filter.EventuallyEq.symm ib).mfderiv_eq] at d0
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
@@ -70,16 +70,16 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     rw [bottcherNear_zero] at d0; exact d0
     rw [bottcherNear_zero]; exact ia.mdifferentiableAt
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
-  refine' ⟨fun z ↦ i (a * bottcherNear f d z), _, _, _⟩
+  refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
   · apply HolomorphicAt.analyticAt I I
-    refine' ia.comp_of_eq (holomorphicAt_const.mul (ba.holomorphicAt I I)) _
+    refine ia.comp_of_eq (holomorphicAt_const.mul (ba.holomorphicAt I I)) ?_
     simp only [bottcherNear_zero, s.f0, MulZeroClass.mul_zero]
   · simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0]
   · simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff]
     have t0 : ContinuousAt (fun z ↦ a * bottcherNear f d z) 0 :=
       continuousAt_const.mul ba.continuousAt
     have t1 : ContinuousAt (fun z ↦ f (i (a * bottcherNear f d z))) 0 := by
-      refine' s.fa0.continuousAt.comp_of_eq (ia.continuousAt.comp_of_eq t0 _) _
+      refine s.fa0.continuousAt.comp_of_eq (ia.continuousAt.comp_of_eq t0 ?_) ?_
       repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0]
     have t2 : ContinuousAt f 0 := s.fa0.continuousAt
     have m0 : ∀ᶠ z in 𝓝 0, i (a * bottcherNear f d z) ∈ t := by
@@ -113,7 +113,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     use fun z ↦ -z, (analyticAt_id _ _).neg, neg_zero; rw [eventually_nhdsWithin_iff]
     have e0 : ∀ᶠ z in 𝓝 0, f (-z) = 0 := by
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
-    refine' o0.mp (e0.mp (eventually_of_forall fun z f0' f0 z0 ↦ _))
+    refine o0.mp (e0.mp (eventually_of_forall fun z f0' f0 z0 ↦ ?_))
     simp only [mem_compl_singleton_iff] at z0; rw [Pi.zero_apply] at f0
     rw [f0, f0', eq_self_iff_true, and_true_iff, Ne.def, neg_eq_self_iff]; exact z0
   have o1 : orderAt f 0 ≠ 1 := by
@@ -130,7 +130,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
       fd := by rw [orderAt_const_smul (inv_ne_zero a0)]
       fc := by rw [leadingCoeff_const_smul]; simp only [smul_eq_mul, inv_mul_cancel a0] }
   rcases s.not_local_inj with ⟨h, ha, h0, e⟩
-  use h, ha, h0; refine' e.mp (eventually_of_forall _)
+  use h, ha, h0; refine e.mp (eventually_of_forall ?_)
   intro z ⟨h0, hz⟩; use h0
   exact (IsUnit.smul_left_cancel (Ne.isUnit (inv_ne_zero a0))).mp hz
 
@@ -146,21 +146,21 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
       (AnalyticAt.comp (by simp only [zero_add, fa]) ((analyticAt_id _ _).add analyticAt_const))
       analyticAt_const
   have df' : HasDerivAt f' (0 * 1) 0 := by
-    refine' HasDerivAt.sub_const _ _
+    refine HasDerivAt.sub_const ?_ _
     have e : (fun z ↦ f (z + c)) = f ∘ fun z ↦ z + c := rfl
     rw [e]; apply HasDerivAt.comp; simp only [zero_add, df]
     exact HasDerivAt.add_const (hasDerivAt_id _) _
   simp only [MulZeroClass.zero_mul] at df'
   have f0' : (fun z ↦ f (z + c) - f c) 0 = 0 := by simp only [zero_add, sub_self]
   rcases not_local_inj_of_deriv_zero' fa' df' f0' with ⟨g, ga, e, h⟩; clear fa df fa' df'
-  refine' ⟨fun z ↦ g (z - c) + c, _, _, _⟩
+  refine ⟨fun z ↦ g (z - c) + c, ?_, ?_, ?_⟩
   · exact AnalyticAt.add (AnalyticAt.comp (by simp only [sub_self, ga])
       ((analyticAt_id _ _).sub analyticAt_const)) analyticAt_const
   · simp only [sub_self, e, zero_add]
   · simp only [eventually_nhdsWithin_iff] at h ⊢
     have sc : Tendsto (fun z ↦ z - c) (𝓝 c) (𝓝 0) := by
       rw [← sub_self c]; exact continuousAt_id.sub continuousAt_const
-    refine' (sc.eventually h).mp (eventually_of_forall _)
+    refine (sc.eventually h).mp (eventually_of_forall ?_)
     simp only [mem_compl_singleton_iff, sub_ne_zero]
     intro z h zc; rcases h zc with ⟨gz, ff⟩; constructor
     contrapose gz; simp only [not_not] at gz ⊢; nth_rw 2 [← gz]; ring
@@ -188,7 +188,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
-  refine' ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), _, _, _⟩
+  refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
   · apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I c)).comp_of_eq
     apply (ha.holomorphicAt I I).comp_of_eq
       (HolomorphicAt.extChartAt (mem_extChartAt_source I c)) rfl
@@ -211,7 +211,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : HolomorphicAt 
         rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
       · rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
         apply mem_extChartAt_source
-    refine' m1.mp (m2.mp (m3.mp (eventually_of_forall _)))
+    refine m1.mp (m2.mp (m3.mp (eventually_of_forall ?_)))
     simp only [mem_compl_singleton_iff]
     intro z m3 m2 m1 m0 even zc
     rcases even ((PartialEquiv.injOn _).ne m0 (mem_extChartAt_source I c) zc) with ⟨hz, gh⟩

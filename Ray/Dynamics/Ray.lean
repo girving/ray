@@ -82,8 +82,9 @@ theorem Super.ext_connected (s : Super f d a) [OnePreimage s] : IsConnected s.ex
   · intro y n; simp only [mem_image, mem_setOf] at n; rcases n with ⟨x, m, e⟩; rw [e] at m; exact m
   · intro ⟨c, x⟩ m; simp only [mem_prod_eq, mem_singleton_iff] at m; rw [m.2]; exact s.mem_ext c
   · left; exact ⟨x, m, rfl⟩
-  · refine' IsPreconnected.union (c, 0) _ _ _ _
-    use 0, s.mem_ext c; exact mk_mem_prod (mem_univ _) rfl
+  · refine IsPreconnected.union (c, 0) ?_ ?_ ?_ ?_
+    · use 0, s.mem_ext c
+    · exact mk_mem_prod (mem_univ _) rfl
     · exact IsPreconnected.image (s.ext_slice_connected c).isPreconnected _
         (Continuous.Prod.mk _).continuousOn
     · exact isPreconnected_univ.prod isPreconnected_singleton
@@ -228,7 +229,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     have t01 : t ∈ Ioc (0 : ℝ) 1 := mem_Ioc.mpr ⟨t0, min_le_left _ _⟩
     specialize @inj t (by simp only [abs_of_pos t0, min_lt_of_right_lt (half_lt_self rp)]) (h t01)
     exact mul_left_cancel₀ (Complex.ofReal_ne_zero.mpr t0.ne') inj
-  refine' isPreconnected_Ioc.relative_clopen _ _ _
+  refine isPreconnected_Ioc.relative_clopen ?_ ?_ ?_
   · use 1, right_mem_Ioc.mpr zero_lt_one
     simp only [mem_setOf, Complex.ofReal_one, one_mul, e]
   · intro t ⟨m, e⟩
@@ -259,7 +260,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
         continuousAt_fst.prod (continuousAt_const.mul continuousAt_snd)
       simp only [ContinuousAt] at xc
       rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel _ x00] at xc
-      refine' (xc.eventually e1).mp (eventually_of_forall _); intro ⟨e, x⟩ e1
+      refine (xc.eventually e1).mp (eventually_of_forall ?_); intro ⟨e, x⟩ e1
       exact _root_.trans e1.eqn (by
         simp only [mul_pow, div_pow, ← de, div_self (pow_ne_zero _ x00), one_mul])
     refine ((continuousAt_const.prod (Complex.continuous_ofReal.continuousAt.mul
@@ -309,7 +310,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
       intro ⟨zp1, x, xp, xz⟩; rw [← xz, s.ray_potential xp] at zp1; use x, zp1, xz
       intro ⟨x, xp, xz⟩; have zp1 := lt_of_le_of_lt xp post; rw [← xz, s.ray_potential zp1]
       use xp, x, zp1
-    rw [e]; refine' (IsCompact.image_of_continuousOn (isCompact_closedBall _ _) _).isClosed
+    rw [e]; refine (IsCompact.image_of_continuousOn (isCompact_closedBall _ _) ?_).isClosed
     intro x m; simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
     exact (s.ray_holomorphic (lt_of_le_of_lt m post)).along_snd.continuousAt.continuousWithinAt
   have uc : IsCompact u := ((isClosed_le pc continuous_const).sdiff io).isCompact
@@ -324,7 +325,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
     apply (jc.isOpen_compl.eventually_mem m).mp
     apply ((Continuous.potential s).along_snd.continuousAt.eventually_lt continuousAt_const lt).mp
-    refine' eventually_of_forall fun w lt m ↦ _
+    refine eventually_of_forall fun w lt m ↦ ?_
     rw [compl_inter] at m; cases' m with m m
     · simp only [compl_setOf, mem_setOf, not_le] at m; linarith
     · apply zm; simp only [mem_diff, mem_setOf]; use lt.le, m

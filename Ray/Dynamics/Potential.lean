@@ -117,7 +117,7 @@ theorem Super.potential_lt_one (s : Super f d a) (a : ∃ n, (c, (f c)^[n] z) �
 /-- `z` reaches `s.near` iff `potential < 1` -/
 theorem Super.potential_lt_one_iff (s : Super f d a) :
     s.potential c z < 1 ↔ ∃ n, (c, (f c)^[n] z) ∈ s.near := by
-  refine' ⟨_, s.potential_lt_one⟩
+  refine ⟨?_, s.potential_lt_one⟩
   intro h; contrapose h; simp only [not_exists] at h
   simp only [s.potential_eq_one h, lt_self_iff_false, not_false_iff]
 
@@ -174,12 +174,12 @@ theorem ContinuousAt.potential_of_reaches (s : Super f d a) (a : ∃ n, (c, (f c
   have e : uncurry s.potential =ᶠ[𝓝 (c, z)] fun p : ℂ × S ↦ s.potential' p.1 p.2 n := by
     have a' : ∀ᶠ p : ℂ × S in 𝓝 (c, z), (p.1, (f p.1)^[n] p.2) ∈ s.near :=
       (s.iter_holomorphic n _).continuousAt.eventually_mem (s.isOpen_near.mem_nhds a)
-    refine' a'.mp (eventually_of_forall fun p h ↦ _)
+    refine a'.mp (eventually_of_forall fun p h ↦ ?_)
     simp only [uncurry, s.potential_eq h]
   simp only [continuousAt_congr e, Super.potential']
-  refine' ContinuousAt.rpow _ continuousAt_const _
+  refine ContinuousAt.rpow ?_ continuousAt_const ?_
   · apply Complex.continuous_abs.continuousAt.comp
-    refine' ((s.bottcherNear_holomorphic _ _).comp (s.iter_holomorphic n (c, z))).continuousAt
+    refine ((s.bottcherNear_holomorphic _ ?_).comp (s.iter_holomorphic n (c, z))).continuousAt
     exact a
   · right; bound
 
@@ -214,7 +214,7 @@ class OnePreimage (s : Super f d a) : Prop where
   eq_a : ∀ c z, f c z = a → z = a
 
 theorem Super.preimage_eq' (s : Super f d a) [o : OnePreimage s] : f c z = a ↔ z = a := by
-  have e := o.eq_a c z; refine' ⟨e, _⟩; intro e; simp only [e, s.f0]
+  have e := o.eq_a c z; refine ⟨e, ?_⟩; intro e; simp only [e, s.f0]
 
 theorem Super.preimage_eq (s : Super f d a) [o : OnePreimage s] {n : ℕ} :
     (f c)^[n] z = a ↔ z = a := by
@@ -243,12 +243,12 @@ theorem Super.no_jump (s : Super f d a) [OnePreimage s] (c : ℂ) (n : Set (ℂ 
   simp only [Filter.not_eventually, not_forall, exists_prop] at h
   set t := s.fp '' (closedBall c 1 ×ˢ univ ∩ nᶜ)
   have tc : IsClosed t := by
-    refine' (IsCompact.image _ s.fpa.continuous).isClosed
+    refine (IsCompact.image ?_ s.fpa.continuous).isClosed
     exact ((isCompact_closedBall _ _).prod isCompact_univ).inter_right no.isClosed_compl
   have th : ∃ᶠ p in 𝓝 (c, a), p ∈ t := by
     have mb : ∀ᶠ p : ℂ × S in 𝓝 (c, a), p.1 ∈ closedBall c 1 :=
       continuousAt_fst.eventually_mem_nhd (Metric.closedBall_mem_nhds _ zero_lt_one)
-    refine' (h.and_eventually mb).mp (eventually_of_forall fun p i ↦ _)
+    refine (h.and_eventually mb).mp (eventually_of_forall fun p i ↦ ?_)
     rcases i with ⟨⟨q, qp, m⟩, b⟩
     simp only [Prod.ext_iff] at qp; simp only [qp.1] at b
     simp only [Set.mem_image, Set.mem_compl_iff, Set.mem_inter_iff, Set.mem_prod_eq, Set.mem_univ,
@@ -291,9 +291,9 @@ theorem Super.barrier (s : Super f d a) [OnePreimage s] (n : Set (ℂ × S)) (no
   have ta : ∀ e, (e, a) ∉ t := fun e ↦
     Set.not_mem_diff_of_mem (Set.mk_mem_prod (Set.mem_univ _) i1m)
   use t
-  refine' ⟨uc.diff (isOpen_univ.prod i1o), _root_.trans (Set.diff_subset _ _) us.1,
-      _root_.trans (Set.diff_subset _ _) us.2, ta, _⟩
-  rw [eventually_nhds_iff]; use i0; refine' ⟨_, i0o, i0m⟩
+  refine ⟨uc.diff (isOpen_univ.prod i1o), _root_.trans (Set.diff_subset _ _) us.1,
+      _root_.trans (Set.diff_subset _ _) us.2, ta, ?_⟩
+  rw [eventually_nhds_iff]; use i0; refine ⟨?_, i0o, i0m⟩
   intro e em z zm za
   rcases tendsto_atTop_nhds.mp za i1 i1m i1o with ⟨m, mh⟩
   have en : ∃ n, (f e)^[n] z ∈ i1 := ⟨m, mh m (le_refl _)⟩
@@ -324,7 +324,7 @@ theorem Barrier.potential_large {s : Super f d a} [OnePreimage s] {n t : Set (�
       imp_true_iff, and_true_iff]
   simp only [← Ne.def, ← Set.nonempty_iff_ne_empty] at t0
   have pc : ContinuousOn (uncurry s.potential) t := by
-    refine' ContinuousOn.mono _ b.near
+    refine ContinuousOn.mono ?_ b.near
     intro ⟨c, z⟩ m; apply ContinuousAt.continuousWithinAt
     apply ContinuousAt.potential_of_reaches s; use 0; simpa only [Function.iterate_zero_apply]
   rcases b.compact.exists_isMinOn t0 pc with ⟨⟨e, z⟩, ps, pm⟩
@@ -343,7 +343,7 @@ def Barrier.fast {s : Super f d a} {n t : Set (ℂ × S)} (_ : Barrier s c n t) 
 
 theorem Barrier.closed_fast {s : Super f d a} {n t : Set (ℂ × S)} (b : Barrier s c n t) (m : ℕ) :
     IsClosed (b.fast m) := by
-  apply isClosed_iUnion_of_finite; intro k; refine' IsClosed.preimage _ b.compact.isClosed
+  apply isClosed_iUnion_of_finite; intro k; refine IsClosed.preimage ?_ b.compact.isClosed
   apply continuous_fst.prod_mk; generalize hn : (k : ℕ) = n; clear k hn; induction' n with n h
   simp only [Function.iterate_zero_apply]; exact continuous_snd
   simp only [Function.iterate_succ_apply']; exact s.fa.continuous.comp (continuous_fst.prod_mk h)
@@ -362,7 +362,7 @@ theorem Barrier.fast_reaches {s : Super f d a} {n t : Set (ℂ × S)} (b : Barri
 theorem Continuous.potential (s : Super f d a) [OnePreimage s] :
     Continuous (uncurry s.potential) := by
   -- Reduce to showing that nearby bounded potential means reaches
-  refine' continuous_iff_lower_upperSemicontinuous.mpr ⟨_, UpperSemicontinuous.potential s⟩
+  refine continuous_iff_lower_upperSemicontinuous.mpr ⟨?_, UpperSemicontinuous.potential s⟩
   intro ⟨c, z⟩
   by_cases re : ∃ n, (c, (f c)^[n] z) ∈ s.near
   exact (ContinuousAt.potential_of_reaches s re).lowerSemicontinuousAt
@@ -414,7 +414,7 @@ theorem Continuous.potential (s : Super f d a) [OnePreimage s] :
     simp only [Filter.eventually_iff, Set.setOf_mem_eq]
     exact Filter.inter_mem un ((vo.prod isOpen_univ).mem_nhds (Set.mk_mem_prod vc (Set.mem_univ _)))
   have ef : ∃ᶠ p in 𝓝 (c, z), p ∈ b.fast n := by
-    refine' (re.and_eventually ev).mp (eventually_of_forall _)
+    refine (re.and_eventually ev).mp (eventually_of_forall ?_)
     intro ⟨e, z⟩ ⟨zy, m⟩
     simp only [Set.mem_inter_iff, Set.mem_prod, Set.mem_univ, and_true_iff] at m
     exact vh e m.2 z m.1 zy
@@ -481,16 +481,16 @@ theorem Super.has_nice_n (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op 
       (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
           (s.bottcherNear_mfderiv_ne_zero c)).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
-    refine' eventually_of_forall fun z m nc ↦ _; use m, nc
+    refine eventually_of_forall fun z m nc ↦ ?_; use m, nc
   rcases et.exists_mem with ⟨t, m, h⟩
   rcases s.potential_basis c m with ⟨q, qp, qt⟩; clear et m
   rcases exists_pow_lt_of_lt_one qp p1 with ⟨n, pq⟩
   use n; intro z m
   replace m : ∀ k, n ≤ k → s.potential c ((f c)^[k] z) < q := by
-    intro k nk; refine' lt_of_le_of_lt _ pq; simp only [s.potential_eqn_iter]
+    intro k nk; refine lt_of_le_of_lt ?_ pq; simp only [s.potential_eqn_iter]
     have dn := (Nat.lt_pow_self s.d1 k).le
     apply _root_.trans (pow_le_pow_of_le_one s.potential_nonneg s.potential_le_one dn)
-    refine' _root_.trans (pow_le_pow_left s.potential_nonneg m _) _
+    refine _root_.trans (pow_le_pow_left s.potential_nonneg m _) ?_
     exact pow_le_pow_of_le_one (_root_.trans s.potential_nonneg m) p1.le nk
   use(h _ (qt (m n (le_refl _)))).1, fun k nk ↦ (h _ (qt (m k nk))).2
 

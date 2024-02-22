@@ -80,7 +80,7 @@ end realCircleMap
 theorem Metric.sphere_eq_empty {S : Type} [IsROrC S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
   constructor
   · intro rp; contrapose rp; simp at rp
-    refine' Nonempty.ne_empty ⟨c + r, _⟩
+    refine Nonempty.ne_empty ⟨c + r, ?_⟩
     simpa only [mem_sphere_iff_norm, add_sub_cancel', IsROrC.norm_ofReal, abs_eq_self]
   · intro n; contrapose n
     rw [← not_nonempty_iff_eq_empty] at n
@@ -250,7 +250,7 @@ theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ 
 
 /-- If `x.toReal = y` is positive, then `x = ofReal y` -/
 theorem invert_toReal {x : ENNReal} {y : ℝ} (yp : y > 0) : x.toReal = y → x = ENNReal.ofReal y := by
-  intro h; rw [← h]; refine' (ENNReal.ofReal_toReal _).symm
+  intro h; rw [← h]; refine (ENNReal.ofReal_toReal ?_).symm
   contrapose yp; simp only [ne_eq, not_not] at yp; simp only [yp, ENNReal.top_toReal] at h
   simp only [← h, lt_self_iff_false, not_false_eq_true]
 

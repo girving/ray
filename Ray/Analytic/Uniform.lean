@@ -56,18 +56,18 @@ theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r
   have h0 := analyticOn_small_cball h (r / 2) (NNReal.half_lt_self <| rp.ne')
   rcases analyticOn_cball_radius (half_pos rp) h0 with ⟨p, ph⟩
   set R := FormalMultilinearSeries.radius p
-  refine'
+  refine
     ⟨p, {
-        r_le := _
+        r_le := ?_
         r_pos := ENNReal.coe_pos.mpr rp
-        hasSum := _ }⟩
+        hasSum := ?_ }⟩
   · apply ENNReal.le_of_forall_pos_nnreal_lt
     intro t tp tr
     have ht := analyticOn_small_cball h t (ENNReal.coe_lt_coe.mp tr)
     rcases analyticOn_cball_radius tp ht with ⟨p', hp'⟩
     have pp : p = p' := HasFPowerSeriesAt.eq_formalMultilinearSeries ⟨↑(r / 2), ph⟩ ⟨t, hp'⟩
     rw [← pp] at hp'
-    refine' hp'.r_le
+    refine hp'.r_le
   · intro y yr
     rw [EMetric.ball, Set.mem_setOf] at yr
     rcases exists_between yr with ⟨t, t0, t1⟩
@@ -80,7 +80,7 @@ theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r
     have pp : p = p' :=
       HasFPowerSeriesAt.eq_formalMultilinearSeries ⟨↑(r / 2), ph⟩ ⟨t.toNNReal, hp'⟩
     rw [← pp] at hp'
-    refine' hp'.hasSum _
+    refine hp'.hasSum ?_
     rw [EMetric.ball, Set.mem_setOf]
     calc edist y 0
       _ < t := t0
@@ -150,11 +150,11 @@ theorem cauchy_is_circleIntegrable {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n 
     apply Continuous.continuousOn
     refine Continuous.inv₀ ?_ fun x ↦ pow_ne_zero n (circleMap_nz rp)
     apply Continuous.pow; continuity
-  · refine' ContinuousOn.mul _ _
-    apply Continuous.continuousOn
-    refine' Continuous.inv₀ (by continuity) fun x ↦ circleMap_nz rp
-    refine' ContinuousOn.comp h (Continuous.continuousOn (by continuity)) _
-    intro θ _; exact circleMap_mem_closedBall c (NNReal.coe_nonneg r) θ
+  · refine ContinuousOn.mul ?_ ?_
+    · apply Continuous.continuousOn
+      refine Continuous.inv₀ (by continuity) fun x ↦ circleMap_nz rp
+    · refine ContinuousOn.comp h (Continuous.continuousOn (by continuity)) ?_
+      intro θ _; exact circleMap_mem_closedBall c (NNReal.coe_nonneg r) θ
 
 theorem cauchy_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
     (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r)) :
@@ -183,7 +183,7 @@ theorem cauchy_dist {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} (n
     dist (cauchyPowerSeries f c r n fun _ ↦ w) (cauchyPowerSeries g c r n fun _ ↦ w) ≤
       abs w ^ n * r⁻¹ ^ n * d := by
   rw [Complex.dist_eq, cauchy_sub n w rp cf cg]
-  refine' cauchy_bound rp _; intro z zr; simp at h zr; refine' h z zr
+  refine cauchy_bound rp ?_; intro z zr; simp at h zr; refine h z zr
 
 /-- Uniform limits of analytic functions are analytic -/
 theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → ℂ} {g : ℂ → ℂ}
@@ -225,7 +225,7 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
   set hn := hn' n; simp at hn; clear hn' u
   have dfg : dist (f n (c + y)) (g (c + y)) ≤ d := by
     apply le_of_lt; rw [dist_comm]
-    refine' hn (c + y) _
+    refine hn (c + y) ?_
     apply cb
     simp; exact yr.le
   set hs := (hpf n).hasSum yb; rw [HasSum, Metric.tendsto_atTop] at hs
