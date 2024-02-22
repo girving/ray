@@ -42,8 +42,8 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
   have z0 : 0 < abs z := lt_of_lt_of_le c0 cz
   set s := superF d
   set t := closedBall (0 : ℂ) (abs c)⁻¹
-  suffices e : EqOn (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) (bottcherNear (fl (f d) ∞ c) d) t
-  · have z0' : z ≠ 0 := Complex.abs.ne_zero_iff.mp z0.ne'
+  suffices e : EqOn (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) (bottcherNear (fl (f d) ∞ c) d) t by
+    have z0' : z ≠ 0 := Complex.abs.ne_zero_iff.mp z0.ne'
     convert @e z⁻¹ _; rw [inv_coe (inv_ne_zero z0'), inv_inv]
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz]
   have a0 : HolomorphicOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
@@ -97,8 +97,8 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
   simp only [term]
   have wc := iterates_converge (superNearF d c) n (inv_mem_t c16 cz)
   generalize hw : (fl (f d) ∞ c)^[n] z⁻¹ = w; rw [hw] at wc
-  replace wc : abs w ≤ (abs z)⁻¹
-  · rw [map_inv₀] at wc
+  replace wc : abs w ≤ (abs z)⁻¹ := by
+    rw [map_inv₀] at wc
     exact le_trans wc (mul_le_of_le_one_left (inv_nonneg.mpr (Complex.abs.nonneg _)) (by bound))
   have cw : abs (c * w ^ d) ≤ (abs z)⁻¹ := by
     simp only [Complex.abs.map_mul, Complex.abs.map_pow]

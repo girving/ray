@@ -449,7 +449,7 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
       _ = 2 := by norm_num
   have l3 : 0 < ↑d * log (abs z) + log (abs (1 + c / z ^ d)) := by
     have i2 : 1/abs z ≤ 1/2 := one_div_le_one_div_of_le (by norm_num) (by linarith)
-    suffices h : -log (abs (1 + c / z ^ d)) < ↑d * log (abs z); linarith
+    suffices h : -log (abs (1 + c / z ^ d)) < ↑d * log (abs z) by linarith
     apply lt_of_le_of_lt (neg_le_neg_iff.mpr (abs_le.mp l2).1); simp only [neg_neg]
     exact lt_of_le_of_lt (neg_log_one_sub_le_two i2) dl2
   rw [log_abs_add (z ^ d) c (pow_ne_zero _ z0) (f_ne_zero cz z3), Complex.abs.map_pow, Real.log_pow,

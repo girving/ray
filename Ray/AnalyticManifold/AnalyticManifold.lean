@@ -9,8 +9,6 @@ import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.SmoothManifoldWithCorners
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Ray.Analytic.HolomorphicUpstream
-import Ray.Misc.Manifold
-import Ray.Misc.Topology
 
 /-!
 ## Analytic manifolds
@@ -600,7 +598,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
   set snd := ContinuousLinearMap.snd 𝕜 (TangentSpace J y) (TangentSpace K z)
   generalize hdf : mfderiv (J.prod K) L (uncurry f) (y, z) = df
   have fh := fd.hasMFDerivAt; rw [hdf] at fh
-  suffices e : df = df0.comp fst + df1.comp snd; rw [e] at fh; exact fh
+  suffices e : df = df0.comp fst + df1.comp snd by rw [e] at fh; exact fh
   apply ContinuousLinearMap.ext; intro ⟨u, v⟩
   simp only [ContinuousLinearMap.add_apply, ContinuousLinearMap.comp_apply,
     ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd']

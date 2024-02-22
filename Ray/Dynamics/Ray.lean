@@ -215,8 +215,8 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
   -- It suffices to show that the set of t's where the x0 and x1 rays match
   -- is relatively clopen in Ioc 0 1
   set u : Set ℝ := {t : ℝ | s.ray c (t * x0) = s.ray c (t * x1)}
-  suffices h : Ioc (0 : ℝ) 1 ⊆ interior u
-  · replace h := _root_.trans h interior_subset
+  suffices h : Ioc (0 : ℝ) 1 ⊆ interior u by
+    replace h := _root_.trans h interior_subset
     replace tc := (tc x0 0).prod_mk (tc x1 0); simp only [← nhds_prod_eq] at tc
     simp only [ContinuousAt, Complex.ofReal_zero, MulZeroClass.zero_mul] at tc
     have inj := tc.eventually ((s.ray_holomorphic (s.mem_ext c)).along_snd.local_inj
@@ -319,8 +319,8 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   have ne : u.Nonempty := ⟨z0, z0u⟩
   rcases uc.exists_isMinOn ne pc.continuousOn with ⟨z, zu, zm⟩
   simp only [mem_diff, mem_setOf] at zu
-  replace zm : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w
-  · have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2
+  replace zm : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w := by
+    have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
     apply (jc.isOpen_compl.eventually_mem m).mp
     apply ((Continuous.potential s).along_snd.continuousAt.eventually_lt continuousAt_const lt).mp

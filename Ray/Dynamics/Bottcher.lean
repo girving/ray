@@ -175,11 +175,12 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     s.bottcher c (f c z) = s.bottcher c z ^ d := by
   have h0 : ∀ {c z}, (c, z) ∈ s.post → s.bottcher c (f c z) = s.bottcher c z ^ d := by
     intro c z m
-    suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d
-    · refine'
-        (HolomorphicOn.eq_of_locally_eq _ (fun z m ↦ (s.bottcher_holomorphicOn (c, z) m).along_snd.pow)
-          (s.post_slice_connected c).isPreconnected ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
-      exact fun z m ↦ (s.bottcher_holomorphicOn _ (s.stays_post m)).along_snd.comp (s.fa _).along_snd
+    suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d by
+      refine (HolomorphicOn.eq_of_locally_eq ?_ (fun z m ↦
+        (s.bottcher_holomorphicOn (c, z) m).along_snd.pow) (s.post_slice_connected c).isPreconnected
+        ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
+      intro z m
+      exact (s.bottcher_holomorphicOn _ (s.stays_post m)).along_snd.comp (s.fa _).along_snd
     have e := s.bottcher_eq_bottcherNear c
     have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp

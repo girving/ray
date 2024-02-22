@@ -155,7 +155,7 @@ theorem Bounded.dist1 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
 /-- `f` is analytic if it's bounded -/
 theorem of_bounded (h : Har f s) (o : IsOpen s) {b : ℝ} (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) :
     AnalyticOn ℂ f s := by
-  suffices c : ContinuousOn f s; exact osgood o c h.fa0 h.fa1
+  suffices c : ContinuousOn f s by exact osgood o c h.fa0 h.fa1
   by_cases bp : b ≤ 0
   · have fz : ∀ z, z ∈ s → f z = 0 := fun z zs ↦
       norm_eq_zero.mp (le_antisymm (_root_.trans (fb z zs) bp) (norm_nonneg (f z)))
@@ -433,7 +433,7 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
     ∃ c a : ℝ, c > 0 ∧ a > 0 ∧ ∀ n z1, z1 ∈ closedBall c1 s →
       ‖unevenSeries u z1 n‖ ≤ c * a ^ n := by
   have fc : ContinuousOn f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) := by
-    suffices fa' : AnalyticOn ℂ f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s); exact fa'.continuousOn
+    suffices fa' : AnalyticOn ℂ f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) by exact fa'.continuousOn
     refine' u.a.mono (Set.prod_mono _ _)
     have rh : r0 / 2 < r0 := by linarith [u.r0p]
     exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
@@ -554,8 +554,8 @@ theorem HasFPowerSeriesAt.along0 {f : ℂ × ℂ → E} {c0 c1 : ℂ}
     {p : FormalMultilinearSeries ℂ (ℂ × ℂ) E} (fp : HasFPowerSeriesAt f p (c0, c1)) :
     HasFPowerSeriesAt (fun z0 ↦ f (z0, c1)) p.along0 c0 := by
   rcases fp with ⟨r, fpr⟩
-  suffices h : HasFPowerSeriesOnBall (fun z0 ↦ f (z0, c1)) p.along0 c0 r
-  exact h.hasFPowerSeriesAt
+  suffices h : HasFPowerSeriesOnBall (fun z0 ↦ f (z0, c1)) p.along0 c0 r by
+    exact h.hasFPowerSeriesAt
   refine'
     { r_le := le_trans fpr.r_le (Along0.radius p)
       r_pos := fpr.r_pos

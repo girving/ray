@@ -3,7 +3,6 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 import Ray.Analytic.Holomorphic
 import Ray.AnalyticManifold.OneDimension
 import Ray.Misc.Connected
-import Ray.Misc.Manifold
 import Ray.Misc.TotallyDisconnected
 import Ray.Tactic.Bound
 
@@ -218,7 +217,7 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
     (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
   set t := {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a}
-  suffices st : s ⊆ t; exact fun z m ↦ (st m).2.self_of_nhds
+  suffices st : s ⊆ t by exact fun z m ↦ (st m).2.self_of_nhds
   refine p.subset_of_closure_inter_subset ?_ ?_ ?_
   · rw [isOpen_iff_eventually]; intro z m; simp only [Set.mem_setOf_eq] at m ⊢
     exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (eventually_of_forall fun y h ↦ h)
@@ -387,8 +386,8 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
     (fa : HolomorphicOn J K f s) (ga : HolomorphicOn J K g s) (sp : IsPreconnected s)
     (e : ∃ x, x ∈ s ∧ f =ᶠ[𝓝 x] g) : f =ᶠ[𝓝ˢ s] g := by
   set t := {x | f =ᶠ[𝓝 x] g}
-  suffices h : s ⊆ interior t
-  · simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff] at h
+  suffices h : s ⊆ interior t by
+    simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff] at h
     exact h.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
   apply sp.relative_clopen; · exact e
   · intro x ⟨_, xt⟩; rw [mem_interior_iff_mem_nhds]; exact xt.eventually_nhds
@@ -400,8 +399,8 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
       extChartAt K (f x) (f ((extChartAt J x).symm y)) -
         extChartAt K (g x) (g ((extChartAt J x).symm y))) = d
     generalize hz : extChartAt J x x = z
-    suffices h : d =ᶠ[𝓝 z] 0
-    · simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq] at h
+    suffices h : d =ᶠ[𝓝 z] 0 by
+      simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq] at h
       refine'
         h.mp (((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp _)
       apply ((fa _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds

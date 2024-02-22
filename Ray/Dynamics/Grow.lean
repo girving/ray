@@ -588,7 +588,7 @@ theorem Super.grow (s : Super f d a) [OnePreimage s] :
   by_cases missing : sSup t ∈ t
   · -- Contradict by growing a bit beyond Sup t
     rcases self missing with ⟨r, g⟩; rcases g.open with ⟨p, sp, g'⟩
-    suffices m : p ∈ t; linarith [le_csSup above m]
+    suffices m : p ∈ t by linarith [le_csSup above m]
     use g'.self_of_nhds.nonneg
     intro q q0 qp; by_cases le : q ≤ sSup t; exact missing.2 _ q0 le
     use r; simp only [not_le] at le

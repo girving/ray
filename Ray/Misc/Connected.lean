@@ -74,8 +74,8 @@ theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I]
   have e : ∃ a, s a ⊆ u ∪ v := by
     by_contra h; simp only [not_exists, Set.not_subset] at h
     set t := fun a ↦ s a \ (u ∪ v)
-    suffices n : (⋂ a, t a).Nonempty
-    · rcases n with ⟨x, n⟩; simp only [mem_iInter, mem_diff, forall_and, forall_const] at n
+    suffices n : (⋂ a, t a).Nonempty by
+      rcases n with ⟨x, n⟩; simp only [mem_iInter, mem_diff, forall_and, forall_const] at n
       rw [← mem_iInter] at n; simp only [suv n.1, not_true, imp_false] at n; exact n.2
     apply IsCompact.nonempty_iInter_of_directed_nonempty_compact_closed
     intro a b; rcases d a b with ⟨c, ac, bc⟩
@@ -254,7 +254,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
       rcases(nhds_basis_Ioo t).mem_iff.mp (o.mem_nhds h) with ⟨⟨x, y⟩, ⟨xt, ty⟩, h⟩
       simp only [subset_def, mem_Ioo, and_imp, mem_preimage, Function.comp] at xt ty h
       rcases exists_between (lt_min ty t1) with ⟨z, tz, zy1⟩; rcases lt_min_iff.mp zy1 with ⟨zy, z1⟩
-      suffices h : z ∈ u; linarith [le_csSup bdd h]
+      suffices h : z ∈ u by linarith [le_csSup bdd h]
       rw [← hu]; refine' ⟨⟨_root_.trans m.1 tz.le, z1.le⟩, _⟩
       simp only [mem_iInter₂, mem_Iic]; intro w ws
       contrapose ws; simp only [not_not, not_le] at ws ⊢

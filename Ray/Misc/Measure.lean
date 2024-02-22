@@ -27,18 +27,9 @@ variable {X : Type} [MeasureSpace X] [MetricSpace X] [BorelSpace X]
 variable {Y : Type} [MeasureSpace Y] [MetricSpace Y] [BorelSpace Y]
 variable {A : Type} [TopologicalSpace A]
 
-/-- If a set has measure 0, any subset does too -/
-theorem null_subset {s t : Set ℝ} (h : s ⊆ t) : volume t = 0 → volume s = 0 := by
-  simp_rw [← le_zero_iff]; exact le_trans (measure_mono h)
-
-/-- Two functions are `ae =` on a set if the expected ae statement holds -/
-theorem ae_eq_on_def {Y : Type} {f g : X → Y} {s : Set X} (m : MeasurableSet s) :
-    f =ᵐ[volume.restrict s] g ↔ ∀ᵐ x, x ∈ s → f x = g x := by
-  rw [Filter.EventuallyEq, ae_restrict_iff' m]
-
 /-- Removing a null set isn't significant measure-wise -/
 theorem ae_minus_null {s t : Set X} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
-  simp only [Filter.EventuallyEq._eq_1, Pi.sdiff_apply, eq_iff_iff]
+  simp only [Filter.EventuallyEq, Pi.sdiff_apply, eq_iff_iff]
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
     intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true_iff]
   simp_rw [Set.mem_def] at e
@@ -180,7 +171,7 @@ theorem average_linear_comm {f : X → E} {s : Set X} (fi : IntegrableOn f s) (g
 /-- Averages on a set depend only on ae values within the set -/
 theorem average_congr_on {f g : X → E} {s : Set X} (sn : NiceVolume s)
     (h : ∀ᵐ x, x ∈ s → f x = g x) : ⨍ x in s, f x = ⨍ x in s, g x := by
-  rw [← ae_eq_on_def sn.measurable] at h; exact average_congr h
+  simp only [← ae_restrict_iff' sn.measurable] at h; exact average_congr h
 
 /-- Means are at most the values of the function -/
 theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi : IntegrableOn f s)

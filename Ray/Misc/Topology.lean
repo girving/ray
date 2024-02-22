@@ -81,13 +81,6 @@ theorem tendsto_inv_iff_tendsto {A B : Type} [NontriviallyNormedField B]
   have h := h.inv₀ (inv_ne_zero a0)
   field_simp [a0] at h; exact h
 
-/-- If `f x ∈ s` for `s` open and `f` continuous at `z`, `∈` holds locally.
-    This is `IsOpen.eventually_mem`, but assuming only `ContinuousAt`. -/
-theorem ContinuousAt.eventually_mem {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
-    ∀ᶠ y in 𝓝 x, f y ∈ s :=
-  fc m
-
 /-- If `f x ∈ s` for `s ∈ 𝓝 (f x)` and `f` continuous at `z`, `∈` holds locally -/
 theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :

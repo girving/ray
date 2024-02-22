@@ -102,8 +102,8 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] :
     (isClosed_le (Continuous.potential s) continuous_const).inter s.isClosed_critical_not_a
   set u := Prod.fst '' t
   have cu : IsClosed u := isClosedMap_fst_of_compactSpace _ ct
-  suffices m : c ∈ u
-  · rcases(mem_image _ _ _).mp m with ⟨⟨c', z⟩, ⟨zp, zc, za⟩, cc⟩
+  suffices m : c ∈ u by
+    rcases(mem_image _ _ _).mp m with ⟨⟨c', z⟩, ⟨zp, zc, za⟩, cc⟩
     simp only at cc za zc zp; simp only [cc] at za zc zp; clear cc c'
     simp only [Ne.def, ← s.potential_eq_zero_of_onePreimage c] at za
     refine' _root_.trans (csInf_le s.bddBelow_ps _) zp; right; use za, z, rfl, zc

@@ -2,7 +2,6 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 import Ray.AnalyticManifold.Inverse
 import Ray.AnalyticManifold.LocalInj
 import Ray.Dynamics.BottcherNear
-import Ray.Misc.Manifold
 
 /-!
 ## Non-injectivity near multiple roots

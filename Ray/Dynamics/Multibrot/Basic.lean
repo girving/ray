@@ -718,8 +718,8 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) atInf (𝓝 1) := by
   set s := superF d
   have e : ∀ᶠ z : ℂ in atInf, s.bottcher c z * z = s.bottcherNear c z * z := by
-    suffices e : ∀ᶠ z : ℂ in atInf, s.bottcher c z = s.bottcherNear c z
-    exact e.mp (eventually_of_forall fun z e ↦ by rw [e])
+    suffices e : ∀ᶠ z : ℂ in atInf, s.bottcher c z = s.bottcherNear c z by
+      exact e.mp (eventually_of_forall fun z e ↦ by rw [e])
     refine coe_tendsto_inf.eventually (p := fun z ↦ s.bottcher c z = s.bottcherNear c z) ?_
     apply s.bottcher_eq_bottcherNear
   rw [Filter.tendsto_congr' e]; clear e

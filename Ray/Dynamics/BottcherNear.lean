@@ -104,7 +104,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
   have o : IsOpen (ball c r) := isOpen_ball
   generalize ht : ball c r = t
   rw [ht] at fa o
-  suffices h : AnalyticOn ℂ (g f d) t; · rw [← ht] at h; exact h _ (mem_ball_self rp)
+  suffices h : AnalyticOn ℂ (g f d) t by rw [← ht] at h; exact h _ (mem_ball_self rp)
   have ga : DifferentiableOn ℂ (g f d) (t \ {0}) := by
     have e : ∀ z : ℂ, z ∈ t \ {0} → g f d z = f z / z ^ d := by
       intro z zs; simp only [Set.mem_diff, Set.mem_singleton_iff] at zs
