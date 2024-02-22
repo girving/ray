@@ -45,50 +45,120 @@ variable {𝕜 : Type} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
 /-- An analytic manifold w.r.t. a model `I : ModelWithCorners 𝕜 E H` is a charted space over H
     s.t. all extended chart conversion maps are analytic. -/
 @[class]
-structure AnalyticManifold {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [I.Boundaryless] (M : Type)
+structure AnalyticManifold {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) (M : Type)
     [TopologicalSpace M] [ChartedSpace H M] extends HasGroupoid M (analyticGroupoid I) : Prop
 
-/-- Normed spaces are complex manifolds over themselves -/
+/-- Normed spaces are analytic manifolds over themselves -/
 instance AnalyticManifold.self_of_nhds {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [CompleteSpace E] : AnalyticManifold (modelWithCornersSelf 𝕜 E) E :=
   AnalyticManifold.mk (by infer_instance)
+
+@[simp] lemma StructureGroupoid.mem_inf {X : Type} [TopologicalSpace X] {G H : StructureGroupoid X}
+    {f : PartialHomeomorph X X} : f ∈ G ⊓ H ↔ f ∈ G ∧ f ∈ H := by
+  rfl
+
+/-- `f ∈ analyticGroupoid` iff its in the `contDiffGroupoid`, is analytic in the interior, and
+maps interior to interior -/
+lemma mem_analyticGroupoid {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [TopologicalSpace A] [CompleteSpace E] {I : ModelWithCorners 𝕜 E A}
+    {f : PartialHomeomorph A A} :
+    f ∈ analyticGroupoid I ↔ f ∈ contDiffGroupoid ∞ I ∧
+      (AnalyticOn 𝕜 (I ∘ f ∘ I.symm) (I.symm ⁻¹' f.source ∩ interior (range I)) ∧
+        (I.symm ⁻¹' f.source ∩ interior (range I)).image (I ∘ f ∘ I.symm) ⊆ interior (range I)) ∧
+      (AnalyticOn 𝕜 (I ∘ f.symm ∘ I.symm) (I.symm ⁻¹' f.target ∩ interior (range I)) ∧
+        (I.symm ⁻¹' f.target ∩ interior (range I)).image (I ∘ f.symm ∘ I.symm) ⊆ interior (range I))
+    := by
+  rfl
+
+/-- Version of `ModelWithCorners.prod_apply` with `x ∈ H × H'` rather than `ModelProd H H'`.  This
+comes up because other simplification doesn't stay in `ModelProd`. -/
+@[simp]
+lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
+    [TopologicalSpace H'] (I' : ModelWithCorners 𝕜 E' H') (x : H × H') :
+    (I.prod I') x = (I x.1, I' x.2) :=
+  ModelWithCorners.prod_apply _ _ _
 
 /-- The product of two analytic local homeomorphisms is analytic -/
 theorem analyticGroupoid_prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [TopologicalSpace A] [CompleteSpace E] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     [TopologicalSpace B] [CompleteSpace F] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
-    [I.Boundaryless] [J.Boundaryless] {f : PartialHomeomorph A A} {g : PartialHomeomorph B B}
+    {f : PartialHomeomorph A A} {g : PartialHomeomorph B B}
     (fa : f ∈ analyticGroupoid I) (ga : g ∈ analyticGroupoid J) :
     f.prod g ∈ analyticGroupoid (I.prod J) := by
-  simp only [mem_analyticGroupoid_of_boundaryless, Function.comp] at fa ga
-  rw [@mem_analyticGroupoid_of_boundaryless _ _ _ _ _ _ _ _ _
-    (ModelWithCorners.range_eq_univ_prod I J)]
-  simp only [Function.comp, ModelWithCorners.prod_apply, PartialHomeomorph.prod_apply,
-    PartialHomeomorph.prod_source, Set.image_prod, Prod.fst, Prod.snd,
-    ModelWithCorners.prod_symm_apply]
-  constructor
+  have er : (range fun x : A × B ↦ (I x.1, J x.2)) = range I ×ˢ range J := range_prod_map
+  have ei : interior (range fun x : A × B ↦ (I x.1, J x.2)) =
+      interior (range I) ×ˢ interior (range J) := by rw [er, interior_prod_eq]
+  -- This proof is made a lot messier because `simp`s tend to fail.  E.g., we can't simplify via
+  -- the above `ei` lemma, because the `TopologicalSpace` instances aren't defeq.  Instead, we use
+  -- it via `subset_of_eq`.
+  simp only [mem_analyticGroupoid, Function.comp, image_subset_iff] at fa ga ⊢
+  refine ⟨contDiffGroupoid_prod fa.1 ga.1, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
   · apply AnalyticOn.prod
-    · apply fa.1.comp (analyticOn_fst _); intro (x,y) m
-      simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
-      rcases m with ⟨⟨a,b⟩,⟨ma,_⟩,ex,_⟩; exact ⟨a,ma,ex⟩
-    · apply ga.1.comp (analyticOn_snd _); intro (x,y) m
-      simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
-      rcases m with ⟨⟨a,b⟩,⟨_,mb⟩,_,ey⟩; exact ⟨b,mb,ey⟩
+    · simp only [ModelWithCorners.symm, modelWithCorners_prod_toPartialEquiv,
+        PartialEquiv.prod_symm, PartialEquiv.prod_coe, ModelWithCorners.toPartialEquiv_coe_symm,
+        PartialHomeomorph.prod_apply, PartialHomeomorph.prod_toPartialEquiv,
+        PartialEquiv.prod_source]
+      refine fa.2.1.1.comp (analyticOn_fst _) ?_
+      intro x m
+      simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+        PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_coe,
+        mem_inter_iff, mem_preimage, mem_prod] at m ⊢
+      exact ⟨m.1.1, (subset_of_eq ei m.2).1⟩
+    · simp only [ModelWithCorners.symm, modelWithCorners_prod_toPartialEquiv,
+        PartialEquiv.prod_symm, PartialEquiv.prod_coe, ModelWithCorners.toPartialEquiv_coe_symm,
+        PartialHomeomorph.prod_apply, PartialHomeomorph.prod_toPartialEquiv,
+        PartialEquiv.prod_source]
+      refine ga.2.1.1.comp (analyticOn_snd _) ?_
+      intro x m
+      simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+        PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_coe,
+        mem_inter_iff, mem_preimage, mem_prod] at m ⊢
+      exact ⟨m.1.2, (subset_of_eq ei m.2).2⟩
+  · simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+      PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_symm,
+      PartialEquiv.coe_symm_mk, PartialHomeomorph.prod_apply, ModelWithCorners.mk_coe,
+      PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_source, mk_preimage_prod,
+      image_subset_iff]
+    intro x ⟨⟨m0,m1⟩,m2⟩
+    replace m2 := subset_of_eq ei m2
+    exact subset_of_eq ei.symm ⟨fa.2.1.2 ⟨m0,m2.1⟩, ga.2.1.2 ⟨m1,m2.2⟩⟩
   · apply AnalyticOn.prod
-    · apply fa.2.comp (analyticOn_fst _); intro (x,y) m
-      simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
-      rcases m with ⟨⟨a,b⟩,⟨ma,_⟩,ex,_⟩; exact ⟨a,ma,ex⟩
-    · apply ga.2.comp (analyticOn_snd _); intro (x,y) m
-      simp only [mem_image, Prod.mk.injEq, mem_prod] at m ⊢
-      rcases m with ⟨⟨a,b⟩,⟨_,mb⟩,_,ey⟩; exact ⟨b,mb,ey⟩
+    · simp only [ModelWithCorners.symm, modelWithCorners_prod_toPartialEquiv,
+        PartialEquiv.prod_symm, PartialEquiv.prod_coe, ModelWithCorners.toPartialEquiv_coe_symm,
+        PartialHomeomorph.prod_apply, PartialHomeomorph.prod_toPartialEquiv,
+        PartialEquiv.prod_source]
+      refine fa.2.2.1.comp (analyticOn_fst _) ?_
+      intro x m
+      simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+        PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_coe,
+        mem_inter_iff, mem_preimage, mem_prod] at m ⊢
+      exact ⟨m.1.1, (subset_of_eq ei m.2).1⟩
+    · simp only [ModelWithCorners.symm, modelWithCorners_prod_toPartialEquiv,
+        PartialEquiv.prod_symm, PartialEquiv.prod_coe, ModelWithCorners.toPartialEquiv_coe_symm,
+        PartialHomeomorph.prod_apply, PartialHomeomorph.prod_toPartialEquiv,
+        PartialEquiv.prod_source]
+      refine ga.2.2.1.comp (analyticOn_snd _) ?_
+      intro x m
+      simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+        PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_coe,
+        mem_inter_iff, mem_preimage, mem_prod] at m ⊢
+      exact ⟨m.1.2, (subset_of_eq ei m.2).2⟩
+  · simp only [ModelWithCorners.prod, ModelWithCorners.source_eq, mem_univ, and_self, setOf_true,
+      PartialEquiv.prod_target, ModelWithCorners.target_eq, ModelWithCorners.mk_symm,
+      PartialEquiv.coe_symm_mk, PartialHomeomorph.prod_apply, ModelWithCorners.mk_coe,
+      PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_source, mk_preimage_prod,
+      image_subset_iff]
+    intro x ⟨⟨m0,m1⟩,m2⟩
+    replace m2 := subset_of_eq ei m2
+    exact subset_of_eq ei.symm ⟨fa.2.2.2 ⟨m0,m2.1⟩, ga.2.2.2 ⟨m1,m2.2⟩⟩
 
-/-- `M × N` is a complex manifold if `M` and `N` are -/
+/-- `M × N` is a analytic manifold if `M` and `N` are -/
 instance AnalyticManifold.prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [TopologicalSpace A] [CompleteSpace E] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     [TopologicalSpace B] [CompleteSpace F] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
-    [I.Boundaryless] [J.Boundaryless] {M : Type} [TopologicalSpace M] [ChartedSpace A M]
-    [m : AnalyticManifold I M]
+    {M : Type} [TopologicalSpace M] [ChartedSpace A M] [m : AnalyticManifold I M]
     {N : Type} [TopologicalSpace N] [ChartedSpace B N] [n : AnalyticManifold J N] :
     AnalyticManifold (I.prod J) (M × N) where
   compatible := by
@@ -100,31 +170,25 @@ instance AnalyticManifold.prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 
 /-- Complex manifolds are smooth manifolds -/
 instance AnalyticManifold.smoothManifoldWithCorners {E A : Type} [NormedAddCommGroup E]
     [NormedSpace 𝕜 E] [TopologicalSpace A] [CompleteSpace E] {I : ModelWithCorners 𝕜 E A}
-    [I.Boundaryless] {M : Type} [TopologicalSpace M] [ChartedSpace A M]
+    {M : Type} [TopologicalSpace M] [ChartedSpace A M]
     [cm : AnalyticManifold I M] :
     SmoothManifoldWithCorners I M := by
-  apply smoothManifoldWithCorners_of_contDiffOn
-  intro f g fa ga
-  have fga := cm.compatible fa ga
-  simp only [mem_analyticGroupoid_of_boundaryless] at fga
-  apply fga.1.contDiffOn.mono; intro x m
-  simp only [PartialHomeomorph.trans_toPartialEquiv, PartialHomeomorph.symm_toPartialEquiv,
-    PartialEquiv.trans_source, PartialEquiv.symm_source, PartialHomeomorph.coe_coe_symm, preimage_inter,
-    mem_inter_iff, mem_preimage, mem_image] at m ⊢
-  refine ⟨I.symm x,⟨m.1.1,m.1.2⟩,?_⟩; simp only [I.right_inv m.2]
+  have h : HasGroupoid M (analyticGroupoid I) := cm.toHasGroupoid
+  simp only [analyticGroupoid, hasGroupoid_inf_iff] at h
+  exact SmoothManifoldWithCorners.mk' (gr := h.1)
 
-/-- A typeclass for trivial manifolds with `extChartAt` is the identity.
+/-- A typeclass for trivial manifolds where `extChartAt` is the identity.
     In this case, `extChartAt I : E → E`, but the intermediate space `H` might be different.
     This is necessary to handle product spaces, where the intermediate space may be `ModelProd`. -/
 @[class]
 structure ExtChartEqRefl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [I.Boundaryless] [ChartedSpace H E]
+    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [ChartedSpace H E]
     [AnalyticManifold I E] : Prop where
   eq_refl : ∀ x, extChartAt I x = PartialEquiv.refl E
 
 /-- `extChartAt I x = refl` given [ExtChartEqRefl] -/
 theorem extChartAt_eq_refl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-    [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H} [I.Boundaryless] [ChartedSpace H E]
+    [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H} [ChartedSpace H E]
     [AnalyticManifold I E] [e : ExtChartEqRefl I] (x : E) :
     extChartAt I x = PartialEquiv.refl E :=
   e.eq_refl x
@@ -139,13 +203,13 @@ instance extChartEqReflSelf {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 
 /-- `extChartAt = refl` extends to products -/
 instance extChartEqReflProd {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
     [TopologicalSpace A] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
-    [TopologicalSpace B] (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B) [I.Boundaryless]
-    [J.Boundaryless] [ChartedSpace A E] [AnalyticManifold I E] [ExtChartEqRefl I] [ChartedSpace B F]
+    [TopologicalSpace B] (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
+    [ChartedSpace A E] [AnalyticManifold I E] [ExtChartEqRefl I] [ChartedSpace B F]
     [AnalyticManifold J F] [ExtChartEqRefl J] : ExtChartEqRefl (I.prod J) :=
   ⟨fun x ↦ by simp_rw [extChartAt_prod, extChartAt_eq_refl, PartialEquiv.refl_prod_refl]⟩
 
 /-- Charts are analytic w.r.t. themselves.
-    This lemma helps when proving particular spaces are complex manifolds. -/
+    This lemma helps when proving particular spaces are analytic manifolds. -/
 theorem extChartAt_self_analytic {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     {M : Type} [TopologicalSpace M] (f : PartialHomeomorph M E) :
     AnalyticOn 𝕜 (𝓘(𝕜, E) ∘ (f.symm.trans f) ∘ ⇑𝓘(𝕜, E).symm)
@@ -175,10 +239,10 @@ variable {M : Type} {I : ModelWithCorners 𝕜 E A} [TopologicalSpace M]
 variable {N : Type} {J : ModelWithCorners 𝕜 F B} [TopologicalSpace N]
 variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]
 variable {P : Type} {L : ModelWithCorners 𝕜 H D} [TopologicalSpace P]
-variable [ModelWithCorners.Boundaryless I] [ChartedSpace A M] [cm : AnalyticManifold I M]
-variable [ModelWithCorners.Boundaryless J] [ChartedSpace B N] [cn : AnalyticManifold J N]
-variable [ModelWithCorners.Boundaryless K] [ChartedSpace C O] [co : AnalyticManifold K O]
-variable [ModelWithCorners.Boundaryless L] [ChartedSpace D P] [cp : AnalyticManifold L P]
+variable [I.Boundaryless] [ChartedSpace A M] [cm : AnalyticManifold I M]
+variable [J.Boundaryless] [ChartedSpace B N] [cn : AnalyticManifold J N]
+variable [K.Boundaryless] [ChartedSpace C O] [co : AnalyticManifold K O]
+variable [L.Boundaryless] [ChartedSpace D P] [cp : AnalyticManifold L P]
 
 /-- Holomorphic at a point -/
 def HolomorphicAt (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
