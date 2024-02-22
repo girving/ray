@@ -98,14 +98,6 @@ namespace Bound
 ### Extra lemmas for `bound`
 -/
 
-/-- `mul_inv` version of `div_le_one_of_le`.
-
-TODO: Will disappear once https://github.com/leanprover-community/mathlib4/pull/10597 is in.
-TODO: Register inv_mul as well. -/
-lemma mul_inv_le_one_of_nonneg_of_le {α : Type} [LinearOrderedSemifield α] {a b : α}
-    (ab : a ≤ b) (b0 : 0 ≤ b) : a * b⁻¹ ≤ 1 := by
-  rw [← div_eq_mul_inv]; exact div_le_one_of_le ab b0
-
 /-- Possibly this one should be deleted, but we'd need to add support for `ℕ ≠ 0` goals -/
 lemma le_self_pow_of_pos {R : Type} [OrderedSemiring R] {a : R} {m : ℕ} (ha : 1 ≤ a) (h : 0 < m) :
     a ≤ a^m :=
@@ -124,11 +116,6 @@ lemma NNReal.coe_pos_of_lt {r : NNReal} : 0 < r → 0 < (r : ℝ) :=
 
 lemma NNReal.coe_lt_coe_of_lt {r₁ r₂ : NNReal} : r₁ < r₂ → (r₁ : ℝ) < r₂ :=
   NNReal.coe_lt_coe.mpr
-
-lemma mul_inv_le_one_of_le {α : Type} [Group α] [LE α]
-    [CovariantClass α α (Function.swap fun x y ↦ x * y) (fun x y ↦ x ≤ y)]
-    {a b : α} : a ≤ b → a * b⁻¹ ≤ 1 :=
-  mul_inv_le_one_iff_le.mpr
 
 lemma mul_lt_mul_left_of_pos_of_lt {α : Type} {a b c : α} [Mul α] [Zero α] [Preorder α]
     [PosMulStrictMono α] [PosMulReflectLT α] (a0 : 0 < a) : b < c → a * b < a * c :=
@@ -177,9 +164,8 @@ attribute [bound] sq_nonneg Nat.cast_nonneg NNReal.coe_nonneg abs_nonneg Absolut
   Real.rpow_pos_of_pos
 
 -- 1 ≤, ≤ 1
-attribute [bound] inv_le_one Nat.one_le_cast_of_le one_le_pow_of_one_le
-  one_le_mul_of_one_le_of_one_le div_le_one_of_le mul_inv_le_one_of_le
-  mul_inv_le_one_of_nonneg_of_le pow_le_one
+attribute [bound] inv_le_one Nat.one_le_cast_of_le one_le_pow_of_one_le pow_le_one
+  one_le_mul_of_one_le_of_one_le div_le_one_of_le mul_inv_le_one_of_le inv_mul_le_one_of_le
 
 -- ≤
 attribute [bound] le_abs_self norm_smul_le Int.le_ceil neg_abs_le Complex.abs_re_le_abs
@@ -312,8 +298,10 @@ elab "bound" lemmas:(("[" term,* "]")?) : tactic => do
   let tac ← `(tactic| aesop (rule_sets [Bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (← Lean.Elab.runTactic g tac.raw).1
 
-/-- `bound`, but return a proof script -/
-elab "bound?" lemmas:(("[" term,* "]")?) : tactic => do
-  Bound.addHyps (Bound.maybeTerms lemmas)
+/-- `bound`, but return a proof script.
+
+TODO: Add support for additional hypotheses via `bound? [h0, ...]`.  Currently these are not yet
+linked into Aesop's proof script generation. -/
+elab "bound?" : tactic => do
   let tac ← `(tactic| aesop? (rule_sets [Bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (← Lean.Elab.runTactic g tac.raw).1
