@@ -40,7 +40,7 @@ open Set
 open scoped Manifold Topology
 noncomputable section
 
-variable {𝕜 : Type} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
 /-- An analytic manifold w.r.t. a model `I : ModelWithCorners 𝕜 E H` is a charted space over H
     s.t. all extended chart conversion maps are analytic. -/
@@ -50,19 +50,14 @@ structure AnalyticManifold {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜
     [TopologicalSpace M] [ChartedSpace H M] extends HasGroupoid M (analyticGroupoid I) : Prop
 
 /-- Normed spaces are analytic manifolds over themselves -/
-instance AnalyticManifold.self_of_nhds {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    [CompleteSpace E] : AnalyticManifold (modelWithCornersSelf 𝕜 E) E :=
+instance AnalyticManifold.self_of_nhds {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] :
+    AnalyticManifold (modelWithCornersSelf 𝕜 E) E :=
   AnalyticManifold.mk (by infer_instance)
-
-@[simp] lemma StructureGroupoid.mem_inf {X : Type} [TopologicalSpace X] {G H : StructureGroupoid X}
-    {f : PartialHomeomorph X X} : f ∈ G ⊓ H ↔ f ∈ G ∧ f ∈ H := by
-  rfl
 
 /-- `f ∈ analyticGroupoid` iff its in the `contDiffGroupoid`, is analytic in the interior, and
 maps interior to interior -/
 lemma mem_analyticGroupoid {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    [TopologicalSpace A] [CompleteSpace E] {I : ModelWithCorners 𝕜 E A}
-    {f : PartialHomeomorph A A} :
+    [TopologicalSpace A] {I : ModelWithCorners 𝕜 E A} {f : PartialHomeomorph A A} :
     f ∈ analyticGroupoid I ↔ f ∈ contDiffGroupoid ∞ I ∧
       (AnalyticOn 𝕜 (I ∘ f ∘ I.symm) (I.symm ⁻¹' f.source ∩ interior (range I)) ∧
         (I.symm ⁻¹' f.source ∩ interior (range I)).image (I ∘ f ∘ I.symm) ⊆ interior (range I)) ∧
@@ -82,8 +77,8 @@ lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [N
 
 /-- The product of two analytic local homeomorphisms is analytic -/
 theorem analyticGroupoid_prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    [TopologicalSpace A] [CompleteSpace E] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    [TopologicalSpace B] [CompleteSpace F] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
+    [TopologicalSpace A] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    [TopologicalSpace B] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
     {f : PartialHomeomorph A A} {g : PartialHomeomorph B B}
     (fa : f ∈ analyticGroupoid I) (ga : g ∈ analyticGroupoid J) :
     f.prod g ∈ analyticGroupoid (I.prod J) := by
@@ -156,8 +151,8 @@ theorem analyticGroupoid_prod {E A : Type} [NormedAddCommGroup E] [NormedSpace �
 
 /-- `M × N` is a analytic manifold if `M` and `N` are -/
 instance AnalyticManifold.prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-    [TopologicalSpace A] [CompleteSpace E] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    [TopologicalSpace B] [CompleteSpace F] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
+    [TopologicalSpace A] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    [TopologicalSpace B] {I : ModelWithCorners 𝕜 E A} {J : ModelWithCorners 𝕜 F B}
     {M : Type} [TopologicalSpace M] [ChartedSpace A M] [m : AnalyticManifold I M]
     {N : Type} [TopologicalSpace N] [ChartedSpace B N] [n : AnalyticManifold J N] :
     AnalyticManifold (I.prod J) (M × N) where
@@ -169,7 +164,7 @@ instance AnalyticManifold.prod {E A : Type} [NormedAddCommGroup E] [NormedSpace 
 
 /-- Complex manifolds are smooth manifolds -/
 instance AnalyticManifold.smoothManifoldWithCorners {E A : Type} [NormedAddCommGroup E]
-    [NormedSpace 𝕜 E] [TopologicalSpace A] [CompleteSpace E] {I : ModelWithCorners 𝕜 E A}
+    [NormedSpace 𝕜 E] [TopologicalSpace A] {I : ModelWithCorners 𝕜 E A}
     {M : Type} [TopologicalSpace M] [ChartedSpace A M]
     [cm : AnalyticManifold I M] :
     SmoothManifoldWithCorners I M := by
@@ -181,28 +176,28 @@ instance AnalyticManifold.smoothManifoldWithCorners {E A : Type} [NormedAddCommG
     In this case, `extChartAt I : E → E`, but the intermediate space `H` might be different.
     This is necessary to handle product spaces, where the intermediate space may be `ModelProd`. -/
 @[class]
-structure ExtChartEqRefl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
+structure ExtChartEqRefl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [ChartedSpace H E]
     [AnalyticManifold I E] : Prop where
   eq_refl : ∀ x, extChartAt I x = PartialEquiv.refl E
 
 /-- `extChartAt I x = refl` given [ExtChartEqRefl] -/
-theorem extChartAt_eq_refl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
+theorem extChartAt_eq_refl {E H : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H} [ChartedSpace H E]
     [AnalyticManifold I E] [e : ExtChartEqRefl I] (x : E) :
     extChartAt I x = PartialEquiv.refl E :=
   e.eq_refl x
 
 /-- `extChartAt = refl` for `I = modelWithCornersSelf 𝕜 E` -/
-instance extChartEqReflSelf {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E] :
+instance extChartEqReflSelf {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] :
     ExtChartEqRefl (modelWithCornersSelf 𝕜 E) := ⟨by
   simp only [PartialHomeomorph.singletonChartedSpace_chartAt_eq, PartialHomeomorph.refl_partialEquiv,
     PartialEquiv.refl_source, forall_const, extChartAt, PartialHomeomorph.extend,
     modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
 
 /-- `extChartAt = refl` extends to products -/
-instance extChartEqReflProd {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-    [TopologicalSpace A] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
+instance extChartEqReflProd {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [TopologicalSpace A] {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     [TopologicalSpace B] (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
     [ChartedSpace A E] [AnalyticManifold I E] [ExtChartEqRefl I] [ChartedSpace B F]
     [AnalyticManifold J F] [ExtChartEqRefl J] : ExtChartEqRefl (I.prod J) :=
@@ -231,10 +226,8 @@ variable {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace
   [TopologicalSpace A]
 variable {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
   [TopologicalSpace B]
-variable {G C : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
-  [TopologicalSpace C]
-variable {H D : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
-  [TopologicalSpace D]
+variable {G C : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [TopologicalSpace C]
+variable {H D : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [TopologicalSpace D]
 variable {M : Type} {I : ModelWithCorners 𝕜 E A} [TopologicalSpace M]
 variable {N : Type} {J : ModelWithCorners 𝕜 F B} [TopologicalSpace N]
 variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]

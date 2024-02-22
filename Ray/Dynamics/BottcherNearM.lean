@@ -84,7 +84,7 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
-  rw [@analyticAt_iff_holomorphicAt _ _ (ℂ × ℂ) (ModelProd ℂ ℂ) _ _ _ _ ℂ ℂ _ _ _ _ II I]
+  rw [@analyticAt_iff_holomorphicAt _ _ (ℂ × ℂ) (ModelProd ℂ ℂ) _ _ _ ℂ ℂ _ _ _ II I]
   refine' (((analyticAt_id _ _).sub analyticAt_const).holomorphicAt I I).comp _
   refine' (HolomorphicAt.extChartAt _).comp _
   simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
