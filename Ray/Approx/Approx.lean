@@ -1,4 +1,5 @@
 import Mathlib.Algebra.Field.Defs
+import Mathlib.Algebra.Star.Basic
 import Mathlib.Data.Set.Intervals.OrdConnected
 import Mathlib.Data.Set.NAry
 import Mathlib.Data.Set.Pointwise.Basic
@@ -36,6 +37,14 @@ class ApproxSub (A R : Type) [Sub R] [Sub A] [Approx A R] where
 class ApproxMul (A R : Type) [Mul R] [Mul A] [Approx A R] where
   approx_mul (x y : A) : approx x * approx y ⊆ approx (x * y)
 
+/-- `A⁻¹` is conservative -/
+class ApproxInv (A R : Type) [Inv R] [Inv A] [Approx A R] where
+  approx_inv (x : A) : (approx x)⁻¹ ⊆ approx x⁻¹
+
+/-- `star A` is conservative -/
+class ApproxStar (A R : Type) [Star R] [Star A] [Approx A R] where
+  approx_star (x : A) : star '' approx x ⊆ approx (star x)
+
 /-- `A / A` is conservative -/
 class ApproxDiv (A R : Type) [Div R] [Div A] [Approx A R] where
   approx_div (x y : A) : approx x / approx y ⊆ approx (x / y)
@@ -61,6 +70,8 @@ export ApproxNeg (approx_neg)
 export ApproxAdd (approx_add)
 export ApproxSub (approx_sub)
 export ApproxMul (approx_mul)
+export ApproxInv (approx_inv)
+export ApproxStar (approx_star)
 export ApproxDiv (approx_div)
 export ApproxSMul (mem_approx_smul)
 
@@ -137,6 +148,14 @@ attribute [mono] mem_approx_smul
     (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a * b ⊆ approx (x * y) :=
   subset_trans (mul_subset_mul ax yb) (approx_mul x y)
 
+@[mono] lemma subset_approx_inv [InvolutiveInv R] [Inv A] [Approx A R] [ApproxInv A R] {s : Set R}
+    {x : A} (sx : s ⊆ approx x) : s⁻¹ ⊆ approx x⁻¹ :=
+  subset_trans (inv_subset_inv.mpr sx) (approx_inv x)
+
+@[mono] lemma subset_approx_star [Star R] [Star A] [Approx A R] [ApproxStar A R] {s : Set R}
+    {x : A} (sx : s ⊆ approx x) : star '' s ⊆ approx (star x) :=
+  subset_trans (image_mono sx) (approx_star x)
+
 @[mono] lemma subset_approx_div [Div R] [Div A] [Approx A R] [ApproxDiv A R] {a b : Set R} {x y : A}
     (ax : a ⊆ approx x) (yb : b ⊆ approx y) : a / b ⊆ approx (x / y) :=
   subset_trans (div_subset_div ax yb) (approx_div x y)
@@ -159,6 +178,16 @@ attribute [mono] mem_approx_smul
     (ax : a ∈ approx x) (yb : b ∈ approx y) : a * b ∈ approx (x * y) := by
   apply subset_approx_mul (singleton_subset_iff.mpr ax) (singleton_subset_iff.mpr yb)
   simp only [mul_singleton, image_singleton, mem_singleton_iff]
+
+@[mono] lemma mem_approx_inv [InvolutiveInv R] [Inv A] [Approx A R] [ApproxInv A R] {a : R} {x : A}
+    (ax : a ∈ approx x) : a⁻¹ ∈ approx x⁻¹ := by
+  apply subset_approx_inv (singleton_subset_iff.mpr ax)
+  simp only [inv_singleton, mem_singleton_iff]
+
+@[mono] lemma mem_approx_star [Star R] [Star A] [Approx A R] [ApproxStar A R] {a : R} {x : A}
+    (ax : a ∈ approx x) : star a ∈ approx (star x) := by
+  apply subset_approx_star (singleton_subset_iff.mpr ax)
+  simp only [image_singleton, mem_singleton_iff]
 
 @[mono] lemma mem_approx_div [Div R] [Div A] [Approx A R] [ApproxDiv A R] {a b : R} {x y : A}
     (ax : a ∈ approx x) (yb : b ∈ approx y) : a / b ∈ approx (x / y) := by

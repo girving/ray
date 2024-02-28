@@ -12,7 +12,7 @@ open Pointwise
 -/
 
 open Set
-open scoped Real
+open scoped Real ComplexConjugate
 
 /-- Rectangular boxes of complex numbers -/
 @[unbox] structure Box where
@@ -66,7 +66,8 @@ instance : Sub Box where
   sub x y := ⟨x.re - y.re, x.im - y.im⟩
 
 /-- Complex conjugation -/
-def conj (z : Box) : Box := ⟨z.re, -z.im⟩
+instance : Star Box where
+  star x := ⟨x.re, -x.im⟩
 
 /-- `Box` multiplication -/
 instance : Mul Box where
@@ -86,6 +87,8 @@ lemma neg_def {z : Box} : -z = ⟨-z.re, -z.im⟩ := rfl
 lemma add_def {z w : Box} : z + w = ⟨z.re + w.re, z.im + w.im⟩ := rfl
 lemma sub_def {z w : Box} : z - w = ⟨z.re - w.re, z.im - w.im⟩ := rfl
 lemma mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + z.im * w.re⟩ := rfl
+@[simp] lemma re_conj {z : Box} : (star z).re = z.re := rfl
+@[simp] lemma im_conj {z : Box} : (star z).im = -z.im := rfl
 
 -- Bounds properties of `Box` arithmetic
 @[simp] lemma re_zero : (0 : Box).re = 0 := rfl
@@ -102,6 +105,14 @@ lemma mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + 
 /-- Prove `im ∈` via full `∈` -/
 @[mono] lemma mem_approx_im {z : ℂ} {w : Box} (zw : z ∈ approx w) : z.im ∈ approx w.im := by
   simp only [approx, mem_image2_iff] at zw; exact zw.2
+
+/-- `star` is conservative -/
+instance : ApproxStar Box ℂ where
+  approx_star z := by
+    simp only [IsROrC.star_def, instApprox, image_image2, re_conj, im_conj, Interval.approx_neg,
+      image2_subset_iff, mem_image2, mem_neg]
+    intro r rz i iz
+    exact ⟨r, rz, -i, by simpa only [neg_neg], rfl⟩
 
 /-- `Box.neg` respects `approx` -/
 instance : ApproxNeg Box ℂ where
@@ -191,6 +202,12 @@ def normSq (z : Box) : Interval :=
   rw [normSq]
   simp only [Complex.sq_abs, Complex.normSq, ←pow_two, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk]
   mono
+
+/-- `normSq` is conservative -/
+@[mono] lemma mem_approx_normSq' {z' : ℂ} {z : Box} (m : z' ∈ approx z) :
+    Complex.normSq z' ∈ approx z.normSq := by
+  simp only [Complex.normSq_eq_abs]
+  exact mem_approx_normSq m
 
 /-- Lower bounds on `normSq` produce lower bounds on contained radii -/
 lemma sqrt_normSq_le_abs {z' : ℂ} {z : Box} (m : z' ∈ approx z) (n : z.normSq ≠ nan) :

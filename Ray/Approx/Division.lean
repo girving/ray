@@ -217,6 +217,11 @@ def inv_guess (x : Floating) : Floating :=
     apply abs_pos_of_not_zero_mem z)
   bif x.lo.n.isNeg then -r else r
 
+/-- `x⁻¹ = inv x` -/
+instance : Inv Interval where inv := inv
+
+lemma inv_def (x : Interval) : x⁻¹ = inv x := rfl
+
 /-- `Interval.inv_pos` is conservative -/
 @[mono] lemma approx_inv_pos {x : Interval} (l0 : 0 < x.lo.val) :
     (approx x)⁻¹ ⊆ approx (x.inv_pos l0) := by
@@ -233,32 +238,23 @@ def inv_guess (x : Floating) : Floating :=
   · exact Interval.approx_union_right (Around.mem _)
 
 /-- `Interval.inv` is conservative -/
-@[mono] lemma approx_inv {x : Interval} : (approx x)⁻¹ ⊆ approx x.inv := by
-  rw [inv]
-  split_ifs with z
-  · simp only [approx_nan, subset_univ]
-  simp only [zero_mem_eq, decide_eq_true_eq] at z
-  simp only [Floating.isNeg_iff, Bool.cond_decide]
-  split_ifs with l0
-  · have e : x = -x.abs := by
-      rw [abs_of_nonpos, neg_neg]
-      rw [lo_lt_zero_iff_hi_lt_zero z] at l0
-      exact l0.le
-    nth_rw 1 [e]
-    simp only [approx_neg, Set.inv_neg, neg_subset_neg]
-    apply approx_inv_pos
-  · nth_rw 1 [←abs_of_nonneg (not_lt.mp l0)]
-    apply approx_inv_pos
-
-/-- `Interval.inv` is conservative, `mono ⊆` version -/
-@[mono] lemma subset_approx_inv {p : Set ℝ} {x : Interval}
-    (px : p ⊆ approx x) : p⁻¹ ⊆ approx x.inv :=
-  subset_trans (inv_subset_inv.mpr px) Interval.approx_inv
-
-/-- `Interval.inv` is conservative, `mono ∈` version -/
-@[mono] lemma mem_approx_inv {p : ℝ} {x : Interval}
-    (px : p ∈ approx x) : p⁻¹ ∈ approx x.inv :=
-  Interval.approx_inv (inv_mem_inv.mpr px)
+noncomputable instance : ApproxInv Interval ℝ where
+  approx_inv x := by
+    rw [inv_def, inv]
+    split_ifs with z
+    · simp only [approx_nan, subset_univ]
+    simp only [zero_mem_eq, decide_eq_true_eq] at z
+    simp only [Floating.isNeg_iff, Bool.cond_decide]
+    split_ifs with l0
+    · have e : x = -x.abs := by
+        rw [abs_of_nonpos, neg_neg]
+        rw [lo_lt_zero_iff_hi_lt_zero z] at l0
+        exact l0.le
+      nth_rw 1 [e]
+      simp only [approx_neg, Set.inv_neg, neg_subset_neg]
+      apply approx_inv_pos
+    · nth_rw 1 [←abs_of_nonneg (not_lt.mp l0)]
+      apply approx_inv_pos
 
 /-!
 ## `Interval` and `Box` division
@@ -266,13 +262,18 @@ def inv_guess (x : Floating) : Floating :=
 
 /-- `Interval` division via reciproval multiplication -/
 instance : Div Interval where
-  div x y := x * y.inv
+  div x y := x * y⁻¹
 
 /-- `Box / Interval` via reciproval multiplication -/
 @[irreducible] def _root_.Box.div_scalar (z : Box) (x : Interval) : Box :=
-  x.inv.mul_box z
+  x⁻¹.mul_box z
 
-lemma div_def (x y : Interval) : x / y = x * y.inv := rfl
+/-- `Box` inversion via scalar division -/
+instance : Inv Box where
+  inv z := (star z).div_scalar z.normSq
+
+lemma _root_.Box.inv_def (z : Box) : z⁻¹ = (star z).div_scalar z.normSq := rfl
+lemma div_def (x y : Interval) : x / y = x * y⁻¹ := rfl
 
 /-- `Interval.div` is conservative -/
 noncomputable instance : ApproxDiv Interval ℝ where
@@ -289,8 +290,23 @@ noncomputable instance : ApproxDiv Interval ℝ where
   intro b m e
   use b⁻¹
   constructor
-  · exact Interval.mem_approx_inv m
+  · exact mem_approx_inv m
   · rw [Complex.ofReal_inv, e, inv_inv]
+
+/-- `Box` inversion is conservative -/
+noncomputable instance : ApproxInv Box ℂ where
+  approx_inv z := by
+    rw [Box.inv_def]
+    intro w m
+    simp only [mem_inv] at m
+    rw [←inv_inv w]
+    generalize w⁻¹ = z at m
+    rw [Complex.inv_def, Box.div_scalar, mul_comm]
+    apply approx_mul_box
+    apply mul_mem_mul
+    · apply mem_image_of_mem
+      mono
+    · exact mem_approx_star m
 
 /-!
 ### Unit tests
@@ -309,7 +325,7 @@ example : guess_test 7 := by native_decide
 /-- `Interval.inv` is provably conservative, but we need to test that it's accurate -/
 def inv_test (l h : Float) (e : Float := 1e-100) : Bool :=
   let x : Interval := ofFloat l ∪ ofFloat h
-  let r := x.inv
+  let r := x⁻¹
   (r.lo.toFloat * h - 1).abs < e && (r.hi.toFloat * l - 1).abs ≤ e
 example : inv_test 0.4 0.6 := by native_decide
 example : inv_test 0.4871231 17.87341 := by native_decide

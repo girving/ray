@@ -323,7 +323,8 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
     · simp only [div_eq_mul_inv, mul_inv, ←mul_assoc _ (abs z)⁻¹, mul_assoc s1 _ (abs z)⁻¹]
       simp only [←mul_inv, mul_assoc s1]
       refine mul_le_mul_of_nonneg_left (inv_le_inv_of_le (by positivity) ?_) s1p
-      exact mul_le_mul fz' (Real.log_le_log (by positivity) zfz) (by positivity) (le_trans b0.le bfz)
+      exact mul_le_mul fz' (Real.log_le_log (by positivity) zfz) (by positivity)
+        (le_trans b0.le bfz)
   have e2 : iter_error d c (f' d c (f' d c z)) ≤
       s2 / ((1 - (bb*b-1)⁻¹) * bb) / (abs z * log (abs z)) := by
     refine le_trans (iter_error_weak d bb3 s2p bs2 ?_ (le_trans cz zffz)) ?_
