@@ -1,6 +1,7 @@
 import Ray.Misc.Array
 import Ray.Render.Color
 import Ray.Render.Grid
+import Ray.Render.Progress
 
 /-!
 ## Images: 2D arrays of colors
@@ -133,25 +134,30 @@ lemma n1_lt_n {n chunk : ℕ} (h : ¬n ≤ max 1 chunk) : n - n / 2 < n := by
   simp only [le_max_iff] at h; omega
 
 /-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
-def parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) : ByteArray :=
+def parallel_colors' (p : Progress) (f : ℕ → Color UInt8) (n o chunk : ℕ) : IO ByteArray := do
   if n ≤ max 1 chunk then
-    push_colors f n o (.mkEmpty n)
+    let c ← IO.lazyPure fun _ ↦ push_colors f n o (.mkEmpty n)
+    p.add n
+    return c
   else
     let n0 := n / 2
-    let t0 := Task.spawn (fun _ ↦ parallel_colors' f n0 o chunk)
-    let t1 := Task.spawn (fun _ ↦ parallel_colors' f (n - n0) (o + n0) chunk)
-    t0.get ++ t1.get
+    let t0 := IO.asTask (parallel_colors' p f n0 o chunk)
+    let t1 := IO.asTask (parallel_colors' p f (n - n0) (o + n0) chunk)
+    let t0 ← IO.ofExcept (← t0).get
+    let t1 ← IO.ofExcept (← t1).get
+    return t0 ++ t1
 termination_by n decreasing_by
   · exact n0_lt_n (by assumption)
   · exact n1_lt_n (by assumption)
 
 /-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
-def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : ByteArray :=
-  parallel_colors' f n 0 chunk
+def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : IO ByteArray := do
+  let p ← Progress.start n
+  parallel_colors' p f n 0 chunk
 
 /-- `parallel_colors'` has the right size -/
-@[simp] lemma size_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) :
-    (parallel_colors' f n o chunk).size = n * 4 := by
+@[simp] lemma size_parallel_colors' (p : Progress) (f : ℕ → Color UInt8) (n o chunk : ℕ) :
+    (ByteArray.size <$> parallel_colors' p f n o chunk) = pure (n * 4) := by
   induction' n using Nat.strong_induction_on with n i generalizing o
   rw [parallel_colors']
   by_cases h : n ≤ max 1 chunk
