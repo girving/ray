@@ -66,25 +66,32 @@ private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
 @[irreducible] def Box.potential_small : Interval :=
   0.216 ∪ 1
 
-/-- Approximate the Mandelbrot potential function at any point -/
-@[irreducible] def Box.potential (c z : Box) (n : ℕ) (r : Floating) : Interval :=
+/-- Which potential estimate we used -/
+inductive PotentialMode : Type
+  | nan
+  | large
+  | small
+
+/-- Approximate the Mandelbrot potential function at any point.
+    We also return the exit mode from our iteration. -/
+@[irreducible] def Box.potential (c z : Box) (n : ℕ) (r : Floating) : Interval × PotentialMode :=
   let cs := c.normSq.hi
   let i := iterate c z (cs.max 9) n
   match i.exit with
-  | .nan => nan
+  | .nan => (nan, .nan)
   | .large =>
     -- We're outside radius `3` after `i.n` iterations.  Iterate a bit more to make `z` very large,
     -- then use our large `z` potential bound.  This should always work, so we use a large count.
     let rc := (r.mul r true).max (cs.max 36)  -- We need `6, abs c ≤ abs z`
     let j := iterate c i.z rc 1000
     match j.exit with
-    | .large => (potential_large j.z).iter_sqrt (i.n + j.n)
-    | _ => nan  -- If we fail to leave the large radius, give up
+    | .large => ((potential_large j.z).iter_sqrt (i.n + j.n), .large)
+    | _ => (nan, .nan)  -- If we fail to leave the large radius, give up
   | .count =>
     -- We know we're `≤ 3`.  Check that we're `≤ 4`, bail if not, and use the small bound if so.
     let zs := i.z.normSq.hi
-    if zs = nan ∨ 16 < zs ∨ 16 < cs then nan else
-    potential_small.iter_sqrt i.n
+    if zs = nan ∨ 16 < zs ∨ 16 < cs then (nan, .nan) else
+    (potential_small.iter_sqrt i.n, .small)
 
 /-!
 ### Correctness proof
@@ -146,7 +153,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
 /-- `Box.potential` is conservative -/
 @[mono] lemma Box.mem_approx_potential {c' z' : ℂ} {c z : Box}
     (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) (r : Floating) :
-    (superF 2).potential c' z' ∈ approx (Box.potential c z n r) := by
+    (superF 2).potential c' z' ∈ approx (Box.potential c z n r).1 := by
   set s := superF 2
   rw [Box.potential]
   generalize hcs : (normSq c).hi = cs
@@ -206,7 +213,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
 
 /-- `Box.potential` is conservative, diagonal version -/
 @[mono] lemma Box.mem_approx_potential' {c' : ℂ} {c : Box} (cm : c' ∈ approx c) (n : ℕ)
-    (r : Floating) : _root_.potential 2 c' ∈ approx (Box.potential c c n r) := by
+    (r : Floating) : _root_.potential 2 c' ∈ approx (Box.potential c c n r).1 := by
   simp only [_root_.potential, RiemannSphere.fill_coe, mem_approx_potential cm cm]
 
 /-!
@@ -247,7 +254,7 @@ end debug
 
 private def good (x y : ℚ) (n : ℕ) : Bool :=
   let c : Box := .ofRat (x,y)
-  Box.potential c c n 1000 ≠ nan
+  (Box.potential c c n 1000).1 ≠ nan
 example : good 0 0 100 := by native_decide
 example : good 0.1 0.2 100 := by native_decide
 example : good (-21/160) (-133/160) 100 := by native_decide

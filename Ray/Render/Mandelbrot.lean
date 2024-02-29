@@ -53,7 +53,7 @@ def far' : Color Interval := .ofRat far
 def bad_potential_image (n : ℕ) (r : Floating) (c : ℚ × ℚ) : Color UInt8 :=
   let c := Box.ofRat c
   let p := c.potential c n r
-  let t := p.sqr.sqr.sqr.sqr
+  let t := p.1.sqr.sqr.sqr.sqr
   let i := lerp t green' outside'
   i.quantize
 
