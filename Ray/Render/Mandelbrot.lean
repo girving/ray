@@ -36,7 +36,7 @@ noncomputable def smooth_image (c : ℂ) : Color ℝ :=
 noncomputable def potential_image (c : ℂ) : Color ℝ :=
   let p := potential 2 c
   let t := p ^ 16
-  lerp t green outside
+  lerp t clear outside
 
 /-!
 ### Bad intervals approximations, evaluating at single points only
@@ -54,7 +54,7 @@ def bad_potential_image (n : ℕ) (r : Floating) (c : ℚ × ℚ) : Color UInt8 
   let c := Box.ofRat c
   let p := c.potential c n r
   let t := p.1.sqr.sqr.sqr.sqr
-  let i := lerp t green' outside'
+  let i := lerp t clear' outside'
   i.quantize
 
 /-- `potential_image'` is conservative -/
@@ -62,7 +62,7 @@ lemma approx_bad_potential_image {c : ℚ × ℚ} {n : ℕ} {r : Floating} :
     potential_image c ∈ approx (bad_potential_image n r c) := by
   rw [potential_image, bad_potential_image]
   have e : ∀ p : ℝ, p^16 = (((p^2)^2)^2)^2 := by intro p; rw [←pow_mul, ←pow_mul, ←pow_mul]
-  simp only [far', outside', green', e]
+  simp only [far', outside', clear', green', e]
   -- mono is timing out for some reason, so we expand a bit
   apply Color.mem_approx_quantize
   apply mem_approx_lerp
