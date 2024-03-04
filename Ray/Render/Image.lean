@@ -1,7 +1,7 @@
 import Ray.Misc.Array
+import Ray.Misc.SatisfiesM
 import Ray.Render.Color
 import Ray.Render.Grid
-import Ray.Render.Progress
 
 /-!
 ## Images: 2D arrays of colors
@@ -10,6 +10,7 @@ We build these on top of `ByteArray` for speed.
 -/
 
 open Set
+open scoped SatisfiesM
 
 /-- Packed array of `Color UInt8` -/
 structure Image where
@@ -141,10 +142,10 @@ def parallel_colors' (p : Progress) (f : ℕ → Color UInt8) (n o chunk : ℕ) 
     return c
   else
     let n0 := n / 2
-    let t0 := IO.asTask (parallel_colors' p f n0 o chunk)
-    let t1 := IO.asTask (parallel_colors' p f (n - n0) (o + n0) chunk)
-    let t0 ← IO.ofExcept (← t0).get
-    let t1 ← IO.ofExcept (← t1).get
+    let t0 := IO.asTask' (parallel_colors' p f n0 o chunk)
+    let t1 := IO.asTask' (parallel_colors' p f (n - n0) (o + n0) chunk)
+    let t0 ← (← t0).get
+    let t1 ← (← t1).get
     return t0 ++ t1
 termination_by n decreasing_by
   · exact n0_lt_n (by assumption)
@@ -157,12 +158,19 @@ def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : IO ByteArray := 
 
 /-- `parallel_colors'` has the right size -/
 @[simp] lemma size_parallel_colors' (p : Progress) (f : ℕ → Color UInt8) (n o chunk : ℕ) :
-    (ByteArray.size <$> parallel_colors' p f n o chunk) = pure (n * 4) := by
+    ∀ˢ c in parallel_colors' p f n o chunk, c.size = n * 4 := by
   induction' n using Nat.strong_induction_on with n i generalizing o
   rw [parallel_colors']
   by_cases h : n ≤ max 1 chunk
   · simp only [h, if_true, size_push_colors, ByteArray.size_mkEmpty, zero_add]
+    apply SatisfiesM.bind (p := fun c ↦ c.size = n * 4)
+    · apply SatisfiesM.pure
+      simp only [size_push_colors, ByteArray.size_mkEmpty, zero_add]
+    · intro c h
+      apply SatisfiesM.unit_bind
+      exact SatisfiesM.pure h
   · simp only [h, if_false, Task.spawn, ByteArray.size_append, i _ (n0_lt_n h), i _ (n1_lt_n h)]
+    apply SatisfiesM.bind (p := fun t0 ↦ ∀ˢ c0 in t0.get, c0.size = n / 2 * 4)
     omega
 
 /-- `parallel_colors'` fills in the right values, `get!` version -/
