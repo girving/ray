@@ -4,7 +4,6 @@ import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-import Mathlib.Topology.MetricSpace.Baire
 import Ray.Analytic.Analytic
 import Ray.Misc.Bounds
 import Ray.Misc.Max

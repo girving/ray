@@ -17,10 +17,6 @@ open Set
 open scoped Real NNReal Topology Filter
 noncomputable section
 
-/-- Turn `s ⊆ setOf p` back into a clean forall -/
-theorem subset_setOf {X : Type} {p : X → Prop} {s : Set X} : s ⊆ setOf p ↔ ∀ x, x ∈ s → p x :=
-  Iff.rfl
-
 /-- Uniform cauchy sequences are cauchy sequences at points -/
 theorem UniformCauchySeqOn.cauchySeq {X Y : Type} [MetricSpace Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) :

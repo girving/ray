@@ -42,7 +42,7 @@ namespace Floating
   simp only [Int64.coe_zero, zpow_zero, mul_one, Real.rpow_int_cast, e62, Int.cast_pow,
     Int.int_cast_ofNat, UInt64.toInt, UInt64.toNat_sub le, u62, Nat.cast_sub le', v, Nat.cast_ofNat,
     sub_right_comm _ (62 : ℤ), add_sub_cancel]
-  rw [mul_comm, zpow_sub₀ (by norm_num), ←zpow_ofNat, Nat.cast_ofNat,
+  rw [mul_comm, zpow_sub₀ (by norm_num), ←zpow_coe_nat, Nat.cast_ofNat,
     div_mul_cancel _ two_zpow_pos.ne']
 
 /-!

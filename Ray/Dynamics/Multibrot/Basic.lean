@@ -49,7 +49,7 @@ lemma two_le_cast_d (d : ℕ) [Fact (2 ≤ d)] : (2 : ℝ) ≤ d :=
 
 -- Teach `bound` about `d`
 attribute [bound] two_le_d d_gt_one d_ge_one d_pos two_le_cast_d one_le_d_minus_one
-attribute [aesop norm apply (rule_sets [Bound])] d_ne_zero  -- TODO: Make `@[bound]` work for this
+attribute [aesop norm apply (rule_sets := [Bound])] d_ne_zero  -- TODO: Make `@[bound]` work here
 
 /-!
 ## The defining iteration, the Multibrot set, and its complement

@@ -141,7 +141,7 @@ lemma mul_norm_correct (n : UInt128) (up : Bool) (n0 : n ≠ 0) (lo : n.toNat �
         pow_mul_zpow t0, Nat.cast_ofNat, ge_iff_le]
       simp only [← hs, Nat.cast_sub t_le, Nat.cast_ofNat, Nat.cast_one]
       ring_nf
-      rw [add_comm, ←Nat.cast_add_one, zpow_ofNat, ←Nat.cast_two, ←Nat.cast_pow, Nat.cast_le, ←ht]
+      rw [add_comm, ←Nat.cast_add_one, zpow_coe_nat, ←Nat.cast_two, ←Nat.cast_pow, Nat.cast_le, ←ht]
       exact Nat.lt_log2_self.le
   · simp only [r_eq, cond_false] at hp
     simp only [beq_iff_eq, UInt64.eq_iff_toNat_eq, up63] at r_eq

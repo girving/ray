@@ -53,14 +53,14 @@ lemma Rat.log2_correct {x : ℚ} (x0 : x ≠ 0) : |x| ∈ Ico (2^x.log2) (2^(x.l
     rw [ae]
     refine le_trans ?_ (div_le_div (by positivity) (Nat.cast_le.mpr an) (by positivity)
       (Nat.cast_le.mpr db.le))
-    simp only [Nat.cast_pow, Nat.cast_two, ←zpow_ofNat, ←zpow_sub₀ t0, Nat.cast_add, sub_sub,
-      Nat.cast_one, le_refl]
+    simp only [sub_sub, zpow_sub₀ t0, zpow_coe_nat, Nat.cast_pow, Nat.cast_ofNat,
+      ← Nat.cast_add_one, le_refl]
   have hi : |x| < 2^(a - b + 1 : ℤ) := by
     rw [ae]
     refine lt_of_lt_of_le ((div_lt_div_right d0').mpr (Nat.cast_lt.mpr na)) ?_
     refine le_trans (div_le_div_of_le_left (by positivity) (by positivity) (Nat.cast_le.mpr bd)) ?_
-    simp only [Nat.cast_pow, Nat.cast_two, ←zpow_ofNat, ←zpow_sub₀ t0, Nat.cast_add, sub_sub,
-      Nat.cast_one, le_refl, add_sub_right_comm]
+    simp only [Nat.cast_pow, Nat.cast_ofNat, ← add_sub_right_comm, zpow_sub₀ t0, zpow_coe_nat,
+      ← Nat.cast_add_one, le_refl]
   simp only [←Nat.cast_le (α := ℚ), ←Nat.cast_lt (α := ℚ), ←ae, mem_Ico,
     apply_ite (fun n : ℤ ↦ (2:ℚ)^n), apply_ite (fun y : ℚ ↦ y ≤ |x|),
     apply_ite (fun y : ℚ ↦ |x| < y), apply_ite (fun n : ℤ ↦ n + 1),
@@ -68,18 +68,17 @@ lemma Rat.log2_correct {x : ℚ} (x0 : x ≠ 0) : |x| ∈ Ico (2^x.log2) (2^(x.l
     ←le_div_iff d0', lo, hi, sub_add_cancel]
   by_cases ba : b ≤ a
   · simp only [Nat.cast_le, ba, ite_true, decide_eq_true_eq, sub_add_cancel, ←Nat.cast_sub ba,
-      Int.toNat_ofNat, zpow_ofNat]
+      Int.toNat_ofNat, zpow_ofNat, zpow_coe_nat]
     split_ifs with h
     · simp only [h, and_self]
     · simp only [not_le.mp h, and_self]
-  · simp only [Nat.cast_le, ba, ite_false, decide_eq_true_eq, ←Nat.cast_sub (not_le.mp ba).le,
-      Int.toNat_ofNat]
-    split_ifs with h
-    all_goals {
-      rw [←zpow_ofNat, Nat.cast_sub (not_le.mp ba).le, ←neg_sub (a:ℤ) (b:ℤ), zpow_neg,
-        ←div_eq_mul_inv, le_div_iff two_zpow_pos, mul_comm, ←le_div_iff d0', ←ae] at h
-      try simp only [not_le] at h
-      simp only [h, and_self] }
+  · have ab : a ≤ b := (not_le.mp ba).le
+    have e : (a : ℤ) - (b : ℤ) = -((b - a : ℕ) : ℤ) := by simp only [Nat.cast_sub ab, neg_sub]
+    simp only [Nat.cast_le, ba, ↓reduceIte, ← Nat.cast_sub ab, Int.toNat_ofNat,
+      mul_comm _ ((2 : ℚ) ^ _), decide_eq_true_eq, e, zpow_neg, zpow_coe_nat, ae,
+      inv_pos_le_iff_one_le_mul two_pow_pos, ← mul_div_assoc, one_le_div d0', if_true_right, not_le,
+      lt_or_le, div_lt_iff d0', ← div_eq_inv_mul, lt_div_iff two_pow_pos, if_true_left, le_or_lt,
+      and_self]
 
 lemma Rat.log2_self_le {x : ℚ} (x0 : x ≠ 0) : 2 ^ x.log2 ≤ |x| := (Rat.log2_correct x0).1
 

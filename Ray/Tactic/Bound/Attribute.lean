@@ -69,7 +69,7 @@ def scoreToConfig (decl : Lean.Name) (score : Nat) : Aesop.Frontend.RuleConfig :
   let (phase, priority) := match score with
     | 0 => (Aesop.PhaseName.norm, 0)  -- No hypotheses: this rule closes the goal immediately
     | s => (Aesop.PhaseName.safe, s)
-  { ident? := some (.const decl)
+  { term? := some (Lean.mkIdent decl)
     phase? := phase
     priority? := some (Aesop.Frontend.Priority.int priority)
     builder? := some (.regular .apply)
@@ -83,14 +83,16 @@ initialize Lean.registerBuiltinAttribute {
   add := fun decl stx attrKind => Lean.withRef stx do
     let score ← Aesop.runTermElabMAsCoreM <| declPriority decl
     trace[bound.attribute] "{decl} has score {score}"
-    let (rule, ruleSets) ← Aesop.runTermElabMAsCoreM <| (scoreToConfig decl score).buildGlobalRule
+    let context ← Aesop.runMetaMAsCoreM Aesop.ElabM.Context.forAdditionalGlobalRules
+    let (rule, ruleSets) ← Aesop.runTermElabMAsCoreM <|
+      (scoreToConfig decl score).buildGlobalRule.run context
     for ruleSet in ruleSets do
       Aesop.Frontend.addGlobalRule ruleSet rule attrKind (checkNotExists := true)
   erase := fun decl =>
-    Aesop.Frontend.eraseGlobalRules Aesop.RuleSetNameFilter.all
-      (Aesop.RuleNameFilter.ofIdent $ .const decl) (checkExists := true)
+    let ruleFilter := { name := decl, scope := .global, builders := #[], phases := #[] }
+    Aesop.Frontend.eraseGlobalRules Aesop.RuleSetNameFilter.all ruleFilter (checkExists := true)
 }
 
 -- Attribute for `forward` rules for the `bound` tactic
 macro "bound_forward" : attr =>
-  `(attr|aesop safe forward (rule_sets [$(Lean.mkIdent `Bound):ident]))
+  `(attr|aesop safe forward (rule_sets := [$(Lean.mkIdent `Bound):ident]))

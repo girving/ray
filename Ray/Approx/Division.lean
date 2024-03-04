@@ -154,12 +154,12 @@ def inv_guess (x : Floating) : Floating :=
     constructor
     · refine le_trans ?_ (mul_le_mul_of_nonneg_right
         (inv_le_inv_of_le (by positivity) n_lt.le) two_zpow_pos.le)
-      simp only [←zpow_neg, ←zpow_ofNat, ←zpow_add₀ t0]
+      simp only [←zpow_neg, ←zpow_coe_nat, ←zpow_add₀ t0]
       apply zpow_le_of_le (by norm_num)
       norm_num; linarith
     · refine le_trans (mul_le_mul_of_nonneg_right
         (inv_le_inv_of_le (by norm_num) le_n) two_zpow_pos.le) ?_
-      simp only [←zpow_neg, ←zpow_ofNat, ←zpow_add₀ t0]
+      simp only [←zpow_neg, ←zpow_coe_nat, ←zpow_add₀ t0]
       apply zpow_le_of_le (by norm_num)
       norm_num; linarith
 

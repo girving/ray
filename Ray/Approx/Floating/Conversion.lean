@@ -281,13 +281,13 @@ lemma le_ofInt {n : ℤ} (h : (ofInt n true) ≠ nan) : n ≤ (ofInt n true).val
     · simp only [r62, ite_true]
       constructor
       · apply Nat.le_rdiv_of_mul_le x.den_pos
-        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_ofNat,
+        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_coe_nat,
           ←le_div_iff d0, ←div_mul_eq_mul_div, ae, ←div_le_iff two_zpow_pos]
         simp only [←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
         ring_nf; rw [←hr]
         exact Rat.log2_self_le x0
       · apply Nat.rdiv_le_of_le_mul
-        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_ofNat,
+        simp only [←Nat.cast_le (α := ℚ), Nat.cast_mul, Nat.cast_pow, Nat.cast_two, ←zpow_coe_nat,
           ←div_le_iff d0, ←div_mul_eq_mul_div, ae, ←le_div_iff two_zpow_pos]
         simp only [←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62)]
         ring_nf; rw [←hr, add_comm]
@@ -298,14 +298,14 @@ lemma le_ofInt {n : ℤ} (h : (ofInt n true) ≠ nan) : n ≤ (ofInt n true).val
       · apply Nat.le_rdiv_of_mul_le (mul_pos x.den_pos two_pow_pos)
         simp only [←mul_assoc, mul_comm _ (2^(_:ℤ).toNat), ←pow_add, ←Nat.cast_le (α := ℚ),
           ←le_div_iff d0, ae, Nat.cast_mul, Nat.cast_pow, Nat.cast_two]
-        simp only [←zpow_ofNat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
+        simp only [←zpow_coe_nat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
           Nat.cast_add]
         ring_nf; rw [←hr]
         exact Rat.log2_self_le x0
       · apply Nat.rdiv_le_of_le_mul
         simp only [←mul_assoc, mul_comm _ (2^(_:ℤ).toNat), ←pow_add, ←Nat.cast_le (α := ℚ),
           ←div_le_iff d0, ae, Nat.cast_mul, Nat.cast_pow, Nat.cast_two]
-        simp only [←zpow_ofNat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
+        simp only [←zpow_coe_nat, ←zpow_sub₀ t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62),
           Nat.cast_add]
         ring_nf; rw [←hr, add_comm]
         exact Rat.lt_log2_self.le)
@@ -350,12 +350,12 @@ lemma approx_ofRat_abs (x : ℚ) (up : Bool) : ↑|x| ∈ rounds (approx (ofRat_
     induction up
     · simp only [ite_false]
       refine le_trans (mul_le_mul_of_nonneg_right Nat.rdiv_le two_zpow_pos.le) ?_
-      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_ofNat,
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_coe_nat,
         mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62), ←div_div,
         div_mul_cancel _ (two_zpow_pos (𝕜 := ℝ)).ne', le_refl]
     · simp only [ite_true, ge_iff_le]
       refine le_trans ?_ (mul_le_mul_of_nonneg_right Nat.le_rdiv two_zpow_pos.le)
-      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_ofNat,
+      simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ←div_mul_eq_mul_div, ae, ←zpow_coe_nat,
         mul_assoc, pow_mul_zpow t0, Int.toNat_of_nonneg (sub_nonneg.mpr r62), ←div_div,
         div_mul_cancel _ (two_zpow_pos (𝕜 := ℝ)).ne', le_refl]
 

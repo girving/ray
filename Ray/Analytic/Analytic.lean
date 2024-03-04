@@ -4,7 +4,6 @@ import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
-import Mathlib.Analysis.NormedSpace.OperatorNorm
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.NNReal

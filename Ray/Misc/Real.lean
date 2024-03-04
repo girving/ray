@@ -111,15 +111,15 @@ lemma Set.inv_Icc {a b : 𝕜} (a0 : 0 < a) (b0 : 0 < b) : (Icc a b)⁻¹ = Icc 
 
 /-- `pow` and `zpow` multiply via addition -/
 lemma pow_mul_zpow {a : 𝕜} (a0 : a ≠ 0) (b : ℕ) (c : ℤ) : a^b * a^c = a^(b + c) := by
-  simp only [← zpow_ofNat, zpow_add₀ a0]
+  simp only [zpow_add₀ a0, zpow_coe_nat]
 
 /-- `zpow` and `pow` divide via subtraction -/
 lemma zpow_mul_pow {a : 𝕜} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b * a^c = a^(b + c) := by
-  simp only [← zpow_ofNat, zpow_add₀ a0]
+  simp only [zpow_add₀ a0, zpow_coe_nat]
 
 /-- `pow` and `zpow` multiply via addition -/
 lemma zpow_div_pow {a : 𝕜} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b / a^c = a^(b - c) := by
-  simp only [← zpow_ofNat, zpow_sub₀ a0]
+  simp only [zpow_sub₀ a0, zpow_coe_nat]
 
 /-- `-` and `⁻¹` commute on `Set ℝ` -/
 @[simp] lemma Set.inv_neg {s : Set 𝕜} : (-s)⁻¹ = -s⁻¹ := by

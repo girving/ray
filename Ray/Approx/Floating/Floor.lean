@@ -32,7 +32,7 @@ namespace Floating
     simp only [UInt64.le_iff_toNat_le, UInt64.toNat_2_pow_63] at s63
     simp only [UInt64.toInt, Nat.cast_pow, Nat.cast_ofNat, Rat.cast_div, Rat.cast_coe_int,
       Rat.cast_pow, Rat.cast_ofNat, ←neg_sub (2^63 : ℤ), zpow_neg, ←div_eq_mul_inv,
-      ←zpow_ofNat, Nat.cast_sub s63, Rat.cast_zpow, Rat.cast_ofNat]
+      ←zpow_coe_nat, Nat.cast_sub s63, Rat.cast_zpow, Rat.cast_ofNat]
   simp only [mul_neg_iff, Int.cast_pos, Int64.coe_pos_iff, two_zpow_not_neg, and_false,
     Int.cast_lt_zero, two_zpow_pos, and_true, false_or, Int64.coe_shiftRightRound,
     UInt64.toNat_sub s63, UInt64.toNat_2_pow_63, Int64.coe_zero, zpow_zero, mul_one,

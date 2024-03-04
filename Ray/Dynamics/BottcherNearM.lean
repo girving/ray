@@ -563,7 +563,9 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
   apply eventually_of_forall; clear t em
   intro ⟨e, z⟩ ezm zm d0 m0; simp only at ezm zm d0 m0 ⊢
   simp only [Super.fl, fl, sub_eq_zero, (PartialEquiv.injOn _).eq_iff zm am] at d0
-  simp only [Critical, m0, inChart, ← d0]; clear m0 d0
+  simp only [Critical, m0, ← d0]
+  unfold inChart
+  clear m0 d0
   generalize hg : (fun w ↦ extChartAt I (f c a) (f e ((extChartAt I a).symm w))) = g
   have hg' : extChartAt I a ∘ f e ∘ (extChartAt I a).symm = g := by
     rw [← hg]; simp only [Function.comp, s.f0]
@@ -580,11 +582,9 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
       (extChartAt I a z - extChartAt I a a) := by
     apply DifferentiableAt.comp; simp only [sub_add_cancel, dg]
     exact differentiableAt_id.add (differentiableAt_const _)
-  simp only [deriv.comp _ (d0 _) d1, deriv_sub_const, deriv_id'']
+  simp only [deriv.comp _ (d0 _) d1, deriv_sub_const, deriv_id'', one_mul]
   rw [deriv.comp _ _ _]
   · simp only [deriv_add_const, deriv_sub_const, deriv_id'', mul_one, sub_add_cancel, Function.comp]
-    rw [deriv_add_const, deriv_sub_const, deriv_id'']; simp only [one_mul, mul_one]
-    exact Eq.congr (congrFun (congrArg deriv (id hg.symm)) (extChartAt I a z)) rfl
   · simp only [sub_add_cancel, dg]
   · exact differentiableAt_id.add (differentiableAt_const _)
 

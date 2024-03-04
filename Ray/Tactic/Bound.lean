@@ -256,14 +256,14 @@ def boundNormNum : Aesop.RuleTac :=
     let goals ← Lean.Elab.Tactic.run i.goal tac |>.run'
     if !goals.isEmpty then failure
     return (#[], some (.ofTactic 1  `(tactic| norm_num)), some .hundred)
-attribute [aesop unsafe 10% tactic (rule_sets [Bound])] boundNormNum
+attribute [aesop unsafe 10% tactic (rule_sets := [Bound])] boundNormNum
 
 /-- Close numerical and other goals with `linarith` -/
 def boundLinarith : Aesop.RuleTac :=
   Aesop.SingleRuleTac.toRuleTac fun i => do
     Linarith.linarith false [] {} i.goal
     return (#[], some (.ofTactic 1  `(tactic| linarith)), some .hundred)
-attribute [aesop unsafe 5% tactic (rule_sets [Bound])] boundLinarith
+attribute [aesop unsafe 5% tactic (rule_sets := [Bound])] boundLinarith
 
 /-!
 ### `bound` tactic implementation
@@ -295,7 +295,7 @@ end Bound
 /-- `bound` tactic for proving inequalities via straightforward recursion on expression structure -/
 elab "bound" lemmas:(("[" term,* "]")?) : tactic => do
   Bound.addHyps (Bound.maybeTerms lemmas)
-  let tac ← `(tactic| aesop (rule_sets [Bound, -default]) (config := Bound.boundConfig))
+  let tac ← `(tactic| aesop (rule_sets := [Bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (← Lean.Elab.runTactic g tac.raw).1
 
 /-- `bound`, but return a proof script.
@@ -303,5 +303,5 @@ elab "bound" lemmas:(("[" term,* "]")?) : tactic => do
 TODO: Add support for additional hypotheses via `bound? [h0, ...]`.  Currently these are not yet
 linked into Aesop's proof script generation. -/
 elab "bound?" : tactic => do
-  let tac ← `(tactic| aesop? (rule_sets [Bound, -default]) (config := Bound.boundConfig))
+  let tac ← `(tactic| aesop? (rule_sets := [Bound, -default]) (config := Bound.boundConfig))
   liftMetaTactic fun g ↦ do return (← Lean.Elab.runTactic g tac.raw).1
