@@ -77,7 +77,7 @@ theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I]
     suffices n : (⋂ a, t a).Nonempty by
       rcases n with ⟨x, n⟩; simp only [mem_iInter, mem_diff, forall_and, forall_const] at n
       rw [← mem_iInter] at n; simp only [suv n.1, not_true, imp_false] at n; exact n.2
-    apply IsCompact.nonempty_iInter_of_directed_nonempty_compact_closed
+    apply IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed
     intro a b; rcases d a b with ⟨c, ac, bc⟩
     use c, diff_subset_diff_left ac, diff_subset_diff_left bc
     intro a; rcases h a with ⟨x, xa, xuv⟩; exact ⟨x, mem_diff_of_mem xa xuv⟩
