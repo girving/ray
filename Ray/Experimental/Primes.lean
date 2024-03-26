@@ -25,13 +25,13 @@ def count (lo hi : ℕ) : ℕ :=
 
 @[noinline] def countM (n : ℕ) : m ℕ := do
   let ns := Array.range n
-  let ts ← ns.parMap (fun i ↦ spawn (fun _ ↦ count i (i+1)))
+  let ts ← ns.parMap' (fun i ↦ count i (i+1))
   return ts.foldl (· + ·) 0
 
 def primesRun (p : Parsed) : IO UInt32 := do
   let n := p.flag! "number" |>.as! Nat
   IO.println s!"n = {n}"
-  let t ← IO.wait (countM (m := Task) n)
+  let t ← IO.wait (countM n)
   IO.println s!"π(n) = {t}"
   return 0
 
