@@ -70,7 +70,6 @@ lemma square_dz (lo hi : ℚ × ℚ) (n : ℕ) :
     rw [←hn1]; exact Nat.cast_ne_zero.mpr (ne_of_gt (lt_max_of_lt_left zero_lt_one))
   have n2z : (n2 : ℚ) ≠ 0 := by
     rw [←hn2]; exact Nat.cast_ne_zero.mpr (ne_of_gt (lt_max_of_lt_left zero_lt_one))
-  simp only [dz, hdx, hn1, hn2, Prod.smul_def, smul_eq_mul, Prod.fst_add, Rat.cast_add,
-    Rat.cast_mul, Rat.cast_div, Rat.cast_ofNat, Rat.cast_coe_nat, Prod.fst_sub, Rat.cast_sub,
-    add_sub_sub_cancel, add_div, mul_div_cancel _ n1z, add_halves', Prod.snd_add, Prod.snd_sub,
-    mul_div_cancel _ n2z]
+  simp only [dz, hdx, hn1, hn2, Prod.smul_mk, smul_eq_mul, Prod.fst_add, Prod.fst_sub, add_sub_sub_cancel,
+    add_div, mul_div_assoc, div_self n1z, mul_one, add_halves', Prod.snd_add, Prod.snd_sub, div_self n2z]
+
