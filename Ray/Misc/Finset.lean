@@ -3,7 +3,6 @@ import Mathlib.Data.Complex.Abs
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Order.Filter.AtTopBot
-import Mathlib.Tactic.Rewrites
 
 /-!
 ## `Finset ℕ` machinery for use in sums and products

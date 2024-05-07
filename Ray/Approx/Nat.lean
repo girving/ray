@@ -1,9 +1,7 @@
 import Mathlib.Algebra.Order.Floor
 import Mathlib.Data.Nat.Bitwise
-import Mathlib.Data.Nat.Order.Basic
 import Mathlib.Data.Nat.Parity
 import Mathlib.Data.Real.Basic
-import Mathlib.Tactic.LibrarySearch
 import Ray.Approx.Bool
 
 /-!
@@ -41,7 +39,7 @@ lemma Nat.bit_le_bit {a b : Bool} {m n : ℕ} (ab : a ≤ b) (mn : m ≤ n) : bi
   · induction b
     repeat simp only [bit_false, bit_true, bit0_le_bit0, bit0_le_bit1_iff, mn]
   · induction b
-    · contrapose ab; decide
+    · simp only [← not_lt, Bool.false_lt_true, not_true_eq_false] at ab
     · simp only [bit_true, bit1_le_bit1, mn]
 
 @[simp] lemma Nat.testBit_zero' {i : ℕ} : testBit 0 i = false := by
@@ -428,7 +426,7 @@ lemma Nat.rdiv_lt {a b : ℕ} {up : Bool} : (a.rdiv b up : ℝ) < a / b + 1 := b
   have b0 : 0 < (b : ℝ) := by positivity
   have bb : b-1 < b := by omega
   rw [←mul_lt_mul_iff_of_pos_right b0]
-  simp only [add_one_mul, div_mul_cancel _ b0.ne', ←Nat.cast_add, ←Nat.cast_mul, Nat.cast_lt]
+  simp only [add_one_mul, div_mul_cancel₀ _ b0.ne', ←Nat.cast_add, ←Nat.cast_mul, Nat.cast_lt]
   refine lt_of_le_of_lt (Nat.div_mul_le_self _ _) ?_
   omega
 

@@ -35,7 +35,7 @@ target png.o pkg : FilePath := do
   let o := pkg.buildDir / "Ray/Render/png.o"
   let src ← inputFile <| pkg.dir / "Ray/Render/png.cc"
   let args := #["-I", (←getLeanIncludeDir).toString, "-I/opt/homebrew/include"]
-  buildO "png.cc" o src args #["-fPIC"] "c++" getLeanTrace
+  buildO o src args #["-fPIC"] "c++" getLeanTrace
 
 extern_lib libray pkg := do
   let name := nameToStaticLib "ray"

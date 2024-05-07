@@ -9,7 +9,7 @@ import Ray.Approx.Nat
 /-- `abs` and `zpow` commute -/
 lemma abs_zpow {x : ℝ} {n : ℤ} : |x ^ n| = |x| ^ n := by
   induction' n with n n
-  · simp only [Int.ofNat_eq_coe, zpow_coe_nat, abs_pow]
+  · simp only [Int.ofNat_eq_coe, zpow_natCast, abs_pow]
   · simp only [zpow_negSucc, abs_inv, abs_pow]
 
 /-- `Int` division, rounding up or down -/
@@ -78,8 +78,8 @@ lemma Int.rdiv_lt {a : ℤ} {b : ℕ} {up : Bool} : (a.rdiv b up : ℝ) < a / b 
   rw [neg_lt, neg_add, ←lt_sub_iff_add_lt, sub_neg_eq_add]
   have bp : 0 < (b : ℝ) := by positivity
   have e : (((-a / b : ℤ) : ℝ) + 1) * b = ((-a / b + 1) * b : ℤ) := by
-    simp only [cast_mul, cast_add, cast_one, cast_ofNat]
-  rw [←mul_lt_mul_iff_of_pos_right bp, e, neg_mul, div_mul_cancel _ bp.ne', ←Int.cast_neg,
+    simp only [cast_mul, cast_add, cast_one, cast_natCast]
+  rw [←mul_lt_mul_iff_of_pos_right bp, e, neg_mul, div_mul_cancel₀ _ bp.ne', ←Int.cast_neg,
     Int.cast_lt]
   apply Int.lt_ediv_add_one_mul_self
   positivity
@@ -198,7 +198,7 @@ lemma Int.cast_ceilDiv_eq_neg_ediv (a b : ℕ) : ((a ⌈/⌉ b : ℕ) : ℤ) = -
 
 /-- `natAbs = toNat` if we nonnegative -/
 lemma Int.natAbs_eq_toNat {a : ℤ} (a0 : 0 ≤ a) : a.natAbs = a.toNat := by
-  simp only [←Nat.cast_inj (R := ℤ), coe_natAbs, a0, toNat_of_nonneg, abs_eq_self]
+  simp only [←Nat.cast_inj (R := ℤ), natCast_natAbs, a0, toNat_of_nonneg, abs_eq_self]
 
 lemma Int.emod_mul_eq_mul_emod' (a n m : ℤ) (n0 : 0 ≤ n) (m0 : 0 < m) :
     a * n % (m * n) = a % m * n := by

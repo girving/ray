@@ -1,4 +1,3 @@
-import Mathlib.Data.Set.Intervals.ProjIcc
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Ray.Misc.Topology
 

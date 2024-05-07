@@ -1,8 +1,8 @@
 import Mathlib.Algebra.Field.Defs
 import Mathlib.Algebra.Star.Basic
-import Mathlib.Data.Set.Intervals.OrdConnected
 import Mathlib.Data.Set.NAry
 import Mathlib.Data.Set.Pointwise.Basic
+import Mathlib.Order.Interval.Set.OrdConnected
 import Mathlib.Tactic.Linarith.Frontend
 import Mathlib.Tactic.Monotonicity.Basic
 
