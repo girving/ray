@@ -337,9 +337,11 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
   have p0 : 0 < 2^64 := by norm_num
   induction' n using Int.induction_overlap with n n
   · simp only [Int.cast_natCast, toNat_cast, Int.ofNat_emod, Nat.cast_ofNat, Int.reducePow]
-  · simp only [Int.cast_neg, Int.cast_ofNat, toNat_neg, size_eq_pow, toNat_cast, Nat.cast_ite,
-      CharP.cast_eq_zero, eq_iff_toNat_eq, toNat_zero, Nat.cast_sub (Nat.mod_lt _ p0).le,
-      Nat.cast_pow, Nat.cast_ofNat, Int.ofNat_emod]
+  · -- simp? [-Int.reducePow, -Nat.reducePow, size_eq_pow]
+    simp only [Int.cast_neg, Int.cast_natCast, toNat_neg, eq_iff_toNat_eq,
+      toNat_cast, size_eq_pow, toNat_zero, Nat.cast_ite, CharP.cast_eq_zero,
+      Nat.cast_sub (Nat.mod_lt _ p0).le, Nat.cast_pow, Nat.cast_ofNat,
+      Int.ofNat_emod]
     rw [←Nat.div_add_mod n (2^64)]
     generalize n / 2^64 = a
     generalize hb : n % 2^64 = b
@@ -411,20 +413,20 @@ noncomputable instance : Coe UInt64 (ZMod UInt64.size) where
 @[simp] lemma UInt64.toZMod_add (x y : UInt64) :
     ((x + y : UInt64) : ZMod UInt64.size) = x + y := by
   simp only [toZMod]
-  rw [toNat_add, ZMod.nat_cast_mod, Nat.cast_add, toZMod_toNat]
+  rw [toNat_add, ZMod.natCast_mod, Nat.cast_add, toZMod_toNat]
 
 @[simp] lemma UInt64.toZMod_mul (x y : UInt64) :
     ((x * y : UInt64) : ZMod UInt64.size) = x * y := by
-  simp only [toZMod, toNat, mul_def, Fin.mul_def, ZMod.nat_cast_mod, Nat.cast_mul]
+  simp only [toZMod, toNat, mul_def, Fin.mul_def, ZMod.natCast_mod, Nat.cast_mul]
 
 @[simp] lemma UInt64.toZMod_cast (x : ℕ) : ((x : UInt64) : ZMod UInt64.size) = x := by
-  simp only [toZMod, toNat, natCast_def, Fin.coe_ofNat_eq_mod, ZMod.nat_cast_mod]
+  simp only [toZMod, toNat, natCast_def, Fin.coe_ofNat_eq_mod, ZMod.natCast_mod]
 
 @[simp] lemma UInt64.toZMod_shiftLeft32 (x : UInt64) :
     (x <<< 32 : ZMod UInt64.size) = x * (2 : ZMod UInt64.size)^32 := by
   have e : (2^32)^2 = UInt64.size := by rfl
   rw [toZMod, UInt64.toNat_shiftLeft32, ←Nat.mod_mul_eq_mul_mod, e]
-  simp only [ZMod.nat_cast_mod, Nat.cast_mul, toZMod_toNat, Nat.cast_pow, Nat.cast_ofNat]
+  simp only [ZMod.natCast_mod, Nat.cast_mul, toZMod_toNat, Nat.cast_pow, Nat.cast_ofNat]
 
 /-!
 ### Add with carry
@@ -445,6 +447,7 @@ lemma addc_eq (x y : UInt64) :
   · simp only [lt, ite_true, zero_mul, UInt64.toNat_add', ge_iff_le, nonpos_iff_eq_zero,
       add_eq_zero, tsub_zero, zero_add, addc, Nat.cast_add, Nat.cast_zero, Prod.mk.injEq,
       UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size, ite_eq_right_iff, true_and]
+    -- TODO: warning that h is not used; file bug report
     intro h; contrapose h
     rw [not_lt, UInt64.le_iff_toNat_le, UInt64.toNat_add']
     simp only [lt, ite_true, ge_iff_le, nonpos_iff_eq_zero, add_eq_zero, tsub_zero,
@@ -475,11 +478,7 @@ def split (x : UInt64) : UInt64 × UInt64 :=
   (x.toUInt32.toUInt64, x >>> 32)
 
 @[simp] lemma UInt32.toNat_toUInt64 {x : UInt32} : x.toUInt64.toNat = x.toNat := by
-  simp only [toUInt64, Nat.toUInt64, UInt64.ofNat, Fin.ofNat]
-  trans toNat x % (18446744073709551615 + 1)
-  · rfl
-  · norm_num
-    exact lt_of_lt_of_le (UInt32.lt_size x) (by norm_num)
+  simp only [toUInt64, UInt64.toNat, toNat]
 
 @[simp] lemma UInt64.toNat_toUInt32 {x : UInt64} : x.toUInt32.toNat = x.toNat % 2^32 := by
   simp only [toUInt32, Nat.toUInt32, UInt32.ofNat, Fin.ofNat]
