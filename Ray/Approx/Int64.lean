@@ -106,6 +106,8 @@ instance : CommRing Int64 where
     intro n
     simp only [IntCast.intCast, Int.cast_negSucc, Int64.ext_iff, UInt64.eq_iff_toNat_eq]
     rfl
+  nsmul := nsmulRec
+  zsmul := zsmulRec
 
 /-- Strict bool comparison on `Int64` -/
 def Int64.blt (x y : Int64) :=
@@ -230,7 +232,7 @@ lemma Int64.eq_zero_iff_n_eq_zero (x : Int64) : x = 0 ↔ x.n = 0 := by
 
 -- An `Int64` is not zero iff its inner `UInt64` is -/
 lemma Int64.ne_zero_iff_n_ne_zero (x : Int64) : x ≠ 0 ↔ x.n ≠ 0 := by
-  simp only [Ne.def, Int64.eq_zero_iff_n_eq_zero]
+  simp only [Ne, Int64.eq_zero_iff_n_eq_zero]
 
 /-- Negation flips `.isNeg`, except at `0` and `.min` -/
 lemma Int64.isNeg_neg {x : Int64} (x0 : x ≠ 0) (xn : x ≠ .min) : (-x).isNeg = !x.isNeg := by
@@ -271,7 +273,7 @@ lemma Int64.isNeg_neg {x : Int64} (x0 : x ≠ 0) (xn : x ≠ .min) : (-x).isNeg 
 /-- Converting to `ℤ` is more than `-2^63` if we're not `min` -/
 @[simp] lemma Int64.pow_lt_coe {x : Int64} (n : x ≠ min) : -2^63 < (x : ℤ) := by
   refine Ne.lt_of_le ?_ (pow_le_coe x)
-  rw [Ne.def, ←coe_min', coe_eq_coe]
+  rw [Ne, ←coe_min', coe_eq_coe]
   exact n.symm
 
 /-!
@@ -354,7 +356,7 @@ lemma Int64.coe_add_ne {x y : Int64} (h : x.isNeg ≠ y.isNeg) : ((x + y : Int64
       · exact lt_of_lt_of_le (not_le.mp xy0) x0
   by_cases x0 : x.isNeg
   · simp only [x0] at h; exact way x0 h.symm
-  · simp only [x0] at h; rw [ne_comm, Ne.def, Bool.not_eq_false] at h
+  · simp only [x0] at h; rw [ne_comm, Ne, Bool.not_eq_false] at h
     rw [_root_.add_comm, _root_.add_comm (x : ℤ)]; exact way h x0
 
 /-- `ℤ` conversion commutes with sub if the result is positive -/
@@ -386,7 +388,8 @@ lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg
       · omega
       · omega
       · omega
-      · contrapose h; simp only [not_le, not_lt] at h2 ⊢
+      · -- TODO: warning for unused h
+        contrapose h; simp only [not_le, not_lt] at h2 ⊢
         exact le_trans (le_trans (by norm_num) (Nat.sub_le_sub_left h2.le _)) (Nat.le_add_left _ _)
     · simp only [not_lt] at c0
       have yx' : y ≤ x := by omega
@@ -413,7 +416,7 @@ lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg
 
 /-- Conversion to `ℤ` is the same as via `ℕ` if we're nonnegative -/
 lemma Int64.toReal_toInt {x : Int64} (h : x.isNeg = false) : ((x : ℤ) : ℝ) = x.n.toNat := by
-  simp only [toInt, h, cond_false, CharP.cast_eq_zero, sub_zero, Int.cast_ofNat]
+  simp only [toInt, h, cond_false, CharP.cast_eq_zero, sub_zero, Int.cast_natCast]
 
 /-- Conversion from `ℕ` is secretly the same as conversion to `UInt64` -/
 @[simp] lemma Int64.ofNat_eq_coe (n : ℕ) : (n : Int64).n = n := by
@@ -439,13 +442,15 @@ lemma Int64.toInt_ofInt {n : ℤ} (h : |n| < 2^63) : ((n : Int64) : ℤ) = n := 
   · have e : n = -(-n).toNat := by rw [Int.toNat_of_nonneg (by omega), neg_neg]
     rw [e] at h ⊢
     simp only [abs_neg, Nat.abs_cast] at h
-    simp only [Int.cast_neg, Int.cast_ofNat]
+    simp only [Int.cast_neg, Int.cast_natCast]
     rw [Int64.coe_neg]
     · simp only [neg_inj]; apply Int64.toInt_ofNat; omega
     · have e : (2 ^ 63 : ℤ) = (2 ^ 63 : ℕ) := by rfl
       rw [e, Nat.cast_lt] at h
       have cm : (min : ℤ) = -(2:ℤ)^63 := by rfl
-      rw [Ne.def, ←Int64.coe_eq_coe, Int64.toInt_ofNat h, cm]
+      rw [Ne]
+      rw [←Int64.coe_eq_coe]
+      rw [Int64.toInt_ofNat h, cm]
       omega
 
 /-- Conversion to `ℤ` is the same as the underlying `toNat` if `isNeg = false` -/
@@ -644,7 +649,7 @@ lemma Int64.sub_le {x y : Int64} (y0 : y.isNeg = false) (h : min + y ≤ x) : x 
 
 /-- `abs` preserves 0 -/
 @[simp] lemma Int64.abs_ne_zero_iff {x : Int64} : x.abs ≠ 0 ↔ x ≠ 0 := by
-  simp only [Ne.def, Int64.abs_eq_zero_iff]
+  simp only [Ne, Int64.abs_eq_zero_iff]
 
 /-- `.abs` doesn't change if nonneg -/
 lemma Int64.abs_eq_self' {x : Int64} (h : x.isNeg = false) : x.abs = x.n := by
@@ -705,7 +710,7 @@ lemma Int64.coe_abs {x : Int64} : x.abs.toInt = |(x : ℤ)| := by
 
 /-- `.abs` is absolute value (`ℕ` version) )-/
 lemma Int64.toNat_abs {x : Int64} : x.abs.toNat = (x : ℤ).natAbs := by
-  rw [←Nat.cast_inj (R := ℤ), Int.coe_natAbs]; exact coe_abs
+  rw [←Nat.cast_inj (R := ℤ), Int.natCast_natAbs]; exact coe_abs
 
 /-- If we turn `abs` back into an `Int64`, it's abs except at `.min` -/
 lemma Int64.coe_abs' {x : Int64} (n : x ≠ .min) : ((⟨x.abs⟩ : Int64) : ℤ) = |(x : ℤ)| := by
@@ -713,7 +718,7 @@ lemma Int64.coe_abs' {x : Int64} (n : x ≠ .min) : ((⟨x.abs⟩ : Int64) : ℤ
   · simp only [x0, coe_zero, abs_zero]; rfl
   have x0' : x.n ≠ 0 := by simpa only [ext_iff, n_zero] using x0
   by_cases xn : x.isNeg
-  · simp only [abs, xn, cond_true, ← neg_def, toInt._eq_1, isNeg_neg x0 n, Bool.not_true, ←
+  · simp only [abs, xn, cond_true, ← neg_def, toInt, isNeg_neg x0 n, Bool.not_true, ←
       UInt64.size_eq_pow, cond_false, sub_zero, Nat.cast_zero]
     rw [abs_of_neg, neg_sub]
     · simp only [neg_def, UInt64.toNat_neg, x0', if_false]
@@ -734,7 +739,7 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
   by_cases z : x = 0
   · simp only [z, neg_zero, abs_zero]
   by_cases m : x = min
-  · simp only [m, neg_min, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]
+  · simp only [m, neg_min, abs_min, coe_min', Int.cast_neg, Int.cast_pow, AddGroupWithOne.intCast_ofNat]
   rw [Int64.abs, Int64.abs]
   simp only [isNeg_neg z m, bif_eq_if, Bool.not_eq_true']
   simp only [neg_def, neg_neg]
@@ -748,7 +753,7 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
   · simp only [ext_iff, n_zero] at x0
     simp only [neg_def, UInt64.toNat_neg, x0, UInt64.size_eq_pow, ite_false,
       Nat.cast_sub (UInt64.toNat_lt_2_pow_64 _).le, Nat.cast_pow, Nat.cast_ofNat, neg_sub,
-      toInt._eq_1, n, cond_true]
+      toInt, n, cond_true]
 
 @[simp] lemma Int64.abs_eq_pow_iff {x : Int64} : x.abs = 2^63 ↔ x = min := by
   rw [abs, bif_eq_if]
@@ -763,7 +768,7 @@ lemma Int64.abs_lt_zero {x : Int64} : ((⟨x.abs⟩ : Int64) : ℤ) < 0 ↔ x = 
   by_cases x0 : x = 0
   · simp only [x0, isNeg_zero, n_zero, neg_zero, Bool.cond_self]
   by_cases m : x = min
-  · simp only [m, abs_min, coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]; decide
+  · simp only [m, abs_min, coe_min', Int.cast_neg, Int.cast_pow, AddGroupWithOne.intCast_ofNat]; decide
   by_cases n : x.isNeg
   · simp only [n, cond_true, ← neg_def, isNeg_neg x0 m, Bool.not_true, neg_neg, cond_false]
   · simp only [Bool.not_eq_true] at n
