@@ -22,7 +22,7 @@ namespace Floating
   norm := by
     intro n0 nm s0
     simp only [Int64.abs_abs, Int64.ext_iff, Int64.n_zero, Int64.n_min,
-      Int64.abs_eq_zero_iff, Ne.def, Int64.abs_eq_pow_iff] at n0 nm ⊢
+      Int64.abs_eq_zero_iff, Ne, Int64.abs_eq_pow_iff] at n0 nm ⊢
     refine x.norm ?_ ?_ s0
     repeat simpa only [ne_eq, Int64.ext_iff, Int64.n_zero]
 
@@ -43,7 +43,7 @@ namespace Floating
   rw [val, val]
   simp only [abs_mul, abs_of_pos (two_zpow_pos (𝕜 := ℝ)), n_abs, s_abs]
   refine congr_arg₂ _ ?_ rfl
-  simp only [Int64.coe_of_nonneg (Int64.isNeg_abs (x.n_ne_min n)), Int64.toNat_abs, Int.coe_natAbs,
+  simp only [Int64.coe_of_nonneg (Int64.isNeg_abs (x.n_ne_min n)), Int64.toNat_abs, Int.natCast_natAbs,
     Int.cast_abs]
 
 /-- `abs` is nonnegative away from `nan` -/
