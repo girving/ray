@@ -111,7 +111,7 @@ instance : One Floating where
 @[simp] lemma val_one : (1 : Floating).val = 1 := by
   have e0 : ((2^62 : Int64) : ℤ) = 2^62 := by decide
   have e1 : (2^63 - 62 : UInt64).toInt - 2^63 = -62 := by decide
-  simp only [val, n_one, e0, Int.cast_pow, Int.int_cast_ofNat, s_one, e1, zpow_neg]
+  simp only [val, n_one, e0, Int.cast_pow, Int.cast_ofNat, s_one, e1, zpow_neg]
   apply mul_inv_cancel; norm_num
 
 /-- If we're not `nan`, `approx` is a singleton -/
@@ -189,7 +189,7 @@ lemma rounds_of_ne_nan {a : ℝ} {x : Floating} {up : Bool}
 /-- `val` if we're nonnegative -/
 lemma val_of_nonneg {x : Floating} (x0 : 0 ≤ x.val) :
     x.val = (x.n.n.toNat : ℝ) * 2^((x.s.toNat : ℤ) - 2^63) := by
-  rw [val, UInt64.toInt, Int64.coe_of_nonneg, Int.cast_ofNat]
+  rw [val, UInt64.toInt, Int64.coe_of_nonneg, Int.cast_natCast]
   rw [val] at x0
   simpa only [Int64.isNeg_eq_le, decide_eq_false_iff_not, not_le, gt_iff_lt, two_zpow_pos,
     mul_nonneg_iff_of_pos_right, Int.cast_nonneg, Int64.coe_nonneg_iff] using x0
@@ -209,7 +209,7 @@ lemma val_of_nonneg {x : Floating} (x0 : 0 ≤ x.val) :
   rw [val, min_norm]
   simp only [UInt64.toInt_zero, zero_sub]
   rw [Int64.coe_of_nonneg (by decide)]
-  simp only [up62, Nat.cast_pow, Nat.cast_ofNat, Int.cast_pow, Int.int_cast_ofNat,
+  simp only [up62, Nat.cast_pow, Nat.cast_ofNat, Int.cast_pow, Int.cast_ofNat,
     pow_mul_zpow t0]
   exact congr_arg₂ _ rfl (by ring_nf)
 

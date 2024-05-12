@@ -74,7 +74,7 @@ lemma low_s_2_eq {g s : UInt64} : (lower g s).2.toNat = s.toNat - (lower g s).1.
   have h := low_lt nm s
   generalize (lower n s).2.toNat = k at h
   refine lt_of_le_of_lt (abs_mul _ _).le ?_
-  simp only [←Int.coe_natAbs, ←Int64.toNat_abs, abs_pow, abs_two]
+  simp only [←Int.natCast_natAbs, ←Int64.toNat_abs, abs_pow, abs_two]
   rw [←Nat.cast_lt (α := ℤ)] at h
   simpa only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat] using h
 
@@ -116,6 +116,7 @@ lemma of_ns_norm {n : Int64} {s : UInt64} (n0 : n ≠ 0) (nm : n ≠ .min) :
   rw [←hd]
   simp only [Int64.sub_def, sub_sub_cancel]
   rw [UInt64.toNat_sub (log2_g_le_62 nm), u62]
+  simp only [UInt64.toNat_log2]
   omega
 
 /-- Construct a `Floating` given possibly non-standardized `n, s` -/
@@ -150,7 +151,7 @@ lemma val_of_ns {n : Int64} {s : UInt64} (nm : n ≠ .min) :
   by_cases n0 : n = 0
   · simp only [n0, Int64.zero_shiftLeft, dite_true, n_zero, Int64.coe_zero, Int.cast_zero, s_zero,
       zero_mul]
-  simp only [n0, dite_false, coe_low_s nm, Int.cast_mul, Int.cast_pow, Int.int_cast_ofNat]
+  simp only [n0, dite_false, coe_low_s nm, Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
   simp only [low_s_2_eq, mul_assoc, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_mul_zpow,
     mul_eq_mul_left_iff, gt_iff_lt, zero_lt_two, OfNat.ofNat_ne_one, zpow_inj, Int.cast_eq_zero,
     Int64.coe_eq_zero, n0, or_false, Nat.cast_sub low_le_s', UInt64.toInt]
@@ -195,7 +196,7 @@ instance {s : Int64} : CoeHead (Fixed s) Floating where
     rw [ax, Fixed.val, val_of_ns nm]
     simp only [Int64.toInt, Int64.isNeg_eq_le, bif_eq_if, decide_eq_true_eq, Nat.cast_ite,
       Nat.cast_pow, Int.cast_sub, Int.cast_ofNat, Int.cast_ite,
-      Int.cast_pow, Int.int_cast_ofNat, Int.cast_zero, UInt64.toInt, UInt64.toNat_add,
+      Int.cast_pow, Int.cast_ofNat, Int.cast_zero, UInt64.toInt, UInt64.toNat_add,
       UInt64.toNat_2_pow_63, Int.ofNat_emod, Nat.cast_add, mul_eq_mul_left_iff,
       zero_lt_two, ne_eq, not_false_eq_true, zpow_inj, UInt64.size_eq_pow, Nat.cast_pow,
       Nat.cast_two]
@@ -209,7 +210,7 @@ instance {s : Int64} : CoeHead (Fixed s) Floating where
         OfNat.ofNat_ne_one, not_false_eq_true, zpow_inj, d0, Int.add_emod_self,
         Int.emod_eq_of_lt d1 d2]
       ring
-    · simp only [le, CharP.cast_eq_zero, ite_false, sub_zero, zpow_coe_nat]
+    · simp only [le, CharP.cast_eq_zero, ite_false, sub_zero, zpow_natCast]
       have d0 : 0 ≤ (s.n.toNat : ℤ) + 2^63 := by omega
       have d1 : (s.n.toNat : ℤ) + 2^63 < 2^64 := by linarith
-      simp only [Int.emod_eq_of_lt d0 d1, add_sub_cancel, zpow_coe_nat]
+      simp only [Int.emod_eq_of_lt d0 d1, add_sub_cancel_right, zpow_natCast]
