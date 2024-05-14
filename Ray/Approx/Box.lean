@@ -109,7 +109,7 @@ lemma mul_def {z w : Box} : z * w = ⟨z.re * w.re - z.im * w.im, z.re * w.im + 
 /-- `star` is conservative -/
 instance : ApproxStar Box ℂ where
   approx_star z := by
-    simp only [IsROrC.star_def, instApprox, image_image2, re_conj, im_conj, Interval.approx_neg,
+    simp only [RCLike.star_def, instApprox, image_image2, re_conj, im_conj, Interval.approx_neg,
       image2_subset_iff, mem_image2, mem_neg]
     intro r rz i iz
     exact ⟨r, rz, -i, by simpa only [neg_neg], rfl⟩
@@ -181,8 +181,10 @@ noncomputable instance : ApproxRing Box ℂ where
   · have e : (2 : ℝ) = 2^(1 : ℤ) := by norm_num
     rw [mul_assoc, mul_comm, e]
     exact Interval.mem_approx_scaleB (mem_approx_mul rz iz)
-  · simpa only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
-      mul_comm _ r] using e
+  · rw [←e]
+    simp only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
+      mul_comm _ r, true_and]; ring
+
 
 /-- `Box` squaring approximates `ℂ`, `∈` version -/
 @[mono] lemma mem_approx_sqr {z' : ℂ} {z : Box} (m : z' ∈ approx z) : z'^2 ∈ approx z.sqr := by
