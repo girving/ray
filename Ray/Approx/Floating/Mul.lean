@@ -225,9 +225,6 @@ lemma mul_norm_correct (n : UInt128) (up : Bool) (n0 : n ≠ 0) (lo : n.toNat �
 lemma mul_finish_correct (n : UInt64) (s : Int128) (up : Bool)
     (norm : n.toNat ∈ Ico (2^62) (2^63)) :
     (n.toNat : ℝ) * 2^((s : ℤ) - 2^63) ∈ rounds (approx (mul_finish n s up norm)) !up := by
-  -- TODO
-  sorry
-  /-
   rw [mul_finish]
   simp only [bif_eq_if, beq_iff_eq]
   have nn : (⟨n⟩ : Int64).isNeg = false := by
@@ -253,9 +250,9 @@ lemma mul_finish_correct (n : UInt64) (s : Int128) (up : Bool)
           pow_mul_zpow]
         apply zpow_le_of_le (by norm_num)
         simp only [Int128.isNeg_iff, decide_eq_true_eq] at sn
+        norm_num
         omega
     · simp only [sn, ite_false, approx_nan, rounds_univ, mem_univ]
-  -/
 
 /-- `mul_exponent` is correct -/
 lemma mul_exponent_eq (xs ys t : UInt64) :

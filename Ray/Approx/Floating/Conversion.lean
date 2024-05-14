@@ -42,14 +42,14 @@ lemma Convert.n_mod (x : Convert) : x.n % 2^64 = x.n := by
   { n := ⟨x.n⟩
     s := x.s
     zero_same := by
-      intro n0; contrapose n0
+      intro n0; contrapose n0; clear n0
       simp only [Int64.ext_iff, Int64.n_zero, UInt64.eq_zero_iff_toNat_eq_zero, UInt64.toNat_cast,
         UInt64.size_eq_pow, e]
       have h := x.norm
       norm_num [mem_Ico] at h
       omega
     nan_same := by
-      intro nm; contrapose nm
+      intro nm; contrapose nm; clear nm
       simp only [Int64.ext_iff, Int64.n_min, UInt64.eq_iff_toNat_eq, UInt64.toNat_cast,
         UInt64.size_eq_pow, UInt64.toNat_2_pow_63, e]
       have h := x.norm
@@ -72,9 +72,6 @@ lemma Convert.n_mod (x : Convert) : x.n % 2^64 = x.n := by
 /-- `Convert.finish` is correct -/
 lemma Convert.approx_finish (x : Convert) (up : Bool) :
     x.val ∈ rounds (approx (x.finish up)) !up := by
-  -- TODO
-  sorry
-  /-
   rw [finish, val]
   by_cases s0 : x.s < 0
   · simp only [s0, bif_eq_if, dite_eq_ite, ite_true]
@@ -87,6 +84,7 @@ lemma Convert.approx_finish (x : Convert) (up : Bool) :
       refine le_trans (mul_le_mul_of_nonneg_right (Nat.cast_le.mpr x.norm.2.le) two_zpow_pos.le) ?_
       simp only [Nat.cast_pow, Nat.cast_ofNat, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
         pow_mul_zpow, gt_iff_lt, Nat.one_lt_ofNat, zpow_le_iff_le]
+      norm_num
       omega
   simp only [s0, dite_eq_ite, ite_false]
   by_cases s1 : 2^64 ≤ x.s
@@ -109,7 +107,6 @@ lemma Convert.approx_finish (x : Convert) (up : Bool) :
     UInt64.toInt, UInt64.toInt_intCast, Int.emod_eq_of_lt s0 s1, mem_rounds_singleton,
     Bool.not_eq_true', gt_iff_lt, two_zpow_pos, mul_le_mul_right, UInt64.size_eq_pow, Nat.cast_pow,
     Nat.cast_two, Int.emod_eq_of_lt (Nat.cast_nonneg _) n1, Int.cast_natCast, le_refl, ite_self]
-  -/
 
 /-- `convert_tweak` is correct -/
 lemma val_convert_tweak (n : ℕ) (s : ℤ) (norm : n ∈ Icc (2^62) (2^63)) :

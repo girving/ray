@@ -20,8 +20,8 @@ namespace Floating
   bif n == nan || s < 62 then nan else
   { n := 2^62
     s := s - 62
-    zero_same := by intro n; contrapose n; decide
-    nan_same := by intro n; contrapose n; decide
+    zero_same := by intro n; contrapose n; clear n; decide
+    nan_same := by intro n; contrapose n; clear n; decide
     norm := by intro _ _ _; decide }
 
 /-- `two_pow` is conservative -/
@@ -53,15 +53,15 @@ namespace Floating
 @[irreducible] def two_pow_special (s : UInt64) : Floating where
   n := 2^62
   s := s
-  zero_same := by intro n; contrapose n; decide
-  nan_same := by intro n; contrapose n; decide
+  zero_same := by intro n; contrapose n; clear n; decide
+  nan_same := by intro n; contrapose n; clear n; decide
   norm := by intro _ _ _; decide
 
 /-- `two_pow_special` never makes `nan` -/
 @[simp] lemma two_pow_special_ne_nan (s : UInt64) : two_pow_special s ≠ nan := by
   rw [two_pow_special]
   simp only [ne_eq, ext_iff, n_nan, s_nan, not_and]
-  intro n; contrapose n; decide
+  intro n; contrapose n; clear n; decide
 
 /-- `two_pow_special` never makes `nan` -/
 @[simp] lemma val_two_pow_special (s : UInt64) :

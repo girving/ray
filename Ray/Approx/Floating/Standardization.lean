@@ -91,7 +91,7 @@ lemma coe_low_s {n : Int64} {s : UInt64} (nm : n ≠ .min) :
 /-- `of_ns` doesn't create `nan` -/
 lemma of_ns_ne_nan {n : Int64} {s : UInt64} (nm : n ≠ .min) :
     n <<< (lower (62 - n.abs.log2) s).2 ≠ .min := by
-  intro m; contrapose m
+  intro m; contrapose m; clear m
   have h := low_lt' nm s
   simp only [abs_lt] at h
   rw [←Int64.coe_eq_coe, coe_low_s nm, Int64.coe_min']
@@ -128,7 +128,7 @@ lemma of_ns_norm {n : Int64} {s : UInt64} (n0 : n ≠ 0) (nm : n ≠ .min) :
   { n := n <<< t.2
     s := t.1
     zero_same := by
-      intro z; contrapose z
+      intro z; contrapose z; clear z
       simp only [←Int64.coe_eq_coe, Int64.coe_zero, coe_low_s nm, mul_eq_zero, not_or,
         pow_eq_zero_iff', OfNat.ofNat_ne_zero, ne_eq, false_and, not_false_eq_true, and_true]
       simp only [Int64.coe_eq_zero, n0, not_false_eq_true]

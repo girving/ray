@@ -199,7 +199,7 @@ lemma UInt128.toNat_succ {x : UInt128} (h : x.toNat ≠ 2^128-1) : x.succ.toNat 
   by_cases ll : x.lo = (2:UInt64)^64-1
   · simp only [ll, e, zero_sub, add_left_neg, beq_self_eq_true, cond_true]
     by_cases hh : x.hi = (2:UInt64)^64-1
-    · simp only [toNat_def, hh, ll, ge_iff_le, ne_eq] at h; contrapose h; decide
+    · simp only [toNat_def, hh, ll, ge_iff_le, ne_eq] at h; contrapose h; clear h; decide
     · simp only [UInt64.eq_iff_toNat_eq] at hh
       simp only [toNat, Nat.shiftLeft_eq, UInt64.toNat_add_one hh, add_mul, one_mul,
         UInt64.toNat_zero, add_zero, ll]
@@ -768,7 +768,7 @@ lemma UInt128.toInt_shiftRightRound (x : UInt128) (s : UInt64) (up : Bool) :
   · simp only [not_le] at h1
     simp only [h3.1, Nat.mod_eq_of_lt h1, true_and, Int.rdiv, Nat.cast_pow, Nat.cast_ofNat,
       cond_true, zero_eq_neg] at h3 h4
-    contrapose h3
+    contrapose h3; clear h3
     simp only [d1 h4, pow_zero, Nat.div_one, mul_one, not_not] at h4 ⊢
     rw [h4]; decide
   · simp only [not_le] at h1; clear h4
@@ -953,4 +953,3 @@ lemma UInt128.toNat_hi_shiftRightRound_le_hi {y : UInt64} {s : UInt64} {up : Boo
     simp only [e, ←Nat.cast_mul, ←Nat.cast_add_one, ←Nat.cast_add, Nat.cast_le]
     norm_num
     omega
-

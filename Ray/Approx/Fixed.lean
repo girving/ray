@@ -231,7 +231,7 @@ instance : Approx (Fixed s) ℝ where
 @[simp] lemma Fixed.approx_zero : approx (0 : Fixed s) = {0} := by
   simp only [approx, nan, ext_iff, zero_n, Int64.zero_def, Int64.ext_iff, Int64.n_min, Nat.cast_pow,
     Nat.cast_ofNat, val_zero, ite_eq_right_iff]
-  intro h; contrapose h; decide
+  intro h; contrapose h; clear h; decide
 
 /-- If we're not `nan`, `approx` is a singleton -/
 @[simp] lemma Fixed.approx_eq_singleton {x : Fixed s} (n : x ≠ nan) : approx x = {x.val} := by

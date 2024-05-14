@@ -448,7 +448,7 @@ lemma addc_eq (x y : UInt64) :
       add_eq_zero, tsub_zero, zero_add, addc, Nat.cast_add, Nat.cast_zero, Prod.mk.injEq,
       UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size, ite_eq_right_iff, true_and]
     -- TODO: warning that h is not used; file bug report
-    intro h; contrapose h
+    intro h; contrapose h; clear h
     rw [not_lt, UInt64.le_iff_toNat_le, UInt64.toNat_add']
     simp only [lt, ite_true, ge_iff_le, nonpos_iff_eq_zero, add_eq_zero, tsub_zero,
       le_add_iff_nonneg_right, zero_le]

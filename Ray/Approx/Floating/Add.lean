@@ -258,8 +258,8 @@ lemma add_n_norm (r : UInt128) (s : UInt64) (up : Bool) :
     bif s = .max then nan else {
       n := 2^62
       s := s + 1
-      zero_same := by intro z; contrapose z; decide
-      nan_same := by intro n; contrapose n; decide
+      zero_same := by intro z; contrapose z; clear z; decide
+      nan_same := by intro n; contrapose n; clear n; decide
       norm := by intro _ _ _; decide }
   else if n0 : n = 0 then 0
   else {

@@ -389,7 +389,7 @@ lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg
       · omega
       · omega
       · -- TODO: warning for unused h
-        contrapose h; simp only [not_le, not_lt] at h2 ⊢
+        contrapose h; clear h; simp only [not_le, not_lt] at h2 ⊢
         exact le_trans (le_trans (by norm_num) (Nat.sub_le_sub_left h2.le _)) (Nat.le_add_left _ _)
     · simp only [not_lt] at c0
       have yx' : y ≤ x := by omega
@@ -840,7 +840,7 @@ lemma Int64.coe_shiftLeft {x : Int64} {s : UInt64} (s64 : s.toNat < 64)
     simp only [Nat.mod_eq_of_lt lt, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, decide_eq_true_eq,
       Nat.cast_ite, CharP.cast_eq_zero, le, decide_False, ite_false, sub_zero, sub_eq_self,
       ite_eq_right_iff, Nat.zero_lt_succ, pow_eq_zero_iff, OfNat.ofNat_ne_zero, imp_false, not_le]
-    intro le; contrapose le; simp only [not_le]
+    intro le; contrapose le; clear le; simp only [not_le]
     refine lt_of_lt_of_le (Nat.mul_lt_mul_of_pos_right xs (pow_pos (by norm_num) _)) ?_
     simp only [← pow_add]
     exact pow_le_pow_right (by norm_num) (by omega)
@@ -926,7 +926,7 @@ lemma Int64.coe_neg_eq_neg_toNat_of_lt {n : UInt64} (h : n.toNat < 2^63) :
   · omega
   · simp only [sub_self, h0, UInt64.toNat_zero, CharP.cast_eq_zero, neg_zero]
   · omega
-  · contrapose h2
+  · contrapose h2; clear h2
     simp only [not_le, not_lt]
     exact le_trans (by norm_num) (Nat.sub_le_sub_left h.le _)
 
