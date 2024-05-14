@@ -225,7 +225,7 @@ lemma approx_float_mul_float (x : Floating) (y : Floating) :
   simp only [approx, mem_ite_univ_left, mem_singleton_iff, mem_Icc] at bm cm ⊢
   by_cases n : x = nan ∨ y = nan ∨ Floating.mul x y false = nan ∨ Floating.mul x y true = nan
   · rcases n with n | n | n | n; repeat simp [n]
-  simp only [not_or, ←Ne.def] at n
+  simp only [not_or, Ne] at n
   rcases n with ⟨n0,n1,n2,n3⟩
   intro nm
   simp only [n0, not_false_eq_true, forall_true_left, n1, lo_eq_nan] at bm cm nm
@@ -253,7 +253,7 @@ lemma approx_float_mul_float (x : Floating) (y : Floating) :
 /-- `float_mul_float nan _ _ = nan` -/
 @[simp] lemma float_mul_float_nan_left {x : Floating} :
     float_mul_float (nan : Floating) x = nan := by
-  simp only [float_mul_float._eq_1, Floating.nan_mul, mix_self, coe_nan]
+  simp only [float_mul_float, Floating.nan_mul, mix_self, coe_nan]
 
 /-- `float_mul_float` arguments are `≠ nan` if the result is -/
 lemma ne_nan_of_float_mul_float {x : Floating} {y : Floating}
@@ -273,7 +273,7 @@ lemma ne_nan_of_float_mul_float {x : Floating} {y : Floating}
     intro n0 n1
     refine le_trans (Floating.mul_le n0) (le_trans ?_ (Floating.le_mul n1))
     clear n0 n1
-    simp only [bif_eq_if, Floating.isNeg_iff, decide_eq_true_eq]
+    simp only [t, bif_eq_if, Floating.isNeg_iff, decide_eq_true_eq]
     by_cases y0 : y.val < 0
     · simp only [y0, ite_true, mul_le_mul_right_of_neg, le]
     · simp only [y0, ite_false]; exact mul_le_mul_of_nonneg_right x.le (not_lt.mp y0))
@@ -305,7 +305,7 @@ lemma approx_mul_float (x : Interval) (y : Floating) :
   all_goals intro m
   all_goals simp only [lo_eq_nan] at m
   all_goals simp only [lo_mix m, hi_mix m]
-  all_goals simp only [mix_eq_nan, not_or, ←Ne.def] at m
+  all_goals simp only [mix_eq_nan, not_or, Ne] at m
   -- Handle each case
   · have le : x.hi.val * y.val ≤ x.lo.val * y.val := by nlinarith
     simp only [image_mul_right_Icc_of_neg ys, Icc_subset_Icc_iff le]
