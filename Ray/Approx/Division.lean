@@ -119,11 +119,11 @@ def inv_guess (x : Floating) : Floating :=
     norm := by simp only [Floating.two_pow_special_ne_nan]
     le' := by
       intro _ _
-      simp only [UInt64.pow_eq_zero, zero_sub, not_lt] at ts
+      simp only [t, UInt64.pow_eq_zero, zero_sub, not_lt] at ts
       have o : (-62 - 63 - x.s).toNat ≠ 2 ^ 64 - 1 := by
-        simp only [UInt64.toNat_sub ts]
+        rw [UInt64.toNat_sub ts]
         exact ne_of_lt (lt_of_le_of_lt (Nat.sub_le _ _) (by decide))
-      simp only [UInt64.pow_eq_zero, zero_sub, Floating.val_two_pow_special]
+      simp only [t, UInt64.pow_eq_zero, zero_sub, Floating.val_two_pow_special]
       apply zpow_le_of_le (by norm_num)
       simp only [UInt64.toNat_add_one o, UInt64.toNat_sub ts]
       omega }
@@ -154,12 +154,12 @@ def inv_guess (x : Floating) : Floating :=
     constructor
     · refine le_trans ?_ (mul_le_mul_of_nonneg_right
         (inv_le_inv_of_le (by positivity) n_lt.le) two_zpow_pos.le)
-      simp only [←zpow_neg, ←zpow_coe_nat, ←zpow_add₀ t0]
+      simp only [←zpow_neg, ←zpow_natCast, ←zpow_add₀ t0]
       apply zpow_le_of_le (by norm_num)
       norm_num; linarith
     · refine le_trans (mul_le_mul_of_nonneg_right
         (inv_le_inv_of_le (by norm_num) le_n) two_zpow_pos.le) ?_
-      simp only [←zpow_neg, ←zpow_coe_nat, ←zpow_add₀ t0]
+      simp only [←zpow_neg, ←zpow_natCast, ←zpow_add₀ t0]
       apply zpow_le_of_le (by norm_num)
       norm_num; linarith
 
