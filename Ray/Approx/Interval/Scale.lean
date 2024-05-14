@@ -70,7 +70,7 @@ lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
     ite_false]
   simp only [approx, ne_eq, neg_neg, tn, not_false_eq_true, Fixed.ne_nan_of_neg, ite_false,
     mem_singleton_iff] at tm
-  rw [tm, Fixed.val, Int64.coe_zero, zpow_zero, mul_one, Real.rpow_int_cast]
+  rw [tm, Fixed.val, Int64.coe_zero, zpow_zero, mul_one, Real.rpow_intCast]
   exact mem_approx_scaleB xm
 
 /-!
@@ -81,7 +81,7 @@ lemma ne_nan_of_scaleB' {x : Interval} {t : Fixed 0} (n : x.scaleB' t ≠ nan) :
   mix (x.lo.div2) (x.hi.div2) (by
     intro n0 n1
     simp only [ne_eq, n0, not_false_eq_true, Floating.val_div2, n1]
-    exact div_le_div_of_le (by norm_num) x.le)
+    exact div_le_div_of_nonneg_right x.le (by norm_num))
 
 @[mono] lemma mem_approx_div2 {x : Interval} {x' : ℝ} (xm : x' ∈ approx x) :
     x' / 2 ∈ approx (div2 x) := by
