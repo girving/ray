@@ -18,7 +18,7 @@ lemma Rat.abs_eq_div' {𝕜 : Type} [LinearOrderedField 𝕜] {x : ℚ} :
     (|x| : 𝕜) = (x.num.natAbs : 𝕜) / x.den := by
   nth_rw 1 [←Rat.num_div_den x]
   have d0 : 0 < (x.den : 𝕜) := Nat.cast_pos.mpr x.den_pos
-  simp only [cast_div, cast_coe_int, cast_coe_nat, abs_div, abs_of_pos d0, ←Int.cast_abs,
+  simp only [cast_div, cast_intCast, cast_natCast, abs_div, abs_of_pos d0, ←Int.cast_abs,
     Int.abs_eq_natAbs, Int.cast_natCast]
 
 /-- `n` s.t. `2^n ≤ |x| < 2^(n+1)` if `n ≠ 0` -/
