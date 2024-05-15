@@ -384,12 +384,7 @@ lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg
       have d1 : 0 ≤ (x : ℤ) + (2^64 - y) := by omega
       simp only [Nat.mod_eq_of_lt c0, Int.emod_eq_of_lt d1 d0] at h ⊢
       simp only [not_le.mpr h, ite_false, sub_zero]
-      split_ifs with h0 h1 h2
-      · omega
-      · omega
-      · omega
-        contrapose h; clear h; simp only [not_le, not_lt] at h2 ⊢
-        exact le_trans (le_trans (by norm_num) (Nat.sub_le_sub_left h2.le _)) (Nat.le_add_left _ _)
+      split_ifs with h0 h1 h2 <;> omega
     · simp only [not_lt] at c0
       have yx' : y ≤ x := by omega
       have e0 : x + (2 ^ 64 - y) - 2 ^ 64 = x - y := by
