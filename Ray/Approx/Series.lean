@@ -216,8 +216,10 @@ lemma log1p_div_bound {x : ℝ} (x1 : |x| < 1) (n : ℕ) :
     have h := Real.abs_log_sub_add_sum_range_le n1 n
     have e : Real.log (1 + x) = x * log1p_div x := by
       simp only [log1p_div, x0, ite_false, mul_comm x, div_mul_cancel₀ _ x0]
-    simp only [pow_succ, neg_mul, neg_div, Finset.sum_neg_distrib, sub_neg_eq_add,
-      add_comm _ (Real.log _), ← sub_eq_add_neg, abs_neg, mul_div_assoc, ←Finset.mul_sum] at h
+    simp only [pow_succ, neg_mul, neg_div] at h
+    simp [pow_succ, neg_mul, neg_div, Finset.sum_neg_distrib, sub_neg_eq_add,
+      add_comm _ (Real.log _), ← sub_eq_add_neg, abs_neg, mul_comm, mul_div_assoc] at h
+    rw [←Finset.mul_sum] at h
     simp only [e, ←mul_sub, abs_mul, mul_le_mul_iff_of_pos_left (abs_pos.mpr x0), neg_pow x] at h
     simpa only [mul_comm_div, ←mul_div_assoc]
 
