@@ -47,6 +47,11 @@ lemma approx_taylor_sum' (c : Array (Interval)) (c' : ℕ → ℝ) (x p t : Inte
   · rw [taylor_sum']
     simp only [Finset.sum_range_succ', pow_zero, mul_one, add_zero, add_comm (Finset.sum _ _),
       ←add_assoc, pow_succ, ←mul_assoc _ x', mul_assoc _ _ x', add_right_comm _ _ (1:ℕ)]
+    conv =>
+      left; right; right; ext
+      conv => right; rw [mul_comm]
+      conv => rw [mul_assoc]; right; rw [←mul_assoc]
+      rw [←mul_assoc]
     apply h
     · exact mem_approx_mul pp xx
     · exact mem_approx_add tt (mem_approx_mul (ac ⟨_, by omega⟩) pp)
@@ -103,7 +108,7 @@ lemma Series.approx_of_taylor (p : Series s) (f : ℝ → ℝ) (a : ℕ → ℝ)
     · simp only [yn, Interval.hi_nan, beq_self_eq_true, Floating.n_nan, Bool.true_or, cond_true,
         Interval.approx_nan, mem_univ]
     · simp only [ry, decide_True, Bool.or_true, cond_true, Interval.approx_nan, mem_univ]
-  simp only [not_or, not_lt, ←Ne.def, Floating.val_le_val] at n
+  simp only [not_or, not_lt, Ne, Floating.val_le_val] at n
   rcases n with ⟨yn, ry⟩
   have yn' : y ≠ nan := by simpa only [ne_eq, Interval.abs_eq_nan] using yn
   have rn : p.radius ≠ nan := Floating.ne_nan_of_le (y.abs.hi_ne_nan yn) ry
@@ -143,7 +148,7 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
       rw [exp_series]
       simp only [beq_self_eq_true, pow_zero, CharP.cast_eq_zero, zero_add, Nat.factorial_zero,
         Nat.cast_one, mul_zero, div_zero, cond_true]
-    simp only [n0, Series.eval._eq_1, bif_eq_if, Floating.val_lt_val, Bool.or_eq_true, beq_iff_eq,
+    simp only [n0, Series.eval, bif_eq_if, Floating.val_lt_val, Bool.or_eq_true, beq_iff_eq,
       Interval.hi_eq_nan, Interval.abs_eq_nan, decide_eq_true_eq, e, Interval.grow_nan, ite_self,
       Interval.approx_nan, mem_univ]
   · apply (exp_series s n).approx_of_taylor
@@ -158,7 +163,7 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
         (by positivity))
     · intro k
       have e : (Nat.factorial k : ℝ)⁻¹ = (Nat.factorial k : ℚ)⁻¹ := by
-        simp only [Rat.cast_inv, Rat.cast_coe_nat]
+        simp only [Rat.cast_inv, Rat.cast_natCast]
       simp only [exp_series, getElem_fin, Array.getElem_map, Array.range_getElem,
         ←Rat.cast_inv, e]
       apply Interval.approx_ofRat
@@ -169,7 +174,7 @@ lemma approx_exp_series (n : ℕ) : Real.exp ∈ approx (exp_series s n) := by
         true_or, if_false] at en ⊢
       refine le_trans (le_of_eq ?_) (Floating.le_ofRat en)
       simp only [div_eq_inv_mul, mul_inv, mul_comm _ ((n:ℚ)⁻¹), Rat.cast_mul, Rat.cast_pow,
-        Rat.cast_inv, Rat.cast_coe_nat, Rat.cast_add, Rat.cast_one]
+        Rat.cast_inv, Rat.cast_natCast, Rat.cast_add, Rat.cast_one]
 
 /-- `mono` friendly version of `approx_exp_series` -/
 @[mono] lemma mem_approx_exp_series {a : ℝ} {x : Interval} (ax : a ∈ approx x) {n : ℕ} :
@@ -190,7 +195,7 @@ noncomputable def log1p_div (x : ℝ) : ℝ := if x = 0 then 1 else Real.log (1 
   simp only [log1p_div]
   by_cases x0 : x = 0
   · simp only [x0, add_zero, Real.log_one, div_zero, ite_true, mul_one]
-  · simp only [x0, ite_false, mul_div_cancel' _ x0]
+  · simp only [x0, ite_false, mul_div_cancel₀ _ x0]
 
 /-- Exact precision series for `log1p_div` -/
 lemma log1p_div_bound {x : ℝ} (x1 : |x| < 1) (n : ℕ) :
@@ -208,9 +213,11 @@ lemma log1p_div_bound {x : ℝ} (x1 : |x| < 1) (n : ℕ) :
   · have n1 : |-x| < 1 := by simpa only [abs_neg] using x1
     have h := Real.abs_log_sub_add_sum_range_le n1 n
     have e : Real.log (1 + x) = x * log1p_div x := by
-      simp only [log1p_div, x0, ite_false, mul_comm x, div_mul_cancel _ x0]
-    simp only [pow_succ, neg_mul, neg_div, Finset.sum_neg_distrib, sub_neg_eq_add,
-      add_comm _ (Real.log _), ← sub_eq_add_neg, abs_neg, mul_div_assoc, ←Finset.mul_sum] at h
+      simp only [log1p_div, x0, ite_false, mul_comm x, div_mul_cancel₀ _ x0]
+    simp only [pow_succ, neg_mul, neg_div] at h
+    simp only [mul_comm, neg_mul, neg_div, mul_div_assoc, Finset.sum_neg_distrib, sub_neg_eq_add,
+      add_comm _ (Real.log _), ←sub_eq_add_neg, abs_neg] at h
+    rw [←Finset.mul_sum] at h
     simp only [e, ←mul_sub, abs_mul, mul_le_mul_iff_of_pos_left (abs_pos.mpr x0), neg_pow x] at h
     simpa only [mul_comm_div, ←mul_div_assoc]
 
@@ -239,7 +246,7 @@ lemma approx_log1p_div_series (n : ℕ) : log1p_div ∈ approx (log1p_div_series
   · intro ⟨k,kn⟩
     have e : (-1 : ℝ) ^ k / (k + 1) = ↑((-1) ^ k / (↑k + 1) : ℚ) := by
       simp only [Rat.cast_div, Rat.cast_pow, Rat.cast_neg, Rat.cast_one, Rat.cast_add,
-        Rat.cast_coe_nat]
+        Rat.cast_natCast]
     simp only [log1p_div_series, getElem_fin, Array.getElem_map, Array.range_getElem, e]
     apply Interval.approx_ofRat
   · intro en
@@ -323,7 +330,7 @@ via Taylor series, and form `exp x = exp (y + n log 2) = exp y * 2^n` via shifti
   simp only [ne_eq, neg_neg, xn, not_false_eq_true, ite_false]
   have e : Real.exp x' = Real.exp (x' - Real.log 2 * n.val) * 2 ^ n.val := by
     rw [Real.exp_sub, Real.exp_mul, Real.exp_log (by norm_num),
-      div_mul_cancel _ (Real.rpow_pos_of_pos (by norm_num) _).ne']
+      div_mul_cancel₀ _ (Real.rpow_pos_of_pos (by norm_num) _).ne']
   rw [e, exp_series_16]
   mono
 
@@ -399,7 +406,7 @@ set the final precision.
   generalize hy : (x : Interval).scaleB' (-n) - 1 = y
   generalize hy' : x.val * 2^(-n.val) - 1 = y'
   have e : Real.log x.val = y' * log1p_div y' +  Real.log 2 * n.val := by
-    simp only [← hy', mul_log1p_div, add_sub_cancel'_right]
+    simp only [← hy', mul_log1p_div, add_sub_cancel]
     rw [Real.log_mul x0.ne' (Real.rpow_pos_of_pos (by norm_num) _).ne', Real.log_rpow (by norm_num)]
     ring
   have ym : y' ∈ approx y := by
@@ -423,7 +430,7 @@ set the final precision.
   rw [Interval.log]
   by_cases n : x.lo = nan ∨ x.hi = nan ∨ x.lo.val ≤ 0
   · rcases n with n | n | n; repeat simp [n]
-  simp only [not_or, not_le, ←Ne.def] at n
+  simp only [not_or, not_le, Ne] at n
   rcases n with ⟨ln,hn,l0⟩
   have e : approx x = Icc x.lo.val x.hi.val := by simp only [approx, ln, hn, false_or, if_false]
   have le : Real.log '' Icc x.lo.val x.hi.val ⊆ Icc (Real.log x.lo.val) (Real.log x.hi.val) := by

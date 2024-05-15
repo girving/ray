@@ -14,12 +14,12 @@ variable {α : Type}
     · simp only [Nat.fold, size_toArray, List.length_nil, Nat.zero_eq]
     · simp only [Nat.fold, size_push, h]
   induction' n with n h
-  · simp only [range, Nat.fold, size_toArray, List.length_nil, not_lt_zero'] at kn
+  · simp only [range, Nat.fold, size_toArray, List.length_nil, not_lt_zero', mkEmpty, size] at kn
   · simp only [Nat.fold, flip, Array.get_push, range] at kn h ⊢
-    by_cases lt : k < size (Nat.fold (fun b a ↦ push a b) n #[])
-    · simp only [lt, h lt, dite_eq_ite, ite_true]
-    · simp only [nn] at lt
-      simp only [size_push, lt, dite_false, nn] at kn ⊢
+    by_cases lt : k < size (Nat.fold (fun b a => a.push b) n #[])
+    · simp only [Function.flip_def, mkEmpty_eq, if_true, lt, forall_true_left] at *; assumption
+    · simp only [Function.flip_def, mkEmpty_eq, if_false, lt, size_push, ↓reduceDite] at kn ⊢
+      simp only [nn] at kn lt
       linarith
 
 /-!
@@ -58,9 +58,9 @@ lemma ByteArray.get!_push (d : ByteArray) (c : UInt8) (i : ℕ) :
   · simp only [not_lt] at lt
     simp only [ByteArray.get!, Array.get!, ByteArray.push_data, Array.getD_eq_get?, Array.get?,
       Array.size_push]
-    split_ifs with b
-    · omega
-    · simp only [Option.getD_none]
+    rw [Array.getElem?_ge]
+    . rfl
+    . simp only [Array.size_push, ByteArray.size] at *; omega
 
 lemma ByteArray.get!_eq_default (d : ByteArray) (i : ℕ) (le : d.size ≤ i) : d.get! i = default := by
   simp only [get!, Array.get!_eq_get?, Array.get?_eq_getElem?, Array.getElem?_eq_data_get?,

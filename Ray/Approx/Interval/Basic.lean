@@ -213,7 +213,7 @@ lemma approx_eq_Icc {x : Interval} (n : x ≠ nan) : approx x = Icc x.lo.val x.h
   by_cases n : lo = nan ∨ hi = nan
   · simp only [n, iff_true]
     rcases n with n | n
-    · simp only [n, not_true_eq_false, true_and, not_imp_self, IsEmpty.forall_iff]
+    · simp only [n, not_true_eq_false, true_and, Decidable.not_imp_self, IsEmpty.forall_iff]
     · simp only [n, not_true_eq_false, and_true, IsEmpty.forall_iff, implies_true]
   · simp only [not_or] at n
     simp only [n, not_false_eq_true, and_self, forall_true_left, or_self]
@@ -516,7 +516,7 @@ instance : Coe Floating Interval where
     simp only [Floating.val_max n1.1 n1.2, le_max_iff]
     split_ifs with h
     · simp only [min_le_iff, le_refl, true_or, or_true, or_self]
-    · simp only [Floating.abs_eq_nan] at n1
+    · simp only [a, b, Floating.abs_eq_nan] at n1
       simp only [Floating.val_abs n1.1, abs_nonneg, Floating.val_abs n1.2, or_self])
 
 /-- `x.abs` conserves `nan` -/

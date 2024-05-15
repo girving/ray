@@ -40,7 +40,7 @@ lemma nonpos_or_nonneg (x : 𝕜) : x ≤ 0 ∨ 0 ≤ x := by
 @[simp] lemma range_mul_right_eq_univ {a : 𝕜} (a0 : a ≠ 0) : range (fun x ↦ x * a) = univ := by
   simp only [eq_univ_iff_forall, mem_range]
   intro x; use x / a
-  simp only [div_mul_cancel _ a0]
+  simp only [div_mul_cancel₀ _ a0]
 
 /-- Multiplying by a nonzero preserves `univ` -/
 @[simp] lemma Set.univ_mul_singleton {a : 𝕜} (a0 : a ≠ 0) : univ * ({a} : Set 𝕜) = univ := by
@@ -54,7 +54,7 @@ lemma nonpos_or_nonneg (x : 𝕜) : x ≤ 0 ∨ 0 ≤ x := by
   constructor
   · intro ⟨z, ⟨hz1, hz2⟩, hz3⟩; exact ⟨by nlinarith, by nlinarith⟩
   · intro ⟨h0,h1⟩; use y / x
-    simp only [le_div_iff x0, h0, div_le_iff x0, h1, and_self, div_mul_cancel _ x0.ne']
+    simp only [le_div_iff x0, h0, div_le_iff x0, h1, and_self, div_mul_cancel₀ _ x0.ne']
 
 /-- Negative `c` version of `image_mul_right_Icc` -/
 theorem image_mul_right_Icc_of_neg {a b c : 𝕜} (c0 : c < 0) :
@@ -68,7 +68,7 @@ theorem image_mul_right_Icc_of_neg {a b c : 𝕜} (c0 : c < 0) :
   · intro ⟨bc,ac⟩; use x/c; refine ⟨⟨?_,?_⟩,?_⟩
     · simpa only [le_div_iff_of_neg c0]
     · simpa only [div_le_iff_of_neg c0]
-    · simp only [div_mul_cancel _ c0.ne]
+    · simp only [div_mul_cancel₀ _ c0.ne]
 
 /-- A simple lemma that we use a lot -/
 @[simp] lemma two_pow_pos {R : Type} [StrictOrderedSemiring R] {n : ℕ} : 0 < (2:R) ^ n :=
@@ -111,15 +111,15 @@ lemma Set.inv_Icc {a b : 𝕜} (a0 : 0 < a) (b0 : 0 < b) : (Icc a b)⁻¹ = Icc 
 
 /-- `pow` and `zpow` multiply via addition -/
 lemma pow_mul_zpow {a : 𝕜} (a0 : a ≠ 0) (b : ℕ) (c : ℤ) : a^b * a^c = a^(b + c) := by
-  simp only [zpow_add₀ a0, zpow_coe_nat]
+  simp only [zpow_add₀ a0, zpow_natCast]
 
 /-- `zpow` and `pow` divide via subtraction -/
 lemma zpow_mul_pow {a : 𝕜} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b * a^c = a^(b + c) := by
-  simp only [zpow_add₀ a0, zpow_coe_nat]
+  simp only [zpow_add₀ a0, zpow_natCast]
 
 /-- `pow` and `zpow` multiply via addition -/
 lemma zpow_div_pow {a : 𝕜} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b / a^c = a^(b - c) := by
-  simp only [zpow_sub₀ a0, zpow_coe_nat]
+  simp only [zpow_sub₀ a0, zpow_natCast]
 
 /-- `-` and `⁻¹` commute on `Set ℝ` -/
 @[simp] lemma Set.inv_neg {s : Set 𝕜} : (-s)⁻¹ = -s⁻¹ := by
@@ -127,7 +127,7 @@ lemma zpow_div_pow {a : 𝕜} (a0 : a ≠ 0) (b : ℤ) (c : ℕ) : a^b / a^c = a
 
 /-- Make `x ^ (7 : ℝ)` simplify to `x ^ (7 : ℕ)` (when literals are involved) -/
 @[simp] lemma Real.rpow_ofNat {x : ℝ} {n : ℕ} [Nat.AtLeastTwo n] :
-    x ^ (no_index (OfNat.ofNat n) : ℝ) = x ^ (OfNat.ofNat n) := Real.rpow_nat_cast _ _
+    x ^ (no_index (OfNat.ofNat n) : ℝ) = x ^ (OfNat.ofNat n) := Real.rpow_natCast _ _
 
 /-- `x - y ≤ x + z ↔ -y ≤ z` -/
 @[simp] lemma sub_le_add_iff_left (x y z : 𝕜) : x - y ≤ x + z ↔ -y ≤ z := by

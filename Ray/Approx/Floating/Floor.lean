@@ -30,9 +30,9 @@ namespace Floating
   have eq : ((x.n : ℤ) : ℝ) * 2^(x.s.toInt - 2 ^ 63) =
       ((x.n : ℤ) / (2^(2^63 - x.s.toNat) : ℕ) : ℚ) := by
     simp only [UInt64.le_iff_toNat_le, UInt64.toNat_2_pow_63] at s63
-    simp only [UInt64.toInt, Nat.cast_pow, Nat.cast_ofNat, Rat.cast_div, Rat.cast_coe_int,
+    simp only [UInt64.toInt, Nat.cast_pow, Nat.cast_ofNat, Rat.cast_div, Rat.cast_intCast,
       Rat.cast_pow, Rat.cast_ofNat, ←neg_sub (2^63 : ℤ), zpow_neg, ←div_eq_mul_inv,
-      ←zpow_coe_nat, Nat.cast_sub s63, Rat.cast_zpow, Rat.cast_ofNat]
+      ←zpow_natCast, Nat.cast_sub s63, Rat.cast_zpow, Rat.cast_ofNat]
   simp only [mul_neg_iff, Int.cast_pos, Int64.coe_pos_iff, two_zpow_not_neg, and_false,
     Int.cast_lt_zero, two_zpow_pos, and_true, false_or, Int64.coe_shiftRightRound,
     UInt64.toNat_sub s63, UInt64.toNat_2_pow_63, Int64.coe_zero, zpow_zero, mul_one,

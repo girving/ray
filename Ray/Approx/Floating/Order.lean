@@ -85,7 +85,7 @@ lemma le_def {x y : Floating} : x ≤ y ↔ ¬(y < x) := by
     · simp only [Int64.isNeg_neg (y.n_ne_zero y0) (y.n_ne_min ym), Bool.beq_not_iff_ne, ne_eq]
       by_cases yn : y.n.isNeg
       · simp only [yn, not_false_eq_true, true_and, ite_true, false_and, or_false, iff_true,
-          UInt64.pos_iff_ne_zero, ←Int64.ne_zero_iff_n_ne_zero, Ne.def, neg_eq_zero, y.n_ne_zero y0,
+          UInt64.pos_iff_ne_zero, ←Int64.ne_zero_iff_n_ne_zero, Ne, neg_eq_zero, y.n_ne_zero y0,
           and_true, eq_comm (a := (0 : UInt64)), ne_or_eq]
       · simp only [yn, not_true_eq_false, false_and, ite_false, true_and, false_or, false_iff,
           not_or, not_lt, UInt64.nonneg, not_and, implies_true, and_self]
@@ -98,7 +98,7 @@ lemma le_def {x y : Floating} : x ≤ y ↔ ¬(y < x) := by
           implies_true, and_self]
       · simp only [Int64.isNeg_neg (x.n_ne_zero x0) (x.n_ne_min xm), xn, Bool.not_false, ite_true,
           false_and, or_false, true_and, true_iff, UInt64.pos_iff_ne_zero,
-          ←Int64.ne_zero_iff_n_ne_zero, Ne.def, x.n_ne_zero x0, not_false_eq_true, and_true,
+          ←Int64.ne_zero_iff_n_ne_zero, Ne, x.n_ne_zero x0, not_false_eq_true, and_true,
           eq_comm (a := (0 : UInt64)), ne_or_eq]
     · simp only [Int64.isNeg_neg (y.n_ne_zero y0) (y.n_ne_min ym), Bool.not_eq_false',
       Int64.isNeg_neg (x.n_ne_zero x0) (x.n_ne_min xm), Bool.not_eq_true', Bool.beq_not_iff_ne,
@@ -197,14 +197,14 @@ lemma isNeg_iff' {x : Floating} : x.n.isNeg = decide (x < 0) := by
 @[simp] lemma neg_coe_coe_n_lt {x : Floating} (n : x ≠ nan) : -((x.n : ℤ) : ℝ) < 2^63 := by
   rw [neg_lt]
   have me : (-2 ^ 63 : ℝ) = (Int64.min : ℤ) := by
-    simp only [Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat]
+    simp only [Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.cast_ofNat]
   rw [me, Int.cast_lt, Int64.coe_lt_coe]
   exact Ne.lt_of_le (x.n_ne_min n).symm x.n.min_le
 
 /-- Upper bound for `-↑↑x.n` -/
 @[simp] lemma neg_coe_coe_n_le (x : Floating) : -((x.n : ℤ) : ℝ) ≤ 2^63 := by
   by_cases n : x = nan
-  · simp only [n, n_nan, Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat, neg_neg,
+  · simp only [n, n_nan, Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.cast_ofNat, neg_neg,
       le_refl]
   · exact (neg_coe_coe_n_lt n).le
 
@@ -241,7 +241,7 @@ lemma isNeg_iff' {x : Floating} : x.n.isNeg = decide (x < 0) := by
 /-- `nan` is the unique minimum, `val` version -/
 @[simp] lemma val_nan_lt {x : Floating} (n : x ≠ nan) : (nan : Floating).val < x.val := by
   rw [val, val]
-  simp only [n_nan, Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.int_cast_ofNat, s_nan, neg_mul,
+  simp only [n_nan, Int64.coe_min', Int.cast_neg, Int.cast_pow, Int.cast_ofNat, s_nan, neg_mul,
     UInt64.toInt, UInt64.toNat_max]
   rw [neg_lt, ←neg_mul]
   refine lt_of_lt_of_le (b := 2^63 * 2 ^ ((x.s.toNat : ℤ) - 2 ^ 63)) ?_ ?_

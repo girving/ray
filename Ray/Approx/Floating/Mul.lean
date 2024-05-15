@@ -132,7 +132,7 @@ lemma mul_norm_correct (n : UInt128) (up : Bool) (n0 : n ≠ 0) (lo : n.toNat �
         simp only [ne_eq, not_not] at r_eq
         simp only [r_eq, pow_zero, mul_one, tsub_eq_zero_iff_le, ←UInt128.eq_iff_toNat_eq] at hz
         simp only [UInt64.lt_iff_toNat_lt, ←hz, ←hr, UInt64.toNat_2_pow_63]
-        simp only [UInt128.toNat_def, mul_n_max._eq_1] at lo
+        simp only [UInt128.toNat_def, mul_n_max] at lo
         refine lt_of_le_of_lt (Nat.add_le_add_left b1 _) ?_
         norm_num only at lo ⊢
         omega
@@ -141,29 +141,29 @@ lemma mul_norm_correct (n : UInt128) (up : Bool) (n0 : n ≠ 0) (lo : n.toNat �
         pow_mul_zpow t0, Nat.cast_ofNat, ge_iff_le]
       simp only [← hs, Nat.cast_sub t_le, Nat.cast_ofNat, Nat.cast_one]
       ring_nf
-      rw [add_comm, ←Nat.cast_add_one, zpow_coe_nat, ←Nat.cast_two, ←Nat.cast_pow, Nat.cast_le, ←ht]
+      rw [add_comm, ←Nat.cast_add_one, zpow_natCast, ←Nat.cast_two, ←Nat.cast_pow, Nat.cast_le, ←ht]
       exact Nat.lt_log2_self.le
   · simp only [r_eq, cond_false] at hp
     simp only [beq_iff_eq, UInt64.eq_iff_toNat_eq, up63] at r_eq
     simp only [← hp, le_r, r_le.lt_of_ne r_eq, and_self, true_and]
     have hz' : (n.toNat : ℝ) = z.toNat / 2 ^ s.toNat := by
       simp only [← hz, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, ne_eq, pow_eq_zero_iff',
-        OfNat.ofNat_ne_zero, false_and, not_false_eq_true, mul_div_cancel]
+        OfNat.ofNat_ne_zero, false_and, not_false_eq_true, mul_div_cancel_right₀]
     have ep : (2:ℝ) ^ (64:ℤ) = 2^64 := zpow_ofNat _ _
     induction up
     · simp only [Bool.and_false, cond_false, UInt64.toNat_zero] at hb
-      simp only [←hr, ←hb, add_zero, zpow_sub₀ t0, ep, zpow_coe_nat, ←mul_div_assoc, hz', ite_true]
+      simp only [←hr, ←hb, add_zero, zpow_sub₀ t0, ep, zpow_natCast, ←mul_div_assoc, hz', ite_true]
       simp only [UInt128.toNat_def, Nat.cast_add, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat,
         add_div, le_add_iff_nonneg_right, ge_iff_le]
       positivity
     · by_cases l0 : z.lo = 0
       · simp only [l0, bne_self_eq_false, Bool.and_true, cond_false, UInt64.toNat_zero] at hb
-        simp only [← hr, ← hb, add_zero, zpow_sub₀ t0, ep, zpow_coe_nat, hz', z.toNat_def, l0,
+        simp only [← hr, ← hb, add_zero, zpow_sub₀ t0, ep, zpow_natCast, hz', z.toNat_def, l0,
           UInt64.toNat_zero, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat, mul_div_assoc, le_refl,
           ite_self]
       · simp only [Bool.and_true, bif_eq_if, bne_iff_ne, ne_eq, l0, not_false_eq_true, ite_true,
           UInt64.toNat_one] at hb
-        simp only [← hr, ← hb, Nat.cast_add, Nat.cast_one, zpow_sub₀ t0, ep, zpow_coe_nat, ←
+        simp only [← hr, ← hb, Nat.cast_add, Nat.cast_one, zpow_sub₀ t0, ep, zpow_natCast, ←
           mul_div_assoc, add_one_mul, hz', z.toNat_def, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat,
           div_le_div_right two_pow_pos, add_le_add_iff_left, ite_false, ge_iff_le]
         exact le_trans (Nat.cast_le.mpr z.lo.toNat_lt.le) (by norm_num)
@@ -234,7 +234,7 @@ lemma mul_finish_correct (n : UInt64) (s : Int128) (up : Bool)
       mem_ite_univ_left, mem_rounds_singleton, Bool.not_eq_true']
     intro _
     rw [val]
-    simp only [UInt64.toInt, Int64.coe_of_nonneg nn, Int.cast_Nat_cast, Int128.coe_of_hi_eq_zero h0,
+    simp only [UInt64.toInt, Int64.coe_of_nonneg nn, Int.cast_natCast, Int128.coe_of_hi_eq_zero h0,
       le_refl, ite_self]
   · simp only [h0, ite_false]
     by_cases sn : s.isNeg
@@ -250,6 +250,7 @@ lemma mul_finish_correct (n : UInt64) (s : Int128) (up : Bool)
           pow_mul_zpow]
         apply zpow_le_of_le (by norm_num)
         simp only [Int128.isNeg_iff, decide_eq_true_eq] at sn
+        norm_num
         omega
     · simp only [sn, ite_false, approx_nan, rounds_univ, mem_univ]
 

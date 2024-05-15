@@ -97,7 +97,7 @@ lemma coe_ofInt (x : ℤ) : (Int128.ofInt x : ℤ) = (x + 2^127) % 2^128 - 2^127
 /-- `ofInt_coe` if we start with `UInt64` -/
 @[simp] lemma ofInt_ofUInt64 (x : UInt64) : Int128.ofInt (x.toNat : ℤ) = x := by
   rw [Int128.ext_iff, ofInt, of_lo, UInt128.ofInt]
-  simp only [Int.cast_ofNat, UInt64.cast_toNat, UInt128.mk.injEq, true_and]
+  simp only [Int.cast_ofNat, UInt64.cast_toNat, UInt128.mk.injEq, true_and, Int.cast_natCast]
   rw [Int.ediv_eq_zero_of_lt]
   · rfl
   · apply Nat.cast_nonneg
@@ -136,6 +136,8 @@ instance : AddCommGroup Int128 where
   add_zero x := by simp only [Int128.ext_iff, n_add, add_zero, n_zero]
   add_left_neg x := by simp only [Int128.ext_iff, n_add, n_neg, add_left_neg, n_zero]
   add_comm x y := by simp only [Int128.ext_iff, n_add, add_comm]
+  zsmul := zsmulRec
+  nsmul := nsmulRec
 
 /-!
 ### `ℤ → Int128` is injective for small integers
