@@ -388,7 +388,6 @@ lemma Int64.coe_sub_of_le_of_pos {x y : Int64} (yx : y ≤ x) (h : (x - y).isNeg
       · omega
       · omega
       · omega
-      · -- TODO: warning for unused h
         contrapose h; clear h; simp only [not_le, not_lt] at h2 ⊢
         exact le_trans (le_trans (by norm_num) (Nat.sub_le_sub_left h2.le _)) (Nat.le_add_left _ _)
     · simp only [not_lt] at c0
@@ -448,9 +447,7 @@ lemma Int64.toInt_ofInt {n : ℤ} (h : |n| < 2^63) : ((n : Int64) : ℤ) = n := 
     · have e : (2 ^ 63 : ℤ) = (2 ^ 63 : ℕ) := by rfl
       rw [e, Nat.cast_lt] at h
       have cm : (min : ℤ) = -(2:ℤ)^63 := by rfl
-      rw [Ne]
-      rw [←Int64.coe_eq_coe]
-      rw [Int64.toInt_ofNat h, cm]
+      rw [Ne, ←Int64.coe_eq_coe, Int64.toInt_ofNat h, cm]
       omega
 
 /-- Conversion to `ℤ` is the same as the underlying `toNat` if `isNeg = false` -/

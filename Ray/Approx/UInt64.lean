@@ -337,8 +337,7 @@ lemma UInt64.toNat_lor_shifts {x y s : UInt64} (s0 : s ≠ 0) (s64 : s < 64) :
   have p0 : 0 < 2^64 := by norm_num
   induction' n using Int.induction_overlap with n n
   · simp only [Int.cast_natCast, toNat_cast, Int.ofNat_emod, Nat.cast_ofNat, Int.reducePow]
-  · -- simp? [-Int.reducePow, -Nat.reducePow, size_eq_pow]
-    simp only [Int.cast_neg, Int.cast_natCast, toNat_neg, eq_iff_toNat_eq,
+  · simp only [Int.cast_neg, Int.cast_natCast, toNat_neg, eq_iff_toNat_eq,
       toNat_cast, size_eq_pow, toNat_zero, Nat.cast_ite, CharP.cast_eq_zero,
       Nat.cast_sub (Nat.mod_lt _ p0).le, Nat.cast_pow, Nat.cast_ofNat,
       Int.ofNat_emod]
@@ -447,7 +446,6 @@ lemma addc_eq (x y : UInt64) :
   · simp only [lt, ite_true, zero_mul, UInt64.toNat_add', ge_iff_le, nonpos_iff_eq_zero,
       add_eq_zero, tsub_zero, zero_add, addc, Nat.cast_add, Nat.cast_zero, Prod.mk.injEq,
       UInt64.eq_iff_toNat_eq, UInt64.toNat_cast, UInt64.toNat_mod_size, ite_eq_right_iff, true_and]
-    -- TODO: warning that h is not used; file bug report
     intro h; contrapose h; clear h
     rw [not_lt, UInt64.le_iff_toNat_le, UInt64.toNat_add']
     simp only [lt, ite_true, ge_iff_le, nonpos_iff_eq_zero, add_eq_zero, tsub_zero,

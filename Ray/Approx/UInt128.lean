@@ -840,7 +840,7 @@ lemma UInt128.toNat_shiftLeftSaturate {x : UInt128} {s : UInt64}
         · simp only [← pow_add, Nat.sub_add_cancel t128.le, le_refl]
       simp only [UInt64.toNat_cast]
       rw [Nat.mod_eq_of_lt t64, Nat.mod_eq_of_lt c, min_eq_left (by omega)]
-    assumption
+    . assumption
   · simp only [not_lt] at t128
     have t128' : 128 ≤ (t : UInt64) := by
       simpa only [UInt64.le_iff_toNat_le, p128, UInt64.toNat_cast, Nat.mod_eq_of_lt t64]
