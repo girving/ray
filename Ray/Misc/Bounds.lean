@@ -144,7 +144,7 @@ theorem sub_near (a z : ℂ) : |abs (a - z) - abs a| ≤ abs z := by
       _ = abs a := by simp only [sub_add_cancel]
   · calc
       abs (a - z) - abs a ≤ abs a + abs z - abs a := by bound
-      _ = abs z := by simp only [add_sub_cancel']
+      _ = abs z := by simp only [add_sub_cancel_left]
 
 theorem add_near (a z : ℂ) : |abs (a + z) - abs a| ≤ abs z := by
   have h := sub_near a (-z)
@@ -186,19 +186,19 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
     linarith [a0, a0']
   · simp only [not_le] at rp
     have L : ‖log (1 + z) - log 1‖ ≤ 1/(1 - r) * ‖1 + z - 1‖ := by
-      set s := Metric.ball (1:ℂ) r
-      have o : IsOpen s := Metric.isOpen_ball
-      have s1z : 1 + z ∈ s := by simp; assumption
-      have s1 : (1:ℂ) ∈ s := by simp; assumption
+      generalize hs : Metric.ball (1:ℂ) r = s
+      have o : IsOpen s := by rw [← hs]; exact Metric.isOpen_ball
+      have s1z : 1 + z ∈ s := by simp [← hs]; assumption
+      have s1 : (1:ℂ) ∈ s := by simp [← hs]; assumption
       have sp : ∀ w : ℂ, w ∈ s → w.re > 0 ∨ w.im ≠ 0 := by
         intro w ws
         apply mem_slitPlane_of_near_one
-        simp only [Metric.mem_ball, Complex.dist_eq] at ws
+        simp only [Metric.mem_ball, Complex.dist_eq, ← hs] at ws
         calc abs (w - 1) < r := by assumption
           _ < 1 := r1
       have sa : ∀ w : ℂ, w ∈ s → abs w ≥ 1 - r := by
         intro w ws
-        simp only [Metric.mem_ball, Complex.dist_eq] at ws
+        simp only [Metric.mem_ball, Complex.dist_eq, ← hs] at ws
         calc abs w = abs (1 + (w - 1)) := by ring_nf
           _ ≥ abs (1 : ℂ) - abs (w - 1) := by bound
           _ ≥ abs (1 : ℂ) - r := by bound
@@ -213,8 +213,8 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
         have aw := sa w ws; linarith; norm_num; assumption
         exact differentiableWithinAt_id
         exact sp w ws
-      · exact convex_ball _ _
-    simp only [Complex.log_one, sub_zero, Complex.norm_eq_abs, one_div, add_sub_cancel'] at L
+      · rw [← hs]; exact convex_ball _ _
+    simp only [Complex.log_one, sub_zero, Complex.norm_eq_abs, one_div, add_sub_cancel_left] at L
     simpa only [one_div, ge_iff_le]
 
 theorem le_of_forall_small_le_add {a b t : ℝ} (tp : 0 < t) (h : ∀ e, 0 < e → e < t → a ≤ b + e) :
@@ -265,11 +265,11 @@ theorem slightly_smaller {z : ℂ} (nz : z ≠ 0) {r : ℝ} (rp : 0 < r) :
   generalize hw : ↑a * z = w
   use w; constructor
   · rw [←hw,←ha]
-    simp only [Complex.ofReal_sub, Complex.ofReal_one, Complex.ofReal_div, Complex.ofReal_bit0]
+    simp only [Complex.ofReal_sub, Complex.ofReal_one, Complex.ofReal_div]
     rw [mul_sub_right_distrib]
     simp only [one_mul, sub_sub_cancel_left, AbsoluteValue.map_neg, AbsoluteValue.map_mul, map_div₀,
       Complex.abs_ofReal, Complex.abs_two, Complex.abs_abs, abs_of_pos rp, div_mul (r/2),
-      div_mul_cancel _ azp.ne', div_one, abs_two]
+      div_mul_cancel₀ _ azp.ne', div_one, abs_two, div_self azp.ne']
     bound
   · simp only [←hw, AbsoluteValue.map_mul, Complex.abs_ofReal, abs_of_nonneg a0]
     calc a * abs z < 1 * abs z := mul_lt_mul_of_pos_right a1 azp
@@ -306,7 +306,7 @@ theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : abs z ≤ r) :
   have fc : ContinuousAt (fun z ↦ log (1 + z)) z := by
     apply ContinuousAt.clog; apply ContinuousAt.add; exact continuousAt_const; exact continuousAt_id
     refine mem_slitPlane_of_near_one ?_
-    simp only [add_sub_cancel', lt_of_le_of_lt zr r1]
+    simp only [add_sub_cancel_left, lt_of_le_of_lt zr r1]
   apply weak_to_strong_small r0 (by bound) zr fc
   intro w wr
   exact @weak_log1p_small w r (by bound) wr
@@ -390,7 +390,7 @@ theorem Real.exp_one_lt_3 : Real.exp 1 < 3 :=
 theorem log_add (a b : ℝ) (a0 : 0 < a) (ab0 : 0 < a + b) :
     Real.log (a + b) = Real.log a + Real.log (1 + b/a) := by
   have d0 : 0 < 1 + b/a := by field_simp [a0.ne']; bound
-  rw [←Real.log_mul a0.ne' d0.ne', left_distrib, mul_one, mul_div_cancel' _ a0.ne']
+  rw [←Real.log_mul a0.ne' d0.ne', left_distrib, mul_one, mul_div_cancel₀ _ a0.ne']
 
 /-- `log (abs (a + b)) = log (abs a) + log (abs (1 + b/a))` -/
 theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
@@ -398,7 +398,7 @@ theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
   have d0 : 1 + b/a ≠ 0 := by field_simp [a0, ab0]
   have a0' : abs a ≠ 0 := Complex.abs.ne_zero a0
   have d0' : abs (1 + b / a) ≠ 0 := Complex.abs.ne_zero d0
-  rw [←Real.log_mul a0' d0', ←Complex.abs.map_mul, left_distrib, mul_one, mul_div_cancel' _ a0]
+  rw [←Real.log_mul a0' d0', ←Complex.abs.map_mul, left_distrib, mul_one, mul_div_cancel₀ _ a0]
 
 /-- `e^(1/4) ≤ 4/3` -/
 theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by

@@ -296,7 +296,7 @@ theorem analyticAt_iff_holomorphicAt [ChartedSpace A E] [AnalyticManifold I E] [
     [AnalyticManifold J F] [ExtChartEqRefl I] [ExtChartEqRefl J] {f : E → F} {x : E} :
     AnalyticAt 𝕜 f x ↔ HolomorphicAt I J f x := by
   simp only [holomorphicAt_iff, extChartAt_eq_refl, PartialEquiv.refl_coe, PartialEquiv.refl_symm,
-    Function.id_comp, Function.comp_id, id.def, iff_and_self]
+    Function.id_comp, Function.comp_id, id_eq, iff_and_self]
   exact AnalyticAt.continuousAt
 
 /-- Analytic functions are holomorphic -/
@@ -657,8 +657,8 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
   have fh := fd.hasMFDerivAt; rw [hdf] at fh
   suffices e : df = df0.comp fst + df1.comp snd by rw [e] at fh; exact fh
   apply ContinuousLinearMap.ext; intro ⟨u, v⟩
-  simp only [ContinuousLinearMap.add_apply, ContinuousLinearMap.comp_apply,
-    ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd']
+  simp only [Function.uncurry_apply_pair, ContinuousLinearMap.add_apply,
+    ContinuousLinearMap.comp_apply]
   have hu : ∀ u : TangentSpace J y, df (u, 0) = df0 u := by
     intro u
     have d : HasMFDerivAt J L (uncurry f ∘ fun x ↦ (x, z)) y
@@ -681,9 +681,9 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     simp only [Prod.mk.injEq]
     exact ⟨(ContinuousLinearMap.zero_apply _).symm, rfl⟩
   have e : (u, v) = (u, 0) + (0, v) := by simp only [Prod.mk_add_mk, add_zero, zero_add]
-  nth_rw 1 [e]; rw [ContinuousLinearMap.map_add, hu u, hv v]
-  refine Eq.trans ?_ (ContinuousLinearMap.add_apply _ _ _).symm
-  exact congr_arg₂ _ rfl rfl
+  nth_rw 1 [e]
+  rw [map_add]
+  exact congr_arg₂ _ (hu u) (hv v)
 
 /-- `HasMFDerivAt` composition for curried functions -/
 theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}
@@ -718,11 +718,11 @@ theorem hasMFDerivAt_iff_hasFDerivAt'
     Obviously more is true and the tangent map is holomorphic, but I don't need that yet -/
 theorem HolomorphicOn.continuousOn_tangentMap {f : M → N} {s : Set M} (fa : HolomorphicOn I J f s) :
     ContinuousOn (tangentMap I J f) (Bundle.TotalSpace.proj ⁻¹' s) := by
-  set t := {x | HolomorphicAt I J f x}
-  have o : IsOpen t := isOpen_holomorphicAt
-  have sub : s ⊆ t := fa
+  generalize ht : {x | HolomorphicAt I J f x} = t
+  have o : IsOpen t := by rw [← ht]; exact isOpen_holomorphicAt
+  have sub : s ⊆ t := by rw [← ht]; exact fa
   replace fa : HolomorphicOn I J f t := by
-    simp only [HolomorphicOn, mem_setOf_eq, imp_self, implies_true]
+    simp only [HolomorphicOn, mem_setOf_eq, imp_self, implies_true, ← ht]
   refine ContinuousOn.mono ?_ (preimage_mono sub)
   apply (fa.smoothOn.contMDiffOn.continuousOn_tangentMapWithin le_top o.uniqueMDiffOn).congr
   intro x m; simp only [mem_preimage] at m

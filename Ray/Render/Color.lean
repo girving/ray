@@ -35,9 +35,11 @@ instance [SMul α β] : SMul α (Color β) where smul s c := ⟨s • c.r, s •
 
 -- Definition lemmas (unfortunate duplication here)
 lemma Color.zero_def [Zero α] : (0 : Color α) = ⟨0, 0, 0, 0⟩ := rfl
-lemma Color.neg_def [Neg α] (x : Color α): -x = ⟨-x.r, -x.g, -x.b, -x.a⟩ := rfl
-lemma Color.add_def [Add α] (x y : Color α): x + y = ⟨x.r + y.r, x.g + y.g, x.b + y.b, x.a + y.a⟩ := rfl
-lemma Color.sub_def [Sub α] (x y : Color α): x - y = ⟨x.r - y.r, x.g - y.g, x.b - y.b, x.a - y.a⟩ := rfl
+lemma Color.neg_def [Neg α] (x : Color α) : -x = ⟨-x.r, -x.g, -x.b, -x.a⟩ := rfl
+lemma Color.add_def [Add α] (x y : Color α) :
+    x + y = ⟨x.r + y.r, x.g + y.g, x.b + y.b, x.a + y.a⟩ := rfl
+lemma Color.sub_def [Sub α] (x y : Color α) :
+    x - y = ⟨x.r - y.r, x.g - y.g, x.b - y.b, x.a - y.a⟩ := rfl
 lemma Color.smul_def [SMul α β] (s : α) (x : Color β) : s • x = ⟨s•x.r, s•x.g, s•x.b, s•x.a⟩ := rfl
 
 /-- Colors form an additive monoid -/
@@ -45,11 +47,24 @@ instance [AddMonoid α] : AddMonoid (Color α) where
   add_assoc _ _ _ := by simp only [Color.ext_iff, Color.add_def, add_assoc]
   zero_add _ := by simp only [Color.ext_iff, Color.add_def, Color.zero_def, zero_add]
   add_zero _ := by simp only [Color.ext_iff, Color.add_def, Color.zero_def, add_zero]
+  nsmul n x := ⟨n • x.r, n • x.g, n • x.b, n • x.a⟩
+  nsmul_zero := by intro x; simp only [zero_smul, Color.zero_def]
+  nsmul_succ := by intro n x; simp only [succ_nsmul, Color.add_def]
 
 /-- Colors form a `SubNegMonoid` -/
 instance [SubNegMonoid α] : SubNegMonoid (Color α) where
   sub_eq_add_neg _ _ := by
     simp only [Color.ext_iff, Color.add_def, Color.neg_def, Color.sub_def, sub_eq_add_neg]
+  zsmul n x := ⟨n • x.r, n • x.g, n • x.b, n • x.a⟩
+  zsmul_zero' := by intro x; simp only [zero_zsmul, Color.zero_def]
+  zsmul_succ' := by
+    intro n x
+    simp only [Color.add_def, Color.mk.injEq]
+    refine ⟨?_, ?_, ?_, ?_⟩ <;> apply SubNegMonoid.zsmul_succ'
+  zsmul_neg' := by
+    intro n x
+    simp only [Color.neg_def, Color.mk.injEq]
+    refine ⟨?_, ?_, ?_, ?_⟩ <;> apply SubNegMonoid.zsmul_neg'
 
 /-- Colors form an additive group -/
 instance [AddGroup α] : AddGroup (Color α) where

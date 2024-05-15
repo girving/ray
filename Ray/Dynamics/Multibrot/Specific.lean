@@ -37,7 +37,7 @@ lemma lt_exp_div {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠
     c < exp (a / b) := by
   have e : exp (a/b : ℝ) = exp 1 ^ (a / b : ℝ) := by rw [Real.exp_one_rpow]
   rw [e, div_eq_mul_inv, Real.rpow_mul (Real.exp_nonneg _), Real.lt_rpow_inv_iff_of_pos,
-    Real.rpow_nat_cast, Real.rpow_nat_cast]
+    Real.rpow_natCast, Real.rpow_natCast]
   · exact _root_.trans h0 (pow_lt_pow_left Real.exp_one_gt_d9 (by norm_num) a0)
   · exact c0.le
   · apply Real.rpow_nonneg (Real.exp_nonneg _)
@@ -49,7 +49,7 @@ lemma exp_div_lt {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠
     exp (a / b) < c := by
   have e : exp (a/b : ℝ) = exp 1 ^ (a / b : ℝ) := by rw [Real.exp_one_rpow]
   rw [e, div_eq_mul_inv, Real.rpow_mul (Real.exp_nonneg _), Real.rpow_inv_lt_iff_of_pos,
-    Real.rpow_nat_cast, Real.rpow_nat_cast]
+    Real.rpow_natCast, Real.rpow_natCast]
   · exact _root_.trans (pow_lt_pow_left Real.exp_one_lt_d9 (Real.exp_nonneg _) a0) h0
   · apply Real.rpow_nonneg (Real.exp_nonneg _)
   · exact c0.le

@@ -171,7 +171,7 @@ attribute [bound] inv_le_one Nat.one_le_cast_of_le one_le_pow_of_one_le pow_le_o
 attribute [bound] le_abs_self norm_smul_le Int.le_ceil neg_abs_le Complex.abs_re_le_abs
   Complex.abs_im_le_abs Real.abs_rpow_le_abs_rpow Real.exp_le_exp_of_le neg_le_neg Real.sqrt_le_sqrt
   Real.one_lt_exp_of_pos tsub_le_tsub_right Real.log_le_log ENNReal.ofReal_le_ofReal pow_le_pow_left
-  Real.rpow_le_rpow div_le_div_of_le mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right
+  Real.rpow_le_rpow div_le_div_of_nonneg_right mul_le_mul_of_nonneg_left mul_le_mul_of_nonneg_right
   div_le_self le_add_of_nonneg_right le_add_of_nonneg_left inv_le_inv_of_le le_self_pow_of_pos
   le_mul_of_one_le_right mul_le_of_le_one_right le_div_self Finset.sum_le_sum sub_le_sub add_le_add
   div_le_div mul_le_mul
@@ -184,7 +184,7 @@ attribute [bound] dist_triangle AbsoluteValue.le_add
 -- <
 attribute [bound] Nat.cast_pos_of_pos NNReal.coe_lt_coe_of_lt neg_lt_neg Real.sqrt_lt_sqrt
   sub_lt_sub_left sub_lt_sub_right add_lt_add_left add_lt_add_right mul_lt_mul_left_of_pos_of_lt
-  mul_lt_mul_right_of_pos_of_lt div_lt_div_of_lt_left div_lt_div_of_lt pow_lt_pow_left
+  mul_lt_mul_right_of_pos_of_lt div_lt_div_of_pos_left div_lt_div_of_pos_right pow_lt_pow_left
   Real.rpow_lt_rpow div_lt_self one_lt_div_of_pos_of_lt div_lt_one_of_pos_of_lt
 
 -- min and max

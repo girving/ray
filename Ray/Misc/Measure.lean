@@ -162,8 +162,8 @@ theorem Average.sub {f g : X → E} {s : Set X} (fi : IntegrableOn f s) (gi : In
 /-- Averages commute with linear maps -/
 theorem average_linear_comm {f : X → E} {s : Set X} (fi : IntegrableOn f s) (g : E →L[ℝ] F) :
     ⨍ x in s, g (f x) = g (⨍ x in s, f x) := by
-  simp only [average_eq, Complex.smul_re, MeasurableSet.univ, Measure.restrict_apply,
-    Set.univ_inter, SMulHomClass.map_smul]
+  simp only [average_eq, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
+    LinearMapClass.map_smul]
   by_cases v0 : (volume s).toReal = 0; simp [v0]
   rw [(Ne.isUnit v0).inv.smul_left_cancel]
   exact ContinuousLinearMap.integral_comp_comm _ fi
@@ -178,7 +178,7 @@ theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi
     (fb : ∀ z, z ∈ s → f z ≤ b) : ⨍ x in s, f x ≤ b := by
   rw [average_eq, smul_eq_mul]
   have bi := sn.integrableOn_const b
-  have ib := set_integral_mono_on fi bi sn.measurable fb
+  have ib := setIntegral_mono_on fi bi sn.measurable fb
   simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, ge_iff_le] at ib ⊢
   trans (volume s).toReal⁻¹ * ((volume s).toReal * b)
   · gcongr; apply le_trans ib
@@ -249,31 +249,29 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
         _ < (b + b) / 2 := (div_lt_div_right (by norm_num)).mpr (by bound)
         _ = b := by ring
     have i0 : ∫ x in s \ t, f x ≤ (vs - vt) * b := by
-      set b' := fun _ ↦ b
       have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono (Set.diff_subset _ _)) sn.finite
       have dm : MeasurableSet (s \ t) := MeasurableSet.diff sn.measurable tm
-      have fb := @set_integral_mono_on _ _ volume f b' (s \ t)
+      have fb := @setIntegral_mono_on _ _ volume f (fun _ ↦ b) (s \ t)
         (fi.mono (Set.diff_subset _ _) (le_refl _)) (integrableOn_const.mpr (Or.inr df)) dm ?_
       simp [measure_diff ts tm (lt_top_iff_ne_top.mp tf),
         ENNReal.toReal_sub_of_le (measure_mono ts) (lt_top_iff_ne_top.mp sn.finite)] at fb
       exact fb
       intro y yd; simp at yd; exact hi y yd.left
     have i1 : ∫ x in t, f x ≤ vt * m := by
-      set m' := fun _ ↦ m
-      have fm := @set_integral_mono_on _ _ volume f m' t (fi.mono ts (le_refl _))
+      have fm := @setIntegral_mono_on _ _ volume f (fun _ ↦ m) t (fi.mono ts (le_refl _))
         (integrableOn_const.mpr (Or.inr tf)) tm ?_
       simp at fm; exact fm
       intro y yt
       rw [← ht] at yt; simp at ht yt
       specialize he y yt.left yt.right
       simp [Real.dist_eq] at he
-      calc
-        f y = f x + (f y - f x) := by ring
+      calc f y
+        _ = f x + (f y - f x) := by ring
         _ ≤ f x + |f y - f x| := by bound
         _ ≤ f x + (b - f x) / 2 := by bound
         _ = (b + f x) / 2 := by ring
-    calc
-      (∫ x : X in s \ t, f x) + ∫ x : X in t, f x ≤ (vs - vt) * b + vt * m := by bound
+    calc (∫ x : X in s \ t, f x) + ∫ x : X in t, f x
+      _ ≤ (vs - vt) * b + vt * m := by bound
       _ = vs * b - vt * (b - m) := by ring
       _ < vs * b - 0 := (sub_lt_sub_left (by bound) _)
       _ = b * vs := by ring
@@ -286,7 +284,7 @@ theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : �
     (fc : ContinuousOn (uncurry f) (s ×ˢ Icc a b)) (sc : IsCompact s) (ab : a ≤ b) :
     ContinuousOn (fun x ↦ ∫ t in a..b, f x t) s := by
   rcases ((sc.prod isCompact_Icc).bddAbove_image fc.norm).exists_ge 0 with ⟨c, _, fb⟩
-  simp only [Set.ball_image_iff] at fb
+  simp only [Set.forall_mem_image] at fb
   simp only [Set.forall_prod_set, uncurry] at fb
   have e : ∀ x t, f x t = (uncurry f) (x, t) := by
     simp only [Function.uncurry_apply_pair, eq_self_iff_true, forall_const, imp_true_iff]
