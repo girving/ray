@@ -312,7 +312,6 @@ lemma val_small_shift {n s : UInt64} {up : Bool}
         simp only [Int64.isNeg_eq_le, not_le.mpr (Ne.lt_of_le n63 n_le), decide_False]
       simp only [Int64.coe_of_nonneg nn, Int.cast_natCast, UInt64.toInt]
 
-
 /-- `add_shift_r` rounds in the correct direction -/
 lemma val_add_shift_r (r : UInt128) (s : UInt64) (up : Bool) :
     (r : ℝ) * 2^((s.toNat : ℤ) - 64 - 2^63) ∈ rounds (approx (add_shift_r r s up)) !up := by

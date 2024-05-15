@@ -183,8 +183,8 @@ noncomputable instance : ApproxRing Box ℂ where
     exact Interval.mem_approx_scaleB (mem_approx_mul rz iz)
   · rw [←e]
     simp only [Complex.ext_iff, pow_two, Complex.mul_re, Complex.mul_im, two_mul, add_mul,
-      mul_comm _ r, true_and]; ring
-
+      mul_comm _ r, true_and]
+    ring
 
 /-- `Box` squaring approximates `ℂ`, `∈` version -/
 @[mono] lemma mem_approx_sqr {z' : ℂ} {z : Box} (m : z' ∈ approx z) : z'^2 ∈ approx z.sqr := by

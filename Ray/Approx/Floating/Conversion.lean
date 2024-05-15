@@ -145,7 +145,7 @@ lemma approx_convert {a : ℝ} {n : ℕ} {s : ℤ} {norm : n ∈ Icc (2^62) (2^6
     simp only [Nat.shiftRightRound_eq_rdiv, mem_Icc]
     by_cases n0 : n = 0
     · simp only [t, n0, Nat.log2_zero, zero_le, not_true_eq_false] at t62
-    . constructor
+    · constructor
       · apply Nat.le_rdiv_of_mul_le (pow_pos (by norm_num) _)
         rw [←pow_add, ←Nat.le_log2 n0]
         omega
