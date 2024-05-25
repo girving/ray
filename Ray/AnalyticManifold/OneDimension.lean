@@ -141,13 +141,13 @@ theorem mderiv_comp_eq_zero_iff {x : S} {y : T} {z : U}
 /-- 1D map composition is nonzero if both sides are -/
 theorem mderiv_comp_ne_zero {x : S} {y : T} {z : U} (f : TangentSpace I y →L[ℂ] TangentSpace I z)
     (g : TangentSpace I x →L[ℂ] TangentSpace I y) : f ≠ 0 → g ≠ 0 → f.comp g ≠ 0 := by
-  intro f0 g0; simp only [Ne.def, mderiv_comp_eq_zero_iff, f0, g0, or_self_iff, not_false_iff]
+  intro f0 g0; simp only [Ne, mderiv_comp_eq_zero_iff, f0, g0, or_self_iff, not_false_iff]
 
 /-- Nonzero `mfderiv` implies differentiability -/
 theorem has_mfderiv_at_of_mderiv_ne_zero {f : S → T} {x : S} (d0 : mfderiv I I f x ≠ 0) :
     MDifferentiableAt I I f x := by
   contrapose d0
-  simp only [mfderiv, d0, if_false, Ne.def, eq_self_iff_true, not_true, not_false_iff]
+  simp only [mfderiv, d0, if_false, Ne, eq_self_iff_true, not_true, not_false_iff]
 
 /-- If two functions have nonzero derivative, their composition has nonzero derivative -/
 theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
@@ -232,7 +232,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
     apply ((isOpen_extChartAt_target I z).eventually_mem (mem_extChartAt_target I z)).mp
     refine eventually_of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
-  simp only [e.fderiv_eq, fderiv_id, Ne.def, ContinuousLinearMap.ext_iff, not_forall,
+  simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
     ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply]
   use 1, one_ne_zero
 
@@ -349,7 +349,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
         rfl
     · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
   refine g0.mp (g0n.mp (eventually_of_forall fun w g0 e ↦ ?_))
-  rw [Ne.def, e]; exact g0
+  rw [Ne, e]; exact g0
 
 /-- `mfderiv` is nonzero near where it is nonzero -/
 theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : HolomorphicAt I I f z)

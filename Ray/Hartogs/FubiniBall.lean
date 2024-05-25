@@ -77,11 +77,11 @@ end realCircleMap
 
 /-- Spheres are empty iff the radius is negative -/
 @[simp]
-theorem Metric.sphere_eq_empty {S : Type} [IsROrC S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
+theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
   constructor
   · intro rp; contrapose rp; simp at rp
     refine Nonempty.ne_empty ⟨c + r, ?_⟩
-    simpa only [mem_sphere_iff_norm, add_sub_cancel', IsROrC.norm_ofReal, abs_eq_self]
+    simpa only [mem_sphere_iff_norm, add_sub_cancel_left, RCLike.norm_ofReal, abs_eq_self]
   · intro n; contrapose n
     rw [← not_nonempty_iff_eq_empty] at n
     simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
@@ -96,9 +96,9 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
   rcases zs with ⟨t, ht⟩
   generalize ha : 2 * π = a
   have ap : a > 0 := by rw [←ha]; bound
-  set s := t + a - a * ⌈t / a⌉
+  generalize hs : t + a - a * ⌈t / a⌉ = s
   use s; constructor
-  · simp only [mem_Ioc, sub_pos, tsub_le_iff_right]
+  · simp only [mem_Ioc, sub_pos, tsub_le_iff_right, ← hs]
     constructor
     · calc a * ⌈t / a⌉
         _ < a * (t / a + 1) := by bound
@@ -109,7 +109,7 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
         _ = a / a * t + a := by ring
         _ = t + a := by field_simp [ap.ne']
   · simp only [←ht, circleMap, Complex.ofReal_sub, Complex.ofReal_add, Complex.ofReal_mul,
-      Complex.ofReal_int_cast, add_right_inj, mul_eq_mul_left_iff, Complex.ofReal_eq_zero]
+      Complex.ofReal_intCast, add_right_inj, mul_eq_mul_left_iff, Complex.ofReal_eq_zero, ← hs]
     rw [mul_sub_right_distrib, right_distrib, Complex.exp_sub, Complex.exp_add]
     rw [mul_comm _ (⌈_⌉:ℂ), mul_assoc, Complex.exp_int_mul, ← ha]
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
@@ -260,7 +260,7 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
     ∫ z in annulus_oc c r0 r1, f z =
       ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have im := MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod
-  rw [←MeasurePreserving.set_integral_preimage_emb im
+  rw [←MeasurePreserving.setIntegral_preimage_emb im
     Complex.measurableEquivRealProd.symm.measurableEmbedding f _]
   clear im
   rw [square_eq r0p]
@@ -275,8 +275,8 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
   have e : ∀ x : ℝ × ℝ, x ∈ square r0 r1 → |x.1| • f (circleMap c x.1 x.2) =
       x.1 • f (circleMap c x.1 x.2) := by
     intro x xs; rw [abs_of_pos (square.rp r0p xs)]
-  rw [MeasureTheory.set_integral_congr Measurable.square e]; clear e
-  rw [square, Measure.volume_eq_prod, MeasureTheory.set_integral_prod]
+  rw [MeasureTheory.setIntegral_congr Measurable.square e]; clear e
+  rw [square, Measure.volume_eq_prod, MeasureTheory.setIntegral_prod]
   simp [integral_smul]
   have fi : IntegrableOn (fun x : ℝ × ℝ ↦ x.1 • f (circleMap c x.1 x.2))
       (Icc r0 r1 ×ˢ Icc 0 (2 * π)) := by
@@ -298,7 +298,7 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
     ∫ z in closedBall c r, f z =
       ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
-  rw [MeasureTheory.set_integral_congr_set_ae center]; clear center
+  rw [MeasureTheory.setIntegral_congr_set_ae center]; clear center
   rw [←Metric.closedBall_zero, ←annulus_oc]
   apply fubini_annulus
   · simpa only [annulus_cc, Metric.ball_zero, diff_empty]
@@ -312,7 +312,7 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
   simp only [ENNReal.toReal_ofReal Real.two_pi_pos.le, ←
     intervalIntegral.integral_of_le rp, integral_const, Measure.restrict_apply, MeasurableSet.univ,
     univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
-    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne.def, bit0_eq_zero,
+    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne, bit0_eq_zero,
     Nat.one_ne_zero, not_false_iff] at f
   ring_nf at f ⊢; exact f
 

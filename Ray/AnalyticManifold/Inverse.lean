@@ -169,7 +169,7 @@ lemma Cinv.dhi_dh (i : Cinv f c z) : ∀ t, i.dhi (i.dh t) = t := by
     i.dfzi_dfz, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
     ContinuousLinearMap.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
     ContinuousLinearMap.add_apply, ContinuousLinearMap.map_add, ContinuousLinearMap.map_sub,
-    add_sub_cancel', ContinuousLinearMap.coe_snd]
+    add_sub_cancel_left, ContinuousLinearMap.coe_snd]
 
 lemma Cinv.dh_dhi (i : Cinv f c z) : ∀ t, i.dh (i.dhi t) = t := by
   intro ⟨u, v⟩
@@ -177,7 +177,7 @@ lemma Cinv.dh_dhi (i : Cinv f c z) : ∀ t, i.dh (i.dhi t) = t := by
     i.dfz_dfzi, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
     ContinuousLinearMap.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
     ContinuousLinearMap.add_apply, ContinuousLinearMap.map_add, ContinuousLinearMap.map_sub,
-    add_sub_cancel', ← add_sub_assoc, ContinuousLinearMap.coe_snd, ContinuousLinearMap.coe_fst]
+    add_sub_cancel_left, ← add_sub_assoc, ContinuousLinearMap.coe_snd, ContinuousLinearMap.coe_fst]
 
 /-- `dh` as a `ContinuousLinearEquiv` -/
 def Cinv.dhe (i : Cinv f c z) : (ℂ × ℂ) ≃L[ℂ] ℂ × ℂ :=
@@ -205,15 +205,17 @@ def Cinv.g (i : Cinv f c z) : ℂ → T → S := fun b w ↦
 
 /-- `g` is a local left inverse -/
 theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g x.1 (f x.1 x.2) = x.2 := by
-  set t : Set (ℂ × S) := (extChartAt II (c, z)).source ∩ extChartAt II (c, z) ⁻¹' i.he.source
-  have o : IsOpen t :=
-    (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
+  generalize ht :
+      ((extChartAt II (c, z)).source ∩ extChartAt II (c, z) ⁻¹' i.he.source : Set (ℂ × S)) = t
+  have o : IsOpen t := by
+    rw [← ht]
+    exact (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
       i.he.open_source
   have m : (c, z) ∈ t := by
-    simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff]
+    simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff, ← ht]
     exact ContDiffAt.mem_toPartialHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
   apply Filter.eventuallyEq_of_mem (o.mem_nhds m); intro x m
-  simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
+  simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl, ← ht,
     PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
   have inv := i.he.left_inv m.2
@@ -234,10 +236,11 @@ theorem Cinv.inv_fst (i : Cinv f c z) : ∀ x, x ∈ i.he.target → (i.he.symm 
 /-- `g` is a local right inverse -/
 theorem Cinv.right_inv (i : Cinv f c z) :
     ∀ᶠ x : ℂ × T in 𝓝 (c, f c z), f x.1 (i.g x.1 x.2) = x.2 := by
-  set t : Set (ℂ × T) :=
-    (extChartAt II (c, f c z)).source ∩ extChartAt II (c, f c z) ⁻¹' i.he.target
-  have o : IsOpen t :=
-    (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
+  generalize ht : ((extChartAt II (c, f c z)).source ∩ extChartAt II (c, f c z) ⁻¹' i.he.target
+      : Set (ℂ × T)) = t
+  have o : IsOpen t := by
+    rw [← ht]
+    exact (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
       i.he.open_target
   have m' : (c, extChartAt I (f c z) (f c z)) ∈ i.he.toPartialEquiv.target := by
     have m := ContDiffAt.image_mem_toPartialHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
@@ -245,7 +248,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
     rw [e] at m; exact m
   have m : (c, f c z) ∈ t := by
-    simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff,
+    simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff, ← ht,
       extChartAt_prod, PartialEquiv.prod_coe, extChartAt_eq_refl, PartialEquiv.refl_coe, id,
       PartialEquiv.prod_source, prod_mk_mem_set_prod_eq, PartialEquiv.refl_source, mem_univ]
   have fm : ∀ᶠ x : ℂ × T in 𝓝 (c, f c z),
@@ -270,7 +273,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   intro x m mf
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
     PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
-    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
+    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, ← ht] at m
   have inv := i.he.right_inv m.2
   simp only [Cinv.g]
   generalize hq : i.he.symm = q; rw [hq] at inv mf

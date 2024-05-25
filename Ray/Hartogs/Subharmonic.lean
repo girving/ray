@@ -48,8 +48,8 @@ open Set (Ioc Icc univ)
 open scoped Real NNReal ENNReal Topology ComplexConjugate
 noncomputable section
 
-variable {S : Type} [IsROrC S] [SMulCommClass ℝ S S]
-variable {T : Type} [IsROrC T] [SMulCommClass ℝ T T]
+variable {S : Type} [_root_.RCLike S] [SMulCommClass ℝ S S]
+variable {T : Type} [_root_.RCLike T] [SMulCommClass ℝ T T]
 variable {E : Type} [NormedAddCommGroup E] [CompleteSpace E] [NormedSpace ℝ E]
 variable {F : Type} [NormedAddCommGroup F] [CompleteSpace F] [NormedSpace ℝ F]
 variable {H : Type} [NormedAddCommGroup H] [CompleteSpace H] [NormedSpace ℂ H]
@@ -270,10 +270,10 @@ theorem Minimum.submean {f : ℂ → ℝ} {s : Set ℂ} {c : ℂ} (fc : Continuo
   have ss : closedBall c t ⊆ s :=
     _root_.trans (Metric.closedBall_subset_ball tr) (_root_.trans rs interior_subset)
   have n := NiceVolume.itau
-  have m := set_integral_ge_of_const_le n.measurable n.ne_top fg
+  have m := setIntegral_ge_of_const_le n.measurable n.ne_top fg
     ((fc.mono ss).integrableOn_sphere tp)
   simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, smul_eq_mul, ge_iff_le]
-  simpa only [←inv_mul_le_iff (inv_pos.mpr n.real_pos), mul_comm, inv_inv]
+  simpa only [mul_comm, ← div_eq_mul_inv, le_div_iff n.real_pos]
 
 /-- `max b (log ‖f z‖)` is subharmonic for analytic `f` (`ℂ` case) -/
 theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOn ℂ f s) (b : ℝ) :
@@ -329,7 +329,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   by_cases gc : g = c; · rw [gc]
   generalize hu : Complex.abs (g - c) = u
   have u0 : u > 0 := by
-    simp only [← hu, gt_iff_lt, AbsoluteValue.pos_iff, Ne.def]
+    simp only [← hu, gt_iff_lt, AbsoluteValue.pos_iff, Ne]
     contrapose gc; simp only [not_not, sub_eq_zero] at gc ⊢; exact gc
   have ur : u ≤ r := by
     simp only [Complex.dist_eq, Metric.mem_closedBall] at gs; simp only [←hu, gs]
@@ -354,14 +354,14 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
     · intro t ts
       simp only [← hs, Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff,
         Set.mem_Ico] at ts
-      set z := c + t * y
+      generalize hz : c + t * y = z
       rcases ts with ⟨fz, tp, tu⟩
       have tz : abs (z - c) = t := by
-        simp only [y1, abs_of_nonneg tp, add_sub_cancel', AbsoluteValue.map_mul, Complex.abs_ofReal,
-          mul_one]
+        simp only [y1, abs_of_nonneg tp, add_sub_cancel_left, AbsoluteValue.map_mul,
+          Complex.abs_ofReal, mul_one, ← hz]
       have zs : z ∈ ball c r := by
         simp only [y1, abs_of_nonneg tp, Metric.mem_ball, dist_self_add_left, Complex.norm_eq_abs,
-          AbsoluteValue.map_mul, Complex.abs_ofReal, mul_one]
+          AbsoluteValue.map_mul, Complex.abs_ofReal, mul_one, ← hz]
         exact lt_of_lt_of_le tu ur
       rw [← interior_closedBall _ rp.ne'] at zs
       rcases fs.submean' z zs with ⟨e, ep, lo⟩
@@ -370,10 +370,10 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
       have teu : t + e' ≤ u := by
         rw [← he']; trans t + (u - t)
         · exact add_le_add_left (min_le_right _ _) _
-        · simp only [add_sub_cancel'_right, le_refl]
+        · simp only [add_sub_cancel, le_refl]
       have e's : e' < e := by rw [← he']; exact lt_of_le_of_lt (min_le_left _ _) (half_lt_self ep)
       specialize lo e' e'p e's
-      rw [fz] at lo
+      rw [← hz, fz] at lo
       have ss : closedBall z e' ⊆ closedBall c r := by
         apply Metric.closedBall_subset_closedBall'; rw [Complex.dist_eq, tz]; linarith
       have hi : ∀ x, x ∈ itau → f (circleMap z e' x) ≤ f c := by
@@ -384,23 +384,23 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
         apply (fs.cont.mono ss).comp (continuous_circleMap _ _).continuousOn; intro a _
         simp only [Complex.dist_eq, abs_of_pos e'p, Metric.mem_closedBall, circleMap_sub_center,
           abs_circleMap_zero, le_refl]
+      rw [hz] at lo
       have fw := mean_squeeze NiceVolume.itau LocalVolume.itau fcc
         ((fs.cont.mono ss).integrableOn_sphere e'p) lo hi
       have eys : z + e' * y ∈ sphere z e' := by
-        simp only [abs_of_pos e'p, y1, mem_sphere_iff_norm, add_sub_cancel', Complex.norm_eq_abs,
-          AbsoluteValue.map_mul, Complex.abs_ofReal, mul_one]
+        simp only [abs_of_pos e'p, y1, mem_sphere_iff_norm, add_sub_cancel_left,
+          Complex.norm_eq_abs, AbsoluteValue.map_mul, Complex.abs_ofReal, mul_one]
       rcases circleMap_Ioc eys with ⟨a, as, aey⟩
       specialize fw a as; simp only [← aey] at fw
       use t + e'
       simp only [Set.mem_inter_iff, Set.mem_Ioc, lt_add_iff_pos_right]
       refine ⟨?_, e'p, teu⟩
       simp only [← hs, right_distrib, Set.mem_preimage, Complex.ofReal_add, Set.mem_singleton_iff]
-      rw [← add_assoc]; exact fw
+      rw [← add_assoc, hz]; exact fw
   simp only [← hs, ← hy, Set.mem_preimage, Set.mem_singleton_iff] at us
   have unz : (u : ℂ) ≠ 0 := by
-    simp only [u0.ne', Ne.def, Complex.ofReal_eq_zero, not_false_iff]
+    simp only [u0.ne', Ne, Complex.ofReal_eq_zero, not_false_iff]
   field_simp [unz] at us; ring_nf at us
-  simp only [←div_eq_mul_inv, mul_div_cancel_left _ unz] at us
   exact us.symm
 
 /-- A subharmonic function achieves its maximum on the boundary -/
@@ -412,7 +412,7 @@ theorem SubharmonicOn.maximum_principle {f : ℂ → ℝ} {s : Set ℂ} (fs : Su
   generalize hr : abs (w - x) = r
   by_cases wx : w = x; · rwa [wx]
   have rp : r > 0 := by
-    simp only [← hr, gt_iff_lt, AbsoluteValue.pos_iff, Ne.def]; exact sub_ne_zero.mpr wx
+    simp only [← hr, AbsoluteValue.pos_iff, Ne]; exact sub_ne_zero.mpr wx
   rw [dist_comm, Complex.dist_eq, hr] at h
   have rs : closedBall x r ⊆ s := by
     rw [← closure_ball x rp.ne', ← sc.isClosed.closure_eq]; apply closure_mono
@@ -438,7 +438,7 @@ theorem uniform_harmonic_lim {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set �
       simp_rw [average_eq] at m ⊢
       have se : itau =ᵐ[volume] Icc 0 (2 * π) := Ioc_ae_eq_Icc
       simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
-        set_integral_congr_set_ae se, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
+        setIntegral_congr_set_ae se, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
         not_le] at m ⊢
       generalize hv : (volume itau).toReal = v; simp_rw [hv] at m ⊢; clear hv
       have cc : Icc 0 (2 * π) ⊆ circleMap c r ⁻¹' s := by
@@ -497,7 +497,7 @@ theorem mem_addCircle_iff_abs {z : ℂ} : abs z = 1 ↔ ∃ t : AddCircle (2 * �
   constructor
   · intro az; rcases(Complex.abs_eq_one_iff z).mp az with ⟨t, h⟩; use t
     simp only [← h, AddCircle.toCircle, Function.Periodic.lift_coe, expMapCircle_apply,
-      Complex.ofReal_mul, Complex.ofReal_div, Complex.ofReal_bit0, Complex.ofReal_one]
+      Complex.ofReal_mul, Complex.ofReal_div, Complex.ofReal_one]
     field_simp [Real.pi_pos.ne']
   · intro h; rcases h with ⟨t, h⟩; simp only [h, abs_coe_circle]
 
@@ -508,13 +508,13 @@ theorem Extension.maximum_principle {f : C(Real.Angle, ℂ)} {g : ℂ → ℂ} (
     with ⟨w, wf, wh⟩
   intro z zs; specialize wh z zs
   rw [frontier_closedBall _ rp.ne'] at wf; simp at wf
-  set w' := (↑r)⁻¹ * (w - c)
+  generalize hw' : (↑r)⁻¹ * (w - c) = w'
   have wf' : abs w' = 1 := by
-    simp only [wf, abs_of_pos rp, AbsoluteValue.map_mul, map_inv₀, Complex.abs_ofReal]
+    simp only [wf, abs_of_pos rp, AbsoluteValue.map_mul, map_inv₀, Complex.abs_ofReal, ← hw']
     field_simp [rp.ne']
   rcases mem_addCircle_iff_abs.mp wf' with ⟨t, tw⟩
   have b := e.b t
-  simp only [← tw, rri rp] at b
+  simp only [← tw, rri rp, ← hw'] at b
   rw [← b] at wh
   exact le_trans wh (fb _)
 
@@ -532,8 +532,9 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
   rcases Fe with ⟨f, fs, fF⟩
   simp only [ContinuousMap.tendsto_iff_tendstoLocallyUniformly,
     tendstoLocallyUniformly_iff_tendstoUniformly_of_compactSpace] at fF
-  set g := fun n ↦ Classical.choose (e _ (fs n))
-  have gs : ∀ n, HasExtension (f n) (g n) c r := fun n ↦ Classical.choose_spec (e _ (fs n))
+  generalize hg : (fun n ↦ Classical.choose (e _ (fs n))) = g
+  have gs : ∀ n, HasExtension (f n) (g n) c r := by
+    rw [← hg]; exact fun n ↦ Classical.choose_spec (e _ (fs n))
   have cauchy : UniformCauchySeqOn g atTop (closedBall c r) := by
     rw [Metric.uniformCauchySeqOn_iff]
     simp_rw [Metric.tendstoUniformly_iff, Filter.eventually_atTop] at fF
@@ -555,7 +556,7 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
   set G := fun z ↦ limUnder atTop fun n ↦ g n z
   have gG : TendstoUniformlyOn g G atTop (closedBall c r) := by
     apply UniformCauchySeqOn.tendstoUniformlyOn_of_tendsto cauchy
-    intro z zs; exact (cauchy.cauchySeq z zs).tendsto_limUnder
+    intro z zs; exact (cauchy.cauchySeq zs).tendsto_limUnder
   exists G
   exact
     { gh := uniform_harmonic_lim (fun n ↦ (gs n).gh) gG
@@ -593,14 +594,14 @@ theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply
-          simp only [coe_nat_zsmul, toCircle_smul, SubmonoidClass.coe_pow] }
+          simp only [natCast_zsmul, toCircle_smul, SubmonoidClass.coe_pow] }
   · exists fun z : ℂ ↦ conj (((↑r)⁻¹ * (z - c)) ^ n)
     exact
       { gh := (mh n).conj
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply
-          simp only [neg_smul, coe_nat_zsmul, toCircle_neg, toCircle_smul, coe_inv_unitSphere,
+          simp only [neg_smul, natCast_zsmul, toCircle_neg, toCircle_smul, coe_inv_unitSphere,
             SubmonoidClass.coe_pow, Complex.inv_def, map_pow, normSq_eq_of_mem_circle, one_pow,
             inv_one, Complex.ofReal_one, mul_one] }
 
@@ -663,28 +664,29 @@ theorem continuous_to_harmonic_complex {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
     rw [← hf']; apply fc.comp_continuous
     · exact continuous_const.add
         (continuous_const.mul (continuous_subtype_val.comp AddCircle.continuous_toCircle))
-    · simp only [mem_sphere_iff_norm, add_sub_cancel', Complex.norm_eq_abs, AbsoluteValue.map_mul,
-        Complex.abs_ofReal, abs_coe_circle, mul_one, abs_eq_self]
+    · simp only [mem_sphere_iff_norm, add_sub_cancel_left, Complex.norm_eq_abs,
+        AbsoluteValue.map_mul, Complex.abs_ofReal, abs_coe_circle, mul_one, abs_eq_self]
       intro _; bound
   rcases continuousExtend ⟨f', fc'⟩ c rp with ⟨g, e⟩
   use g, e.gh; intro z zs
-  set z' := (↑r)⁻¹ * (z - c)
+  generalize hz' : (↑r)⁻¹ * (z - c) = z'
   have za' : abs z' = 1 := by
     simp only [mem_sphere_iff_norm, Complex.norm_eq_abs] at zs
     simp only [zs, abs_of_pos rp, inv_mul_cancel rp.ne', AbsoluteValue.map_mul, map_inv₀,
-      Complex.abs_ofReal]
+      Complex.abs_ofReal, ← hz']
   rcases mem_addCircle_iff_abs.mp za' with ⟨t, tz⟩
-  have rr : c + r * t.toCircle = z := by rw [← tz]; exact rri rp _
+  have rr : c + r * t.toCircle = z := by rw [← tz, ← hz']; exact rri rp _
   nth_rw 2 [← rr]; rw [← e.b t]; simp only [← hf', rr, ContinuousMap.coe_mk]
 
 /-- Continuous functions on the sphere extend to harmonic functions on the ball (`ℝ` case) -/
 theorem continuous_to_harmonic_real {f : ℂ → ℝ} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (sphere c r)) :
     ∃ g : ℂ → ℝ, HarmonicOn g (closedBall c r) ∧ ∀ z, z ∈ sphere c r → f z = g z := by
-  set f' := fun z ↦ (f z : ℂ)
-  have fc' : ContinuousOn f' (sphere c r) := Complex.continuous_ofReal.comp_continuousOn fc
+  generalize hf' : (fun z ↦ (f z : ℂ)) = f'
+  have fc' : ContinuousOn f' (sphere c r) := by
+    rw [← hf']; exact Complex.continuous_ofReal.comp_continuousOn fc
   rcases continuous_to_harmonic_complex fc' with ⟨g, gh, b⟩
   use fun z ↦ (g z).re, gh.re
-  intro z zs; simp only [← b z zs, Complex.ofReal_re]
+  intro z zs; simp only [← b z zs, Complex.ofReal_re, ← hf']
 
 /-- If `f : ℂ → ℝ` is subharmonic on a disk, its center value is `≤` the circle mean.
 
@@ -737,10 +739,11 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     rw [Filter.EventuallyLE]; rw [ae_restrict_iff' measurableSet_Ioc]; apply ae_of_all; intro s sr
     simp only [Set.mem_Ioc] at sr
     have e := (fs.mono (Metric.closedBall_subset_closedBall sr.2)).submean sr.1
-    rw [smul_eq_mul]
+    rw [smul_eq_mul, ← itau]
     simp only [average_eq, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
       itau_real_volume, smul_eq_mul] at e
-    generalize hi : ∫ t in itau, f (circleMap c s t) = i; rw [hi] at e
+    generalize hi : ∫ t in itau, f (circleMap c s t) = i
+    rw [hi] at e
     calc 2 * π * s * f c
       _ ≤ 2 * π * s * ((2 * π)⁻¹ * i) := by bound
       _ = s * (2 * π * (2 * π)⁻¹) * i := by ring_nf
@@ -750,7 +753,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     rw [hi] at im; clear hi m
     simp only [← intervalIntegral.integral_of_le rp.le, Algebra.id.smul_eq_mul,
       intervalIntegral.integral_mul_const, intervalIntegral.integral_const_mul, integral_id,
-      zero_pow, Ne.def, bit0_eq_zero, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
+      zero_pow, Ne, bit0_eq_zero, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
     rw [intervalIntegral.integral_const_mul] at im
     simp only [integral_id, ne_eq, zero_pow, sub_zero] at im
     ring_nf at im ⊢
@@ -793,7 +796,7 @@ theorem SubharmonicOn.max {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn 
       rw [e]; rw [← average_linear_comm pi]
       simp only [ContinuousLinearMap.snd, ContinuousLinearMap.coe_mk', LinearMap.snd_apply]
       exact (gs.mono cs).submean rp
-  · simp only [Ne.def, Measure.restrict_eq_zero]; exact NiceVolume.itau.ne_zero
+  · simp only [Ne, Measure.restrict_eq_zero]; exact NiceVolume.itau.ne_zero
   · exact NiceVolume.itau.ne_top
   · simp only [Set.mem_univ, Filter.eventually_true]
   · exact (mc.mono cs).integrableOn_sphere rp

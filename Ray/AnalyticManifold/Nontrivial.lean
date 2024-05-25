@@ -66,7 +66,7 @@ theorem NontrivialAnalyticOn.isolated (n : NontrivialAnalyticOn f s) {z : ℂ} (
   have fa : AnalyticAt ℂ (fun w ↦ f w - f z) z := (n.analyticOn z zs).sub analyticAt_const
   cases' fa.eventually_eq_zero_or_eventually_ne_zero with h h
   · have b := h.and_frequently (n.nonconst z zs)
-    simp only [sub_eq_zero, Ne.def, and_not_self_iff, Filter.frequently_false] at b
+    simp only [sub_eq_zero, Ne, and_not_self_iff, Filter.frequently_false] at b
   · simp only [sub_ne_zero] at h; exact h
 
 /-- Nontrivial analytic functions have isolated values -/
@@ -129,18 +129,18 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
   apply IsCountable.isTotallyDisconnected
   simp only [_root_.allRootsOfUnity, setOf_exists]; apply countable_iUnion; intro n
   by_cases n0 : n = 0
-  simp only [n0, Ne.def, eq_self_iff_true, not_true, false_and_iff, setOf_false, countable_empty]
-  simp only [Ne.def, n0, not_false_iff, true_and_iff]
+  simp only [n0, Ne, eq_self_iff_true, not_true, false_and_iff, setOf_false, countable_empty]
+  simp only [Ne, n0, not_false_iff, true_and_iff]
   have np : 0 < n := Nat.pos_of_ne_zero n0
-  set n' : ℕ+ := ⟨n, np⟩
+  generalize hn' : (⟨n, np⟩ : ℕ+) = n'
   have e : {z : ℂ | z ^ n = 1} ⊆ (fun x : ℂˣ ↦ (x : ℂ)) '' (rootsOfUnity n' ℂ : Set ℂˣ) := by
     intro z e; simp only [mem_setOf] at e
     simp only [mem_image, SetLike.mem_coe, mem_rootsOfUnity, PNat.mk_coe]
     by_cases z0 : z = 0
     · simp only [z0, zero_pow n0, zero_ne_one] at e
-    use Units.mk0 z z0
-    simp only [Units.val_mk0, eq_self_iff_true, and_true_iff, ← Units.eq_iff,
-      Units.val_pow_eq_pow_val, Units.val_one, e]
+    · use Units.mk0 z z0
+      simp only [← hn', PNat.mk_coe, ← Units.eq_iff, Units.val_pow_eq_pow_val, Units.val_mk0, e,
+        Units.val_one, and_self]
   apply Set.Countable.mono e; clear e; apply Countable.image; apply Set.Finite.countable
   rw [Set.finite_def]; exact ⟨_root_.rootsOfUnity.fintype ℂ n'⟩
 
@@ -167,13 +167,20 @@ theorem eq_of_pow_eq {p q : X → ℂ} {t : Set X} {d : ℕ} (pc : ContinuousOn 
     (qc : ContinuousOn q t) (tc : IsPreconnected t) (dp : d > 0) (pq : ∃ x, x ∈ t ∧ p x = q x)
     (p0 : ∀ x, x ∈ t → p x ≠ 0) (pqd : ∀ x, x ∈ t → p x ^ d = q x ^ d) :
     ∀ x, x ∈ t → p x = q x := by
-  set r := fun x ↦ q x / p x
-  have rc : ContinuousOn r t := qc.div pc p0
+  generalize hr : (fun x ↦ q x / p x) = r
+  have rc : ContinuousOn r t := by rw [← hr]; exact qc.div pc p0
   have h := eq_one_of_pow_eq_one rc tc dp ?_ ?_
-  · intro x m; exact ((div_eq_one_iff_eq (p0 _ m)).mp (h _ m)).symm
-  · rcases pq with ⟨x, m, e⟩; use x, m; exact (div_eq_one_iff_eq (p0 _ m)).mpr e.symm
-  · intro x m; simp only [div_pow]; rw [div_eq_one_iff_eq]; exact (pqd _ m).symm
-    exact pow_ne_zero _ (p0 _ m)
+  · intro x m
+    rw [← hr] at h
+    exact ((div_eq_one_iff_eq (p0 _ m)).mp (h _ m)).symm
+  · rcases pq with ⟨x, m, e⟩; use x, m
+    rw [← hr]
+    exact (div_eq_one_iff_eq (p0 _ m)).mpr e.symm
+  · intro x m
+    simp only [div_pow, ← hr]
+    rw [div_eq_one_iff_eq]
+    · exact (pqd _ m).symm
+    · exact pow_ne_zero _ (p0 _ m)
 
 /-- At a point, a holomorphic function is either locally constant or locally different from its
     value at the point.  This is the `HolomorphicAt` version of
@@ -216,20 +223,23 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
 theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
     (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
-  set t := {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a}
-  suffices st : s ⊆ t by exact fun z m ↦ (st m).2.self_of_nhds
+  generalize ht : {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a} = t
+  suffices st : s ⊆ t by rw [← ht] at st; exact fun z m ↦ (st m).2.self_of_nhds
   refine p.subset_of_closure_inter_subset ?_ ?_ ?_
-  · rw [isOpen_iff_eventually]; intro z m; simp only [Set.mem_setOf_eq] at m ⊢
+  · rw [isOpen_iff_eventually]
+    intro z m
+    simp only [Set.mem_setOf_eq, ← ht] at m ⊢
     exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (eventually_of_forall fun y h ↦ h)
-  · use z; simp only [Set.mem_inter_iff]; exact ⟨zs, zs, c⟩
+  · use z; simp only [Set.mem_inter_iff, ← ht]; exact ⟨zs, zs, c⟩
   · intro z m; simp only [Set.mem_inter_iff, mem_closure_iff_frequently] at m
     have aa : HolomorphicAt I I (fun _ ↦ a) z := holomorphicAt_const
-    cases' (fa _ m.2).eventually_eq_or_eventually_ne aa with h h; use m.2, h
-    simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at h
-    have m' := m.1; contrapose m'; simp only [Filter.not_frequently]
-    refine h.mp (eventually_of_forall ?_); intro x i
-    by_cases xz : x = z; rwa [xz]; specialize i xz; contrapose i
-    simp only [not_not] at i ⊢; exact i.2.self_of_nhds
+    cases' (fa _ m.2).eventually_eq_or_eventually_ne aa with h h
+    · rw [← ht]; use m.2, h
+    · simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at h
+      have m' := m.1; contrapose m'; simp only [Filter.not_frequently]
+      refine h.mp (eventually_of_forall ?_); intro x i
+      by_cases xz : x = z; rwa [xz]; specialize i xz; contrapose i
+      simp only [not_not, ← ht] at i ⊢; exact i.2.self_of_nhds
 
 /-- If `S` is locally connected, we don't need the open assumption in
     `HolomorphicOn.const_of_locally_const` -/
@@ -311,22 +321,24 @@ theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ 
   use holomorphicAt_id
   rw [Filter.frequently_iff]; intro s sz
   rcases mem_nhds_iff.mp sz with ⟨t, ts, ot, zt⟩
-  set u := (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t
-  have uo : IsOpen u :=
-    (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target _ _) ot
+  generalize hu : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t = u
+  have uo : IsOpen u := by
+    rw [← hu]
+    exact (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target _ _) ot
   have zu : extChartAt I z z ∈ u := by
     simp only [mem_inter_iff, mem_extChartAt_target, true_and_iff, mem_preimage,
-      PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt]
+      PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt, ← hu]
   rcases Metric.isOpen_iff.mp uo _ zu with ⟨r, rp, ru⟩
   generalize ha : extChartAt I z z + r / 2 = a
   have au : a ∈ u := by
-    rw [← ha]; apply ru; simp only [Metric.mem_ball, Complex.dist_eq, add_sub_cancel']
+    rw [← ha]; apply ru; simp only [Metric.mem_ball, Complex.dist_eq, add_sub_cancel_left]
     simp only [map_div₀, Complex.abs_ofReal, abs_of_pos rp, Complex.abs_two]; exact half_lt_self rp
-  use(extChartAt I z).symm a; simp only [mem_inter_iff, mem_preimage] at au
+  use (extChartAt I z).symm a; simp only [mem_inter_iff, mem_preimage] at au
+  rw [← hu] at au
   use ts au.2
   rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
   rw [PartialEquiv.right_inv _ au.1, ← ha]
-  simp only [Ne.def, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero, bit0_eq_zero,
+  simp only [Ne, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero, bit0_eq_zero,
     one_ne_zero, or_false_iff, rp.ne', not_false_iff]; norm_num
 
 /-- If `orderAt f z ≠ 0` (`f` has a zero of positive order), then `f` is nontrivial at `z` -/
@@ -338,7 +350,7 @@ theorem nontrivialHolomorphicAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : Analy
     hasFPowerSeriesAt_const.congr (Filter.EventuallyEq.symm h)
   simp only [fp.orderAt_unique]; by_contra p0
   have b := FormalMultilinearSeries.apply_order_ne_zero' p0
-  simp only [constFormalMultilinearSeries_apply p0, Ne.def, eq_self_iff_true, not_true] at b
+  simp only [constFormalMultilinearSeries_apply p0, Ne, eq_self_iff_true, not_true] at b
 
 /-- `NontrivialAnalyticOn → NontrivialHolomorphicOn` over `ℂ` -/
 theorem NontrivialAnalyticOn.nontrivialHolomorphicOn {f : ℂ → ℂ} {s : Set ℂ}
@@ -385,14 +397,18 @@ variable {N : Type} [TopologicalSpace N] [ChartedSpace B N] [AnalyticManifold K 
 theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
     (fa : HolomorphicOn J K f s) (ga : HolomorphicOn J K g s) (sp : IsPreconnected s)
     (e : ∃ x, x ∈ s ∧ f =ᶠ[𝓝 x] g) : f =ᶠ[𝓝ˢ s] g := by
-  set t := {x | f =ᶠ[𝓝 x] g}
+  generalize ht :  {x | f =ᶠ[𝓝 x] g} = t
   suffices h : s ⊆ interior t by
-    simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff] at h
+    simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff, ← ht] at h
     exact h.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
-  apply sp.relative_clopen; · exact e
-  · intro x ⟨_, xt⟩; rw [mem_interior_iff_mem_nhds]; exact xt.eventually_nhds
+  apply sp.relative_clopen
+  · rw [← ht]; exact e
+  · intro x ⟨_, xt⟩
+    simp only [mem_interior_iff_mem_nhds, ← ht] at xt ⊢
+    exact xt.eventually_nhds
   · intro x ⟨xs, xt⟩; rw [mem_closure_iff_frequently] at xt
-    have ex' : ∃ᶠ y in 𝓝 x, f y = g y := xt.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
+    have ex' : ∃ᶠ y in 𝓝 x, f y = g y := by
+      rw [← ht] at xt; exact xt.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
     have ex : f x = g x :=
       tendsto_nhds_unique_of_frequently_eq (fa _ xs).continuousAt (ga _ xs).continuousAt ex'
     generalize hd : (fun y : E ↦
@@ -400,7 +416,8 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
         extChartAt K (g x) (g ((extChartAt J x).symm y))) = d
     generalize hz : extChartAt J x x = z
     suffices h : d =ᶠ[𝓝 z] 0 by
-      simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq] at h
+      simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq,
+        ← ht] at h ⊢
       refine
         h.mp (((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp ?_)
       apply ((fa _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
@@ -419,12 +436,12 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
       apply (Filter.Tendsto.frequently (p := fun y ↦ (extChartAt J x).symm y ∈ t)
           (continuousAt_extChartAt J x) xt').mp
       apply ((isOpen_extChartAt_target J x).eventually_mem (mem_extChartAt_target J x)).mp
-      refine eventually_of_forall fun y m e ↦ ?_; simp only at e
+      refine eventually_of_forall fun y m e ↦ ?_; simp only [← ht] at e
       apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
       refine eventually_of_forall fun z e ↦ ?_; simp only at e
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
     have da : AnalyticAt ℂ d z := by rw [← hd, ← hz]; exact (fa _ xs).2.sub (ga _ xs).2
-    clear hd ex ex' xt t e fa ga f g xs hz x sp
+    clear hd ex ex' xt t e fa ga f g xs hz x sp ht
     -- Forget about manifolds
     rcases da.exists_ball_analyticOn with ⟨r, rp, da⟩
     rcases Filter.frequently_iff.mp d0 (isOpen_ball.mem_nhds (mem_ball_self rp)) with ⟨z0, m0, ze⟩

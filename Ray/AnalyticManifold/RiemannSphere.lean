@@ -59,7 +59,7 @@ theorem map_rec {A B : Sort*} (g : A → B) {f : ℂ → A} {i : A} {z : 𝕊} :
 
 -- ∞ is not 0 or finite
 theorem inf_ne_coe {z : ℂ} : (∞ : 𝕊) ≠ ↑z := by
-  simp only [Ne.def, OnePoint.infty_ne_coe, not_false_iff]
+  simp only [Ne, OnePoint.infty_ne_coe, not_false_iff]
 theorem inf_ne_zero : (∞ : 𝕊) ≠ (0 : 𝕊) := by
   have e : (0 : 𝕊) = ((0 : ℂ) : 𝕊) := rfl; rw [e]; exact inf_ne_coe
 theorem coe_ne_inf {z : ℂ} : (z : 𝕊) ≠ ∞ := inf_ne_coe.symm
@@ -115,7 +115,7 @@ theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
   · simp only [inv_inf, toComplex_zero, toComplex_inf, inv_zero', inv_zero, eq_self_iff_true]
   · by_cases z0 : z = 0
     · simp only [z0, coe_zero, inv_zero', toComplex_inf, toComplex_zero, inv_zero]
-    · simp only [z0, inv_coe, Ne.def, not_false_iff, toComplex_coe]
+    · simp only [z0, inv_coe, Ne, not_false_iff, toComplex_coe]
 
 /-- `coe` tends to `∞` `atInf` -/
 theorem coe_tendsto_inf : Tendsto (fun z : ℂ ↦ (z : 𝕊)) atInf (𝓝 ∞) := by
@@ -161,7 +161,7 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
           eq_self_iff_true, not_true, IsEmpty.forall_iff]
     · have e : ∀ᶠ w : ℂ in 𝓝 z, (if w = 0 then ∞ else ↑w⁻¹ : 𝕊) = ↑w⁻¹ := by
         refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
-        simp only [Ne.def, id.def] at w0; simp only [w0, if_false]
+        simp only [Ne, id_eq] at w0; simp only [w0, if_false]
       simp only [coe_eq_zero, continuousAt_congr e]
       exact continuous_coe.continuousAt.comp (tendsto_inv₀ z0)
 instance : ContinuousInv 𝕊 := ⟨continuous_inv⟩
@@ -369,7 +369,7 @@ theorem prod_mem_inf_of_mem_atInf {s : Set (X × ℂ)} {x : X} (f : s ∈ (𝓝 
 theorem holomorphic_coe : Holomorphic I I (fun z : ℂ ↦ (z : 𝕊)) := by
   rw [holomorphic_iff]; use continuous_coe; intro z
   simp only [extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_symm, PartialEquiv.refl_coe,
-    Function.comp_id, id.def, Function.comp, PartialEquiv.invFun_as_coe]
+    Function.comp_id, id_eq, Function.comp, PartialEquiv.invFun_as_coe]
   rw [← PartialEquiv.invFun_as_coe]; simp only [coePartialEquiv, toComplex_coe]; apply analyticAt_id
 
 /-- `OnePoint.toComplex : 𝕊 → ℂ` is holomorphic except at `∞` -/
@@ -478,7 +478,7 @@ theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, 
     have e : (fun z ↦ extChartAt I y (if z = 0 then y else f z⁻¹)) =ᶠ[𝓝 z]
         fun z ↦ extChartAt I y (f z⁻¹) := by
       refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
-      simp only [Ne.def, id.def] at w0; simp only [w0, if_false]
+      simp only [Ne, id_eq] at w0; simp only [w0, if_false]
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
     apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
     refine (HolomorphicAt.extChartAt ?_).comp ?_; exact m
@@ -576,11 +576,13 @@ theorem holomorphicLift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOn ℂ (uncurry
     (fi : ∀ x, Tendsto (uncurry f) ((𝓝 x).prod atInf) atInf) :
     Holomorphic II I (uncurry (lift' f ∞)) := by
   apply osgoodManifold (continuous_lift' fa.continuous fi)
-  · intro x z; induction z using OnePoint.rec
+  · intro x z
+    induction z using OnePoint.rec
     · simp only [uncurry, lift_inf']; exact holomorphicAt_const
     · exact (holomorphic_coe _).comp ((fa _ (mem_univ ⟨_,_⟩)).along_fst.holomorphicAt _ _)
-  · intro x z; refine holomorphic_lift (fun _ _ ↦ (fa _ (mem_univ ⟨_,_⟩)).along_snd) ?_ z
-    exact (fi x).comp (tendsto_const_nhds.prod_mk Filter.tendsto_id)
+  · intro x z
+    exact holomorphic_lift (fun _ _ ↦ (fa _ (mem_univ ⟨_,_⟩)).along_snd)
+      ((fi x).comp (tendsto_const_nhds.prod_mk Filter.tendsto_id)) z
 
 /-- `𝕊` is path connected -/
 instance : PathConnectedSpace 𝕊 := by

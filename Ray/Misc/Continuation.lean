@@ -135,10 +135,10 @@ theorem Convex.inter_ball (c : Convex ℝ s) (x0 x1 : closure s) {r0 r1 : ℝ} (
     intro x a b ap bp; have rnz := (add_pos ap bp).ne'
     calc (a / (a + b)) • x - x
       _ = (a / (a + b) - (a + b) / (a + b)) • x := by simp only [one_smul, sub_smul, div_self rnz]
-      _ = -((b / (a + b)) • x) := by rw [← sub_div, sub_add_cancel', neg_div, neg_smul]
+      _ = -((b / (a + b)) • x) := by rw [← sub_div, sub_add_cancel_left, neg_div, neg_smul]
   have le : ∀ {a : ℝ}, 0 < a → a / (r0 + r1) * ‖x1 - x0‖ < a := by
     intro a ap; apply lt_of_lt_of_le (mul_lt_mul_of_pos_left x01 (div_pos ap (add_pos r0p r1p)))
-    rw [div_mul_cancel _ (add_pos r0p r1p).ne']
+    rw [div_mul_cancel₀ _ (add_pos r0p r1p).ne']
   have e : ∀ᶠ p : E × E in 𝓝 (x0, x1),
       (r1 / (r0 + r1)) • p.1 + (r0 / (r0 + r1)) • p.2 ∈ ball x0 r0 ∩ ball x1 r1 := by
     refine ContinuousAt.eventually_mem ?_ ((isOpen_ball.inter isOpen_ball).mem_nhds ?_)

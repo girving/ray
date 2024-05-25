@@ -28,10 +28,6 @@ open Metric (ball closedBall sphere)
 open scoped Classical Real NNReal ENNReal Topology
 noncomputable section
 
-/-- The infinite product of `f n` converges absolutely to `g` (analogous to `HasSum`) -/
-def HasProd (f : ℕ → ℂ) (g : ℂ) :=
-  Filter.Tendsto (fun N : Finset ℕ ↦ N.prod fun n ↦ f n) atTop (𝓝 g)
-
 /-- For all z, `Πₙ f n z` converges absolutely to `g z` (analogous to `HasSumOn`) -/
 def HasProdOn (f : ℕ → ℂ → ℂ) (g : ℂ → ℂ) (s : Set ℂ) :=
   ∀ z, z ∈ s → HasProd (fun n ↦ f n z) (g z)
@@ -41,40 +37,19 @@ def ProdExists (f : ℕ → ℂ) : Prop :=
   ∃ g, HasProd f g
 
 /-- The limit of an infinite product if it exists, or `0` -/
-noncomputable def tprod (f : ℕ → ℂ) :=
-  if h : ProdExists f then Classical.choose h else 0
-
-/-- The limit of an infinite product if it exists, or `0` -/
 noncomputable def tprodOn (f : ℕ → ℂ → ℂ) := fun z ↦ tprod fun n ↦ f n z
 
 /-- The limit of a parameterized infinite product if it exists, or `0` -/
 def ProdExistsOn (f : ℕ → ℂ → ℂ) (s : Set ℂ) :=
   ∀ z, z ∈ s → ProdExists fun n ↦ f n z
 
-/-- Products are unique -/
-theorem HasProd.unique {f : ℕ → ℂ} {a b : ℂ} : HasProd f a → HasProd f b → a = b :=
-  tendsto_nhds_unique
-
 /-- If a product has a particular limit, it has some limit -/
 theorem HasProd.prodExists {f : ℕ → ℂ} {g : ℂ} (h : HasProd f g) : ProdExists f :=
   ⟨g, h⟩
 
-/-- `tprod` is the product limit if it exists -/
-theorem HasProd.tprod_eq {f : ℕ → ℂ} {g : ℂ} : HasProd f g → tprod f = g := by
-  intro h; rw [tprod]; simp only [h.prodExists, dif_pos]
-  exact (Classical.choose_spec h.prodExists).unique h
-
 /-- `tprodOn` is the product on `s` if it exists on `s` -/
 theorem HasProdOn.tprodOn_eq {f : ℕ → ℂ → ℂ} {g : ℂ → ℂ} {s : Set ℂ} :
     HasProdOn f g s → ∀ z, z ∈ s → tprodOn f z = g z := fun h z zs ↦ (h z zs).tprod_eq
-
-/-- The product of ones is one -/
-theorem prod_ones : HasProd (fun _ ↦ (1 : ℂ)) 1 := by
-  simp only [HasProd, Finset.prod_const_one, tendsto_const_nhds_iff]
-
-/-- The product of ones is one (`tprod` version) -/
-theorem prod_ones' : (tprod fun _ ↦ (1 : ℂ)) = 1 :=
-  HasProd.tprod_eq prod_ones
 
 /-- Analytic products that converge exponentially converge to analytic functions.
     For now, we require the constant to be `≤ 1/2` so that we can take logs without
@@ -108,7 +83,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
       _ = 2 * c * a ^ n := by ring
       _ = c2 * a ^ n := rfl
   rcases fast_series_converge o a0 a1 hl hfl with ⟨gl, gla, us⟩
-  set g := fun z ↦ exp (gl z)
+  generalize hg : (fun z ↦ exp (gl z)) = g
   use g; refine ⟨?_, ?_, ?_⟩
   · intro z zs
     specialize us z zs; simp at us
@@ -118,9 +93,9 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
     have expsum0 : (exp ∘ fun N : Finset ℕ ↦ N.sum fun n ↦ fl n z) = fun N : Finset ℕ ↦
         N.prod fun n ↦ f n z := by
       apply funext; intro N; simp; rw [Complex.exp_sum]; simp_rw [expfl _ z zs]
-    rw [expsum0] at comp; assumption
-  · exact fun z zs ↦ AnalyticAt.exp.comp (gla z zs)
-  · simp only [Complex.exp_ne_zero, Ne.def, not_false_iff, imp_true_iff]
+    rw [expsum0] at comp; rw [← hg]; assumption
+  · rw [← hg]; exact fun z zs ↦ AnalyticAt.exp.comp (gla z zs)
+  · simp only [Complex.exp_ne_zero, Ne, not_false_iff, imp_true_iff, ← hg]
 
 /-- Same as above, but converge to `tprodOn` -/
 theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
@@ -188,7 +163,4 @@ theorem product_head_zero {f : ℕ → ℂ} (f0 : f 0 = 0) : HasProd f 0 := by
 /-- Separate out head and tail in a product -/
 theorem product_split {f : ℕ → ℂ} (h : ProdExists f) : tprod f = f 0 * tprod fun n ↦ f (n + 1) := by
   by_cases f0 : f 0 = 0; · rw [f0, (product_head_zero f0).tprod_eq]; simp
-  rw [product_drop' f0 h]; field_simp; exact mul_comm _ _
-
-/-- The zero product -/
-theorem HasProd.zero : HasProd (fun _ ↦ 0) 0 := by apply product_head_zero; rfl
+  rw [product_drop' f0 h]; field_simp

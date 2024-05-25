@@ -37,16 +37,16 @@ theorem exist_root_of_unity {d : ℕ} (d2 : 2 ≤ d) : ∃ a : ℂ, a ≠ 1 ∧ 
   set n : ℕ+ := ⟨d, lt_of_lt_of_le (by norm_num) d2⟩
   have two : Nontrivial (rootsOfUnity n ℂ) := by
     rw [← Fintype.one_lt_card_iff_nontrivial, Complex.card_rootsOfUnity]
-    simp only [PNat.mk_coe]; exact lt_of_lt_of_le (by norm_num) d2
+    simp only [PNat.mk_coe, n]; exact lt_of_lt_of_le (by norm_num) d2
   rcases two with ⟨⟨a, am⟩, ⟨b, bm⟩, ab⟩
-  simp only [Ne.def, Subtype.mk_eq_mk, mem_rootsOfUnity, PNat.mk_coe] at am bm ab
+  simp only [Ne, Subtype.mk_eq_mk, mem_rootsOfUnity, PNat.mk_coe] at am bm ab
   by_cases a1 : a = 1
   · use b; rw [a1] at ab; constructor
     · simp only [ne_eq, Units.val_eq_one, Ne.symm ab, not_false_eq_true]
-    · rw [← Units.val_pow_eq_pow_val, bm, Units.val_one]
+    · simp only [PNat.mk_coe, n] at bm; rw [← Units.val_pow_eq_pow_val, bm, Units.val_one]
   · use a; constructor
     · simp only [ne_eq, Units.val_eq_one, a1, not_false_eq_true]
-    · rw [← Units.val_pow_eq_pow_val, am, Units.val_one]
+    · simp only [PNat.mk_coe, n] at am; rw [← Units.val_pow_eq_pow_val, am, Units.val_one]
 
 /-- Case `c = 0, f 0 = 0`, when `f` has a monic, superattracting fixpoint at 0.  Every
     nearby point is achieved at least twice.  We operationalize this statement via a
@@ -66,7 +66,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero
     rw [(Filter.EventuallyEq.symm ib).mfderiv_eq] at d0
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
-    simp only [Ne.def, mderiv_comp_eq_zero_iff, nc, or_false_iff] at d0
+    simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false_iff] at d0
     rw [bottcherNear_zero] at d0; exact d0
     rw [bottcherNear_zero]; exact ia.mdifferentiableAt
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
@@ -93,12 +93,12 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     refine ib.mp (bi.mp ((t1.eventually ib).mp
       ((t0.eventually bi).mp ((t2.eventually ib).mp (m0.mp (m1.mp ?_))))))
     refine eventually_of_forall fun z m1 m0 t2 t0 t1 _ ib tp z0 ↦ ⟨?_, ?_⟩
-    · contrapose tp; simp only [id, Prod.fst, Prod.snd, not_not, not_imp] at tp ⊢
+    · contrapose tp; simp only [ne_eq, Decidable.not_not, Classical.not_imp] at tp ⊢
       rw [ib]; use tp
       contrapose a1; simp only [not_not] at a1 ⊢
       have b0 := bottcherNear_ne_zero s m1 z0
       calc a
-        _ = a * bottcherNear f d z / bottcherNear f d z := by rw [mul_div_cancel _ b0]
+        _ = a * bottcherNear f d z / bottcherNear f d z := by field_simp [b0]
         _ = bottcherNear f d z / bottcherNear f d z := by rw [a1]
         _ = 1 := div_self b0
     · rw [← t1, bottcherNear_eqn s m0, t0, mul_pow, ad, one_mul, ← bottcherNear_eqn s m1, t2]
@@ -109,13 +109,13 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     (f0 : f 0 = 0) :
     ∃ g : ℂ → ℂ, AnalyticAt ℂ g 0 ∧ g 0 = 0 ∧ ∀ᶠ z in 𝓝[{0}ᶜ] 0, g z ≠ z ∧ f (g z) = f z := by
   by_cases o0 : orderAt f 0 = 0
-  · simp only [orderAt_eq_zero_iff fa, f0, Ne.def, eq_self_iff_true, not_true, or_false_iff] at o0
+  · simp only [orderAt_eq_zero_iff fa, f0, Ne, eq_self_iff_true, not_true, or_false_iff] at o0
     use fun z ↦ -z, (analyticAt_id _ _).neg, neg_zero; rw [eventually_nhdsWithin_iff]
     have e0 : ∀ᶠ z in 𝓝 0, f (-z) = 0 := by
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
     refine o0.mp (e0.mp (eventually_of_forall fun z f0' f0 z0 ↦ ?_))
     simp only [mem_compl_singleton_iff] at z0; rw [Pi.zero_apply] at f0
-    rw [f0, f0', eq_self_iff_true, and_true_iff, Ne.def, neg_eq_self_iff]; exact z0
+    rw [f0, f0', eq_self_iff_true, and_true_iff, Ne, neg_eq_self_iff]; exact z0
   have o1 : orderAt f 0 ≠ 1 := by
     have d := df.deriv; contrapose d; simp only [not_not] at d
     exact deriv_ne_zero_of_orderAt_eq_one d
@@ -164,7 +164,7 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
     simp only [mem_compl_singleton_iff, sub_ne_zero]
     intro z h zc; rcases h zc with ⟨gz, ff⟩; constructor
     contrapose gz; simp only [not_not] at gz ⊢; nth_rw 2 [← gz]; ring
-    simp only [sub_left_inj, sub_add_cancel] at ff; exact ff
+    simp only [sub_left_inj, sub_add_cancel, f'] at ff; exact ff
 
 /-- If `f' z = 0`, then every value near `f z` is achieved at least twice (manifold version).
     We operationalize this statement via a nontrivial function `g : S → T` s.t. `f (g w) = f w`

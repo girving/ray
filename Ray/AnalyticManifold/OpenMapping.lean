@@ -54,7 +54,7 @@ theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
   simp only [Filter.not_frequently, not_not] at ef
   simp only [not_forall, not_le]
   have zrs : z + r ∈ sphere z r := by
-    simp only [mem_sphere, Complex.dist_eq, add_sub_cancel', Complex.abs_ofReal, abs_of_pos rp]
+    simp only [mem_sphere, Complex.dist_eq, add_sub_cancel_left, Complex.abs_ofReal, abs_of_pos rp]
   use z + r, zrs
   simp only [fh.const_of_locally_const' zs (convex_closedBall z r).isPreconnected ef (z + r)
       (Metric.sphere_subset_closedBall zrs),
@@ -123,7 +123,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
   have er : ∃ r, 0 < r ∧ closedBall (c, z) r ⊆ s ∧ f c z ∉ f c '' sphere z r := by
     have h := n.eventually_ne; contrapose h
     simp only [not_exists, Filter.not_frequently, not_not, not_and, not_exists] at h
-    simp only [Filter.not_eventually, not_imp, not_not, Filter.eventually_iff,
+    simp only [Filter.not_eventually, _root_.not_imp, not_not, Filter.eventually_iff,
       Metric.mem_nhds_iff, not_exists, not_subset, mem_setOf, not_and]
     intro r rp; specialize h (min (e/2) (r/2)) ?_ ?_
     · bound
@@ -145,9 +145,11 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
     use Metric.mem_closedBall_self rp.le, Metric.sphere_subset_closedBall xs
   rcases (isCompact_sphere _ _).exists_isMinOn (NormedSpace.sphere_nonempty.mpr rp.le) fc with
     ⟨x, xs, xm⟩
-  set e := ‖f c x - f c z‖
+  generalize he : ‖f c x - f c z‖ = e
   have ep : 0 < e := by
-    contrapose fr; simp only [norm_pos_iff, sub_ne_zero, not_not, mem_image] at fr ⊢; use x, xs, fr
+    contrapose fr
+    simp only [norm_pos_iff, sub_ne_zero, not_not, mem_image, ← he] at fr ⊢
+    use x, xs, fr
   rcases Metric.uniformContinuousOn_iff.mp
       ((isCompact_closedBall _ _).uniformContinuousOn_of_continuous (fa.continuousOn.mono rs))
       (e / 4) (by linarith) with
@@ -168,7 +170,7 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
       _ = abs (f c w - f c z + (f d w - f c w) + (f c z - f d z)) := by ring_nf
       _ ≥ abs (f c w - f c z + (f d w - f c w)) - abs (f c z - f d z) := by bound
       _ ≥ abs (f c w - f c z) - abs (f d w - f c w) - abs (f c z - f d z) := by bound
-      _ ≥ e - e / 4 - e / 4 := sub_le_sub (sub_le_sub (xm wr) a1) a2
+      _ ≥ e - e / 4 - e / 4 := by rw [← he] at a1 a2 ⊢; exact sub_le_sub (sub_le_sub (xm wr) a1) a2
       _ = e / 2 := by ring
   -- Apply the partially effective parameterized open mapping theorem
   have ss : ball c (min t r) ×ˢ closedBall z r ⊆ s := by
@@ -202,8 +204,8 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ g (extChartAt I z z) := by rw [← hg]; exact n.holomorphicAt.2
   cases' ga.eventually_constant_or_nhds_le_map_nhds with h h
-  · contrapose h; simp only [Filter.not_eventually]
-    apply n.inCharts.nonconst.mp; simp only [← hg, Ne.def, imp_self, Filter.eventually_true]
+  · contrapose h; clear h; simp only [Filter.not_eventually]
+    apply n.inCharts.nonconst.mp; simp only [← hg, Ne, imp_self, Filter.eventually_true]
   · -- The open mapping theorem for g = c ∘ f ∘ c⁻¹ (with charts c) is
     --   𝓝 (g (c z)) ≤ map g (𝓝 (c z))
     -- We have

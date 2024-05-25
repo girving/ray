@@ -188,7 +188,8 @@ theorem NonemptyInterior.nonempty_interior_of_iUnion_of_closed {A B : Type} [Top
     | none => sᶜ
     | some k => f k
   have hc' : ∀ k, IsClosed (f' k) := by
-    rw [Option.forall]; exact ⟨isOpen_interior.isClosed_compl, fun k ↦ hc k⟩
+    simp only [s, Option.forall, isClosed_compl_iff, isOpen_interior, true_and, f']
+    exact fun k ↦ hc k
   have hU' : (⋃ k, f' k) = Set.univ := by
     apply Set.ext; intro x; refine ⟨fun _ ↦ Set.mem_univ _, ?_⟩; intro _; rw [Set.mem_iUnion]
     by_cases m : x ∈ s
@@ -199,7 +200,8 @@ theorem NonemptyInterior.nonempty_interior_of_iUnion_of_closed {A B : Type} [Top
   rcases Dense.exists_mem_open d isOpen_interior hU with ⟨x, xi, xs⟩
   rcases Set.mem_iUnion.mp xi with ⟨k, xk⟩
   match k with
-  | none => simp only [interior_compl, Set.mem_compl_iff, subset_closure xs, not_true] at xk
+  | none => simp only [s, interior_compl, Set.mem_compl_iff, subset_closure xs,
+      not_true_eq_false, f'] at xk
   | some k => exact ⟨k, Set.nonempty_of_mem xk⟩
 
 /-- Special case of forall_and_distrib -/
@@ -215,7 +217,7 @@ theorem ContinuousOn.isClosed_le {A B : Type} [TopologicalSpace A] [TopologicalS
   set t := {p : B × B | p.fst ≤ p.snd}
   set fg := fun x ↦ (f x, g x)
   have e : {x | f x ≤ g x} = fg ⁻¹' t := by
-    apply Set.ext; intro x; simp only [Set.preimage_setOf_eq]
+    apply Set.ext; intro x; simp only [Set.preimage_setOf_eq, t]
   rw [e]
   exact ContinuousOn.preimage_isClosed_of_isClosed (ContinuousOn.prod fc gc) sc
     OrderClosedTopology.isClosed_le'
@@ -246,11 +248,11 @@ theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0)
     rw [Set.subset_def]; intro z0 z0s; rw [Set.mem_iUnion]
     have z0s' := esub (mem_open_closed z0s)
     rcases (isCompact_closedBall _ _).bddAbove_image (h.on1 z0s').continuousOn.norm with ⟨b, fb⟩
-    simp only [mem_upperBounds, Set.ball_image_iff] at fb
+    simp only [mem_upperBounds, Set.forall_mem_image] at fb
     use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
     refine ⟨mem_open_closed z0s, ?_⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
-    exact _root_.trans (fb z1 z1r) (Nat.le_ceil _)
+    exact _root_.trans (fb z1r) (Nat.le_ceil _)
   rcases NonemptyInterior.nonempty_interior_of_iUnion_of_closed hc hU with ⟨b, bi⟩
   rcases bi with ⟨c0', c0's⟩; use c0'
   rcases mem_interior.mp c0's with ⟨s', s's, so, c0s'⟩
@@ -298,12 +300,12 @@ theorem diam_ball_eq {c : ℂ} {r : ℝ} (rp : r ≥ 0) : Metric.diam (ball c r)
   apply le_of_forall_small_le_add rp'; intro e ep er
   have m : ∀ t : ℝ, |t| ≤ 1 → c + t * (r - e / 2) ∈ ball c r := by
     intro t t1
-    simp only [Complex.dist_eq, Metric.mem_ball, add_sub_cancel', AbsoluteValue.map_mul,
+    simp only [Complex.dist_eq, Metric.mem_ball, add_sub_cancel_left, AbsoluteValue.map_mul,
       Complex.abs_ofReal]
     have re : r - e / 2 ≥ 0 := by linarith [_root_.trans (half_lt_self ep) er]
     calc |t| * abs (↑r - ↑e / 2 : ℂ)
       _ = |t| * abs (↑(r - e / 2) : ℂ) := by
-        simp only [Complex.ofReal_sub, Complex.ofReal_div, Complex.ofReal_bit0, Complex.ofReal_one]
+        simp only [Complex.ofReal_sub, Complex.ofReal_div, Complex.ofReal_one]
         norm_num
       _ = |t| * (r - e / 2) := by rw [Complex.abs_ofReal, abs_of_nonneg re]
       _ ≤ 1 * (r - e / 2) := mul_le_mul_of_nonneg_right t1 re
@@ -316,7 +318,7 @@ theorem diam_ball_eq {c : ℂ} {r : ℝ} (rp : r ≥ 0) : Metric.diam (ball c r)
     have re : 2 * r - e ≥ 0 := by trans r - e; linarith; simp only [sub_nonneg, er.le]
     calc abs (2 * ↑r - ↑e : ℂ)
       _ = abs (↑(2 * r - e) : ℂ) := by
-        simp only [Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_bit0, Complex.ofReal_one]
+        simp only [Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_one]
         norm_num
       _ = 2 * r - e := by rw [Complex.abs_ofReal, abs_of_nonneg re]
   simp only [Complex.dist_eq, Complex.ofReal_one, one_mul, Complex.ofReal_neg, neg_mul, neg_sub,
@@ -400,7 +402,7 @@ theorem Uneven.has_series (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr1
     (z1s : z1 ∈ closedBall c1 r1) :
     HasFPowerSeriesOnBall (fun z0 ↦ f (z0, z1)) (unevenSeries' u s z1) c0 (ENNReal.ofReal s) := by
   set sn := s.toNNReal
-  have sns : s = sn := by simp only [Real.coe_toNNReal', sp.le, max_eq_left]
+  have sns : s = sn := by simp only [Real.coe_toNNReal', sp.le, max_eq_left, sn]
   have snp : sn > 0 := Real.toNNReal_pos.mpr sp
   rw [uneven_is_cauchy]
   rw [sns, ← ENNReal.coe_nnreal_eq]
@@ -439,7 +441,7 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
     · exact Metric.closedBall_subset_ball (by linarith [u.r1p])
   rcases (((isCompact_sphere _ _).prod (isCompact_closedBall _ _)).bddAbove_image
     fc.norm).exists_ge 0 with ⟨b, bp, fb⟩
-  simp only [Set.ball_image_iff] at fb
+  simp only [Set.forall_mem_image] at fb
   use b + 1, (r0 / 2)⁻¹, lt_of_le_of_lt bp (lt_add_one _), inv_pos.mpr (half_pos u.r0p)
   intro n z1 z1s
   have r0hp : r0 / 2 > 0 := by linarith [u.r0p]
@@ -448,8 +450,7 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
   have gc : ContinuousOn g (sphere c0 (r0 / 2)) :=
     ContinuousOn.comp fc (ContinuousOn.prod continuousOn_id continuousOn_const) fun z0 z0s ↦
       Set.mk_mem_prod z0s z1s
-  have gb : ∀ z0, z0 ∈ sphere c0 (r0 / 2) → ‖g z0‖ ≤ b := fun z0 z0s ↦
-    fb (z0, z1) (Set.mk_mem_prod z0s z1s)
+  have gb : ∀ z0, z0 ∈ sphere c0 (r0 / 2) → ‖g z0‖ ≤ b := fun z0 z0s ↦ fb (Set.mk_mem_prod z0s z1s)
   have cb := cauchy1_bound' r0hp b gc gb n; clear bp gc gb
   have e : (2 * π * I : ℂ)⁻¹ • (∮ z0 in C(c0, r0 / 2), (z0 - c0)⁻¹ ^ n • (z0 - c0)⁻¹ • g z0) =
       unevenTerm' u (r0 / 2) z1 n := rfl
@@ -562,7 +563,7 @@ theorem HasFPowerSeriesAt.along0 {f : ℂ × ℂ → E} {c0 c1 : ℂ}
   · intro w0 w0r
     simp_rw [FormalMultilinearSeries.along0, ContinuousMultilinearMap.along0, idZeroLm]
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
-      ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id.def,
+      ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id_eq,
       ContinuousLinearMap.zero_apply]
     have w01r : (w0, (0 : ℂ)) ∈ EMetric.ball (0 : ℂ × ℂ) r := by
       simpa only [Prod.edist_eq, EMetric.mem_ball, Prod.fst_zero, Prod.snd_zero, edist_self,
@@ -604,7 +605,7 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     have sr : s ≤ r := by bound
     have sb : EMetric.ball z1 s ⊆ ball c1 r1 := by
       rw [Set.subset_def]; intro x xs
-      simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal] at xs z1s ⊢
+      simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, s] at xs z1s ⊢
       calc dist x c1
         _ ≤ dist x z1 + dist z1 c1 := by bound
         _ < s' + dist z1 c1 := (add_lt_add_right xs.right _)
@@ -623,8 +624,8 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
           edist_dist, Complex.dist_eq, sub_zero]
         exact lt_of_lt_of_le w1s sr
       convert (hp.changeOrigin wz).hasFPowerSeriesAt.along0
-      · simp only [add_sub_cancel'_right]
-      · simp only [add_sub_cancel'_right, add_zero]
+      · simp only [add_sub_cancel]
+      · simp only [add_sub_cancel, add_zero]
     rw [HasFPowerSeriesAt.eq_formalMultilinearSeries p0 p1]
   rw [analyticAt_congr pu]
   exact (Along0.analyticAt _).comp ta
@@ -747,10 +748,10 @@ theorem unevenSeries_strong_bound' (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s 
     apply ContinuousOn.norm
     exact (unevenSeries_analytic u n).continuousOn.mono (Metric.closedBall_subset_ball sr)
   rcases ((isCompact_closedBall _ _).bddAbove_image gc).exists_ge 0 with ⟨b, bp, gb⟩
-  simp_rw [Set.ball_image_iff, partialSups_le_iff] at gb
+  simp only [Set.forall_mem_image, partialSups_le_iff, g] at gb
   use max 1 b, le_max_of_le_right bp; intro k z zs
   by_cases kn : k ≤ n
-  · specialize gb z zs k kn
+  · specialize gb zs k kn
     calc ‖unevenSeries u z k‖
       _ = s⁻¹ ^ k * (s ^ k * ‖unevenSeries u z k‖) := by ring_nf; field_simp [(pow_pos sp _).ne']
       _ ≤ s⁻¹ ^ k * b := by bound
@@ -782,7 +783,7 @@ theorem uneven_bounded (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s
   have ds' : z.1 - c0 ∈ EMetric.ball (0 : ℂ) (ENNReal.ofReal s) := by rwa [Metric.emetric_ball]
   have hs := (u.has_series sp sr.le z1r).hasSum ds'
   simp only [unevenSeries_eq u sp sr.le z1r,
-    FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel'_right, Prod.mk.eta] at hs
+    FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel, Prod.mk.eta] at hs
   set g := fun n : ℕ ↦ c * (s / t) ^ n
   have gs : HasSum g (c * (1 - s / t)⁻¹) := HasSum.mul_left _
     (hasSum_geometric_of_lt_one (by bound) (by bound))

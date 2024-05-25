@@ -87,7 +87,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
       (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
   induction' n with n h generalizing d o
   · simp only [Nat.zero_eq, zero_mul, add_zero] at lt
-    simp only [Nat.zero_eq, push_colors._eq_1, ↓reduceIte, lt, ↓reduceDite]
+    simp only [Nat.zero_eq, push_colors, ↓reduceIte, lt, ↓reduceDite]
   · simp only [ByteArray.getElem_eq_get!, ByteArray.getElemNat_eq_get!] at h ⊢
     rw [push_colors]
     simp only [Nat.succ_ne_zero, ↓reduceIte, Nat.succ_sub_succ_eq_sub, tsub_zero, dite_eq_ite]
@@ -99,7 +99,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
       by_cases e1 : k = d.size + 1; · simp [e1]
       by_cases e2 : k = d.size + 2; · simp [e2]
       by_cases e3 : k = d.size + 3; · simp [e3]
-      simp only [←Ne.def] at e0 e1 e2 e3
+      simp only [← ne_eq] at e0 e1 e2 e3
       by_cases lt0 : k < d.size
       · have lt1 : k < d.size + 1 := by omega
         have lt2 : k < d.size + 2 := by omega
@@ -110,7 +110,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
         have e0 : o + (1 + (k - (d.size + 4)) / 4) = o + (k - d.size) / 4 := by omega
         have e1 : k - d.size = k - (d.size + 4) + 4 := by omega
         simp only [not_lt.mpr ge, ↓reduceIte, Nat.succ_eq_add_one, e0, e1, lt0, Nat.cast_add,
-          Fin.nat_cast_self, add_zero]
+          Fin.natCast_self, add_zero]
     · simp only [ByteArray.size_push]
       omega
 

@@ -138,7 +138,7 @@ theorem circleIntegral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ} (fi : CircleI
   exact intervalIntegral.integral_sub fci gci
 
 theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
-  simp only [circleMap_sub_center, Ne.def, circleMap_eq_center_iff, NNReal.coe_eq_zero]
+  simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
   intro h; rw [h] at rp; simp only [gt_iff_lt, not_lt_zero'] at rp
 
 theorem cauchy_is_circleIntegrable {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)

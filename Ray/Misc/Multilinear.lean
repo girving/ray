@@ -218,12 +218,12 @@ theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMulCommCla
       have nsk : n.succ ≤ k := Nat.succ_le_iff.mpr nk
       rw [min_eq_right nk.le, min_eq_right nsk, Nat.sub_eq_zero_of_le nk.le,
         Nat.sub_eq_zero_of_le nsk]
-      simp; rw [← smul_assoc, smul_eq_mul, ← pow_succ]
+      simp only [pow_zero, one_smul, ← smul_assoc, smul_eq_mul, Nat.succ_eq_add_one, pow_succ']
     · simp [nk]; simp at nk
       rw [sndCmmap_apply]
       have nsk : k ≤ n.succ := Nat.le_succ_of_le nk
       rw [min_eq_left nk, min_eq_left nsk]
-      rw [smul_comm b _, ← smul_assoc b _ _, smul_eq_mul, ← pow_succ, ← Nat.sub_add_comm nk]
+      rw [smul_comm b _, ← smul_assoc b _ _, smul_eq_mul, ← pow_succ', ← Nat.sub_add_comm nk]
 
 theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
     [NormedSpace 𝕜 E] (n k : ℕ) (x : E) : ‖termCmmap 𝕜 n k x‖ ≤ ‖x‖ := by
@@ -253,7 +253,7 @@ def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype
   toFun f := f x
   map_add' := by simp
   map_smul' := by simp
-  cont := by simp [ContinuousMultilinearMap.continuous_eval_left]
+  cont := by simp [ContinuousMultilinearMap.continuous_eval_const]
 
 /-- Prove `A x = 0` by `x = 0` for a continuous linear map `A` -/
 lemma ContinuousLinearMap.apply_eq_zero_of_eq_zero {𝕜 X Y : Type} [NormedField 𝕜]
@@ -268,13 +268,13 @@ lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [Topological
     (c0 : c ≠ 0) (f0 : f ≠ 0) :
     c.smulRight f ≠ 0 := by
   rcases ContinuousLinearMap.exists_ne_zero c0 with ⟨x,cx⟩
-  simp only [Ne.def, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
+  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
     ContinuousLinearMap.smulRight_apply, smul_eq_zero, not_or]
   use x
 
 /-- `1 ≠ 0`, `ContinuousLinearMap` case -/
 lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A] [AddCommMonoid A]
     [Module R A] [Nontrivial A] : (1 : A →L[R] A) ≠ 0 := by
-  simp only [Ne.def, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
+  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
     ContinuousLinearMap.one_apply]
   apply exists_ne

@@ -58,7 +58,7 @@ lemma Complex.abs_log_one_add_le {z : ℂ} (z1 : abs z < 1) :
   apply intervalIntegral.integral_mono_on zero_le_one ic.norm ir
   intro t ⟨t0,t1⟩
   simp only [norm_div, Complex.norm_eq_abs]
-  apply div_le_div_of_le_left (Complex.abs.nonneg _) (sub_pos.mpr (m1 _ t1)) ?_
+  apply div_le_div_of_nonneg_left (Complex.abs.nonneg _) (sub_pos.mpr (m1 _ t1)) ?_
   calc abs (1 + t * z)
     _ ≥ Complex.abs 1 - abs (t * z) := Complex.abs.le_add _ _
     _ = 1 - t * abs z := by

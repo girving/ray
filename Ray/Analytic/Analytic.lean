@@ -54,7 +54,7 @@ theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f
   · rcases fp with ⟨p, fp⟩; rw [fp.orderAt_unique]; rw [← fp.coeff_zero 1] at f0
     rw [FormalMultilinearSeries.order_eq_zero_iff']; right
     contrapose f0; simp only [not_not] at f0
-    simp only [f0, ContinuousMultilinearMap.zero_apply, Ne.def, eq_self_iff_true, not_true,
+    simp only [f0, ContinuousMultilinearMap.zero_apply, Ne, eq_self_iff_true, not_true,
       not_false_iff]
   · simp [orderAt, fp]
 
@@ -78,7 +78,7 @@ theorem deriv_ne_zero_of_orderAt_eq_one {f : 𝕜 → E} {c : 𝕜} (o : orderAt
     have p0 := FormalMultilinearSeries.apply_order_ne_zero' o0
     rw [o] at p0
     simpa only [fp.deriv, FormalMultilinearSeries.apply_eq_pow_smul_coeff, one_pow, one_smul,
-      FormalMultilinearSeries.coeff_eq_zero, Ne.def]
+      FormalMultilinearSeries.coeff_eq_zero, Ne]
   · simp only [orderAt, fa] at o; rw [dif_neg] at o; norm_num at o; exact not_false
 
 /-- The leading nonzero coefficient of `f`'s power series -/
@@ -149,7 +149,7 @@ def FormalMultilinearSeries.unshiftIter (p : FormalMultilinearSeries 𝕜 𝕜 E
 lemma FormalMultilinearSeries.unshiftIter_coeff (p : FormalMultilinearSeries 𝕜 𝕜 E) (n : ℕ)
     (i : ℕ) : (p.unshiftIter n).coeff i = if i < n then 0 else p.coeff (i - n) := by
   revert i; induction' n with n h
-  · simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_zero, id.def, not_lt_zero',
+  · simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_zero, id_eq, not_lt_zero',
       tsub_zero, if_false, eq_self_iff_true, forall_const, Nat.zero_eq]
   · simp_rw [FormalMultilinearSeries.unshiftIter] at h
     simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_succ', Function.comp]
@@ -175,7 +175,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
     refine le_trans ?_ (le_iSup₂ r (k * ↑r⁻¹))
     have h := fun n ↦ mul_le_mul_of_nonneg_right (h (n + 1)) (NNReal.coe_nonneg r⁻¹)
     by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero_eq_zero, le_zero_iff]
-    simp only [pow_succ', ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
+    simp only [pow_succ, ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
       mul_inv_cancel (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
     simp only [NNReal.coe_inv]
     convert le_iSup _ h; rfl
@@ -187,7 +187,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
           FormalMultilinearSeries.norm_apply_eq_norm_coef, pow_zero, mul_one, le_max_iff, le_refl,
           true_or_iff]
       · simp only [FormalMultilinearSeries.norm_apply_eq_norm_coef] at h
-        simp only [FormalMultilinearSeries.unshift_coeff_succ, pow_succ', ← mul_assoc,
+        simp only [FormalMultilinearSeries.unshift_coeff_succ, pow_succ, ← mul_assoc,
           FormalMultilinearSeries.norm_apply_eq_norm_coef, le_max_iff]
         right; exact mul_le_mul_of_nonneg_right (h n) (NNReal.coe_nonneg _)
     convert le_iSup _ h'; rfl
@@ -199,13 +199,13 @@ theorem HasFPowerSeriesOnBall.unshift {f : 𝕜 → E} {p : FormalMultilinearSer
   { r_le := le_trans fp.r_le (ge_of_eq p.unshift_radius')
     r_pos := fp.r_pos
     hasSum := by
-      intro y yr; simp only [FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel']
+      intro y yr; simp only [FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel_left]
       generalize hs : (fun n ↦ y ^ n • (p.unshift' 0).coeff n) = s
       have s0 : y • f (c + y) = y • f (c + y) + (Finset.range 1).sum s := by
         simp only [← hs, p.unshift_coeff_zero, Finset.range_one, Finset.sum_singleton, smul_zero,
           add_zero]
       rw [s0, ← hasSum_nat_add_iff, ← hs]
-      simp only [p.unshift_coeff_succ, pow_succ, ← smul_smul]; apply HasSum.const_smul
+      simp only [p.unshift_coeff_succ, pow_succ', ← smul_smul]; apply HasSum.const_smul
       have h := fp.hasSum yr; simp only [FormalMultilinearSeries.apply_eq_pow_smul_coeff] at h
       exact h }
 
@@ -218,7 +218,7 @@ theorem HasFPowerSeriesAt.unshiftIter {f : 𝕜 → E} {p : FormalMultilinearSer
     {n : ℕ} (fp : HasFPowerSeriesAt f p c) :
     HasFPowerSeriesAt (fun z ↦ (z - c) ^ n • f z) (p.unshiftIter n) c := by
   induction' n with n h; · simp only [Nat.zero_eq, pow_zero, one_smul]; exact fp
-  · simp only [pow_succ, ← smul_smul, FormalMultilinearSeries.unshiftIter, Function.iterate_succ',
+  · simp only [pow_succ', ← smul_smul, FormalMultilinearSeries.unshiftIter, Function.iterate_succ',
       Function.comp]
     exact h.unshift
 
@@ -247,8 +247,8 @@ theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : Analyt
   rw [FormalMultilinearSeries.order_eq_find pe, FormalMultilinearSeries.order_eq_find pne]
   rw [Nat.find_eq_iff]; constructor
   · have s := Nat.find_spec pe
-    simp only [← p.coeff_eq_zero, Ne.def] at s
-    simp only [p.unshiftIter_coeff, ←FormalMultilinearSeries.coeff_eq_zero, s, Ne.def,
+    simp only [← p.coeff_eq_zero, Ne] at s
+    simp only [p.unshiftIter_coeff, ←FormalMultilinearSeries.coeff_eq_zero, s, Ne,
       add_lt_iff_neg_left, not_lt_zero', add_tsub_cancel_left, if_false, not_false_iff, true_and,
       not_not]
   · intro m mp; simp [← FormalMultilinearSeries.coeff_eq_zero, p.unshiftIter_coeff]; intro mn
@@ -263,7 +263,7 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
   simp [leadingCoeff, fa.monomial_mul_orderAt fnz n]; generalize orderAt f c = a
   induction' n with n h
   · simp only [zero_add, pow_zero, one_smul, Nat.zero_eq]
-  · simp [pow_succ, ← smul_smul, Nat.succ_add]
+  · simp [pow_succ', ← smul_smul, Nat.succ_add]
     generalize hg : (fun z ↦ (z - c) ^ n • f z) = g
     have hg' : ∀ z, (z - c) ^ n • f z = g z := by
       rw [←hg]; simp only [eq_self_iff_true, forall_const]
@@ -334,7 +334,7 @@ theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
   by_cases fa : AnalyticAt 𝕜 f c
   · rcases fa with ⟨p, fp⟩
     have e : ∀ n, a • p n ≠ 0 ↔ p n ≠ 0 := fun n ↦ by
-      simp only [a0, Ne.def, smul_eq_zero, false_or_iff]
+      simp only [a0, Ne, smul_eq_zero, false_or_iff]
     simp only [fp.orderAt_unique, fp.const_smul.orderAt_unique, FormalMultilinearSeries.order, e]
   · have ga := fa; rw [← analyticAt_iff_const_smul a0] at ga
     simp only [orderAt, fa, ga]; rw [dif_neg, dif_neg]
@@ -349,18 +349,6 @@ theorem leadingCoeff.zero {c : 𝕜} : leadingCoeff (fun _ : 𝕜 ↦ (0 : E)) c
   simp only [Function.swap, dslope, deriv_const]
   funext; simp only [slope_fun_def, vsub_eq_sub, sub_zero, smul_zero, Function.update_apply]
   split_ifs; rfl; rfl
-
-/-- `deriv` scales linearly without assuming differentiability -/
-theorem deriv_const_smul' {f : 𝕜 → E} {c : 𝕜} (a : 𝕜) :
-    deriv (fun x ↦ a • f x) c = a • deriv f c := by
-  by_cases a0 : a = 0; simp only [a0, zero_smul, deriv_const]
-  by_cases d : DifferentiableAt 𝕜 f c; exact deriv_const_smul _ d
-  have ad : ¬DifferentiableAt 𝕜 (fun x ↦ a • f x) c := by
-    contrapose d; simp only [not_not] at d ⊢
-    have e : f = fun z ↦ a⁻¹ • a • f z := by
-      funext; simp only [←smul_assoc, smul_eq_mul, inv_mul_cancel a0, one_smul]
-    rw [e]; exact d.const_smul _
-  simp only [deriv_zero_of_not_differentiableAt d, deriv_zero_of_not_differentiableAt ad, smul_zero]
 
 /-- `leadingCoeff` has linear scaling -/
 theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :

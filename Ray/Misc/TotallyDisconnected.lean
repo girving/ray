@@ -61,10 +61,10 @@ theorem not_countable_Ioo {a b : ℝ} (h : a < b) : ¬(Ioo a b).Countable := by
 /-- Countable metric spaces are totally disconnected -/
 theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable X] :
     TotallyDisconnectedSpace X := by
-  set R := {r | ∃ x y : X, dist x y = r}
+  generalize hR : {r | ∃ x y : X, dist x y = r} = R
   have rc : R.Countable := by
     have e : R = range (uncurry dist) := by
-      apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry]; rfl
+      apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry, ← hR]; rfl
     rw [e]; exact countable_range _
   refine ⟨?_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
   rw [← dist_pos] at xy
@@ -72,7 +72,7 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
   simp only [not_subset, mem_Ioo] at h; rcases h with ⟨r, ⟨rp, rxy⟩, rr⟩
   have e : ball x r = closedBall x r := by
     apply Set.ext; intro z; simp only [mem_ball, mem_closedBall]
-    simp only [mem_setOf, not_exists] at rr; simp only [Ne.le_iff_lt (rr z x)]
+    simp only [mem_setOf, not_exists, ← hR] at rr; simp only [Ne.le_iff_lt (rr z x)]
   refine ⟨ball x r, ⟨?_, isOpen_ball⟩, ?_⟩
   rw [e]; exact isClosed_ball; use mem_ball_self rp
   simp only [mem_ball, not_lt]; rw [dist_comm]; exact rxy.le

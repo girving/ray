@@ -192,7 +192,7 @@ theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : 
     (fc : ContinuousOn (uncurry f) (s ×ˢ sphere c1 r)) :
     ContinuousOn (fun z0 ↦ ∮ z1 in C(c1, r), f z0 z1) s := by
   rcases (IsCompact.prod cs (isCompact_sphere _ _)).bddAbove_image fc.norm with ⟨b, bh⟩
-  simp only [mem_upperBounds, Set.ball_image_iff] at bh
+  simp only [mem_upperBounds, Set.forall_mem_image] at bh
   intro z1 z1s
   have fb : ∀ᶠ x : ℂ in 𝓝[s] z1, ∀ᵐ t : ℝ, t ∈ Set.uIoc 0 (2 * π) →
       ‖deriv (circleMap c1 r) t • (fun z1 : ℂ ↦ f x z1) (circleMap c1 r t)‖ ≤ r * b := by
@@ -200,7 +200,7 @@ theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : 
     apply MeasureTheory.ae_of_all _; intro t _; simp only [deriv_circleMap]
     rw [norm_smul, Complex.norm_eq_abs]
     simp only [map_mul, abs_circleMap_zero, Complex.abs_I, mul_one]
-    have bx := bh (x, circleMap c1 r t) (Set.mk_mem_prod xs (circleMap_mem_sphere c1
+    have bx := @bh (x, circleMap c1 r t) (Set.mk_mem_prod xs (circleMap_mem_sphere c1
       (by linarith) t))
     simp only [uncurry] at bx
     calc |r| * ‖f x (circleMap c1 r t)‖ ≤ |r| * b := by bound
@@ -577,7 +577,7 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedA
   have rs : closedBall c (r / 2) ⊆ s := le_trans (Metric.closedBall_subset_ball (by linarith)) rs
   rcases ((isCompact_closedBall _ _).bddAbove_image (ContinuousOn.mono fc rs).norm).exists_ge 0
     with ⟨b, bp, bh⟩
-  simp only [Set.ball_image_iff] at bh
+  simp only [Set.forall_mem_image] at bh
   have h : Separate f c.fst c.snd (r / 2) b s :=
     { rp := by linarith
       so := o
@@ -586,7 +586,7 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedA
       fa0 := fa0 _ _
       fa1 := fa1 _ _
       bp := bp
-      fb := fun {z0 z1} z0m z1m ↦ bh (z0, z1)
+      fb := fun {z0 z1} z0m z1m ↦ @bh (z0, z1)
         (spheres_subset_closedBall (Set.mk_mem_prod z0m z1m)) }
   have a := (osgood_h h).analyticAt
   simpa only [Prod.mk.eta] using a

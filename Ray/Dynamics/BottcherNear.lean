@@ -94,8 +94,9 @@ theorem SuperAt.f0 (s : SuperAt f d) : f 0 = 0 :=
 
 /-- `f = z^d g` -/
 theorem SuperAt.fg (s : SuperAt f d) (z : ℂ) : f z = z ^ d * g f d z := by
-  by_cases z0 : z = 0; · simp only [z0, zero_pow s.d0, s.f0, MulZeroClass.zero_mul]
-  · simp only [g, z0, if_false]; field_simp [z0]; rw [mul_comm]
+  by_cases z0 : z = 0
+  · simp only [z0, zero_pow s.d0, s.f0, MulZeroClass.zero_mul]
+  · simp only [g, z0, if_false]; field_simp [z0]
 
 /-- `g` is analytic where `f` is -/
 theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
@@ -165,13 +166,13 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
       intro z zs; simp only [mem_ball_zero_iff, Complex.norm_eq_abs] at zs gs ⊢
       by_cases z0 : z = 0; · simp only [z0, s.f0, rp, AbsoluteValue.map_zero]
       calc abs (f z)
-        _ = abs (f z / z ^ d * z ^ d) := by rw [div_mul_cancel _ (pow_ne_zero d z0)]
+        _ = abs (f z / z ^ d * z ^ d) := by rw [div_mul_cancel₀ _ (pow_ne_zero d z0)]
         _ = abs (f z / z ^ d - 1 + 1) * abs z ^ d := by
           simp only [AbsoluteValue.map_mul, Complex.abs_pow, sub_add_cancel]
         _ ≤ (abs (f z / z ^ d - 1) + abs (1 : ℂ)) * r ^ d := by bound
         _ ≤ (1 / 4 + abs (1 : ℂ)) * r ^ d := by bound [gs z0 zs]
         _ ≤ 5 / 4 * r ^ (d - 1) * r := by
-          rw [mul_assoc, ← pow_succ', Nat.sub_add_cancel (le_trans one_le_two s.d2)]; norm_num
+          rw [mul_assoc, ← pow_succ, Nat.sub_add_cancel (le_trans one_le_two s.d2)]; norm_num
         _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (d - 1) * r := by bound
         _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (2 - 1) * r := by bound
         _ = 5 / 8 * r := by norm_num
@@ -206,7 +207,7 @@ theorem SuperNear.g_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : g f
 
 /-- `f` is zero only at zero -/
 theorem SuperNear.f_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) (z0 : z ≠ 0) : f z ≠ 0 := by
-  simp only [s.fg, mul_ne_zero (pow_ne_zero _ z0) (s.g_ne_zero zt), Ne.def, not_false_iff]
+  simp only [s.fg, mul_ne_zero (pow_ne_zero _ z0) (s.g_ne_zero zt), Ne, not_false_iff]
 
 /-!
 ## The infinite product
@@ -243,8 +244,8 @@ def bottcherNear (f : ℂ → ℂ) (d : ℕ) (z : ℂ) :=
     `             = term (n-1) (f z)` -/
 theorem term_eqn (s : SuperNear f d t) : ∀ n, term f d n (f z) = term f d (n + 1) z ^ d := by
   intro n
-  simp only [term, ← Function.iterate_succ_apply, pow_mul_nat, div_mul, pow_succ _ (n + 1),
-    mul_div_cancel_left _ s.dz, Nat.succ_eq_add_one, Nat.cast_mul]
+  simp only [term, ← Function.iterate_succ_apply, pow_mul_nat, div_mul, pow_succ' _ (n + 1),
+    mul_div_cancel_left₀ _ s.dz, Nat.succ_eq_add_one, Nat.cast_mul]
 
 /-- The analogue of `term_eqn (-1)`:
 
@@ -252,10 +253,10 @@ theorem term_eqn (s : SuperNear f d t) : ∀ n, term f d n (f z) = term f d (n +
     `                 = z^d * g z`
     `                 = f z` -/
 theorem term_base (s : SuperNear f d t) : f z = (z * term f d 0 z) ^ d := by
-  rw [term]; simp only [Function.iterate_zero, id.def, pow_one, one_div]
+  rw [term]; simp only [Function.iterate_zero, id, pow_one, one_div]
   rw [mul_pow, pow_mul_nat, zero_add, pow_one, inv_mul_cancel _]
   · rw [s.fg]; simp only [Complex.cpow_one]
-  · simp only [Ne.def, Nat.cast_eq_zero]
+  · simp only [Ne, Nat.cast_eq_zero]
     exact (gt_of_ge_of_gt s.d2 (by norm_num)).ne'
 
 /-- `abs (f z) = abs (z^d * g z) ≤ 5/4 * (abs z)^d ≤ 5/8 * abs z` -/
@@ -293,14 +294,14 @@ theorem iterates_converge (s : SuperNear f d t) :
     ∀ n, z ∈ t → abs (f^[n] z) ≤ (5/8 : ℝ) ^ n * abs z := by
   intro n zt
   induction' n with n nh
-  · simp only [Function.iterate_zero, id.def, pow_zero, one_mul, Nat.cast_one, le_refl]
+  · simp only [Function.iterate_zero, id, pow_zero, one_mul, Nat.cast_one, le_refl]
   · rw [Function.iterate_succ']
     trans (5/8 : ℝ) * abs (f^[n] z)
     · exact f_converges s (s.mapsTo n zt)
     · calc (5/8 : ℝ) * abs (f^[n] z)
         _ ≤ (5/8 : ℝ) * ((5/8 : ℝ) ^ n * abs z) := by bound
         _ = 5/8 * (5/8 : ℝ) ^ n * abs z := by ring
-        _ = (5/8 : ℝ) ^ (n + 1) * abs z := by rw [← pow_succ]
+        _ = (5/8 : ℝ) ^ (n + 1) * abs z := by rw [← pow_succ']
         _ = (5/8 : ℝ) ^ n.succ * abs z := rfl
 
 /-- Iterates are analytic -/
@@ -329,7 +330,7 @@ theorem term_converges (s : SuperNear f d t) :
       exact one_le_pow_of_one_le hd _
   · have gs : abs (g f d (f^[n] z) - 1) ≤ 1 / 4 := s.gs (s.mapsTo n zt)
     have ps : abs (1 / (d:ℂ) ^ (n + 1) : ℂ) ≤ 1/2 * (1/2 : ℝ) ^ n := by
-      have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ _ _).symm
+      have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ' _ _).symm
       rw [nn]
       simp only [one_div, map_inv₀, map_pow, Complex.abs_natCast, inv_pow, ge_iff_le]
       bound
@@ -384,13 +385,13 @@ theorem bottcherNear_eqn (s : SuperNear f d t) (zt : z ∈ t) :
 /-- `bottcherNear_eqn`, iterated -/
 theorem bottcherNear_eqn_iter (s : SuperNear f d t) (zt : z ∈ t) (n : ℕ) :
     bottcherNear f d (f^[n] z) = bottcherNear f d z ^ d ^ n := by
-  induction' n with n h; simp only [Function.iterate_zero, id.def, pow_zero, pow_one]
-  simp only [Function.comp, Function.iterate_succ', pow_succ', pow_mul,
+  induction' n with n h; simp only [Function.iterate_zero, id, pow_zero, pow_one]
+  simp only [Function.comp, Function.iterate_succ', pow_succ, pow_mul,
     bottcherNear_eqn s (s.mapsTo n zt), h]
 
 /-- `f^[n] 0 = 0` -/
 theorem iterates_at_zero (s : SuperNear f d t) : ∀ n, f^[n] 0 = 0 := by
-  intro n; induction' n with n h; simp only [Function.iterate_zero, id.def]
+  intro n; induction' n with n h; simp only [Function.iterate_zero, id]
   simp only [Function.iterate_succ', Function.comp_apply, h, s.f0]
 
 /-- `term s n 0 = 1` -/
@@ -399,7 +400,7 @@ theorem term_at_zero (s : SuperNear f d t) (n : ℕ) : term f d n 0 = 1 := by
 
 /-- `prod (term s _ 0) = 1` -/
 theorem term_prod_at_zero (s : SuperNear f d t) : tprodOn (term f d) 0 = 1 := by
-  simp_rw [tprodOn, term_at_zero s, prod_ones']
+  simp_rw [tprodOn, term_at_zero s, tprod_one]
 
 /-- `bottcherNear' 0 = 1` (so in particular `bottcherNear` is a local isomorphism) -/
 theorem bottcherNear_monic (s : SuperNear f d t) : HasDerivAt (bottcherNear f d) 1 0 := by
@@ -547,7 +548,7 @@ theorem SuperNearC.union {I : Type} {u : I → Set ℂ} {t : I → Set (ℂ × �
   have sm : ∀ {c z : ℂ},
       (c, z) ∈ tu → ∃ u, z ∈ u ∧ u ⊆ {z | (c, z) ∈ tu} ∧ SuperNear (f c) d u := by
     intro c z m; rcases Set.mem_iUnion.mp m with ⟨i, m⟩; use{z | (c, z) ∈ t i}
-    simp only [Set.mem_setOf_eq, m, Set.mem_iUnion, Set.setOf_subset_setOf, true_and]
+    simp only [Set.mem_setOf_eq, m, Set.mem_iUnion, Set.setOf_subset_setOf, true_and, tu]
     constructor
     · exact fun z m ↦ ⟨i, m⟩
     · exact (s i).s ((s i).tc m)
@@ -634,7 +635,7 @@ theorem SuperAtC.superNearC (s : SuperAtC f d u) : ∃ t, SuperNearC f d u t := 
 
 theorem iterates_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ (f c)^[n] z) c := by
-  induction' n with n nh; · simp only [Function.iterate_zero, id.def]; exact analyticAt_const
+  induction' n with n nh; · simp only [Function.iterate_zero, id]; exact analyticAt_const
   · simp_rw [Function.iterate_succ']; simp only [Function.comp_apply]
     refine (s.fa _ ?_).comp ((analyticAt_id _ _).prod nh)
     exact (s.ts m).mapsTo n m
