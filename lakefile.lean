@@ -10,6 +10,7 @@ package ray where
   ]
 
 require mathlib from git "https://github.com/leanprover-community/mathlib4"
+require interval from git "https://github.com/girving/interval"
 
 @[default_target]
 lean_lib Ray

@@ -1,8 +1,8 @@
-import Ray.Approx.Floating.Floor
-import Ray.Approx.Interval.Basic
-import Ray.Approx.Interval.Conversion
-import Ray.Approx.Interval.Mul
-import Ray.Approx.Interval.Scale
+import Interval.Floating.Floor
+import Interval.Interval.Basic
+import Interval.Interval.Conversion
+import Interval.Interval.Mul
+import Interval.Interval.Scale
 
 /-!
 ## Approximate colors

@@ -1,11 +1,11 @@
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
+import Interval.Misc.Int
 import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
 import Ray.Hartogs.Duals
 import Ray.Hartogs.FubiniBall
 import Ray.Hartogs.MaxLog
-import Ray.Misc.Int
 import Ray.Misc.Max
 import Ray.Misc.Measure
 import Ray.Tactic.Bound

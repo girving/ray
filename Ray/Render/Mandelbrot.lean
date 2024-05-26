@@ -1,5 +1,5 @@
-import Ray.Approx.Box
-import Ray.Approx.Interval.Conversion
+import Interval.Box
+import Interval.Interval.Conversion
 import Ray.Dynamics.Mandelbrot
 import Ray.Render.Color
 import Ray.Render.Potential

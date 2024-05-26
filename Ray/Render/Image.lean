@@ -1,4 +1,4 @@
-import Ray.Misc.Array
+import Interval.Misc.Array
 import Ray.Render.Color
 import Ray.Render.Grid
 

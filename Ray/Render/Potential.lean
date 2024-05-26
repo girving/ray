@@ -1,6 +1,6 @@
-import Ray.Approx.Box
-import Ray.Approx.Floating.Conversion
-import Ray.Approx.Series
+import Interval.Box
+import Interval.Floating.Conversion
+import Interval.Series
 import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.PotentialLower
 import Ray.Render.Color
