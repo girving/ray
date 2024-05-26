@@ -112,7 +112,7 @@ lemma Interval.mem_approx_iter_sqrt {a : ℝ} {x : Interval} {n : ℕ} (ax : a �
   generalize hb : a^(2^n) = b at ax
   have ab : a = b ^ (2 ^ (-n : ℝ) : ℝ) := by
     have e : (2:ℝ)^n = (2^n : ℕ) := by norm_num
-    rw [←hb, Real.rpow_neg (by norm_num), Real.rpow_nat_cast, e,
+    rw [←hb, Real.rpow_neg (by norm_num), Real.rpow_natCast, e,
       Real.pow_rpow_inv_natCast a0 (pow_ne_zero _ (by norm_num))]
   rw [ab]
   exact mem_approx_iter_sqrt ax
@@ -135,7 +135,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
   rw [potential_large]
   apply Interval.approx_grow (potential_approx 2 (le_trans (by norm_num) z6) cz)
   · intro n
-    rw [Ne.def, Interval.hi_eq_nan] at n
+    rw [Ne, Interval.hi_eq_nan] at n
     refine le_trans (potential_error_le_of_z6 _ z6 cz) ?_
     apply Interval.le_hi n
     rw [div_eq_mul_inv, ←Real.rpow_neg (Complex.abs.nonneg _), Real.rpow_def_of_pos (by linarith)]
@@ -146,7 +146,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
   · have e : 1 / Complex.abs z' = Real.exp (-(Real.log (Complex.abs z' ^ 2) / 2)) := by
       simp only [one_div, Real.log_pow, Nat.cast_ofNat, neg_mul, Real.rpow_neg zero_le_two,
         Real.rpow_one, ←mul_assoc, mul_comm _ (2:ℝ)⁻¹]
-      rw [mul_div_cancel_left _ two_ne_zero, Real.exp_neg, Real.exp_log (by linarith)]
+      rw [mul_div_cancel_left₀ _ two_ne_zero, Real.exp_neg, Real.exp_log (by linarith)]
     rw [e]
     mono
 

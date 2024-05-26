@@ -94,7 +94,7 @@ theorem Eqn.mono {x : ℂ × ℂ} (e : Eqn s n r x) {m : ℕ} (nm : n ≤ m) : E
     eqn := by
       refine Nat.le_induction e.eqn ?_ m nm; intro k nk h
       simp only [h, Function.iterate_succ_apply',
-        s.bottcherNear_eqn (s.iter_stays_near' e.near nk), pow_succ', pow_mul] }
+        s.bottcherNear_eqn (s.iter_stays_near' e.near nk), pow_succ, pow_mul] }
 
 /-- We can increase `n` in `Grow` -/
 theorem Grow.mono (g : Grow s c p n r) {m : ℕ} (nm : n ≤ m) : Grow s c p m r :=
@@ -604,7 +604,7 @@ theorem Super.grow (s : Super f d a) [OnePreimage s] :
     have eq := le_antisymm le (not_lt.mp lt); rw [eq]; clear eq lt le q0 q
     -- Piece together a single r that works < Sup t, then close to Sup t
     rcases exists_seq_tendsto_sSup ne above with ⟨p, mono, tend, sub⟩
-    simp only [Set.range_subset_iff, mem_setOf] at sub
+    simp only [Set.range_subset_iff, mem_setOf, t] at sub
     set pr := fun k ↦ choose (self (sub k))
     have pg : ∀ k, Grow s c (p k) (s.np c (sSup t)) (pr k) := fun k ↦
       (choose_spec (self (sub k))).mono

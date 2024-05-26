@@ -102,16 +102,16 @@ lemma le_potential (c4 : abs c ≤ 4) (z4 : abs z ≤ 4) : 0.216 ≤ (superF 2).
         rw [div_eq_mul_inv, Real.rpow_mul (by positivity), Real.le_rpow_inv_iff_of_pos (by norm_num)
           (by positivity) (by positivity)]
         norm_num
-      exact le_trans (by norm_num) (sub_le_sub_left (div_le_div_of_le_left (by norm_num)
+      exact le_trans (by norm_num) (sub_le_sub_left (div_le_div_of_nonneg_left (by norm_num)
         (by norm_num) le) _)
     have pwz : s.potential c w = s.potential c z ^ 2^(n+1) := by
       simp only [←hw, ←f_f'_iter, s.potential_eqn_iter]
-    rw [←Real.rpow_nat_cast] at pwz
+    rw [←Real.rpow_natCast] at pwz
     rw [←Real.rpow_inv_eq s.potential_nonneg s.potential_nonneg
       (NeZero.natCast_ne (2^(n+1)) ℝ)] at pwz
     rw [←pwz]
     refine le_trans ?_ (Real.rpow_le_rpow (by norm_num) pw (by positivity))
-    rw [Real.le_rpow_inv_iff_of_pos (by norm_num) (by norm_num) (by positivity), Real.rpow_nat_cast]
+    rw [Real.le_rpow_inv_iff_of_pos (by norm_num) (by norm_num) (by positivity), Real.rpow_natCast]
     refine le_trans (pow_le_pow_of_le_one (by norm_num) (by norm_num)
       (pow_le_pow_right (by norm_num) (Nat.le_add_left 1 n))) ?_
     norm_num

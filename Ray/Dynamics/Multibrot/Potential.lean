@@ -37,7 +37,7 @@ lemma tendsto_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z) (cz : abs 
       s.potential c ↑((f' d c)^[n] z)) ^ (-((d ^ n : ℕ) : ℝ)⁻¹))
       atTop (𝓝 1) by
     replace h := h.mul_const (s.potential c z)
-    simp only [div_mul_cancel _ potential_pos.ne', one_mul, ← f_f'_iter, s.potential_eqn_iter,
+    simp only [div_mul_cancel₀ _ potential_pos.ne', one_mul, ← f_f'_iter, s.potential_eqn_iter,
       Real.mul_rpow (Complex.abs.nonneg _) (pow_nonneg s.potential_nonneg _),
       Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero _ (d_ne_zero d)),
       Real.rpow_neg (pow_nonneg s.potential_nonneg _), ← div_eq_mul_inv] at h
@@ -103,7 +103,7 @@ lemma tendsto_log_neg_log_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z
     exact Real.log_ne_zero_of_pos_of_ne_one (inv_pos.mpr p0) (inv_ne_one.mpr p1.ne)
   have t := Tendsto.comp fc (tendsto_potential d z3 cz)
   simpa only [Real.log_inv, Real.log_neg_eq_log, Nat.cast_pow, Function.comp_def, Real.log_rpow zn0,
-    neg_mul, ← div_eq_inv_mul, Real.log_div ln0.ne' dn0, Real.log_pow] using t
+    neg_mul, ← div_eq_inv_mul, Real.log_div ln0.ne' dn0, Real.log_pow, f] using t
 
 /-- `log (-log potential)` inherits the `iter_approx` bound by taking limits -/
 lemma log_neg_log_potential_approx (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -214,7 +214,7 @@ lemma potential_error_le' (d : ℕ) [Fact (2 ≤ d)] (i j b : ℝ) {c z : ℂ}
   have l1 : 1.386 < log (abs z) :=
     lt_of_lt_of_le lt_log_4 (Real.log_le_log (by linarith) (by linarith))
   have l0 : 0 < log (abs z) := lt_trans (by norm_num) l1
-  refine le_trans (potential_error_le d b4 bz cz) (div_le_div_of_le_left (by norm_num)
+  refine le_trans (potential_error_le d b4 bz cz) (div_le_div_of_nonneg_left (by norm_num)
     (by positivity) ?_)
   refine Real.rpow_le_rpow_of_exponent_le (by linarith) ?_
   simp only [add_comm (1:ℝ), ←sub_le_iff_le_add]
@@ -275,14 +275,14 @@ theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs 
   set t := Ici (log (log (abs z)) - r)
   have yt : log (-log p) ∈ t := by
     simp only [abs_le, neg_le_sub_iff_le_add, tsub_le_iff_right, add_comm r] at h
-    simp only [mem_Ici, tsub_le_iff_right, h]
+    simp only [mem_Ici, tsub_le_iff_right, h, t]
   have lt : log (log (abs z)) ∈ t := by
-    simp only [mem_Ici, tsub_le_iff_right, le_add_iff_nonneg_right, r0]
+    simp only [mem_Ici, tsub_le_iff_right, le_add_iff_nonneg_right, r0, t]
   generalize hb : dene (log (log (abs z)) - r) = b
   have b0 : 0 ≤ b := by rw [←hb]; exact dene_nonneg
   have bound : ∀ x, x ∈ t → ‖deriv ene x‖ ≤ b := by
     intro x m
-    simp only [Real.dist_eq, mem_Ici, ←hr] at m
+    simp only [Real.dist_eq, mem_Ici, ←hr, t] at m
     simp only [deriv_ene, norm_neg, Real.norm_of_nonneg dene_nonneg, ←hb, ←hr]
     apply dene_anti (sub_nonneg.mpr (iter_error_le_log_log_abs d z4 cz)) m
   have m := Convex.norm_image_sub_le_of_norm_deriv_le

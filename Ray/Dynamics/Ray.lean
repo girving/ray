@@ -59,7 +59,7 @@ theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
     (s.lowerSemicontinuous_p.comp continuous_fst).add
       (Complex.continuous_abs.comp continuous_snd).neg.lowerSemicontinuous
   have e : s.ext = f ⁻¹' Ioi 0 :=
-    Set.ext fun _ ↦ by simp only [Super.ext, mem_setOf, mem_preimage, mem_Ioi, sub_pos]
+    Set.ext fun _ ↦ by simp only [Super.ext, mem_setOf, mem_preimage, mem_Ioi, sub_pos, f]
   rw [e]; exact fc.isOpen_preimage _
 
 /-- `(c,0) ∈ s.ext` -/
@@ -181,7 +181,7 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
   simp only [mfderiv_comp x
       (s.bottcherNearIter_holomorphic (s.ray_near post)).along_snd.mdifferentiableAt
       (s.ray_holomorphic post).along_snd.mdifferentiableAt,
-    Ne.def, mderiv_comp_eq_zero_iff, not_or] at h
+    Ne, mderiv_comp_eq_zero_iff, not_or] at h
   exact h.2
 
 /-- `s.ray` is nontrivial, since it is noncritical at 0 and `s.ext` is connected -/
@@ -231,26 +231,30 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     exact mul_left_cancel₀ (Complex.ofReal_ne_zero.mpr t0.ne') inj
   refine isPreconnected_Ioc.relative_clopen ?_ ?_ ?_
   · use 1, right_mem_Ioc.mpr zero_lt_one
-    simp only [mem_setOf, Complex.ofReal_one, one_mul, e]
+    simp only [mem_setOf, Complex.ofReal_one, one_mul, e, u]
   · intro t ⟨m, e⟩
     simp only [mem_setOf, mem_interior_iff_mem_nhds, ← Filter.eventually_iff] at e ⊢
     generalize hn : s.np c (abs (↑t * x0)) = n
     have t0 : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr m.1.ne'
     have pe : abs (↑t * x0) = abs (↑t * x1) := by
-      simp only [← s.ray_potential (pt p0 m), ← s.ray_potential (pt p1 m), e]
+      simp only [mem_setOf_eq, u] at e
+      simp only [← s.ray_potential (pt p0 m), e, ← s.ray_potential (pt p1 m)]
     have e0 := (s.ray_spec (Complex.abs.nonneg _) (pt p0 m)).eqn.filter_mono
       (nhds_le_nhdsSet mem_domain_self)
     have e1 := (s.ray_spec (Complex.abs.nonneg _) (pt p1 m)).eqn.filter_mono
       (nhds_le_nhdsSet mem_domain_self)
     simp only [← pe, hn] at e0 e1
     have de : (↑t * x0) ^ d ^ n = (↑t * x1) ^ d ^ n := by
-      have e0 := e0.self_of_nhds.eqn; have e1 := e1.self_of_nhds.eqn; simp only [hn, ← pe, ← e] at e0 e1
+      have e0 := e0.self_of_nhds.eqn
+      have e1 := e1.self_of_nhds.eqn
+      simp only [mem_setOf_eq, u] at e
+      simp only [hn, ← pe, ← e] at e0 e1
       exact e0.symm.trans e1
     simp only [mul_pow] at de
     replace de := mul_left_cancel₀ (pow_ne_zero _ t0) de
     generalize hr : (fun e x ↦ s.ray e (x1 / x0 * x)) = r
     have xe : x1 / x0 * (↑t * x0) = ↑t * x1 := by
-      rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel _ x00]
+      rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel₀ _ x00]
     have er : ∀ᶠ y in 𝓝 (c, ↑t * x0), Eqn s n r y := by
       rw [← hr]; apply eqn_near
       exact (s.ray_holomorphic (pt p1 m)).comp₂_of_eq holomorphicAt_fst
@@ -259,7 +263,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
       have xc : ContinuousAt (fun y : ℂ × ℂ ↦ (y.1, x1 / x0 * y.2)) (c, ↑t * x0) :=
         continuousAt_fst.prod (continuousAt_const.mul continuousAt_snd)
       simp only [ContinuousAt] at xc
-      rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel _ x00] at xc
+      rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at xc
       refine (xc.eventually e1).mp (eventually_of_forall ?_); intro ⟨e, x⟩ e1
       exact _root_.trans e1.eqn (by
         simp only [mul_pow, div_pow, ← de, div_self (pow_ne_zero _ x00), one_mul])
@@ -268,7 +272,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
         (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (eventually_of_forall fun u e ↦ ?_)
     · simp only [← hr]; rw [xe]; exact e
     · rw [← hr] at e; simp only [uncurry] at e
-      rw [← mul_assoc, mul_comm _ (u:ℂ), mul_assoc, div_mul_cancel _ x00] at e
+      rw [← mul_assoc, mul_comm _ (u:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at e
       exact e
   · intro t ⟨m, e⟩; simp only [mem_setOf, mem_closure_iff_frequently] at e ⊢
     have rc : ∀ {x : ℂ}, (c, x) ∈ s.ext → ContinuousAt (fun t : ℝ ↦ s.ray c (↑t * x)) t :=
@@ -305,21 +309,21 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     have e : j = s.ray c '' closedBall 0 p1 := by
       refine Set.ext fun z ↦ ?_
       simp only [mem_inter_iff, mem_setOf, mem_image, mem_closedBall, Complex.dist_eq, sub_zero,
-        Super.ext]
+        Super.ext, j]
       constructor
-      intro ⟨zp1, x, xp, xz⟩; rw [← xz, s.ray_potential xp] at zp1; use x, zp1, xz
-      intro ⟨x, xp, xz⟩; have zp1 := lt_of_le_of_lt xp post; rw [← xz, s.ray_potential zp1]
-      use xp, x, zp1
+      · intro ⟨zp1, x, xp, xz⟩; rw [← xz, s.ray_potential xp] at zp1; use x, zp1, xz
+      · intro ⟨x, xp, xz⟩; have zp1 := lt_of_le_of_lt xp post; rw [← xz, s.ray_potential zp1]
+        use xp, x, zp1
     rw [e]; refine (IsCompact.image_of_continuousOn (isCompact_closedBall _ _) ?_).isClosed
     intro x m; simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
     exact (s.ray_holomorphic (lt_of_le_of_lt m post)).along_snd.continuousAt.continuousWithinAt
   have uc : IsCompact u := ((isClosed_le pc continuous_const).sdiff io).isCompact
   have z0u : z0 ∈ u := by
-    simp only [mem_diff, mem_setOf]; use p01.le; contrapose i0
+    simp only [mem_diff, mem_setOf, u]; use p01.le; contrapose i0
     simp only [not_not, mem_image, mem_setOf, not_forall, exists_prop] at i0 ⊢; exact i0
   have ne : u.Nonempty := ⟨z0, z0u⟩
   rcases uc.exists_isMinOn ne pc.continuousOn with ⟨z, zu, zm⟩
-  simp only [mem_diff, mem_setOf] at zu
+  simp only [mem_diff, mem_setOf, u] at zu
   replace zm : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w := by
     have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
@@ -328,8 +332,8 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     refine eventually_of_forall fun w lt m ↦ ?_
     rw [compl_inter] at m; cases' m with m m
     · simp only [compl_setOf, mem_setOf, not_le] at m; linarith
-    · apply zm; simp only [mem_diff, mem_setOf]; use lt.le, m
-  simp only [mem_setOf, mem_image, not_exists, not_and] at zu
+    · apply zm; simp only [mem_diff, mem_setOf, u]; use lt.le, m
+  simp only [mem_setOf, mem_image, not_exists, not_and, i] at zu
   have za := s.potential_minima_only_a (lt_of_le_of_lt zu.1 post) zm
   have h := zu.2 0 (s.mem_ext c); simp only [s.ray_zero] at h; exact h za.symm
 

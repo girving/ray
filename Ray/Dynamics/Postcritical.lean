@@ -54,7 +54,7 @@ theorem Super.compact_ps (s : Super f d a) [OnePreimage s] : IsCompact (s.ps c) 
   have c1 : IsCompact {(1 : ℝ)} := isCompact_singleton
   convert c1.union ((s.isClosed_critical_not_a.snd_preimage c).isCompact.image pc)
   apply Set.ext; intro p
-  simp only [mem_setOf, Super.ps, mem_singleton_iff, mem_union, mem_image, Ne.def, ←
+  simp only [mem_setOf, Super.ps, mem_singleton_iff, mem_union, mem_image, Ne, ←
     s.potential_eq_zero_of_onePreimage c]
   apply or_congr_right; constructor
   intro ⟨p0, z, e, c⟩; rw [← e] at p0; exact ⟨z, ⟨c, p0⟩, e⟩
@@ -105,13 +105,13 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] :
   suffices m : c ∈ u by
     rcases(mem_image _ _ _).mp m with ⟨⟨c', z⟩, ⟨zp, zc, za⟩, cc⟩
     simp only at cc za zc zp; simp only [cc] at za zc zp; clear cc c'
-    simp only [Ne.def, ← s.potential_eq_zero_of_onePreimage c] at za
+    simp only [Ne, ← s.potential_eq_zero_of_onePreimage c] at za
     refine _root_.trans (csInf_le s.bddBelow_ps ?_) zp; right; use za, z, rfl, zc
   refine Filter.Frequently.mem_of_closed ?_ cu
   refine h.mp (eventually_of_forall fun e h ↦ ?_)
   rcases exists_lt_of_csInf_lt s.nonempty_ps (lt_of_le_of_lt h pq) with ⟨r, m, rq⟩
   cases' m with m m; linarith; rcases m with ⟨r0, z, zr, zc⟩
-  rw [← zr, Ne.def, s.potential_eq_zero_of_onePreimage] at r0; rw [mem_image]
+  rw [← zr, Ne, s.potential_eq_zero_of_onePreimage] at r0; rw [mem_image]
   refine ⟨(e, z), ⟨?_, zc, r0⟩, rfl⟩; simp only [zr]; exact rq.le
 
 /-- `z : S` is postcritical if its potential is smaller than any critical point (except for `a`) -/
@@ -140,7 +140,7 @@ theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential 
 /-- Postcritical points are not precritical, since iteration decreases potential (except for `a`) -/
 theorem Postcritical.not_precritical' (p : Postcritical s c z) (za : z ≠ a) [OnePreimage s] :
     ¬Precritical (f c) z := by
-  apply p.not_precritical; simp only [Ne.def, s.potential_eq_zero_of_onePreimage]; exact za
+  apply p.not_precritical; simp only [Ne, s.potential_eq_zero_of_onePreimage]; exact za
 
 /-- The set of postcritical points -/
 def Super.post (s : Super f d a) : Set (ℂ × S) :=
@@ -154,7 +154,7 @@ theorem Super.isOpen_post (s : Super f d a) [OnePreimage s] : IsOpen s.post := b
       (Continuous.potential s).neg.lowerSemicontinuous
   have e : s.post = f ⁻¹' Ioi 0 :=
     Set.ext fun _ ↦ by
-      simp only [Super.post, mem_setOf, Postcritical, mem_preimage, mem_Ioi, sub_pos]
+      simp only [Super.post, mem_setOf, Postcritical, mem_preimage, mem_Ioi, sub_pos, f]
   rw [e]; exact fc.isOpen_preimage _
 
 /-- Postcritical holds locally -/

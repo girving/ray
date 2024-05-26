@@ -221,7 +221,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
 theorem Super.bottcher_eqn_iter (s : Super f d a) [OnePreimage s] (n : ℕ) :
     s.bottcher c ((f c)^[n] z) = s.bottcher c z ^ d ^ n := by
   induction' n with n h; simp only [Function.iterate_zero_apply, pow_zero, pow_one]
-  simp only [Function.iterate_succ_apply', s.bottcher_eqn, h, ← pow_mul, pow_succ']
+  simp only [Function.iterate_succ_apply', s.bottcher_eqn, h, ← pow_mul, pow_succ]
 
 /-- `abs (s.bottcher c z) = s.potential c z` -/
 theorem Super.abs_bottcher (s : Super f d a) [OnePreimage s] :

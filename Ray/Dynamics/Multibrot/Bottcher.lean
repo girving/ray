@@ -45,18 +45,18 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
   suffices e : EqOn (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) (bottcherNear (fl (f d) ∞ c) d) t by
     have z0' : z ≠ 0 := Complex.abs.ne_zero_iff.mp z0.ne'
     convert @e z⁻¹ _; rw [inv_coe (inv_ne_zero z0'), inv_inv]
-    simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz]
+    simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz, t]
   have a0 : HolomorphicOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
     intro z m
     refine (s.bottcher_holomorphicOn _ ?_).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
-    simp only [mem_closedBall, Complex.dist_eq, sub_zero] at m
+    simp only [mem_closedBall, Complex.dist_eq, sub_zero, t] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
     rw [inv_coe z0]; refine postcritical_large (by linarith) ?_
     rwa [map_inv₀, le_inv c0]; exact Complex.abs.pos z0
   have a1 : HolomorphicOn I I (bottcherNear (fl (f d) ∞ c) d) t := by
     intro z m; apply AnalyticAt.holomorphicAt
     apply bottcherNear_analytic_z (superNearF d c)
-    simp only [mem_setOf, mem_closedBall, Complex.dist_eq, sub_zero] at m ⊢
+    simp only [mem_setOf, mem_closedBall, Complex.dist_eq, sub_zero, t] at m ⊢
     refine lt_of_le_of_lt m ?_
     refine inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
     exact max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))
@@ -122,8 +122,8 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
       bound
     have d1 : abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ))) ≤ 1 := le_trans dn (by bound)
     refine le_trans (pow_small ?_ d1) ?_
-    · rw [add_sub_cancel']; exact cw2
-    · rw [add_sub_cancel']
+    · rw [add_sub_cancel_left]; exact cw2
+    · rw [add_sub_cancel_left]
       calc 4 * abs (c * w ^ d) * abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ)))
         _ ≤ 4 * (abs z)⁻¹ * (1/2 : ℝ) ^ (n + 1) := by bound
         _ ≤ 2 * (1/2 : ℝ) ^ n * (abs z)⁻¹ := by
@@ -189,7 +189,7 @@ theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
-  rw [Ne.def, ContinuousLinearMap.ext_iff, not_forall]; use 1
+  rw [Ne, ContinuousLinearMap.ext_iff, not_forall]; use 1
   simp only [ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
     Algebra.id.smul_eq_mul, mul_one, ContinuousLinearMap.zero_apply]
   convert one_ne_zero; exact NeZero.one

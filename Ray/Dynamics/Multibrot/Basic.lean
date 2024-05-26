@@ -266,16 +266,14 @@ instance onePreimageF : OnePreimage (superF d) where
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
-  · simp only [Critical, mfderiv, (holomorphicF (c, z)).along_snd.mdifferentiableAt, if_pos,
+  · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ ContinuousLinearMap.zero_apply _
+    simp only [Critical, mfderiv, (holomorphicF (c, z)).along_snd.mdifferentiableAt, if_pos,
       ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
       RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply, toComplex_coe, coe_eq_zero,
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
-      one_mul, ContinuousLinearMap.zero_apply, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero,
-      false_or_iff, pow_eq_zero_iff (d_minus_one_pos d).ne']
-    dsimp [TangentSpace]
-    simp only [ge_iff_le, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, tsub_pos_iff_lt,
-      pow_eq_zero_iff (d_minus_one_pos d).ne', false_or]
+      one_mul, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or_iff,
+      pow_eq_zero_iff (d_minus_one_pos d).ne', zx]
     constructor
     · intro h; specialize h 1
       simp only [one_mul, mul_eq_zero, one_ne_zero, false_or_iff] at h
@@ -302,14 +300,14 @@ theorem multibrot_p : (superF d).p c = (superF d).potential c 0 := by
   set s := superF d
   have e : s.ps c = {1, s.potential c 0} := by
     apply Set.ext; intro p
-    simp only [Super.ps, mem_singleton_iff, mem_setOf, critical_f, Ne.def, mem_insert_iff,
+    simp only [Super.ps, mem_singleton_iff, mem_setOf, critical_f, Ne, mem_insert_iff,
       mem_singleton_iff]
     constructor
     · intro h; cases' h with h h; left; exact h; right; rcases h with ⟨p0, z, e, h⟩
       cases' h with h h; rw [h] at e; exact e.symm
       rw [h, s.potential_a] at e; exfalso; exact p0 e.symm
     · intro h; cases' h with h h; left; exact h; right; constructor
-      · simp only [h, ← Ne.def, s.potential_ne_zero]; exact inf_ne_zero.symm
+      · simp only [h, ← ne_eq, s.potential_ne_zero]; exact inf_ne_zero.symm
       · use 0, h.symm, Or.inl rfl
   simp only [Super.p, e, csInf_pair]; exact inf_of_le_right s.potential_le_one
 
@@ -361,7 +359,7 @@ lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b)
       _ = (b-1) ^ (n*d) * (abs z * abs z) - abs c := by rw [pow_two]
       _ ≥ (b-1) ^ (n*d) * (b * abs z) - abs c := by bound
       _ = (b-1) ^ (n*d) * (b-1) * abs z + ((b-1) ^ (n*d) * abs z - abs c) := by ring
-      _ = (b-1) ^ (n*d + 1) * abs z + ((b-1) ^ (n * d) * abs z - abs c) := by rw [pow_succ']
+      _ = (b-1) ^ (n*d + 1) * abs z + ((b-1) ^ (n * d) * abs z - abs c) := by rw [pow_succ]
       _ ≥ (b-1) ^ (n + 1) * abs z + (1 * abs z - abs c) := by bound
       _ = (b-1) ^ (n + 1) * abs z + (abs z - abs c) := by rw [one_mul]
       _ ≥ (b-1) ^ (n + 1) * abs z := by bound
@@ -475,7 +473,7 @@ theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < abs ((f' d c)^[n] c)) : c ∉
         _ = s ^ 2 * (s - 1) ^ (k * 2) - 2 * 1 := by rw [mul_pow, pow_mul, mul_one]
         _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound
         _ = s * ((s - 1) ^ k * (s - 1)) := by ring
-        _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ']
+        _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ]
   simp only [tendsto_atInf_iff_norm_tendsto_atTop, Complex.norm_eq_abs]
   rw [← Filter.tendsto_add_atTop_iff_nat n]; apply Filter.tendsto_atTop_mono b
   refine Filter.Tendsto.mul_atTop (by linarith) tendsto_const_nhds ?_
@@ -534,7 +532,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
       Function.comp, add_zero, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm,
       coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm]
     rw [coe_toComplex]
-    simp only [Ne.def, inv_eq_inf, ← hz, ← h, inv_inv, ← Function.iterate_succ_apply' (f d c)]
+    simp only [Ne, inv_eq_inf, ← hz, ← h, inv_inv, ← Function.iterate_succ_apply' (f d c)]
     apply nz
   -- Find an n that gets us close enough to ∞ for s.bottcher = bottcher_near
   have b := mem
@@ -641,7 +639,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
       nonconst := h }
   exfalso; simp only [Filter.not_frequently, not_not] at h
   set b := bottcher d c
-  have b1 : abs b < 1 := by simp only [abs_bottcher, potential_lt_one, m]
+  have b1 : abs b < 1 := by simp only [abs_bottcher, potential_lt_one, m, b]
   -- From bottcher d c = y near a point, show that bottcher d c = y everywhere in 𝕊
   set t := {c | c ∈ multibrotExt d ∧ ∀ᶠ e in 𝓝 c, bottcher d e = b}
   have tu : t = univ := by
@@ -656,7 +654,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
         simp only [frequently_nhdsWithin_iff, mem_compl_singleton_iff]
         refine e.mp (eventually_of_forall fun z zt ↦ ⟨zt, ?_⟩)
         contrapose xt; simp only [not_not] at xt ⊢; rwa [← xt]
-      contrapose xt; simp only [not_not]; use b1
+      contrapose xt; clear xt; simp only [not_not]; use b1
       cases' HolomorphicAt.eventually_eq_or_eventually_ne (bottcherHolomorphic d _ b1)
         holomorphicAt_const with h h
       use h; contrapose h; simp only [Filter.not_eventually, not_not] at h ⊢

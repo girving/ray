@@ -139,7 +139,7 @@ lemma f_error_le_generic (d : ℕ) [Fact (2 ≤ d)] (b l s t c g : ℝ) {z : ℂ
     exact le_trans (inv_le_inv_of_le (by positivity) bz) bs
   have dm : 2 * log (abs z) ≤ d * log (abs z) := by bound
   have div_le : -log (1 - 1 / abs z) / (d * log (abs z)) ≤ t := by
-    have sz : s / abs z ≤ s / b := div_le_div_of_le_left (by positivity) (by positivity) bz
+    have sz : s / abs z ≤ s / b := div_le_div_of_nonneg_left (by positivity) (by positivity) bz
     exact le_trans (div_le_div (by positivity) (le_trans inner_le sz) (by positivity)
       (le_trans (mul_le_mul_of_nonneg_left lb (by norm_num)) dm)) st
   refine le_trans (neg_log_one_sub_le_linear (f_error_inner_nonneg d z3) c1 ?_) ?_
@@ -226,7 +226,7 @@ lemma iter_error_sum_weak (d : ℕ) [Fact (2 ≤ d)] {b s : ℝ} {c : ℂ} (b3 :
     have mk' : abs z ≤ abs ((f' d c)^[k] z) :=
       le_trans (le_mul_of_one_le_left (Complex.abs.nonneg _) (one_le_pow_of_one_le b1.le _)) mk
     refine le_trans (bs (le_trans bz mk')) ?_
-    refine div_le_div_of_le_left s0 (by positivity) ?_
+    refine div_le_div_of_nonneg_left s0 (by positivity) ?_
     exact mul_le_mul mk (Real.log_le_log (by positivity) mk') l0.le (by positivity)
   simp only [div_eq_mul_inv, ←mul_assoc, mul_inv, mul_comm _ ((b-1)^_)⁻¹,
     mul_comm _ (1-(b-1)⁻¹)⁻¹] at fb ⊢
@@ -271,7 +271,7 @@ lemma iter_error_weak_of_z33 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z33 : 33 �
     (fun {_} bz ↦ f_error_le_of_z33 d bz) z33 cz) ?_
   have l0 : 0 < log (abs z) :=
     lt_of_lt_of_le (by norm_num) (le_log_abs_z (le_trans (by norm_num) z33))
-  exact div_le_div_of_le (by positivity) (by norm_num)
+  exact div_le_div_of_nonneg_right (by norm_num) (by positivity)
 
 /-- Stronger `iter_error` bound based on expanding the first two terms -/
 lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
@@ -301,7 +301,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
     calc abs (f' d c z)
       _ ≥ (abs z)^d - abs c := fz
       _ ≥ (abs z)^d - abs z := by bound
-      _ = (abs z)^(d-1) * abs z - abs z := by rw [←pow_succ', Nat.sub_add_cancel (d_ge_one d)]
+      _ = (abs z)^(d-1) * abs z - abs z := by rw [←pow_succ, Nat.sub_add_cancel (d_ge_one d)]
       _ = ((abs z)^(d-1) - 1) * abs z := by rw [sub_one_mul]
       _ ≥ (b^(d-1)-1) * abs z := by bound
   have zfz : abs z ≤ abs (f' d c z) := le_self_iter d z3 cz 1
@@ -313,7 +313,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
       _ = (abs (f' d c z))^d - abs c := by rw [Complex.abs.map_pow]
       _ ≥ ((b^(d-1)-1) * abs z)^d - abs z := by bound
       _ = (b^(d-1)-1)^d * (abs z)^(d-1) * abs z - abs z := by
-          rw [mul_assoc, ←pow_succ', mul_pow, Nat.sub_add_cancel (d_ge_one d)]
+          rw [mul_assoc, ←pow_succ, mul_pow, Nat.sub_add_cancel (d_ge_one d)]
       _ ≥ (b^(d-1)-1)^d * b^(d-1) * abs z - abs z := by bound
       _ = bb * abs z := by rw [←hbb, sub_one_mul]
   have e0 : f_error d z ≤ s0 / (abs z * log (abs z)) := bs0 bz
@@ -339,7 +339,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
   rw [iter_error_peel z3 cz, iter_error_peel (le_trans b3 bfz) (le_trans cz zfz), ←add_assoc]
   refine le_trans (add_le_add (add_le_add e0 e1) e2) ?_
   simp only [←add_div, le_refl]
-  exact div_le_div_of_le (by positivity) si
+  exact div_le_div_of_nonneg_right si (by positivity)
 
 /-- `iter_error_string` for `3 ≤ abs z` -/
 lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -375,8 +375,8 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
   · exact sub_pos.mpr (inv_lt_one (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
     exact le_trans (add_le_add (add_le_add_left
-      (div_le_div_of_le_left (by norm_num) (by norm_num) b2) _)
-      (div_le_div_of_le_left (by norm_num) (by norm_num) b10)) (by norm_num)
+      (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)
+      (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b10)) (by norm_num)
 
 /-- `iter_error_string` for `4 ≤ abs z` -/
 lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -412,8 +412,8 @@ lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs
   · exact sub_pos.mpr (inv_lt_one (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
     exact le_trans (add_le_add (add_le_add_left
-      (div_le_div_of_le_left (by norm_num) (by norm_num) b2) _)
-      (div_le_div_of_le_left (by norm_num) (by norm_num) b10)) (by norm_num)
+      (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)
+      (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b10)) (by norm_num)
 
 /-!
 ## Effective bounds on iterates
@@ -430,7 +430,8 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
   have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp (by positivity)
   have cz_le : abs (c / z ^ d) ≤ 1 / abs z := by
     have d1 : z^d = z^(d - 1 + 1) := by rw [Nat.sub_add_cancel (d_ge_one d)]
-    simp only [d1, map_div₀, Complex.abs.map_pow, pow_succ, Complex.abs.map_mul, div_mul_eq_div_div]
+    simp only [d1, map_div₀, Complex.abs.map_pow, pow_succ', Complex.abs.map_mul,
+      div_mul_eq_div_div]
     bound
   have l0s : 1 ≤ log (abs z) := by
     rw [Real.le_log_iff_exp_le z0']; exact le_trans Real.exp_one_lt_3.le z3

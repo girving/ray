@@ -106,28 +106,28 @@ theorem Super.holomorphicAt_iter (s : Super f d a) {T : Type} [TopologicalSpace 
     [ChartedSpace ℂ T] {g : ℂ × T → ℂ} {h : ℂ × T → S} {p : ℂ × T} {n : ℕ}
     (ga : HolomorphicAt II I g p) (ha : HolomorphicAt II I h p) :
     HolomorphicAt II I (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
-  induction' n with n h; simp only [Function.iterate_zero, id.def]; exact ha
+  induction' n with n h; simp only [Function.iterate_zero, id]; exact ha
   simp_rw [Function.iterate_succ']; exact (s.fa _).comp₂ ga h
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuous_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {n : ℕ} (gc : Continuous g) (hc : Continuous h) :
     Continuous fun x ↦ (f (g x))^[n] (h x) := by
-  induction' n with n h; simp only [Function.iterate_zero, id.def]; exact hc
+  induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
   simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp (gc.prod_mk h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuousOn_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {t : Set T} {n : ℕ} (gc : ContinuousOn g t) (hc : ContinuousOn h t) :
     ContinuousOn (fun x ↦ (f (g x))^[n] (h x)) t := by
-  induction' n with n h; simp only [Function.iterate_zero, id.def]; exact hc
+  induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
   simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp_continuousOn (gc.prod h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuousAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {x : T} {n : ℕ} (gc : ContinuousAt g x) (hc : ContinuousAt h x) :
     ContinuousAt (fun x ↦ (f (g x))^[n] (h x)) x := by
-  induction' n with n h; simp only [Function.iterate_zero, id.def]; exact hc
+  induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
   simp_rw [Function.iterate_succ']; exact (s.fa _).continuousAt.comp (gc.prod h)
 
 /-- `(f c)^[k]` is holomorphic -/
@@ -175,7 +175,7 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
 theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
   have h := s.critical_0 c
   have e := PartialEquiv.left_inv _ (mem_extChartAt_source I a)
-  contrapose h; simp only [Critical, Super.fl, fl, ← Ne.def] at h ⊢
+  contrapose h; simp only [Critical, Super.fl, fl, ← ne_eq] at h ⊢
   simp only [mfderiv_eq_fderiv, _root_.fl, Function.comp]
   rw [fderiv_sub_const, ←mfderiv_eq_fderiv]
   apply mderiv_comp_ne_zero' (extChartAt_mderiv_ne_zero' ?_)
@@ -492,7 +492,7 @@ theorem Super.bottcherNear_eqn_iter (s : Super f d a) (m : (c, z) ∈ s.near) {n
     s.bottcherNear c ((f c)^[n] z) = s.bottcherNear c z ^ d ^ n := by
   induction' n with n h; simp only [Function.iterate_zero_apply, pow_zero, pow_one]
   simp only [Function.iterate_succ_apply', s.bottcherNear_eqn (s.iter_stays_near m n), h, ←
-    pow_mul, ← pow_succ']
+    pow_mul, ← pow_succ]
 
 /-- The defining equation in terms of `s.bottcherNearp` and `s.fp` -/
 theorem Super.bottcherNearp_eqn (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :

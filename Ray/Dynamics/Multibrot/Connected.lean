@@ -59,7 +59,8 @@ theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected 
     intro h; contrapose h; simp only [not_le, not_forall] at h ⊢
     rcases exists_between h with ⟨y, py, y1⟩
     exact ⟨⟨y, ⟨le_trans potential_nonneg py.le, y1⟩⟩, py⟩
-  rw [e]; apply IsPreconnected.directed_iInter
+  rw [e]; refine @IsPreconnected.directed_iInter _ _ _ _ ?_ _ ?_ ?_ ?_
+  · exact Zero.instNonempty
   · intro ⟨a, a0, a1⟩ ⟨b, b0, b1⟩
     refine ⟨⟨max a b, mem_Ico.mpr ⟨le_max_of_le_left a0, max_lt a1 b1⟩⟩, ?_, ?_⟩
     · intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.1
@@ -80,7 +81,7 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
     simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and_iff,
       eq_self_iff_true]
     intro ⟨w, m, wz⟩; induction w using OnePoint.rec
-    · contrapose m; simp only [not_not, multibrotExt_inf]
+    · contrapose m; clear m; simp only [not_not, multibrotExt_inf]
     · simp only [multibrotExt_coe, not_not, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply (isConnected_compl_multibrotExt d).image
   refine continuousOn_toComplex.mono ?_; intro z m
@@ -103,7 +104,7 @@ theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_r
       simp only [multibrotExt_coe, m, true_and_iff, toComplex_coe, not_false_iff, true_and_iff,
         mem_diff, eq_self_iff_true, and_true_iff, mem_singleton_iff, coe_ne_inf]
     · intro ⟨w, ⟨m, wi⟩, wz⟩; induction w using OnePoint.rec
-      · contrapose wi; simp only [mem_singleton_iff, not_not]
+      · contrapose wi; clear wi; simp only [mem_singleton_iff, not_not]
       · simp only [multibrotExt_coe, toComplex_coe, mem_diff] at m wz; rwa [← wz]
   rw [e]; apply dc.image
   refine continuousOn_toComplex.mono ?_; intro z ⟨_, i⟩

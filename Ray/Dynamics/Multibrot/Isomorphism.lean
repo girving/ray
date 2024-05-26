@@ -52,7 +52,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   -- We operate by induction on potential down to 0, expressed using closed sets of pairs.
   -- Preliminaries first:
   by_contra bad
-  simp only [InjOn, not_forall, ← Ne.def] at bad
+  simp only [InjOn, not_forall, ← ne_eq] at bad
   rcases bad with ⟨x, xm, y, ym, bxy, xy⟩
   generalize hb : potential d x = b
   have b1 : b < 1 := by rwa [← hb, potential_lt_one]
@@ -62,8 +62,8 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   set t2 := {q : 𝕊 × 𝕊 | q.1 ≠ q.2 ∧ q ∈ t1}
   have t2ne : t2.Nonempty := by
     refine ⟨⟨x, y⟩, xy, bxy, ?_, ?_⟩
-    · simp only [mem_setOf, ← hb, le_refl]
-    · simp only [mem_setOf, ← hb, ← abs_bottcher, bxy, le_refl]
+    · simp only [mem_setOf, ← hb, le_refl, u]
+    · simp only [mem_setOf, ← hb, ← abs_bottcher, bxy, le_refl, u]
   clear x xm y ym bxy xy hb
   have ue : u ⊆ multibrotExt d := by intro c m; rw [← potential_lt_one]; exact lt_of_le_of_lt m b1
   have t01 : t1 ⊆ t0 := inter_subset_right _ _
@@ -111,7 +111,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     simp only [not_lt, abs_bottcher] at vw bvw pv ⊢
     have pw : potential d w < p := by rwa [← abs_bottcher, ← bvw, abs_bottcher]
     have m : (v, w) ∈ t2 := ⟨vw, bvw, le_trans pv.le pb, le_trans pw.le pb⟩
-    contrapose pv; simp only [not_lt]; exact min ⟨v, w⟩ (subset_closure m)
+    contrapose pv; clear pv; simp only [not_lt]; exact min ⟨v, w⟩ (subset_closure m)
   -- x = y, so we're at a singular point
   simp only [not_not] at xy
   rw [← xy] at m1 m2 p0i; clear xy ym yp y
