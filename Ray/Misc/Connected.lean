@@ -25,7 +25,7 @@ variable [DenselyOrdered I] [OrderTopology I]
 theorem closure_inter_subset_compl {s u v : Set X} (vo : IsOpen v) (d : Disjoint u v) :
     closure (s ∩ u) ⊆ vᶜ := by
   rw [← vo.isClosed_compl.closure_eq]; apply closure_mono
-  exact _root_.trans (inter_subset_right _ _) (Disjoint.subset_compl_left d.symm)
+  exact _root_.trans inter_subset_right (Disjoint.subset_compl_left d.symm)
 
 theorem isClosed_closed_inter {s u v : Set X} (sc : IsClosed s) (vo : IsOpen v) (d : Disjoint u v)
     (suv : s ⊆ u ∪ v) : IsClosed (s ∩ u) := by

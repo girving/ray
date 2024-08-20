@@ -194,7 +194,7 @@ lemma potential_error_le (d : ℕ) [Fact (2 ≤ d)] {b : ℝ} {c z : ℂ}
   have x0 : 0 < x := by rw [←hx]; linarith
   refine le_trans (mul_le_mul_of_nonneg_left ie (by positivity)) ?_
   simp only [←mul_assoc, div_eq_inv_mul, mul_inv, mul_comm _ (log x)]
-  simp only [←mul_assoc, mul_comm _ (log x)⁻¹, inv_mul_cancel l0.ne', one_mul]
+  simp only [←mul_assoc, mul_comm _ (log x)⁻¹, inv_mul_cancel₀ l0.ne', one_mul]
   simp only [mul_assoc]
   refine le_trans (mul_le_of_le_one_left (by positivity) (Real.exp_le_one_iff.mpr (by linarith))) ?_
   simp only [←mul_assoc, ←Real.rpow_neg_one x, ←Real.rpow_add (lt_trans zero_lt_one z1),

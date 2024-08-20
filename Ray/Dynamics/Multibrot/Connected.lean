@@ -11,7 +11,7 @@ intersection of compact, connected sets (the levelsets of `potential d`).
 -/
 
 open Complex (abs)
-open Filter (eventually_of_forall Tendsto atTop)
+open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball sphere closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall
   mem_closedBall_self mem_sphere)

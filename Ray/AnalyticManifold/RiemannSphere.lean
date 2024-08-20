@@ -17,11 +17,13 @@ namely `coe` and `inv ∘ coe`, giving the Riemann sphere `𝕊`.
 
 open Classical
 open Complex (abs)
-open Filter (eventually_of_forall Tendsto atTop)
+open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Set
 open scoped Topology OnePoint
 noncomputable section
+
+variable {α : Type}
 
 /-- A left inverse to `coe : ℂ → 𝕊`.
     We put this outside the `RiemannSphere` namespace so that `z.toComplex` works. -/
@@ -139,7 +141,7 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
   · simp only [OnePoint.continuousAt_infty', Function.comp, Filter.coclosedCompact_eq_cocompact,
       inv_inf, ← atInf_eq_cocompact]
     have e : ∀ᶠ z : ℂ in atInf, ↑z⁻¹ = (↑z : 𝕊)⁻¹ := by
-      refine (eventually_atInf 0).mp (eventually_of_forall fun z z0 ↦ ?_)
+      refine (eventually_atInf 0).mp (.of_forall fun z z0 ↦ ?_)
       simp only [gt_iff_lt, Complex.norm_eq_abs, AbsoluteValue.pos_iff] at z0; rw [inv_coe z0]
     apply Filter.Tendsto.congr' e
     exact Filter.Tendsto.comp continuous_coe.continuousAt inv_tendsto_atInf'
@@ -160,7 +162,7 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
         simp only [Filter.pure_zero, Filter.tendsto_pure, ite_eq_left_iff, Filter.eventually_zero,
           eq_self_iff_true, not_true, IsEmpty.forall_iff]
     · have e : ∀ᶠ w : ℂ in 𝓝 z, (if w = 0 then ∞ else ↑w⁻¹ : 𝕊) = ↑w⁻¹ := by
-        refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
+        refine (continuousAt_id.eventually_ne z0).mp (.of_forall fun w w0 ↦ ?_)
         simp only [Ne, id_eq] at w0; simp only [w0, if_false]
       simp only [coe_eq_zero, continuousAt_congr e]
       exact continuous_coe.continuousAt.comp (tendsto_inv₀ z0)
@@ -326,7 +328,7 @@ theorem tendsto_inf_iff_tendsto_atInf {X : Type} {f : Filter X} {g : X → ℂ} 
 
 variable {X : Type} [TopologicalSpace X]
 variable {Y : Type} [TopologicalSpace Y]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [AnalyticManifold I T]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
 
 /-- `coe : ℂ → 𝕊` is an open map -/
 theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
@@ -395,7 +397,7 @@ theorem holomorphic_inv : Holomorphic I I fun z : 𝕊 ↦ z⁻¹ := by
       apply analyticAt_id
     · simp only [inv_coe z0, extChartAt_coe, coePartialEquiv_symm_apply]
       refine ((analyticAt_id _ _).inv z0).congr ?_
-      refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
+      refine (continuousAt_id.eventually_ne z0).mp (.of_forall fun w w0 ↦ ?_)
       rw [id] at w0; simp only [inv_coe w0, toComplex_coe, id]
 
 /-- Given `f : ℂ → X`, fill in the value at `∞` to get `𝕊 → X` -/
@@ -407,17 +409,25 @@ def lift (f : ℂ → ℂ) (y : 𝕊) : 𝕊 → 𝕊 := fun z ↦ z.rec y (fun 
 /-- Lift `f : X → ℂ → ℂ` to `X → 𝕊 → 𝕊` by filling in a value at `∞` -/
 def lift' (f : X → ℂ → ℂ) (y : 𝕊) : X → 𝕊 → 𝕊 := fun x z ↦ z.rec y (fun z ↦ f x z)
 
+section Fill
+
 variable {f : ℂ → ℂ}
-variable {g : X → ℂ → ℂ}
-variable {y : 𝕊} {x : X} {z : ℂ}
+variable {g : α → ℂ → ℂ}
+variable {y : 𝕊} {x : α} {z : ℂ}
 
 -- Values of `fill` and `lift` at `coe` and `∞`
-@[simp] lemma fill_coe {f : ℂ → X} {y : X} : fill f y z = f z := rfl
-@[simp] lemma fill_inf {f : ℂ → X} {y : X} : fill f y ∞ = y := rfl
+@[simp] lemma fill_coe {f : ℂ → α} {y : α} : fill f y z = f z := rfl
+@[simp] lemma fill_inf {f : ℂ → α} {y : α} : fill f y ∞ = y := rfl
 @[simp] lemma lift_coe : lift f y z = ↑(f z) := rfl
 @[simp] lemma lift_coe' : lift' g y x z = ↑(g x z) := rfl
 @[simp] lemma lift_inf : lift f y ∞ = y := rfl
 @[simp] lemma lift_inf' : lift' g y x ∞ = y := rfl
+
+end Fill
+
+variable {f : ℂ → ℂ}
+variable {g : X → ℂ → ℂ}
+variable {y : 𝕊} {x : X} {z : ℂ}
 
 /-- `lift` in terms of `fill` -/
 theorem lift_eq_fill : lift f y = fill (fun z ↦ (f z : 𝕊)) y := rfl
@@ -451,8 +461,9 @@ theorem holomorphicAt_fill_coe {f : ℂ → T} {y : T} (fa : HolomorphicAt I I f
   simp only [toComplex_coe]
 
 /-- `fill` is holomorphic at `∞` -/
-theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, HolomorphicAt I I f z)
-    (fi : Tendsto f atInf (𝓝 y)) : HolomorphicAt I I (fill f y) ∞ := by
+theorem holomorphicAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
+    (fa : ∀ᶠ z in atInf, HolomorphicAt I I f z) (fi : Tendsto f atInf (𝓝 y)) :
+    HolomorphicAt I I (fill f y) ∞ := by
   rw [holomorphicAt_iff]; use continuousAt_fill_inf fi
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, fill, rec_inf,
     modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, chartAt_inf,
@@ -477,7 +488,7 @@ theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, 
     simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at z0
     have e : (fun z ↦ extChartAt I y (if z = 0 then y else f z⁻¹)) =ᶠ[𝓝 z]
         fun z ↦ extChartAt I y (f z⁻¹) := by
-      refine (continuousAt_id.eventually_ne z0).mp (eventually_of_forall fun w w0 ↦ ?_)
+      refine (continuousAt_id.eventually_ne z0).mp (.of_forall fun w w0 ↦ ?_)
       simp only [Ne, id_eq] at w0; simp only [w0, if_false]
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
     apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
@@ -492,10 +503,10 @@ theorem holomorphicAt_fill_inf {f : ℂ → T} {y : T} (fa : ∀ᶠ z in atInf, 
       exact Filter.Tendsto.comp fi inv_tendsto_atInf
 
 /-- `fill` is holomorphic -/
-theorem holomorphic_fill {f : ℂ → T} {y : T} (fa : Holomorphic I I f) (fi : Tendsto f atInf (𝓝 y)) :
-    Holomorphic I I (fill f y) := by
+theorem holomorphic_fill [AnalyticManifold I T] {f : ℂ → T} {y : T} (fa : Holomorphic I I f)
+    (fi : Tendsto f atInf (𝓝 y)) : Holomorphic I I (fill f y) := by
   intro z; induction z using OnePoint.rec
-  · exact holomorphicAt_fill_inf (eventually_of_forall fa) fi
+  · exact holomorphicAt_fill_inf (.of_forall fa) fi
   · exact holomorphicAt_fill_coe (fa _)
 
 /-- `lift'` is continuous at finite values -/
@@ -561,14 +572,14 @@ theorem holomorphicAt_lift_coe (fa : AnalyticAt ℂ f z) : HolomorphicAt I I (li
 theorem holomorphicAt_lift_inf (fa : ∀ᶠ z in atInf, AnalyticAt ℂ f z) (fi : Tendsto f atInf atInf) :
     HolomorphicAt I I (lift f ∞) ∞ := by
   rw [lift_eq_fill]; apply holomorphicAt_fill_inf
-  exact fa.mp (eventually_of_forall fun z fa ↦ (holomorphic_coe _).comp (fa.holomorphicAt I I))
+  exact fa.mp (.of_forall fun z fa ↦ (holomorphic_coe _).comp (fa.holomorphicAt I I))
   exact coe_tendsto_inf.comp fi
 
 /-- `lift` is holomorphic -/
 theorem holomorphic_lift (fa : AnalyticOn ℂ f univ) (fi : Tendsto f atInf atInf) :
     Holomorphic I I (lift f ∞) := by
   intro z; induction z using OnePoint.rec
-  · exact holomorphicAt_lift_inf (eventually_of_forall fun z ↦ fa z (mem_univ _)) fi
+  · exact holomorphicAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
   · exact holomorphicAt_lift_coe (fa _ (mem_univ _))
 
 /-- `lift'` is holomorphic (the parameterized version) -/

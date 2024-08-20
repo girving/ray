@@ -8,7 +8,6 @@ import Ray.Analytic.Products
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
 import Ray.Misc.Pow
-import Ray.Tactic.Bound
 
 /-!
 ## Böttcher map near a superattracting fixpoint
@@ -34,7 +33,7 @@ open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)
 open Nat (iterate)
-open Set (MapsTo univ)
+open Set
 open scoped NNReal Topology
 noncomputable section
 
@@ -111,7 +110,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
       intro z zs; simp only [Set.mem_diff, Set.mem_singleton_iff] at zs
       simp only [g, zs.2, if_false]
     rw [differentiableOn_congr e]
-    apply DifferentiableOn.div (fa.mono (Set.diff_subset _ _)).differentiableOn
+    apply DifferentiableOn.div (fa.mono diff_subset).differentiableOn
     exact (Differentiable.pow differentiable_id _).differentiableOn
     intro z zs; exact pow_ne_zero _ (Set.mem_diff_singleton.mp zs).2
   rw [analyticOn_iff_differentiableOn o]
@@ -130,7 +129,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     calc
       abs (f z / z ^ d - 1) = abs (f z * (z ^ d)⁻¹ - 1) := by rw [div_eq_mul_inv]
       _ = abs ((f z - z ^ d) * (z ^ d)⁻¹) := by
-        rw [mul_sub_right_distrib, mul_inv_cancel (pow_ne_zero d z0)]
+        rw [mul_sub_right_distrib, mul_inv_cancel₀ (pow_ne_zero d z0)]
       _ = abs (f z - z ^ d) * (abs (z ^ d))⁻¹ := by rw [Complex.abs.map_mul, map_inv₀]
       _ ≤ e / 2 * abs (z ^ d) * (abs (z ^ d))⁻¹ := by bound
       _ = e / 2 * (abs (z ^ d) * (abs (z ^ d))⁻¹) := by ring
@@ -197,8 +196,8 @@ theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t := by
 /-- `g` is small near 0 -/
 theorem SuperNear.gs (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : abs (g f d z - 1) ≤ 1 / 4 := by
   by_cases z0 : z = 0
-  · simp only [z0, g0, sub_self, AbsoluteValue.map_zero, one_div, inv_nonneg, zero_le_bit0,
-      zero_le_one]; norm_num
+  · simp only [z0, g0, sub_self, AbsoluteValue.map_zero, one_div, inv_nonneg, zero_le_one]
+    norm_num
   · simp only [g, z0, if_false, s.gs' z0 zt]
 
 /-- `g` is nonzero -/
@@ -254,7 +253,7 @@ theorem term_eqn (s : SuperNear f d t) : ∀ n, term f d n (f z) = term f d (n +
     `                 = f z` -/
 theorem term_base (s : SuperNear f d t) : f z = (z * term f d 0 z) ^ d := by
   rw [term]; simp only [Function.iterate_zero, id, pow_one, one_div]
-  rw [mul_pow, pow_mul_nat, zero_add, pow_one, inv_mul_cancel _]
+  rw [mul_pow, pow_mul_nat, zero_add, pow_one, inv_mul_cancel₀]
   · rw [s.fg]; simp only [Complex.cpow_one]
   · simp only [Ne, Nat.cast_eq_zero]
     exact (gt_of_ge_of_gt s.d2 (by norm_num)).ne'
@@ -440,8 +439,7 @@ theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : abs (bottcher
     with ⟨r, rp, rs⟩
   simp only [Complex.dist_eq, sub_zero, bottcherNear_zero] at rs
   have b' : ∀ᶠ n in atTop, abs (bottcherNear f d (f^[n] z)) < 1 := by
-    refine (Metric.tendsto_nhds.mp (iterates_tendsto s zt) r rp).mp
-        (Filter.eventually_of_forall fun n h ↦ ?_)
+    refine (Metric.tendsto_nhds.mp (iterates_tendsto s zt) r rp).mp (.of_forall fun n h ↦ ?_)
     rw [Complex.dist_eq, sub_zero] at h; exact rs h
   rcases b'.exists with ⟨n, b⟩
   contrapose b; simp only [not_lt] at b ⊢
@@ -700,7 +698,7 @@ theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :
       exact (s.s m).dp
   apply small.mp
   apply (s.o.eventually_mem (s.s m).t0).mp
-  apply Filter.eventually_of_forall; clear small
+  refine .of_forall ?_; clear small
   intro ⟨e, w⟩ m' small; simp only [df _ _ m'] at small ⊢
   nth_rw 4 [← Nat.sub_add_cancel (Nat.succ_le_of_lt (s.s m).dp)]
   simp only [pow_add, pow_one, mul_comm _ (w ^ (d - 1)), mul_assoc (w ^ (d - 1)) _ _, ←

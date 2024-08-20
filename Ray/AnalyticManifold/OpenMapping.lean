@@ -5,7 +5,6 @@ import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
 import Ray.AnalyticManifold.Nontrivial
 import Ray.Misc.TotallyDisconnected
-import Ray.Tactic.Bound
 
 /-!
 ## The open mapping theorem on 1D complex manifolds
@@ -28,7 +27,7 @@ extentions of the flat versions lifted to charts.
 
 open Classical
 open Complex (abs)
-open Filter (Tendsto eventually_of_forall)
+open Filter (Tendsto)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
@@ -39,8 +38,8 @@ noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
 variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : AnalyticManifold I T]
-variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U] [cmu : AnalyticManifold I U]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
+variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 
 /-- Nontriviality at a point from nontriviality on a sphere -/
 theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
@@ -190,7 +189,7 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
   apply c.mp
   apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
   apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
-  refine eventually_of_forall fun w fm m fn ↦ ?_
+  refine .of_forall fun w fm m fn ↦ ?_
   simp only at fm m fn
   rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
   exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _ _)).mp fn
@@ -198,7 +197,7 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
     `AnalyticAt.eventually_constant_or_nhds_le_map_nhds`. -/
-theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
+theorem NontrivialHolomorphicAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S → T} {z : S}
     (n : NontrivialHolomorphicAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
   refine le_antisymm ?_ n.holomorphicAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
@@ -220,7 +219,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds {f : S → T} {z : S}
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
       apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
       apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
-      refine eventually_of_forall fun w fm m ↦ ?_
+      refine .of_forall fun w fm m ↦ ?_
       simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
 
@@ -231,8 +230,9 @@ theorem Filter.prod_map_id_map_eq {A B C : Type} {f : Filter A} {g : Filter B} {
 
 /-- The local open mapping theorem, parameterized manifold version: if `f : ℂ → S → T` is
     nontrivial, then `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods. -/
-theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c : ℂ} {z : S}
-    (n : NontrivialHolomorphicAt (f c) z) (fa : HolomorphicAt II I (uncurry f) (c, z)) :
+theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f : ℂ → S → T}
+    {c : ℂ} {z : S} (n : NontrivialHolomorphicAt (f c) z)
+    (fa : HolomorphicAt II I (uncurry f) (c, z)) :
     𝓝 (c, f c z) = Filter.map (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
   refine le_antisymm ?_ (continuousAt_fst.prod fa.continuousAt)
   generalize hg : (fun e x ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm x))) = g
@@ -253,6 +253,6 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param {f : ℂ → S → T} {c 
   rw [←nhds_prod_eq, Filter.map_map]; apply Filter.map_congr
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source II (c, z))).mp
   apply (fa.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f c z))).mp
-  apply eventually_of_forall; intro ⟨e, w⟩ fm m
+  refine .of_forall fun ⟨e, w⟩ fm m ↦ ?_
   simp only [Function.comp, uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
   simp only [Function.comp, PartialEquiv.left_inv _ m.2, PartialEquiv.left_inv _ fm]

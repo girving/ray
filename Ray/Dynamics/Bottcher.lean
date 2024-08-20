@@ -22,7 +22,7 @@ since for higher potentials we choose roots arbitrarily.
 
 open Classical
 open Complex (abs)
-open Filter (Tendsto atTop eventually_of_forall)
+open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball mem_closedBall mem_ball_self)
 open OneDimension
@@ -104,7 +104,7 @@ theorem Super.bottcher_eq_bottcherNear (s : Super f d a) [OnePreimage s] (c : �
   simp only [eq, Filter.eventually_map]
   apply ((continuousAt_const.prod continuousAt_id).eventually (s.ray_eqn_zero c)).mp
   refine ((s.isOpen_ext.snd_preimage c).eventually_mem (s.mem_ext c)).mp
-    (eventually_of_forall fun z m e ↦ ?_)
+    (.of_forall fun z m e ↦ ?_)
   simp only [s.bottcher_ray m]; exact e.symm
 
 /-- `s.ext` and `s.post` are (analytically) bijective -/
@@ -185,7 +185,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
-    refine eventually_of_forall fun w m e0 e1 ↦ ?_; simp only at m e0 e1
+    refine .of_forall fun w m e0 e1 ↦ ?_; simp only at m e0 e1
     simp only [e0, e1]; exact s.bottcherNear_eqn m
   by_cases p : (c, z) ∈ s.post; simp only [h0 p]
   by_cases m : (c, z) ∈ s.basin

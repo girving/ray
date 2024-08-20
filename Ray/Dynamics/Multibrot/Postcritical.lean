@@ -73,8 +73,6 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
   generalize abs (f' d c z) = w at zw
   generalize abs z = x at zw cz z4
   clear z c cz
-  have x0 : 0 < x := by linarith
-  have x1 : 1 < x := by linarith
   simp only [pow_one] at zw
   have lx1 : 1 < log (x-1) :=
     lt_trans (by norm_num) (lt_of_lt_of_le lt_log_3 (Real.log_le_log (by norm_num) (by linarith)))

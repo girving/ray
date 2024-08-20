@@ -5,7 +5,6 @@ import Ray.AnalyticManifold.Inverse
 import Ray.AnalyticManifold.Nontrivial
 import Ray.AnalyticManifold.OneDimension
 import Ray.Misc.Topology
-import Ray.Tactic.Bound
 
 /-!
 ## Böttcher map near a superattracting fixed point
@@ -23,7 +22,7 @@ iteration sends `s.near` to `s.near`.
 
 open Classical
 open Complex (exp log abs cpow)
-open Filter (Tendsto atTop eventually_of_forall)
+open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)
 open Nat (iterate)
@@ -33,8 +32,7 @@ open scoped NNReal Topology
 noncomputable section
 
 -- All information for a monic superattracting fixed point at the origin
-variable {S : Type} [TopologicalSpace S] [CompactSpace S] [T3Space S] [ChartedSpace ℂ S]
-  [AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S]
 variable {f : ℂ → S → S}
 variable {c : ℂ}
 variable {a z : S}
@@ -64,6 +62,8 @@ structure Super {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace �
   f0 : ∀ c, f c a = a
   fd : ∀ c, orderAt (fl f a c) 0 = d
   fc : ∀ c, leadingCoeff (fl f a c) 0 = 1
+
+variable [CompactSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
 
 -- `d` facts
 theorem Super.dp (s : Super f d a) : 0 < d := lt_trans (by norm_num) s.d2
@@ -158,7 +158,7 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   have od : (fun z : ℂ ↦ z ^ d) =o[𝓝 0] (fun z ↦ z) := by
     rw [Asymptotics.isLittleO_iff]; intro e ep
     apply ((@Metric.isOpen_ball ℂ _ 0 (min 1 e)).eventually_mem (mem_ball_self (by bound))).mp
-    refine eventually_of_forall fun z b ↦ ?_
+    refine .of_forall fun z b ↦ ?_
     simp only at b; rw [mem_ball_zero_iff, Complex.norm_eq_abs, lt_min_iff] at b
     simp only [Complex.norm_eq_abs, Complex.abs.map_pow]
     rw [← Nat.sub_add_cancel s.d2, pow_add, pow_two]
@@ -200,7 +200,7 @@ theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialHolomorphicAt
     refine (continuousAt_extChartAt_symm I a).comp_of_eq ?_ (by simp only [zero_add])
     exact continuousAt_id.add continuousAt_const
   simp only [ContinuousAt, zero_add, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)] at gc
-  refine (gc.eventually n).mp (eventually_of_forall ?_)
+  refine (gc.eventually n).mp (.of_forall ?_)
   intro x h; simp only [_root_.fl, Function.comp, h, sub_self]
 
 /-- Close enough to `a`, `f c z ∈ (ext_chart_at I a).source` -/
@@ -442,7 +442,7 @@ theorem Super.fp2 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).2 = 
     simp only [Function.iterate_succ_apply', c, h, fp]
 
 /-- `bottcherNear` on the manifold -/
-@[pp_dot] def Super.bottcherNear (s : Super f d a) (c : ℂ) (z : S) : ℂ :=
+def Super.bottcherNear (s : Super f d a) (c : ℂ) (z : S) : ℂ :=
   _root_.bottcherNear (s.fl c) d (extChartAt I a z - extChartAt I a a)
 
 /-- `s.bottcherNear`, uncurried -/
@@ -468,7 +468,7 @@ theorem Super.bottcherNear_holomorphic (s : Super f d a) :
   simp only [sub_self]
 
 /-- `s.bottcherNear` after some iterations of `f` -/
-@[pp_dot] def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fun c z ↦
+def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fun c z ↦
   s.bottcherNear c ((f c)^[n] z)
 
 theorem Super.bottcherNearIter_holomorphic (s : Super f d a) {n : ℕ}
@@ -560,7 +560,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     refine (s.fa _).continuousAt.eventually_mem (extChartAt_source_mem_nhds' I ?_)
     simp only [uncurry, s.f0, mem_extChartAt_source I a]
   apply ezm.mp
-  apply eventually_of_forall; clear t em
+  refine .of_forall ?_; clear t em
   intro ⟨e, z⟩ ezm zm d0 m0; simp only at ezm zm d0 m0 ⊢
   simp only [Super.fl, fl, sub_eq_zero, (PartialEquiv.injOn _).eq_iff zm am] at d0
   simp only [Critical, m0, ← d0]
@@ -593,11 +593,11 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
     IsClosed {p : ℂ × S | Critical (f p.1) p.2 ∧ p.2 ≠ a} := by
   rw [← isOpen_compl_iff]; rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m
   by_cases za : z = a
-  · rw [za]; refine (s.f_noncritical_near_a c).mp (eventually_of_forall ?_); intro ⟨e, w⟩ h
+  · rw [za]; refine (s.f_noncritical_near_a c).mp (.of_forall ?_); intro ⟨e, w⟩ h
     simp only [mem_compl_iff, mem_setOf, not_and, not_not] at h ⊢; exact h.1
   · have o := isOpen_iff_eventually.mp (isOpen_noncritical s.fa)
     simp only [za, mem_compl_iff, mem_setOf, not_and, not_not, imp_false] at m o ⊢
-    refine (o (c, z) m).mp (eventually_of_forall ?_); intro ⟨e, w⟩ a b; exfalso; exact a b
+    refine (o (c, z) m).mp (.of_forall ?_); intro ⟨e, w⟩ a b; exfalso; exact a b
 
 /-- If `z ∈ s.basin`, iterating enough takes us to a noncritical point of `s.bottcherNear` -/
 theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
@@ -614,14 +614,14 @@ theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
   simp only [not_not] at f0 ⊢; exact critical_iter s.fa.along_snd f0
 
 /-- `f c^[n]` is nontrivial at `a` -/
-theorem Super.iter_nontrivial_a (s : Super f d a) :
+theorem Super.iter_nontrivial_a [T2Space S] (s : Super f d a) :
     NontrivialHolomorphicAt (fun z ↦ (f c)^[n] z) a := by
   induction' n with n h; simp only [Function.iterate_zero_apply]; apply nontrivialHolomorphicAt_id
   simp only [Function.iterate_succ_apply']; refine NontrivialHolomorphicAt.comp ?_ h
   simp only [s.iter_a]; exact s.f_nontrivial c
 
 /-- `s.bottcherNearIter` is nontrivial at `a` -/
-theorem Super.bottcherNearIter_nontrivial_a (s : Super f d a) :
+theorem Super.bottcherNearIter_nontrivial_a [T2Space S] (s : Super f d a) :
     NontrivialHolomorphicAt (s.bottcherNearIter n c) a :=
   haveI b : NontrivialHolomorphicAt (s.bottcherNear c) ((f c)^[n] a) := by
     simp only [s.iter_a]

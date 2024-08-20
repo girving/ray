@@ -3,7 +3,6 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.ReImTopology
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral
@@ -14,7 +13,6 @@ import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
 import Ray.Misc.Bounds
 import Ray.Misc.Topology
-import Ray.Tactic.Bound
 
 /-!
 ## Convergent sequences of analytic functions
@@ -116,9 +114,8 @@ theorem cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w 
     _ ≤ |π|⁻¹ * 2⁻¹ * (2 * π * r * (wr * r⁻¹)) := by bound
     _ = π * |π|⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
-    _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel Real.pi_ne_zero]
-    _ = wr := by
-      rw [NNReal.coe_inv, mul_inv_cancel (NNReal.coe_ne_zero.mpr rp.ne'), one_mul, one_mul]
+    _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
+    _ = wr := by field_simp
 
 theorem circleIntegral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :
@@ -203,7 +200,7 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
   have cfs : ∀ n, ContinuousOn (f n) s := fun n ↦ AnalyticOn.continuousOn (h n)
   have cf : ∀ n, ContinuousOn (f n) (closedBall c r) := fun n ↦ ContinuousOn.mono (cfs n) cb
   have cg : ContinuousOn g (closedBall c r) :=
-    ContinuousOn.mono (TendstoUniformlyOn.continuousOn u (Filter.eventually_of_forall cfs)) cb
+    ContinuousOn.mono (TendstoUniformlyOn.continuousOn u (.of_forall cfs)) cb
   clear h hb hc o cfs
   set p := cauchyPowerSeries g c r
   refine
@@ -255,7 +252,7 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
         _ ≤ (1 - a)⁻¹ * d := by bound
         _ = (1 - a)⁻¹ * ((1 - a) * (e / 4)) := by rw [← d4]
         _ = (1 - a) * (1 - a)⁻¹ * (e / 4) := by ring
-        _ = 1 * (e / 4) := by rw [mul_inv_cancel a1p.ne']
+        _ = 1 * (e / 4) := by rw [mul_inv_cancel₀ a1p.ne']
         _ = e / 4 := by ring
   generalize hMp : M.sum (fun k : ℕ ↦ p k fun _ ↦ y) = Mp; rw [hMp] at dppr
   generalize hMpr : M.sum (fun k ↦ pr n k fun _ ↦ y) = Mpr; rw [hMpr] at dpf dppr

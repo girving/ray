@@ -6,14 +6,12 @@ import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Mathlib.Topology.Basic
 import Ray.Analytic.Analytic
-import Ray.Tactic.Bound
 import Ray.Misc.Bounds
 import Ray.Misc.Multilinear
 import Ray.Misc.Topology
@@ -54,12 +52,13 @@ open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere isOpen_ball)
 open intervalIntegral
+open Set
 open scoped Real NNReal ENNReal Topology MeasureTheory
 noncomputable section
 
 section osgood
 
-variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {f : ℂ × ℂ → E}
 variable {s : Set (ℂ × ℂ)}
 variable {c0 c1 w0 w1 : ℂ}
@@ -131,46 +130,6 @@ theorem Separate.fd1 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ closedBall c0 r)
     apply h.rs; rw [←closedBall_prod_same]; exact Set.mem_prod.mpr ⟨w0m, w1m⟩
   AnalyticAt.differentiableAt (h.fa1 m)
 
-/-- Simplied 1D Cauchy integral formula, assuming differentiability everywhere in the interior -/
-theorem cauchy1 {r : ℝ} {c w : ℂ} {f : ℂ → E} (wm : w ∈ ball c r)
-    (fc : ContinuousOn f (closedBall c r)) (fd : ∀ z, z ∈ ball c r → DifferentiableAt ℂ f z) :
-    (2*π*I : ℂ)⁻¹ • (∮ z in C(c, r), (z - w)⁻¹ • f z) = f w := by
-  refine Complex.two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
-    Set.countable_empty wm fc ?_
-  intro z zm; apply fd z _; simp only [Metric.mem_ball, Set.diff_empty] at zm ⊢; assumption
-
-/-- The 2D Cauchy integral formula -/
-theorem cauchy2 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball c0 r) (w1m : w1 ∈ ball c1 r) :
-    (2*π*I : ℂ)⁻¹ • (∮ z0 in C(c0, r), (z0 - w0)⁻¹ • (2*π*I : ℂ)⁻¹ •
-      (∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))) =
-      f (w0, w1) := by
-  have h1 := fun z0 (z0m : z0 ∈ closedBall c0 r) ↦
-    cauchy1 w1m (h.fc1 z0m) fun z1 z1m ↦ h.fd1 z0m (mem_open_closed z1m)
-  have ic1 : ContinuousOn (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))
-      (closedBall c0 r) :=
-    (h.fc0 w1m).congr h1
-  have id1 : DifferentiableOn ℂ (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹
-      • f (z0, z1)) (ball c0 r) := by
-    rw [differentiableOn_congr fun z zs ↦ h1 z (mem_open_closed zs)]
-    intro z0 z0m; apply DifferentiableAt.differentiableWithinAt
-    exact h.fd0 (mem_open_closed z0m) (mem_open_closed w1m)
-  have h01 :=
-    cauchy1 w0m ic1 fun z0 z0m ↦
-      DifferentiableOn.differentiableAt id1 (IsOpen.mem_nhds isOpen_ball z0m)
-  exact _root_.trans h01 (h1 w0 (mem_open_closed w0m))
-
-/-- One 2D coefficient of the 2D Cauchy series -/
-@[nolint unusedArguments]  -- Don't complain about the first argument
-def Separate.series2Coeff (_ : Separate f c0 c1 r b s) (n0 n1 : ℕ) : E :=
-  (2*π*I : ℂ)⁻¹ • ∮ z0 in C(c0, r), (z0 - c0)⁻¹ ^ n0 • (z0 - c0)⁻¹ •
-    (2*π*I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - c1)⁻¹ ^ n1 • (z1 - c1)⁻¹ • f (z0, z1)
-
-/-- `series2Coeff` summed over `n0` -/
-@[nolint unusedArguments]  -- Don't complain about the first argument
-def Separate.series2CoeffN0Sum (_ : Separate f c0 c1 r b s) (n1 : ℕ) (w0 : ℂ) : E :=
-  (2*π*I : ℂ)⁻¹ • ∮ z0 : ℂ in C(c0, r), (z0 - (c0 + w0))⁻¹ •
-    (2*π*I : ℂ)⁻¹ • ∮ z1 : ℂ in C(c1, r), (z1 - c1)⁻¹ ^ n1 • (z1 - c1)⁻¹ • f (z0, z1)
-
 /-- The 1D Cauchy series converges as expected
    (rephrasing of `hasSum_cauchy_power_series_integral`) -/
 theorem cauchy1_hasSum {f : ℂ → E} {c w : ℂ} {r : ℝ} (rp : r > 0) (fc : ContinuousOn f (sphere c r))
@@ -208,7 +167,9 @@ theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : 
   refine intervalIntegral.continuousWithinAt_of_dominated_interval ?_ fb (by simp) ?_
   · apply eventually_nhdsWithin_of_forall; intro x xs
     apply ContinuousOn.aestronglyMeasurable
-    apply ContinuousOn.smul; simp
+    apply ContinuousOn.smul
+    rw [(by rfl : deriv (circleMap c1 r) = fun t ↦ deriv (circleMap c1 r) t)]
+    simp only [deriv_circleMap]
     exact ContinuousOn.mul (Continuous.continuousOn (continuous_circleMap _ _)) continuousOn_const
     have comp : (fun t ↦ f x (circleMap c1 r t)) = uncurry f ∘ fun t ↦ (x, circleMap c1 r t) := by
       apply funext; intro t; simp
@@ -223,27 +184,6 @@ theorem ContinuousOn.circleIntegral {f : ℂ → ℂ → E} {s : Set ℂ} (rp : 
     rw [comp]; apply ContinuousOn.comp fc (ContinuousOn.prod continuousOn_id continuousOn_const)
     intro x xs; simp; exact ⟨xs, by linarith⟩
     exact z1s
-
-/-- Inverses are continuous on the sphere -/
-theorem ContinuousOn.inv_sphere {c : ℂ} {r : ℝ} (rp : r > 0) :
-    ContinuousOn (fun z ↦ (z - c)⁻¹) (sphere c r) :=
-  ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun _ zs ↦
-    center_not_in_sphere rp zs
-
-/-- Shifted inverses are continuous on the sphere -/
-theorem ContinuousOn.inv_sphere_ball {c w : ℂ} {r : ℝ} (wr : w ∈ ball (0 : ℂ) r) :
-    ContinuousOn (fun z ↦ (z - (c + w))⁻¹) (sphere c r) := by
-  refine ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun z zs ↦ ?_
-  rw [←Complex.abs.ne_zero_iff]
-  simp only [mem_ball_zero_iff, Complex.norm_eq_abs, mem_sphere_iff_norm] at zs wr
-  apply ne_of_gt
-  calc abs (z - (c + w))
-    _ = abs (z - c + -w) := by ring_nf
-    _ ≥ abs (z - c) - abs (-w) := by bound
-    _ = r - abs (-w) := by rw [zs]
-    _ = r - abs w := by rw [Complex.abs.map_neg]
-    _ > r - r := (sub_lt_sub_left wr _)
-    _ = 0 := by ring
 
 /-- Cauchy series terms are continuous in the function -/
 theorem ContinuousOn.cauchy1 {n1 : ℕ} (rp : r > 0)
@@ -260,6 +200,18 @@ theorem ContinuousOn.cauchy1 {n1 : ℕ} (rp : r > 0)
   exact Continuous.sub (Continuous.snd continuous_id) continuous_const
   intro x xp; exact center_not_in_sphere rp (Set.mem_prod.mp xp).right
   simp; exact fc
+
+/-- One 2D coefficient of the 2D Cauchy series -/
+@[nolint unusedArguments]  -- Don't complain about the first argument
+def Separate.series2Coeff (_ : Separate f c0 c1 r b s) (n0 n1 : ℕ) : E :=
+  (2*π*I : ℂ)⁻¹ • ∮ z0 in C(c0, r), (z0 - c0)⁻¹ ^ n0 • (z0 - c0)⁻¹ •
+    (2*π*I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - c1)⁻¹ ^ n1 • (z1 - c1)⁻¹ • f (z0, z1)
+
+/-- `series2Coeff` summed over `n0` -/
+@[nolint unusedArguments]  -- Don't complain about the first argument
+def Separate.series2CoeffN0Sum (_ : Separate f c0 c1 r b s) (n1 : ℕ) (w0 : ℂ) : E :=
+  (2*π*I : ℂ)⁻¹ • ∮ z0 : ℂ in C(c0, r), (z0 - (c0 + w0))⁻¹ •
+    (2*π*I : ℂ)⁻¹ • ∮ z1 : ℂ in C(c1, r), (z1 - c1)⁻¹ ^ n1 • (z1 - c1)⁻¹ • f (z0, z1)
 
 /-- Summing over `n0` in the 2D series does the right thing -/
 theorem cauchy2_hasSum_n0 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r) (n1 : ℕ) :
@@ -324,6 +276,12 @@ theorem bounded_circleIntegral {f : ℂ → E} {c : ℂ} {r b : ℝ} (rp : r > 0
     _ = r * (2 * π * b) := by rw [abs_of_pos rp]
     _ = 2 * π * r * b := by ring
 
+/-- Inverses are continuous on the sphere -/
+theorem ContinuousOn.inv_sphere {c : ℂ} {r : ℝ} (rp : r > 0) :
+    ContinuousOn (fun z ↦ (z - c)⁻¹) (sphere c r) :=
+  ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun _ zs ↦
+    center_not_in_sphere rp zs
+
 /-- The 1D Cauchy integral without the constant has the expected bound -/
 theorem cauchy1_bound {f : ℂ → E} {b r : ℝ} {c : ℂ} (rp : r > 0)
     (fc : ContinuousOn f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ‖f z‖ ≤ b) (n : ℕ) :
@@ -337,7 +295,7 @@ theorem cauchy1_bound {f : ℂ → E} {b r : ℝ} {c : ℂ} (rp : r > 0)
   · calc ‖∮ z in C(c, r), (z - c)⁻¹ ^ n • (z - c)⁻¹ • f z‖
       _ ≤ 2 * π * r * (r⁻¹ ^ n * r⁻¹ * b) := isb
       _ = 2 * π * b * r⁻¹ ^ n * (r * r⁻¹) := by ring
-      _ = 2 * π * b * r⁻¹ ^ n := by rw [mul_inv_cancel rp.ne']; simp
+      _ = 2 * π * b * r⁻¹ ^ n := by rw [mul_inv_cancel₀ rp.ne']; simp
   · apply ContinuousOn.smul; apply ContinuousOn.pow; exact ContinuousOn.inv_sphere rp
     apply ContinuousOn.smul; exact ContinuousOn.inv_sphere rp; assumption
 
@@ -384,43 +342,7 @@ theorem cauchy2_hasSum_n1n0_bound (h : Separate f c0 c1 r b s) (w0m : w0 ∈ bal
     _ ≤ abs w1 ^ n * ((2 * π)⁻¹ * ((r - abs w0)⁻¹ * (2 * π * b * r⁻¹ ^ n))) := by bound
     _ = 2 * π * (2 * π)⁻¹ * (r - abs w0)⁻¹ * b * (abs w1 ^ n * r⁻¹ ^ n) := by ring
     _ = (r - abs w0)⁻¹ * b * (abs w1 / r) ^ n := by
-      rw [mul_inv_cancel Real.two_pi_pos.ne', ← mul_pow, ← div_eq_mul_inv _ r, one_mul]
-
-/-- The outer n1 sum in the 2D series does the right thing -/
-theorem cauchy2_hasSum_n1n0 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r)
-    (w1m : w1 ∈ ball (0 : ℂ) r) :
-    HasSum (fun n1 ↦ w1 ^ n1 • h.series2CoeffN0Sum n1 w0) (f (c0 + w0, c1 + w1)) := by
-  have cw0m : c0 + w0 ∈ ball c0 r := by
-    simpa only [Metric.mem_ball, dist_self_add_left, Complex.norm_eq_abs, Complex.dist_eq,
-      sub_zero] using w0m
-  have cw1m : c1 + w1 ∈ ball c1 r := by
-    simpa only [Metric.mem_ball, dist_self_add_left, Complex.norm_eq_abs, dist_zero_right] using w1m
-  simp_rw [Separate.series2CoeffN0Sum]
-  rw [← cauchy2 h cw0m cw1m]
-  generalize hs : (2 * ↑π * I)⁻¹ = s
-  simp_rw [smul_comm _ s _]
-  apply HasSum.const_smul
-  simp_rw [← circleIntegral.integral_smul (w1 ^ _) _ _ _]
-  apply sum_integral_commute (fun n ↦ (r - abs w0)⁻¹ * b * (abs w1 / r) ^ n) h.rp
-  · intro n
-    apply ContinuousOn.smul continuousOn_const
-    apply ContinuousOn.smul continuousOn_const
-    apply ContinuousOn.smul
-    exact ContinuousOn.inv_sphere_ball w0m
-    apply ContinuousOn.cauchy1 h.rp
-    apply ContinuousOn.mono h.fc h.rs'
-  · rw [← hs]; exact fun n z0 z0s ↦ cauchy2_hasSum_n1n0_bound h w0m n z0s
-  · apply Summable.mul_left
-    apply summable_geometric_of_abs_lt_one
-    rw [abs_div, abs_of_pos h.rp]; simp at w1m ⊢; exact (div_lt_one h.rp).mpr w1m
-  · intro z0 z0s
-    simp_rw [smul_comm s _]; simp_rw [smul_comm (w1 ^ _) _]; apply HasSum.const_smul
-    have fcs : ContinuousOn (fun z1 ↦ f (z0, z1)) (sphere c1 r) :=
-      ContinuousOn.mono (h.fc1 (Metric.sphere_subset_closedBall z0s))
-        Metric.sphere_subset_closedBall
-    have hs1 := cauchy1_hasSum h.rp fcs w1m
-    simp_rw [hs, smul_comm _ s] at hs1
-    assumption
+      rw [mul_inv_cancel₀ Real.two_pi_pos.ne', ← mul_pow, ← div_eq_mul_inv _ r, one_mul]
 
 /-- 2D Cauchy series terms are geometrically bounded -/
 theorem series2Coeff_bound (h : Separate f c0 c1 r b s) (n0 n1 : ℕ) :
@@ -483,6 +405,87 @@ theorem cauchy2_radius (h : Separate f c0 c1 r b s) : ENNReal.ofReal r ≤ (seri
   exact Summable.add (hasSum_coe_mul_geometric_of_norm_lt_one trn).summable
     (hasSum_geometric_of_norm_lt_one trn).summable
 
+variable [CompleteSpace E]
+
+/-- Simplied 1D Cauchy integral formula, assuming differentiability everywhere in the interior -/
+theorem cauchy1 {r : ℝ} {c w : ℂ} {f : ℂ → E} (wm : w ∈ ball c r)
+    (fc : ContinuousOn f (closedBall c r)) (fd : ∀ z, z ∈ ball c r → DifferentiableAt ℂ f z) :
+    (2*π*I : ℂ)⁻¹ • (∮ z in C(c, r), (z - w)⁻¹ • f z) = f w := by
+  refine Complex.two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
+    Set.countable_empty wm fc ?_
+  intro z zm; apply fd z _; simp only [Metric.mem_ball, Set.diff_empty] at zm ⊢; assumption
+
+/-- The 2D Cauchy integral formula -/
+theorem cauchy2 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball c0 r) (w1m : w1 ∈ ball c1 r) :
+    (2*π*I : ℂ)⁻¹ • (∮ z0 in C(c0, r), (z0 - w0)⁻¹ • (2*π*I : ℂ)⁻¹ •
+      (∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))) =
+      f (w0, w1) := by
+  have h1 := fun z0 (z0m : z0 ∈ closedBall c0 r) ↦
+    cauchy1 w1m (h.fc1 z0m) fun z1 z1m ↦ h.fd1 z0m (mem_open_closed z1m)
+  have ic1 : ContinuousOn (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))
+      (closedBall c0 r) :=
+    (h.fc0 w1m).congr h1
+  have id1 : DifferentiableOn ℂ (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹
+      • f (z0, z1)) (ball c0 r) := by
+    rw [differentiableOn_congr fun z zs ↦ h1 z (mem_open_closed zs)]
+    intro z0 z0m; apply DifferentiableAt.differentiableWithinAt
+    exact h.fd0 (mem_open_closed z0m) (mem_open_closed w1m)
+  have h01 :=
+    cauchy1 w0m ic1 fun z0 z0m ↦
+      DifferentiableOn.differentiableAt id1 (IsOpen.mem_nhds isOpen_ball z0m)
+  exact _root_.trans h01 (h1 w0 (mem_open_closed w0m))
+
+/-- Shifted inverses are continuous on the sphere -/
+theorem ContinuousOn.inv_sphere_ball {c w : ℂ} {r : ℝ} (wr : w ∈ ball (0 : ℂ) r) :
+    ContinuousOn (fun z ↦ (z - (c + w))⁻¹) (sphere c r) := by
+  refine ContinuousOn.inv₀ (ContinuousOn.sub continuousOn_id continuousOn_const) fun z zs ↦ ?_
+  rw [←Complex.abs.ne_zero_iff]
+  simp only [mem_ball_zero_iff, Complex.norm_eq_abs, mem_sphere_iff_norm] at zs wr
+  apply ne_of_gt
+  calc abs (z - (c + w))
+    _ = abs (z - c + -w) := by ring_nf
+    _ ≥ abs (z - c) - abs (-w) := by bound
+    _ = r - abs (-w) := by rw [zs]
+    _ = r - abs w := by rw [Complex.abs.map_neg]
+    _ > r - r := (sub_lt_sub_left wr _)
+    _ = 0 := by ring
+
+/-- The outer n1 sum in the 2D series does the right thing -/
+theorem cauchy2_hasSum_n1n0 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r)
+    (w1m : w1 ∈ ball (0 : ℂ) r) :
+    HasSum (fun n1 ↦ w1 ^ n1 • h.series2CoeffN0Sum n1 w0) (f (c0 + w0, c1 + w1)) := by
+  have cw0m : c0 + w0 ∈ ball c0 r := by
+    simpa only [Metric.mem_ball, dist_self_add_left, Complex.norm_eq_abs, Complex.dist_eq,
+      sub_zero] using w0m
+  have cw1m : c1 + w1 ∈ ball c1 r := by
+    simpa only [Metric.mem_ball, dist_self_add_left, Complex.norm_eq_abs, dist_zero_right] using w1m
+  simp_rw [Separate.series2CoeffN0Sum]
+  rw [← cauchy2 h cw0m cw1m]
+  generalize hs : (2 * ↑π * I)⁻¹ = s
+  simp_rw [smul_comm _ s _]
+  apply HasSum.const_smul
+  simp_rw [← circleIntegral.integral_smul (w1 ^ _) _ _ _]
+  apply sum_integral_commute (fun n ↦ (r - abs w0)⁻¹ * b * (abs w1 / r) ^ n) h.rp
+  · intro n
+    apply ContinuousOn.smul continuousOn_const
+    apply ContinuousOn.smul continuousOn_const
+    apply ContinuousOn.smul
+    exact ContinuousOn.inv_sphere_ball w0m
+    apply ContinuousOn.cauchy1 h.rp
+    apply ContinuousOn.mono h.fc h.rs'
+  · rw [← hs]; exact fun n z0 z0s ↦ cauchy2_hasSum_n1n0_bound h w0m n z0s
+  · apply Summable.mul_left
+    apply summable_geometric_of_abs_lt_one
+    rw [abs_div, abs_of_pos h.rp]; simp at w1m ⊢; exact (div_lt_one h.rp).mpr w1m
+  · intro z0 z0s
+    simp_rw [smul_comm s _]; simp_rw [smul_comm (w1 ^ _) _]; apply HasSum.const_smul
+    have fcs : ContinuousOn (fun z1 ↦ f (z0, z1)) (sphere c1 r) :=
+      ContinuousOn.mono (h.fc1 (Metric.sphere_subset_closedBall z0s))
+        Metric.sphere_subset_closedBall
+    have hs1 := cauchy1_hasSum h.rp fcs w1m
+    simp_rw [hs, smul_comm _ s] at hs1
+    assumption
+
 /-- The 2D series converges to `f` -/
 theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ) r)
     (w1m : w1 ∈ ball (0 : ℂ) r) :
@@ -517,7 +520,8 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
   rwa [HasSum.unique gs gs']
 
 /-- We convert the 2D sum to a 1D outer sum with an inner finite antidiagonal -/
-theorem HasSum.antidiagonal_of_2d {f : ℕ × ℕ → E} {a : E} (h : HasSum f a) :
+theorem HasSum.antidiagonal_of_2d {V : Type} [AddCommMonoid V] [TopologicalSpace V]
+    [ContinuousAdd V] [RegularSpace V] {f : ℕ × ℕ → V} {a : V} (h : HasSum f a) :
     HasSum (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) a := by
   generalize hg : (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) = g
   rw [←Finset.sigmaAntidiagonalEquivProd.hasSum_iff] at h

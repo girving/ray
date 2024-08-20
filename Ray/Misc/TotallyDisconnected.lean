@@ -63,8 +63,8 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
     TotallyDisconnectedSpace X := by
   generalize hR : {r | ∃ x y : X, dist x y = r} = R
   have rc : R.Countable := by
-    have e : R = range (uncurry dist) := by
-      apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry, ← hR]; rfl
+    have e : R = range (uncurry (dist (α := X))) := by
+      apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry, ← hR]
     rw [e]; exact countable_range _
   refine ⟨?_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
   rw [← dist_pos] at xy

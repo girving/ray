@@ -8,7 +8,7 @@ def gradient (_ : Unit) : Image :=
   let w := 162
   let h := 100
   let chunk := 128
-  let i (c : ℚ) : UInt8 := (c * 255).floor
+  let i (c : ℚ) : UInt8 := .ofNat (c * 255).floor.toNat
   Image.ofFn w h chunk (fun x y ↦
     let x := (x : ℚ) / w
     let y := (y : ℚ) / h

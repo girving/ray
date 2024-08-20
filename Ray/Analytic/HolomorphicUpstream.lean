@@ -8,7 +8,6 @@ import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic
@@ -26,6 +25,7 @@ noncomputable section
 
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F] [CompleteSpace F]
+variable {G : Type} [NormedAddCommGroup G] [NormedSpace ℂ G]
 
 /-- A function is analytic at `z` iff it's differentiable on a surrounding open set -/
 theorem analyticOn_iff_differentiableOn {f : ℂ → E} {s : Set ℂ} (o : IsOpen s) :
@@ -69,21 +69,21 @@ theorem analyticAt_log {c : ℂ} (m : c ∈ Complex.slitPlane) : AnalyticAt ℂ 
   exact differentiableAt_id.clog m
 
 /-- `log` is analytic away from nonpositive reals -/
-theorem AnalyticAt.log {f : E → ℂ} {c : E} (fa : AnalyticAt ℂ f c) (m : f c ∈ Complex.slitPlane) :
+theorem AnalyticAt.log {f : G → ℂ} {c : G} (fa : AnalyticAt ℂ f c) (m : f c ∈ Complex.slitPlane) :
     AnalyticAt ℂ (fun z ↦ log (f z)) c :=
   (analyticAt_log m).comp fa
 
 /-- `log` is analytic away from nonpositive reals -/
-theorem AnalyticOn.log {f : E → ℂ} {s : Set E} (fs : AnalyticOn ℂ f s)
+theorem AnalyticOn.log {f : G → ℂ} {s : Set G} (fs : AnalyticOn ℂ f s)
     (m : ∀ z ∈ s, f z ∈ Complex.slitPlane) : AnalyticOn ℂ (fun z ↦ log (f z)) s :=
   fun z n ↦ (analyticAt_log (m z n)).comp (fs z n)
 
 /-- `f z ^ g z` is analytic if `f z` is not a nonpositive real -/
-theorem AnalyticAt.cpow {f g : E → ℂ} {c : E} (fa : AnalyticAt ℂ f c) (ga : AnalyticAt ℂ g c)
+theorem AnalyticAt.cpow {f g : G → ℂ} {c : G} (fa : AnalyticAt ℂ f c) (ga : AnalyticAt ℂ g c)
     (m : f c ∈ Complex.slitPlane) : AnalyticAt ℂ (fun z ↦ f z ^ g z) c := by
   have fc : f c ≠ 0 := Complex.slitPlane_ne_zero m
   have e : (fun z ↦ f z ^ g z) =ᶠ[𝓝 c] fun z ↦ Complex.exp (Complex.log (f z) * g z) := by
-    refine (fa.continuousAt.eventually_ne fc).mp (Filter.eventually_of_forall ?_)
+    refine (fa.continuousAt.eventually_ne fc).mp (.of_forall ?_)
     intro z fz; simp only [fz, Complex.cpow_def, if_false]
   rw [analyticAt_congr e]
   exact AnalyticAt.exp.comp ((fa.log m).mul ga)

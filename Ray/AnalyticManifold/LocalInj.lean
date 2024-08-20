@@ -10,7 +10,7 @@ parameterized versions, where `f : ℂ → S → T`.
 -/
 
 open Classical
-open Filter (eventually_of_forall Tendsto)
+open Filter (Tendsto)
 open Function (uncurry)
 open OneDimension
 open Set
@@ -31,7 +31,7 @@ theorem HolomorphicAt.local_inj {f : S → T} {z : S}
     exact (nontrivialHolomorphicAt_id _).congr (Filter.EventuallyEq.symm fg)
   have o := n.nhds_eq_map_nhds; rw [gf.self_of_nhds] at o
   simp only [nhds_prod_eq, o, Filter.prod_map_map_eq, Filter.eventually_map]
-  refine (fg.prod_mk fg).mp (eventually_of_forall ?_); intro ⟨x, y⟩ ⟨ex, ey⟩ h
+  refine (fg.prod_mk fg).mp (.of_forall ?_); intro ⟨x, y⟩ ⟨ex, ey⟩ h
   simp only at ex ey; simp only [ex, ey] at h; simp only [h]
 
 /-- Nonzero derivative holomorphic functions are locally injective, parameterized version.
@@ -46,11 +46,11 @@ theorem HolomorphicAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
     rw [e] at fa
     refine (NontrivialHolomorphicAt.anti ?_ fa.along_snd ga.along_snd).2
     refine (nontrivialHolomorphicAt_id _).congr ?_
-    refine ((continuousAt_const.prod continuousAt_id).eventually fg).mp (eventually_of_forall ?_)
+    refine ((continuousAt_const.prod continuousAt_id).eventually fg).mp (.of_forall ?_)
     exact fun _ e ↦ e.symm
   have o := n.nhds_eq_map_nhds_param ga; rw [gf.self_of_nhds] at o; simp only at o
   rw [nhds_prod_eq, o]; simp only [Filter.prod_map_map_eq, Filter.eventually_map]
-  refine (fg.prod_mk fg).mp (eventually_of_forall ?_); intro ⟨x, y⟩ ⟨ex, ey⟩ h1 h2
+  refine (fg.prod_mk fg).mp (.of_forall ?_); intro ⟨x, y⟩ ⟨ex, ey⟩ h1 h2
   simp only at h1; simp only [h1] at ex ey h2 ⊢; simp only [ex, ey] at h2; simp only [h2]
 
 /-- Nonzero derivative holomorphic functions are locally injective, parameterized version.
@@ -63,5 +63,5 @@ theorem HolomorphicAt.local_inj' {f : ℂ → S → T} {c : ℂ} {z : S}
     apply Continuous.continuousAt; apply Continuous.prod_mk
     · exact continuous_fst.prod_mk (continuous_fst.comp continuous_snd)
     · exact continuous_fst.prod_mk (continuous_snd.comp continuous_snd)
-  refine (t.eventually (fa.local_inj'' nc)).mp (eventually_of_forall ?_)
+  refine (t.eventually (fa.local_inj'' nc)).mp (.of_forall ?_)
   intro ⟨e, x, y⟩ inj fe; exact (Prod.ext_iff.mp (inj rfl fe)).2

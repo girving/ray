@@ -45,7 +45,7 @@ namespace Image
     Nat.sub_add_cancel le1, le_refl]
 
 /-- Get a pixel -/
-@[irreducible, pp_dot] def get (i : Image) (x : Fin i.width) (y : Fin i.height) : Color UInt8 :=
+@[irreducible] def get (i : Image) (x : Fin i.width) (y : Fin i.height) : Color UInt8 :=
   let b := base i.width i.height x y
   have lt : b + 4 ≤ i.data.size := by rw [i.size_eq]; exact base_le x.prop y.prop
   ⟨i.data[b]'(by omega),
@@ -87,7 +87,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
       (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
   induction' n with n h generalizing d o
   · simp only [Nat.zero_eq, zero_mul, add_zero] at lt
-    simp only [Nat.zero_eq, push_colors, ↓reduceIte, lt, ↓reduceDite]
+    simp only [Nat.zero_eq, push_colors, ↓reduceIte, lt, ↓reduceIte]
   · simp only [ByteArray.getElem_eq_get!, ByteArray.getElemNat_eq_get!] at h ⊢
     rw [push_colors]
     simp only [Nat.succ_ne_zero, ↓reduceIte, Nat.succ_sub_succ_eq_sub, tsub_zero, dite_eq_ite]
@@ -119,7 +119,7 @@ lemma get_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray)
     (k : Fin (push_colors f n o d).size) :
     (push_colors f n o d)[k] = (if h : k < d.size then d[k]'h else
       (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
-  simp only [getElem_fin, ByteArray.getElemNat_eq_get!, dite_eq_ite]
+  simp only [Fin.getElem_fin, ByteArray.getElemNat_eq_get!, dite_eq_ite]
   apply get!_push_colors; convert k.prop; simp only [size_push_colors]
 
 /-!

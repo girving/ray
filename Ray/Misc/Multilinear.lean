@@ -1,11 +1,8 @@
--- Multilinear functions on pairs
-
-import Mathlib.Algebra.Algebra.Basic
+import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.Basic
-import Mathlib.Analysis.Normed.Field.Basic
-import Mathlib.Analysis.NormedSpace.Basic
-import Mathlib.Data.Complex.Basic
-import Ray.Tactic.Bound
+import Mathlib.Analysis.Normed.Module.Completion
+import Mathlib.Analysis.NormedSpace.Multilinear.Basic
+import Mathlib.Tactic.Bound
 
 /-!
 ## Continuous multilinear map constructors
@@ -57,12 +54,12 @@ theorem sndCmmap_apply [AddCommMonoid A] [Module R A] [TopologicalSpace A] [AddC
 theorem fstCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [NormedRing B]
     [NormedAlgebra 𝕜 B] [NormOneClass B] : ‖fstCmmap 𝕜 A B‖ = 1 := by
   apply le_antisymm
-  · refine (fstCmmap 𝕜 A B).op_norm_le_bound (M := 1) (by norm_num) ?_
+  · refine (fstCmmap 𝕜 A B).opNorm_le_bound (M := 1) (by norm_num) ?_
     intro z; simp only [Finset.univ_unique, Fin.default_eq_zero, Finset.prod_singleton, one_mul]
     have e : z = (fun _ ↦ ((z 0).1, (z 0).2)) := by apply funext; intro i; rw [Fin.eq_zero i]
     rw [e]
     rw [fstCmmap_apply]; simp; exact norm_fst_le (z 0)
-  · have lo := (fstCmmap 𝕜 A B).unit_le_op_norm (fun _ ↦ (1, 1)) ?_
+  · have lo := (fstCmmap 𝕜 A B).unit_le_opNorm (fun _ ↦ (1, 1)) ?_
     rw [fstCmmap_apply, norm_one] at lo; assumption
     rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one, max_eq_right]
     repeat norm_num
@@ -70,12 +67,12 @@ theorem fstCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [No
 theorem sndCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [NormedRing B]
     [NormedAlgebra 𝕜 B] [NormOneClass B] : ‖sndCmmap 𝕜 A B‖ = 1 := by
   apply le_antisymm
-  · apply (sndCmmap 𝕜 A B).op_norm_le_bound (M := 1) (by norm_num)
+  · apply (sndCmmap 𝕜 A B).opNorm_le_bound (M := 1) (by norm_num)
     intro z; simp only [Finset.univ_unique, Fin.default_eq_zero, Finset.prod_singleton, one_mul]
     have e : z = (fun _ ↦ ((z 0).1, (z 0).2)) := by apply funext; intro i; rw [Fin.eq_zero i]
     rw [e]
     rw [sndCmmap_apply]; simp; exact norm_snd_le (z 0)
-  · have lo := (sndCmmap 𝕜 A B).unit_le_op_norm (fun _ ↦ (1, 1)) ?_
+  · have lo := (sndCmmap 𝕜 A B).unit_le_opNorm (fun _ ↦ (1, 1)) ?_
     rw [sndCmmap_apply, norm_one] at lo; assumption
     rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one, max_eq_right]
     repeat norm_num

@@ -1,6 +1,5 @@
 import Mathlib.Analysis.NormedSpace.HahnBanach.Extension
 import Mathlib.Topology.Basic
-import Ray.Tactic.Bound
 import Ray.Hartogs.MaxLog
 import Ray.Misc.Topology
 
@@ -29,25 +28,26 @@ noncomputable section
 
 variable {G : Type} [NormedAddCommGroup G]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [SecondCountableTopology E]
+variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F]
 
 /-- A nonconstructive function which extracts a dual vector `f` exhibiting `f x = ‖x‖` -/
 def dualVector (x : E) : E →L[ℂ] ℂ :=
   choose (exists_dual_vector'' ℂ x)
 
-@[bound] lemma dualVector_norm (x : E) : ‖dualVector x‖ ≤ 1 :=
+@[bound] lemma dualVector_norm (x : F) : ‖dualVector x‖ ≤ 1 :=
   (choose_spec (exists_dual_vector'' ℂ x)).1
 
-@[bound] lemma dualVector_nnnorm (x : E) : ‖dualVector x‖₊ ≤ 1 :=
+@[bound] lemma dualVector_nnnorm (x : F) : ‖dualVector x‖₊ ≤ 1 :=
   dualVector_norm _
 
 @[simp]
-theorem dualVector_apply (x : E) : dualVector x x = ‖x‖ :=
+theorem dualVector_apply (x : F) : dualVector x x = ‖x‖ :=
   (choose_spec (exists_dual_vector'' ℂ x)).2
 
-theorem dualVector_le (x y : E) : abs (dualVector x y) ≤ ‖y‖ := by
+theorem dualVector_le (x y : F) : abs (dualVector x y) ≤ ‖y‖ := by
   rw [← Complex.norm_eq_abs]
   calc ‖dualVector x y‖
-    _ ≤ ‖dualVector x‖ * ‖y‖ := (dualVector x).le_op_norm y
+    _ ≤ ‖dualVector x‖ * ‖y‖ := (dualVector x).le_opNorm y
     _ ≤ 1 * ‖y‖ := by bound
     _ = ‖y‖ := by simp only [one_mul]
 

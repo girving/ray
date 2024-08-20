@@ -13,7 +13,6 @@ import Ray.Misc.Bounds
 import Ray.Misc.Finset
 import Ray.Analytic.Holomorphic
 import Ray.Analytic.Series
-import Ray.Tactic.Bound
 
 /-!
 ## Infinite products of analytic functions
@@ -86,7 +85,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
   generalize hg : (fun z ↦ exp (gl z)) = g
   use g; refine ⟨?_, ?_, ?_⟩
   · intro z zs
-    specialize us z zs; simp at us
+    specialize us z zs
     have comp :
       Filter.Tendsto (exp ∘ fun N : Finset ℕ ↦ N.sum fun n ↦ fl n z) atTop (𝓝 (exp (gl z))) :=
       Filter.Tendsto.comp (Continuous.tendsto Complex.continuous_exp _) us
@@ -145,7 +144,7 @@ theorem product_drop {f : ℕ → ℂ} {g : ℂ} (f0 : f 0 ≠ 0) (h : HasProd f
       fun N : Finset ℕ ↦ N.prod fun n ↦ f (n + 1) := by
     clear c h g; apply funext; intro N; simp
     nth_rw 2 [← Stream'.eta f]
-    simp only [←push_prod, Stream'.head, Stream'.tail, Stream'.get, ←mul_assoc, inv_mul_cancel f0,
+    simp only [←push_prod, Stream'.head, Stream'.tail, Stream'.get, ←mul_assoc, inv_mul_cancel₀ f0,
       one_mul]
   rw [s] at c; assumption
 

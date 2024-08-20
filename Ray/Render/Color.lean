@@ -68,8 +68,8 @@ instance [SubNegMonoid α] : SubNegMonoid (Color α) where
 
 /-- Colors form an additive group -/
 instance [AddGroup α] : AddGroup (Color α) where
-  add_left_neg _ := by
-    simp only [Color.ext_iff, Color.add_def, Color.neg_def, add_left_neg, Color.zero_def]
+  neg_add_cancel _ := by
+    simp only [Color.ext_iff, Color.add_def, Color.neg_def, neg_add_cancel, Color.zero_def]
 
 /-- Conversion from `Color ℚ → Color ℝ`.
     We should make this general, but `ℚ → ℝ` is all we need for now. -/
@@ -115,7 +115,7 @@ instance : Nan (Color UInt8) where
   nan := ⟨255, 0, 0, 255⟩
 
 /-- Approximation midpoint for a color channel -/
-@[pp_dot] noncomputable def UInt8.color (v : UInt8) : ℝ :=
+noncomputable def UInt8.color (v : UInt8) : ℝ :=
   (v.toNat + 1/2) / 256
 
 /-- Approximation interval around a color channel, of width `color_error` -/
@@ -172,7 +172,7 @@ def UInt8.unquantize (v : UInt8) : Floating :=
   ring_nf
 
 /-- Quantize an interval approximating a `[0,1]` value into a `UInt8` -/
-@[pp_dot] def Interval.quantize (x : Interval) : Option UInt8 :=
+def Interval.quantize (x : Interval) : Option UInt8 :=
   -- Determine the best result
   let c := x.untrusted_quantize
   -- Check if we're accurate enough
@@ -187,7 +187,7 @@ def UInt8.unquantize (v : UInt8) : Floating :=
   Floating.val_ofNat' (lt_trans v.toNat_lt (by norm_num))
 
 /-- `Interval.quantize` is conservative -/
-@[mono] lemma Interval.mem_approx_quantize {x' : ℝ} {x : Interval} (xm : x' ∈ approx x) :
+@[approx] lemma Interval.mem_approx_quantize {x' : ℝ} {x : Interval} (xm : x' ∈ approx x) :
     x' ∈ approx x.quantize := by
   rw [quantize]
   generalize hc : x.untrusted_quantize = c
@@ -213,7 +213,7 @@ def UInt8.unquantize (v : UInt8) : Floating :=
       apply lo_le (by native_decide)
       have e : (color_error : ℝ) / 2 = (color_error / 2 : ℚ) := by
         simp only [Rat.cast_div, Rat.cast_ofNat]
-      rw [e]; mono
+      rw [e]; approx
     simp only [←hl, ←hh] at n0 n1 mn g
     have le_lo := Floating.le_sub n0
     have le_hi := Floating.add_le n1
@@ -222,13 +222,13 @@ def UInt8.unquantize (v : UInt8) : Floating :=
   · simp only [g, ↓reduceIte, approx_none, mem_univ]
 
 /-- Turn an `Interval` color into a `UInt8` color -/
-@[irreducible, pp_dot] def Color.quantize (c : Color Interval) : Color UInt8 :=
+@[irreducible] def Color.quantize (c : Color Interval) : Color UInt8 :=
   match (c.r.quantize, c.g.quantize, c.b.quantize, c.a.quantize) with
   | (some r, some g, some b, some a) => ⟨r, g, b, a⟩
   | _ => nan
 
 /-- `Color.quantize` is conservative -/
-@[mono] lemma Color.mem_approx_quantize {c' : Color ℝ} {c : Color Interval} (cm : c' ∈ approx c) :
+@[approx] lemma Color.mem_approx_quantize {c' : Color ℝ} {c : Color Interval} (cm : c' ∈ approx c) :
     c' ∈ approx c.quantize := by
   rw [quantize]
   generalize hr : c.r.quantize = r
@@ -325,15 +325,15 @@ noncomputable instance : ApproxSMul Interval (Color Interval) ℝ (Color ℝ) wh
     all_goals exact mem_approx_mul (by assumption) (by assumption)
 
 /-- `lerp` approximates itself -/
-@[mono] lemma mem_approx_lerp [Add β] [Sub β] [AddGroup β'] [SMul α β] [SMul α' β']
+@[approx] lemma mem_approx_lerp [Add β] [Sub β] [AddGroup β'] [SMul α β] [SMul α' β']
     [ApproxAdd β β'] [ApproxSub β β'] [ApproxSMul α β α' β']
     {t' : α'} {x' y' : β'} {t : α} {x y : β}
     (tm : t' ∈ approx t) (xm : x' ∈ approx x) (ym : y' ∈ approx y) :
     lerp t' x' y' ∈ approx (lerp t x y) := by
-  rw [lerp, lerp]; mono
+  rw [lerp, lerp]; approx
 
 /-- `Color.ofRat` is conservative -/
-@[mono] lemma Color.mem_approx_ofRat {c : Color ℚ} : ↑c ∈ approx (Color.ofRat c) := by
+@[approx] lemma Color.mem_approx_ofRat {c : Color ℚ} : ↑c ∈ approx (Color.ofRat c) := by
   simp only [coe, approx, ofRat, map]
   simp only [approx', mem_setOf_eq]
   refine ⟨?_, ?_, ?_, ?_⟩

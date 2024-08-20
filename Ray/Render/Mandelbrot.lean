@@ -70,6 +70,6 @@ lemma approx_bad_potential_image {c : ℚ × ℚ} {n : ℕ} {r : Floating} :
     apply Interval.mem_approx_sqr
     apply Interval.mem_approx_sqr
     apply Interval.mem_approx_sqr
-    mono
-  · mono
-  · mono
+    approx
+  · approx
+  · approx

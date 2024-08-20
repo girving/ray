@@ -6,7 +6,6 @@ import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Topology.Basic
@@ -19,7 +18,7 @@ import Ray.Misc.Topology
 -/
 
 open Classical
-open Filter (atTop eventually_of_forall)
+open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere isOpen_ball)
 open Set (univ)
@@ -27,10 +26,8 @@ open scoped Real NNReal ENNReal Topology
 noncomputable section
 
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
-variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
-variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [CompleteSpace G]
-variable {H : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [CompleteSpace H]
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
 /-- The order of a zero at a point.
     We define this in terms of the function alone so that expressions involving order can
@@ -176,7 +173,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
     have h := fun n ↦ mul_le_mul_of_nonneg_right (h (n + 1)) (NNReal.coe_nonneg r⁻¹)
     by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero_eq_zero, le_zero_iff]
     simp only [pow_succ, ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
-      mul_inv_cancel (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
+      mul_inv_cancel₀ (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
     simp only [NNReal.coe_inv]
     convert le_iSup _ h; rfl
   · refine iSup₂_le ?_; intro r k; refine iSup_le ?_; intro h
@@ -279,7 +276,7 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
     rw [e, h]
 
 /-- `fderiv` is analytic -/
-theorem AnalyticAt.fderiv {f : E → F} {c : E} (fa : AnalyticAt 𝕜 f c) :
+theorem AnalyticAt.fderiv [CompleteSpace F] {f : E → F} {c : E} (fa : AnalyticAt 𝕜 f c) :
     AnalyticAt 𝕜 (fderiv 𝕜 f) c := by
   rcases Metric.isOpen_iff.mp (isOpen_analyticAt 𝕜 f) _ fa with ⟨r, rp, fa⟩
   exact AnalyticOn.fderiv fa _ (Metric.mem_ball_self rp)
@@ -298,7 +295,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
     AnalyticAt 𝕜 (fun x : E × 𝕜 ↦ _root_.deriv (f x.1) x.2) c := by
   set p : (E × 𝕜 →L[𝕜] 𝕜) →L[𝕜] 𝕜 := ContinuousLinearMap.apply 𝕜 𝕜 (0, 1)
   have e : ∀ᶠ x : E × 𝕜 in 𝓝 c, _root_.deriv (f x.1) x.2 = p (_root_.fderiv 𝕜 (uncurry f) x) := by
-    refine fa.eventually_analyticAt.mp (eventually_of_forall ?_)
+    refine fa.eventually_analyticAt.mp (.of_forall ?_)
     intro ⟨x, y⟩ fa; simp only [← fderiv_deriv]
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
     rw [e]; rw [fderiv.comp]
@@ -314,7 +311,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
 /-- Scaling commutes with power series -/
 theorem HasFPowerSeriesAt.const_smul {f : 𝕜 → E} {c a : 𝕜} {p : FormalMultilinearSeries 𝕜 𝕜 E}
     (fp : HasFPowerSeriesAt f p c) : HasFPowerSeriesAt (fun z ↦ a • f z) (fun n ↦ a • p n) c := by
-  rw [hasFPowerSeriesAt_iff] at fp ⊢; refine fp.mp (eventually_of_forall fun z h ↦ ?_)
+  rw [hasFPowerSeriesAt_iff] at fp ⊢; refine fp.mp (.of_forall fun z h ↦ ?_)
   simp only [FormalMultilinearSeries.coeff, ContinuousMultilinearMap.smul_apply, smul_comm _ a]
   exact h.const_smul a
 
@@ -324,7 +321,7 @@ theorem analyticAt_iff_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
   constructor
   · intro ⟨p, fp⟩
     have e : f = fun z ↦ a⁻¹ • a • f z := by
-      funext; simp only [← smul_assoc, smul_eq_mul, inv_mul_cancel a0, one_smul]
+      funext; simp only [← smul_assoc, smul_eq_mul, inv_mul_cancel₀ a0, one_smul]
     rw [e]; exact ⟨_, fp.const_smul⟩
   · intro ⟨p, fp⟩; exact ⟨_, fp.const_smul⟩
 
@@ -347,7 +344,7 @@ theorem leadingCoeff.zero {c : 𝕜} : leadingCoeff (fun _ : 𝕜 ↦ (0 : E)) c
   induction' n with n h; simp only [Function.iterate_zero_apply]
   simp only [Function.iterate_succ_apply]; convert h
   simp only [Function.swap, dslope, deriv_const]
-  funext; simp only [slope_fun_def, vsub_eq_sub, sub_zero, smul_zero, Function.update_apply]
+  simp only [slope_fun_def, vsub_eq_sub, sub_zero, smul_zero, Function.update_apply]
   split_ifs; rfl; rfl
 
 /-- `leadingCoeff` has linear scaling -/

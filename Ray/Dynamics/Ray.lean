@@ -20,7 +20,7 @@ from bijectivity of `s.ray`; see `Bottcher.lean`.
 
 open Classical
 open Complex (abs)
-open Filter (Tendsto atTop eventually_of_forall)
+open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball mem_closedBall mem_ball_self)
 open OneDimension
@@ -29,19 +29,13 @@ open scoped Topology
 noncomputable section
 
 -- All information for a monic superattracting fixed point at the origin
-variable {S : Type} [TopologicalSpace S] [CompactSpace S] [T3Space S] [ChartedSpace ℂ S]
-  [AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
 variable {f : ℂ → S → S}
 variable {c x : ℂ}
 variable {a z : S}
 variable {d n : ℕ}
 variable {s : Super f d a}
 variable {y : ℂ × ℂ}
-
-/-- The external ray map: `s.ray c y` is moving in external ray space from the superattractor `a`
-    out by `y`.  `s.ray` is well behaved for all postcritical values `(c,y) ∈ s.ext` (see below). -/
-def Super.ray (s : Super f d a) [OnePreimage s] : ℂ → ℂ → S :=
-  choose s.has_ray
 
 /-- The domain on which `s.ray` is well behaved: `{(c,z) | s.potential c z < s.p c}`. -/
 def Super.ext (s : Super f d a) : Set (ℂ × ℂ) :=
@@ -51,6 +45,13 @@ def Super.ext (s : Super f d a) : Set (ℂ × ℂ) :=
 theorem Super.ext_slice (s : Super f d a) (c : ℂ) :
     {x | (c, x) ∈ s.ext} = ball (0 : ℂ) (s.p c) := by
   apply Set.ext; intro x; simp only [Super.ext, mem_ball, mem_setOf, Complex.dist_eq, sub_zero]
+
+variable [T2Space S]
+
+/-- The external ray map: `s.ray c y` is moving in external ray space from the superattractor `a`
+    out by `y`.  `s.ray` is well behaved for all postcritical values `(c,y) ∈ s.ext` (see below). -/
+def Super.ray (s : Super f d a) [OnePreimage s] : ℂ → ℂ → S :=
+  choose s.has_ray
 
 /-- `s.ext` is open -/
 theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
@@ -136,7 +137,7 @@ theorem Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ 
     ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x),
       s.bottcherNearIter (s.np c (abs x)) y.1 (s.ray y.1 y.2) = y.2 ^ d ^ s.np c (abs x) :=
   ((s.ray_spec (Complex.abs.nonneg _) post).eqn.filter_mono (nhds_le_nhdsSet mem_domain_self)).mp
-    (eventually_of_forall fun _ e ↦ e.eqn)
+    (.of_forall fun _ e ↦ e.eqn)
 
 /-- `s.ray` sends absolute value to potential -/
 theorem Super.ray_potential (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
@@ -264,12 +265,12 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
         continuousAt_fst.prod (continuousAt_const.mul continuousAt_snd)
       simp only [ContinuousAt] at xc
       rw [← mul_assoc, mul_comm _ (t:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at xc
-      refine (xc.eventually e1).mp (eventually_of_forall ?_); intro ⟨e, x⟩ e1
+      refine (xc.eventually e1).mp (.of_forall ?_); intro ⟨e, x⟩ e1
       exact _root_.trans e1.eqn (by
         simp only [mul_pow, div_pow, ← de, div_self (pow_ne_zero _ x00), one_mul])
     refine ((continuousAt_const.prod (Complex.continuous_ofReal.continuousAt.mul
         continuousAt_const)).eventually
-        (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (eventually_of_forall fun u e ↦ ?_)
+        (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (.of_forall fun u e ↦ ?_)
     · simp only [← hr]; rw [xe]; exact e
     · rw [← hr] at e; simp only [uncurry] at e
       rw [← mul_assoc, mul_comm _ (u:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at e
@@ -304,7 +305,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     have eq := (s.ray_nontrivial m).nhds_eq_map_nhds; rw [xz] at eq
     rw [eq, Filter.eventually_map]
     exact ((s.isOpen_ext.snd_preimage c).eventually_mem m).mp
-      (eventually_of_forall fun x m ↦ ⟨x, m, rfl⟩)
+      (.of_forall fun x m ↦ ⟨x, m, rfl⟩)
   have jc : IsClosed j := by
     have e : j = s.ray c '' closedBall 0 p1 := by
       refine Set.ext fun z ↦ ?_
@@ -329,7 +330,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
     apply (jc.isOpen_compl.eventually_mem m).mp
     apply ((Continuous.potential s).along_snd.continuousAt.eventually_lt continuousAt_const lt).mp
-    refine eventually_of_forall fun w lt m ↦ ?_
+    refine .of_forall fun w lt m ↦ ?_
     rw [compl_inter] at m; cases' m with m m
     · simp only [compl_setOf, mem_setOf, not_le] at m; linarith
     · apply zm; simp only [mem_diff, mem_setOf, u]; use lt.le, m

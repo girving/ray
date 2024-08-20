@@ -12,7 +12,6 @@ import Ray.Misc.Multilinear
 import Ray.Hartogs.Osgood
 import Ray.Misc.Prod
 import Ray.Hartogs.Subharmonic
-import Ray.Tactic.Bound
 import Ray.Misc.Topology
 
 /-!
@@ -44,7 +43,7 @@ References:
 -/
 
 open Complex (abs exp I log)
-open Filter (atTop eventually_of_forall)
+open Filter (atTop)
 open Function (curry uncurry)
 open MeasureTheory.MeasureSpace (volume)
 open Metric (ball closedBall sphere isOpen_ball)
@@ -55,8 +54,7 @@ noncomputable section
 
 section Hartogs
 
-variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
-  [SecondCountableTopology E]
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {f : ℂ × ℂ → E}
 variable {s : Set (ℂ × ℂ)}
 variable {c0 c0' c1 z0 z1 w0 w1 : ℂ}
@@ -152,8 +150,8 @@ theorem Bounded.dist1 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
   rwa [dist_comm]
 
 /-- `f` is analytic if it's bounded -/
-theorem of_bounded (h : Har f s) (o : IsOpen s) {b : ℝ} (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) :
-    AnalyticOn ℂ f s := by
+theorem of_bounded [CompleteSpace E] (h : Har f s) (o : IsOpen s) {b : ℝ}
+    (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) : AnalyticOn ℂ f s := by
   suffices c : ContinuousOn f s by exact osgood o c h.fa0 h.fa1
   by_cases bp : b ≤ 0
   · have fz : ∀ z, z ∈ s → f z = 0 := fun z zs ↦
@@ -225,7 +223,7 @@ theorem ContinuousOn.isClosed_le {A B : Type} [TopologicalSpace A] [TopologicalS
 /-- If `f` is separately analytic on a polydisk, it is analytic on a subpolydisk that is full in
     one dimension.  Proof: Use the Baire category to find a subpolydisk on which `f` is bounded,
     whence it is analytic there by above. -/
-theorem on_subdisk (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0) :
+theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0) :
     ∃ c0' t, t > 0 ∧ c0' ∈ closedBall c0 e ∧ AnalyticOn ℂ f (ball c0' t ×ˢ ball c1 r) := by
   set re := min r e
   have esub : closedBall c0 re ⊆ closedBall c0 r :=
@@ -341,7 +339,7 @@ theorem le_of_ball_subset_closedBall {z0 z1 : ℂ} {r0 r1 : ℝ} (r0p : r0 ≥ 0
 
 /-- Given separate analyticity on a polydisk, find an uneven subpolydisk s.t. fixing the
     unevenness covers the center. -/
-theorem to_uneven (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) :
+theorem to_uneven [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) :
     ∃ c0' r0 r1, ball c0' r1 ⊆ closedBall c0 r ∧ c0 ∈ ball c0' r1 ∧ Uneven f c0' c1 r0 r1 := by
   have r4p : r / 4 > 0 := by linarith
   rcases on_subdisk h rp r4p with ⟨c0', r0, r0p, m, a⟩
@@ -398,8 +396,8 @@ theorem uneven_is_cauchy {u : Uneven f c0 c1 r0 r1} {r : ℝ} :
     unevenSeries' u r z1 = cauchyPowerSeries (fun z0 ↦ f (z0, z1)) c0 r := by
   funext; rw [unevenSeries', cauchyPowerSeries]; rfl
 
-theorem Uneven.has_series (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr1 : s ≤ r1)
-    (z1s : z1 ∈ closedBall c1 r1) :
+theorem Uneven.has_series [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s : ℝ}
+    (sp : 0 < s) (sr1 : s ≤ r1) (z1s : z1 ∈ closedBall c1 r1) :
     HasFPowerSeriesOnBall (fun z0 ↦ f (z0, z1)) (unevenSeries' u s z1) c0 (ENNReal.ofReal s) := by
   set sn := s.toNNReal
   have sns : s = sn := by simp only [Real.coe_toNNReal', sp.le, max_eq_left, sn]
@@ -411,7 +409,8 @@ theorem Uneven.has_series (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr1
   refine DifferentiableOn.mono ?_ (Metric.closedBall_subset_closedBall sr1)
   exact AnalyticOn.differentiableOn (u.h.on0 z1s)
 
-theorem unevenTerm_eq (u : Uneven f c0 c1 r0 r1) {r : ℝ} (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
+theorem unevenTerm_eq [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {r : ℝ}
+    (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
     z1 ∈ closedBall c1 r1 → unevenTerm' u r z1 = unevenTerm u z1 := by
   intro z1s; funext x
   have p0 := u.has_series rp rr1 z1s
@@ -419,7 +418,8 @@ theorem unevenTerm_eq (u : Uneven f c0 c1 r0 r1) {r : ℝ} (rp : r > 0) (rr1 : r
   have h := HasFPowerSeriesAt.eq_formalMultilinearSeries p0.hasFPowerSeriesAt p1.hasFPowerSeriesAt
   clear p0 p1; simp only [unevenTerm, ←unevenSeries_apply, h]
 
-theorem unevenSeries_eq (u : Uneven f c0 c1 r0 r1) {r : ℝ} (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
+theorem unevenSeries_eq [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {r : ℝ}
+    (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
     z1 ∈ closedBall c1 r1 → unevenSeries' u r z1 = unevenSeries u z1 := by
   intro z1s; funext
   simp_rw [unevenSeries, unevenSeries', unevenTerm_eq u rp rr1 z1s,
@@ -430,7 +430,8 @@ theorem unevenSeries_norm (u : Uneven f c0 c1 r0 r1) {n : ℕ} :
   rw [unevenSeries, unevenSeries', unevenTerm, ContinuousMultilinearMap.norm_mkPiRing]
 
 /-- Our power series terms are uniformly bounded (away from the edges) -/
-theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r1) :
+theorem unevenSeries_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s : ℝ}
+    (sr : s < r1) :
     ∃ c a : ℝ, c > 0 ∧ a > 0 ∧ ∀ n z1, z1 ∈ closedBall c1 s →
       ‖unevenSeries u z1 n‖ ≤ c * a ^ n := by
   have fc : ContinuousOn f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) := by
@@ -459,8 +460,9 @@ theorem unevenSeries_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s 
   rw [unevenSeries_norm u]; apply _root_.trans cb; bound
 
 /-- Our power series terms are nonuniformly bounded as `O(s⁻¹^n)` for any `s < r1` -/
-theorem unevenSeries_nonuniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr1 : s < r1)
-    (z1s : z1 ∈ closedBall c1 r1) : ∃ c : ℝ, c > 0 ∧ ∀ n, ‖unevenSeries u z1 n‖ ≤ c * s⁻¹ ^ n := by
+theorem unevenSeries_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s : ℝ}
+    (sp : s > 0) (sr1 : s < r1) (z1s : z1 ∈ closedBall c1 r1) :
+    ∃ c : ℝ, c > 0 ∧ ∀ n, ‖unevenSeries u z1 n‖ ≤ c * s⁻¹ ^ n := by
   have h := (Uneven.has_series u u.r1p (le_refl _) z1s).r_le
   rw [FormalMultilinearSeries.radius, le_iSup_iff] at h
   have sr := not_le_of_lt ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg sp.le).mpr sr1)
@@ -476,7 +478,7 @@ theorem unevenSeries_nonuniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp :
   generalize hy : ‖unevenSeries u z1 n‖ = y; rw [hy] at th
   have tnz : (t : ℝ) ^ n ≠ 0 := pow_ne_zero _ (lt_trans sp st').ne'
   calc
-    y = y * (↑t ^ n * (↑t ^ n)⁻¹) := by simp only [mul_inv_cancel tnz, mul_one]
+    y = y * (↑t ^ n * (↑t ^ n)⁻¹) := by simp only [mul_inv_cancel₀ tnz, mul_one]
     _ = y * ↑t ^ n * (↑t ^ n)⁻¹ := by ring
     _ ≤ c * (↑t ^ n)⁻¹ := by bound
     _ ≤ c * (s ^ n)⁻¹ := by bound
@@ -578,11 +580,11 @@ theorem Along0.analyticAt (n : ℕ) : ∀ {p},
   have e : (fun p : ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ × ℂ) E => p.along0) =ᶠ[𝓝 p]
       (Along0.continuousLinearMap n : (ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ × ℂ) E →
         ContinuousMultilinearMap ℂ (fun _ : Fin n ↦ ℂ) E)) := by
-    apply eventually_of_forall; intro _; rfl
+    refine .of_forall ?_; intro _; rfl
   rw [analyticAt_congr e]; apply ContinuousLinearMap.analyticAt
 
 /-- `unevenSeries u r1 z1` is analytic as a function of `z1` -/
-theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
+theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     AnalyticOn ℂ (fun z1 ↦ unevenSeries u z1 n) (ball c1 r1) := by
   intro z1 z1s
   rcases u.a (c0, z1) (Set.mk_mem_prod (Metric.mem_ball_self u.r0p) z1s) with ⟨p, r, hp⟩
@@ -631,7 +633,7 @@ theorem unevenSeries_analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
   exact (Along0.analyticAt _).comp ta
 
 /-- `unevenTerm u z1 n` is analytic as a function of `z1` -/
-theorem unevenTerm.analytic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
+theorem unevenTerm.analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     AnalyticOn ℂ (fun z1 ↦ unevenTerm u z1 n) (ball c1 r1) := by
   have e : ∀ z1, unevenTerm u z1 n =
       (cmmapApplyCmap ℂ (fun _ : Fin n ↦ ℂ) E fun _ ↦ 1) (unevenSeries u z1 n) := by
@@ -645,7 +647,7 @@ def unevenLog (u : Uneven f c0 c1 r0 r1) (n : ℕ) (z1 : ℂ) : ℝ :=
   (↑n)⁻¹ * maxLog (-1) ‖r1 ^ n • unevenTerm u z1 n‖
 
 /-- Uniform bound on `unevenTerm` in terms of `unevenLog` -/
-theorem unevenLog_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r1) :
+theorem unevenLog_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r1) :
     ∃ b : ℝ, ∀ n z1, z1 ∈ closedBall c1 s → unevenLog u n z1 ≤ b := by
   rcases unevenSeries_uniform_bound u sr with ⟨c, a, _, ap, h⟩
   use maxLog 0 (r1 * (max 1 c * a)); intro n z zs; specialize h n z zs
@@ -668,8 +670,8 @@ theorem unevenLog_uniform_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sr : s < r
   · bound
 
 /-- Nonuniform bound on `unevenTerm` in terms of `unevenLog` -/
-theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ closedBall c1 r1) :
-    ∀ d, d > 0 → ∀ᶠ n in atTop, unevenLog u n z1 ≤ d := by
+theorem unevenLog_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1)
+    (z1s : z1 ∈ closedBall c1 r1) : ∀ d, d > 0 → ∀ᶠ n in atTop, unevenLog u n z1 ≤ d := by
   intro d dp
   rcases exists_between dp with ⟨e, ep, ed⟩
   set s := r1 / e.exp
@@ -704,7 +706,8 @@ theorem unevenLog_nonuniform_bound (u : Uneven f c0 c1 r0 r1) (z1s : z1 ∈ clos
     _ ≤ (↑n * d).exp := by field_simp [(sub_pos.mpr ed).ne']
 
 /-- Our `maxLog` function is subharmonic -/
-theorem uneven_nonuniform_subharmonic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
+theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology E]
+    (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
   refine SubharmonicOn.constMul ?_ (by bound)
   apply AnalyticOn.maxLog_norm_subharmonicOn _ (-1)
@@ -713,8 +716,11 @@ theorem uneven_nonuniform_subharmonic (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
   rw [← analyticOn_iff_differentiableOn Metric.isOpen_ball]
   apply unevenTerm.analytic u
 
+attribute [bound] Real.log_pos
+
 /-- The nonuniform bound holds uniformly -/
-theorem unevenSeries_strong_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 < s) (sr : s < r1) :
+theorem unevenSeries_strong_bound [CompleteSpace E] [SecondCountableTopology E]
+    (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 < s) (sr : s < r1) :
     ∀ᶠ n in atTop, ∀ z1, z1 ∈ closedBall c1 s → ‖unevenSeries u z1 n‖ ≤ s⁻¹ ^ n := by
   rcases exists_between sr with ⟨t, ts, tr⟩
   have tp : t > 0 := _root_.trans ts sp
@@ -727,7 +733,7 @@ theorem unevenSeries_strong_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 <
   have H := SubharmonicOn.hartogs (fun n ↦ (uneven_nonuniform_subharmonic u n).mono trs) fb
       (fun z zs ↦ unevenLog_nonuniform_bound u (cs zs)) (isCompact_closedBall _ _) ks
   specialize H (r1 / s).log (by bound)
-  refine H.mp ((Filter.eventually_gt_atTop 0).mp (Filter.eventually_of_forall ?_))
+  refine H.mp ((Filter.eventually_gt_atTop 0).mp (.of_forall ?_))
   intro n np h z zs; specialize h z zs
   rw [unevenSeries_norm]
   rw [unevenLog, inv_mul_le_iff (Nat.cast_pos.mpr np : 0 < (n : ℝ))] at h
@@ -739,7 +745,8 @@ theorem unevenSeries_strong_bound (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : 0 <
   exact (mul_le_mul_left (by bound)).mp a
 
 /-- The nonuniform bound holds uniformly, without `∀ᶠ` -/
-theorem unevenSeries_strong_bound' (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s < r1) :
+theorem unevenSeries_strong_bound' [CompleteSpace E] [SecondCountableTopology E]
+    (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s < r1) :
     ∃ c, c ≥ 0 ∧ ∀ n, ∀ z1, z1 ∈ closedBall c1 s → ‖unevenSeries u z1 n‖ ≤ c * s⁻¹ ^ n := by
   rcases Filter.eventually_atTop.mp (unevenSeries_strong_bound u sp sr) with ⟨n, h⟩
   set g := fun z1 ↦ partialSups (fun k ↦ s ^ k * ‖unevenSeries u z1 k‖) n
@@ -766,7 +773,8 @@ theorem unevenSeries_strong_bound' (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s 
 theorem fst_snd_eq {A B : Type} (p : A × B) : (p.fst, p.snd) = p := by simp only [Prod.mk.eta]
 
 /-- `f` is bounded away from the (now even!) edges -/
-theorem uneven_bounded (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s < r1) :
+theorem uneven_bounded [CompleteSpace E] [SecondCountableTopology E]
+    (u : Uneven f c0 c1 r0 r1) {s : ℝ} (sp : s > 0) (sr : s < r1) :
     ∃ b, b ≥ 0 ∧ ∀ z, z ∈ ball (c0, c1) s → ‖f z‖ ≤ b := by
   rcases exists_between sr with ⟨t, ts, tr⟩
   have tp : t > 0 := _root_.trans ts sp

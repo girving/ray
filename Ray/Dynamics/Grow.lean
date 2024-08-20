@@ -34,7 +34,7 @@ However, we know `bottcher` only locally near `a`, specifically on `s.near`.  If
 
 open Classical
 open Complex (abs)
-open Filter (Tendsto atTop eventually_of_forall)
+open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball mem_closedBall mem_ball_self)
 open OneDimension
@@ -43,8 +43,7 @@ open scoped Topology
 noncomputable section
 
 -- All information for a monic superattracting fixed point at the origin
-variable {S : Type} [TopologicalSpace S] [CompactSpace S] [T3Space S] [ChartedSpace ℂ S]
-  [AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
 variable {f : ℂ → S → S}
 variable {c : ℂ}
 variable {a z : S}
@@ -76,7 +75,7 @@ theorem eqn_near {s : Super f d a} {n : ℕ} {r : ℂ → ℂ → S} {c x : ℂ}
     refine ContinuousAt.eventually_mem ?_ (s.isOpen_near.mem_nhds mem)
     exact continuousAt_fst.prod (s.continuousAt_iter continuousAt_fst holo.continuousAt)
   apply holo.eventually.mp; apply loc.mp; apply m.mp
-  apply eventually_of_forall; intro _ m l h; exact ⟨h, m, l⟩
+  exact .of_forall fun _ m l h ↦ ⟨h, m, l⟩
 
 /-- `Eqn` is local -/
 theorem Eqn.congr {x : ℂ × ℂ} {r0 r1 : ℂ → ℂ → S} (e : Eqn s n r0 x)
@@ -101,7 +100,7 @@ theorem Grow.mono (g : Grow s c p n r) {m : ℕ} (nm : n ≤ m) : Grow s c p m r
   { nonneg := g.nonneg
     zero := g.zero
     start := g.start
-    eqn := g.eqn.mp (eventually_of_forall fun _ e ↦ e.mono nm) }
+    eqn := g.eqn.mp (.of_forall fun _ e ↦ e.mono nm) }
 
 /-- Centers `(c,0)` are in the domain -/
 theorem mem_domain (c : ℂ) {p : ℝ} (p0 : 0 ≤ p) :
@@ -164,12 +163,12 @@ theorem Grow.congr {r0 r1 : ℂ → ℂ → S} (g : Grow s c p n r0)
       simp only [uncurry] at e; rw [← e]; exact g.zero
     start := by
       refine g.start.mp ((e.filter_mono (nhds_le_nhdsSet (mem_domain c g.nonneg))).mp ?_)
-      refine eventually_of_forall fun x e s ↦ ?_
+      refine .of_forall fun x e s ↦ ?_
       simp only [uncurry] at e; rw [← e]; exact s
     eqn := by
       have eqn := g.eqn; simp only [Filter.EventuallyEq, eventually_nhdsSet_iff_forall] at eqn e ⊢
       intro x m
-      refine (eqn x m).mp ((e x m).eventually_nhds.mp (eventually_of_forall fun y e eqn ↦ ?_))
+      refine (eqn x m).mp ((e x m).eventually_nhds.mp (.of_forall fun y e eqn ↦ ?_))
       exact eqn.congr e }
 
 /-- `s.potential (r x) = abs x`, if `Eqn s n r x` -/
@@ -188,7 +187,7 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
       x0, ContinuousLinearMap.zero_comp]
   have loc : (fun y ↦ s.bottcherNearIter n c (r c y)) =ᶠ[𝓝 x] fun y ↦ y ^ d ^ n :=
     ((continuousAt_const.prod continuousAt_id).eventually e).mp
-      (eventually_of_forall fun _ e ↦ e.eqn)
+      (.of_forall fun _ e ↦ e.eqn)
   rw [mfderiv_eq_fderiv, loc.fderiv_eq] at x0
   have d := (differentiableAt_pow (𝕜 := ℂ) (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
   apply_fun (fun x ↦ x 1) at x0
@@ -275,6 +274,42 @@ theorem Grow.anti (g : Grow s c p n r) {q : ℝ} (nonneg : 0 ≤ q) (le : q ≤ 
     eqn :=
       g.eqn.filter_mono (nhdsSet_mono (prod_mono_right (Metric.closedBall_subset_closedBall le))) }
 
+/-- `Eqn` determines `r` locally, given equality at a point -/
+theorem eqn_unique {r0 r1 : ℂ → ℂ → S} {x : ℂ × ℂ} (e0 : ∀ᶠ y in 𝓝 x, Eqn s n r0 y)
+    (e1 : ∀ᶠ y in 𝓝 x, Eqn s n r1 y) (r01 : r0 x.1 x.2 = r1 x.1 x.2) (x0 : x.2 ≠ 0) :
+    uncurry r0 =ᶠ[𝓝 x] uncurry r1 := by
+  have ba := s.bottcherNearIter_holomorphic e0.self_of_nhds.near
+  have inj := ba.local_inj' (eqn_noncritical e0 x0); nth_rw 2 [r01] at inj
+  have t : Tendsto (fun x : ℂ × ℂ ↦ (x.1, r0 x.1 x.2, r1 x.1 x.2)) (𝓝 x)
+      (𝓝 (x.1, r0 x.1 x.2, r1 x.1 x.2)) :=
+    continuousAt_fst.prod (e0.self_of_nhds.holo.continuousAt.prod e1.self_of_nhds.holo.continuousAt)
+  apply (t.eventually inj).mp
+  refine e0.mp (e1.mp (.of_forall fun x e1 e0 inj ↦ ?_))
+  specialize inj _
+  simp only [Prod.fst]
+  simp only [uncurry, Prod.fst, Prod.snd, Super.bottcherNearIter, e0.eqn, e1.eqn]
+  simp only [uncurry, Prod.fst, Prod.snd, Prod.ext_iff] at inj; exact inj
+
+/-- The property that we will use to define valid germs in analytic continuation.
+    This is normally just `Eqn`, but requiring `=ᶠ[𝓝 (c,0)]` if we're at the origin
+    since there `Eqn` uniqueness breaks down. -/
+structure Eqns (s : Super f d a) (n : ℕ) (r0 r : ℂ → ℂ → S) (x : ℂ × ℂ) : Prop where
+  eqn : ∀ᶠ y in 𝓝 x, Eqn s n r y
+  start : x.2 = 0 → uncurry r =ᶠ[𝓝 x] uncurry r0
+
+/-- `Eqns` implies `r` is analytic -/
+theorem Eqns.holo {r0 r : ℂ → ℂ → S} {x : ℂ × ℂ} (e : Eqns s n r0 r x) :
+    HolomorphicAt II I (uncurry r) x :=
+  e.eqn.self_of_nhds.holo
+
+/-- `Eqns` is local -/
+theorem Eqns.congr {x : ℂ × ℂ} {r0 r1 r2 : ℂ → ℂ → S} (e1 : Eqns s n r0 r1 x)
+    (loc : uncurry r1 =ᶠ[𝓝 x] uncurry r2) : Eqns s n r0 r2 x :=
+  { eqn := e1.eqn.mp (loc.eventually_nhds.mp (.of_forall fun _ loc e ↦ e.congr loc))
+    start := fun x0 ↦ loc.symm.trans (e1.start x0) }
+
+variable [T2Space S]
+
 /-- The equivalent of `Grow` on `{c} ×ˢ ball 0 p`, where the ball is open rather than closed.
     However, we use an `n` that covers the boundary at potential `p` as well, so that analytic
     continuation will work without changing `n`. -/
@@ -340,7 +375,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   · -- We satisfy eqn near x
     apply eqn_near ian
     · simp only [←bz]; rw [ib.self_of_nhds]; exact m
-    · refine (pt.eventually bi).mp (eventually_of_forall ?_)
+    · refine (pt.eventually bi).mp (.of_forall ?_)
       intro _ bi; simp only [← hb] at bi; exact bi
   · -- We frequently match r, by local injectivity of b
     have ne : MapClusterPt (z, z) (𝓝[t] x) fun y ↦ (r c y, i c (y ^ d ^ n)) := by
@@ -354,43 +389,9 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
     simp only [Filter.frequently_map, frequently_nhdsWithin_iff] at inj
     apply inj.mp
     apply ((continuousAt_const.prod (continuousAt_pow _ _)).eventually bi).mp
-    apply eventually_of_forall; simp only [← hb, ← hn]; intro x bi ⟨inj, m⟩
+    refine .of_forall ?_; simp only [← hb, ← hn]; intro x bi ⟨inj, m⟩
     refine ⟨m, (inj ?_).symm⟩; simp only [bi]
     exact (g.eqn.self_of_nhdsSet ⟨c, x⟩ (mk_mem_prod rfl m)).eqn
-
-/-- `Eqn` determines `r` locally, given equality at a point -/
-theorem eqn_unique {r0 r1 : ℂ → ℂ → S} {x : ℂ × ℂ} (e0 : ∀ᶠ y in 𝓝 x, Eqn s n r0 y)
-    (e1 : ∀ᶠ y in 𝓝 x, Eqn s n r1 y) (r01 : r0 x.1 x.2 = r1 x.1 x.2) (x0 : x.2 ≠ 0) :
-    uncurry r0 =ᶠ[𝓝 x] uncurry r1 := by
-  have ba := s.bottcherNearIter_holomorphic e0.self_of_nhds.near
-  have inj := ba.local_inj' (eqn_noncritical e0 x0); nth_rw 2 [r01] at inj
-  have t : Tendsto (fun x : ℂ × ℂ ↦ (x.1, r0 x.1 x.2, r1 x.1 x.2)) (𝓝 x)
-      (𝓝 (x.1, r0 x.1 x.2, r1 x.1 x.2)) :=
-    continuousAt_fst.prod (e0.self_of_nhds.holo.continuousAt.prod e1.self_of_nhds.holo.continuousAt)
-  apply (t.eventually inj).mp
-  refine e0.mp (e1.mp (eventually_of_forall fun x e1 e0 inj ↦ ?_))
-  specialize inj _
-  simp only [Prod.fst]
-  simp only [uncurry, Prod.fst, Prod.snd, Super.bottcherNearIter, e0.eqn, e1.eqn]
-  simp only [uncurry, Prod.fst, Prod.snd, Prod.ext_iff] at inj; exact inj
-
-/-- The property that we will use to define valid germs in analytic continuation.
-    This is normally just `Eqn`, but requiring `=ᶠ[𝓝 (c,0)]` if we're at the origin
-    since there `Eqn` uniqueness breaks down. -/
-structure Eqns (s : Super f d a) (n : ℕ) (r0 r : ℂ → ℂ → S) (x : ℂ × ℂ) : Prop where
-  eqn : ∀ᶠ y in 𝓝 x, Eqn s n r y
-  start : x.2 = 0 → uncurry r =ᶠ[𝓝 x] uncurry r0
-
-/-- `Eqns` implies `r` is analytic -/
-theorem Eqns.holo {r0 r : ℂ → ℂ → S} {x : ℂ × ℂ} (e : Eqns s n r0 r x) :
-    HolomorphicAt II I (uncurry r) x :=
-  e.eqn.self_of_nhds.holo
-
-/-- `Eqns` is local -/
-theorem Eqns.congr {x : ℂ × ℂ} {r0 r1 r2 : ℂ → ℂ → S} (e1 : Eqns s n r0 r1 x)
-    (loc : uncurry r1 =ᶠ[𝓝 x] uncurry r2) : Eqns s n r0 r2 x :=
-  { eqn := e1.eqn.mp (loc.eventually_nhds.mp (eventually_of_forall fun _ loc e ↦ e.congr loc))
-    start := fun x0 ↦ loc.symm.trans (e1.start x0) }
 
 /-- `Eqns` determines `r` once one point is fixed -/
 theorem eqns_unique {r0 r1 r2 : ℂ → ℂ → S} {t : Set (ℂ × ℂ)}
@@ -429,7 +430,7 @@ theorem Grow.unique {r0 r1 : ℂ → ℂ → S} {p0 p1 : ℝ} {n0 n1 : ℕ} (g0 
   simp only [ContinuousAt, g0.zero, g1.zero] at t
   have inj := (s.bottcherNear_holomorphic _ (s.mem_near c)).local_inj'
     (s.bottcherNear_mfderiv_ne_zero c)
-  refine ((t.eventually inj).and (g0.start.and g1.start)).mp (eventually_of_forall ?_)
+  refine ((t.eventually inj).and (g0.start.and g1.start)).mp (.of_forall ?_)
   intro ⟨e, y⟩ ⟨inj, s0, s1⟩; exact inj (s0.trans s1.symm)
 
 /-- Given `GrowOpen _ _ p`, we can analytically continue to the boundary to get `Grow _ _ p` -/
@@ -444,7 +445,7 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
       start := by
         simp only [Filter.eventually_iff]; rw [mem_nhdsSet_iff_forall]; intro x m
         exact (g.eqn.filter_mono (nhds_le_nhdsSet m)).eventually_nhds.mp
-          (eventually_of_forall fun y e ↦
+          (.of_forall fun y e ↦
           { eqn := e
             start := by
               simp only [Function.curry_uncurry, Filter.EventuallyEq.refl, imp_true_iff] })
@@ -458,18 +459,18 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
         · rw [m.1]; rcases g.point m.2 with ⟨r', e, rr⟩
           use uncurry r'; constructor
           · have t : ContinuousAt (fun y : ℂ × ℂ ↦ y.2) (c, x) := continuousAt_snd
-            refine e.eventually_nhds.mp ((t.eventually_ne x0).mp (eventually_of_forall ?_))
+            refine e.eventually_nhds.mp ((t.eventually_ne x0).mp (.of_forall ?_))
             intro y y0 e
             exact
               { eqn := e
                 start := fun h ↦ (y0 h).elim }
-          · refine ct.frequently (rr.mp (eventually_of_forall ?_)); intro x ⟨m, e⟩
+          · refine ct.frequently (rr.mp (.of_forall ?_)); intro x ⟨m, e⟩
             simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and_iff]; use m, e
         · use uncurry r; simp only [not_not] at x0
           simp only [m.1, x0, eq_self_iff_true, and_true_iff] at ct ⊢; constructor
           · refine
               (g.eqn.filter_mono (nhds_le_nhdsSet ?_)).eventually_nhds.mp
-                (eventually_of_forall fun y e ↦ ?_)
+                (.of_forall fun y e ↦ ?_)
             use rfl, mem_ball_self g.pos; simp only [Function.curry_uncurry]
             exact
               { eqn := e
@@ -490,12 +491,12 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
     { nonneg := g.pos.le
       zero := by rw [curry, b.uf.self_of_nhdsSet m0, uncurry, g.zero]
       start := by
-        refine g.start.mp ((b.uf.filter_mono (nhds_le_nhdsSet m0)).mp (eventually_of_forall ?_))
+        refine g.start.mp ((b.uf.filter_mono (nhds_le_nhdsSet m0)).mp (.of_forall ?_))
         intro x e b; simp only [curry, uncurry, Prod.mk.eta] at e ⊢; rw [e]; exact b
       eqn := by
         have fp := b.up
         simp only [closure_prod_eq, closure_singleton, closure_ball _ g.pos.ne'] at fp
-        exact fp.mp (eventually_of_forall fun x e ↦ e.eqn.self_of_nhds) }
+        exact fp.mp (.of_forall fun x e ↦ e.eqn.self_of_nhds) }
 
 /-- Given a increasing sequence of `p`s with corresponding `r`s and `Grow`s, we can piece together
     a single, globally consistent `r`. -/
@@ -510,7 +511,7 @@ theorem join_r (s : Super f d a) {p : ℕ → ℝ} {n : ℕ → ℕ} {ps : ℝ} 
   -- rs is locally each r, via induction
   have loc : ∀ k, ∀ᶠ e in 𝓝 c, ∀ x : ℂ, abs x < p k → rs e x = r k e x := by
     intro k; induction' k with k h
-    · apply eventually_of_forall; intro e x x0
+    · refine .of_forall fun e x x0 ↦ ?_
       have xe : ∃ k, abs x < p k := ⟨0, x0⟩
       simp only [← hrs, lt_of_lt_of_le x0 (above _), dif_pos, (Nat.find_eq_zero xe).mpr x0]
     · have eq := (g k).unique (g (k + 1)) (mono (Nat.lt_succ_self _).le)
@@ -556,7 +557,7 @@ theorem joined_growOpen (s : Super f d a) {p : ℕ → ℝ} {ps : ℝ} {r : ℕ 
       rcases tend.exists_lt pos with ⟨k, pos⟩
       apply (g k).start.mp
       apply (loc k 0 (by simp only [Complex.abs.map_zero, pos])).mp
-      apply eventually_of_forall; intro ⟨e, x⟩ loc start
+      refine .of_forall fun ⟨e, x⟩ loc start ↦ ?_
       simp only [uncurry] at loc start ⊢; simp only [start, loc]
     eqn := by
       apply mem_nhdsSet_iff_forall.mpr; intro ⟨c', x⟩ lt
@@ -572,7 +573,7 @@ theorem joined_growOpen (s : Super f d a) {p : ℕ → ℝ} {ps : ℝ} {r : ℕ 
       apply ((g k).eqn.filter_mono (nhds_le_nhdsSet m)).mp
       apply (loc _ _ ltp).eventually_nhds.mp
       apply lt'.mp
-      apply eventually_of_forall; intro ⟨e, y⟩ _ loc eq
+      refine .of_forall fun ⟨e, y⟩ _ loc eq ↦ ?_
       exact eq.congr (Filter.EventuallyEq.symm loc) }
 
 /-- We can grow up to the postcritical value `s.p c` -/
@@ -637,7 +638,7 @@ theorem Super.has_ray (s : Super f d a) [OnePreimage s] :
     rcases exists_between (lt_min pq' h.2) with ⟨q, pq, qlo⟩
     rcases lt_min_iff.mp qlo with ⟨qq', qs⟩
     have q0 : 0 ≤ q := _root_.trans h.1 pq.le
-    replace gh := gh.mp (eventually_of_forall fun c' g ↦ g.anti q0 qq'.le)
+    replace gh := gh.mp (.of_forall fun c' g ↦ g.anti q0 qq'.le)
     clear qlo qq' pq' q'
     rcases eventually_nhds_iff.mp gh with ⟨t0, gh, ot0, ct0⟩
     rcases eventually_nhds_iff.mp (s.lowerSemicontinuous_p _ _ qs) with ⟨t1, lo, ot1, ct1⟩

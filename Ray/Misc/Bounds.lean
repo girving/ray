@@ -3,13 +3,12 @@ import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Data.Complex.ExponentialBounds
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
+import Mathlib.Tactic.Bound
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Topology.MetricSpace.Basic
 import Ray.Misc.Finset
-import Ray.Tactic.Bound
 
 /-!
 ## Assorted bound lemmas
@@ -101,7 +100,7 @@ theorem finset_sum_partition (A B : Finset ℕ) (f : ℕ → ℂ) :
   exact Finset.sum_union (Finset.disjoint_sdiff_inter A B)
 
 theorem sdiff_sdiff_disjoint (A B : Finset ℕ) : Disjoint (A \ B) (B \ A) :=
-  Finset.disjoint_of_subset_right (Finset.sdiff_subset B A) Finset.sdiff_disjoint
+  Finset.disjoint_of_subset_right Finset.sdiff_subset Finset.sdiff_disjoint
 
 theorem symmDiff_union (A B : Finset ℕ) : A ∆ B = A \ B ∪ B \ A := by
   rw [symmDiff_def, Finset.sup_eq_union]

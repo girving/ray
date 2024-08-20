@@ -7,7 +7,6 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic

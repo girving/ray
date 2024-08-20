@@ -52,7 +52,7 @@ def iterate (c z : Box) (rs : Floating) (n : ℕ) : Iter :=
 
 /-- All correctness properties of `iterate'` in a single lemma -/
 lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
-    (cm : c' ∈ approx c) (zm : z' ∈ approx z) (rsn : rs ≠ nan) (rsm : rs' ≤ rs.val) (k n : ℕ) :
+    (cm : c' ∈ approx c) (zm : z' ∈ approx z) (rsm : rs' ≤ rs.val) (k n : ℕ) :
     let i := iterate' c z rs k n
     let w' := (f' 2 c')^[i.n - k] z'
     k ≤ i.n ∧ w' ∈ approx i.z ∧ (i.exit = .large → rs' < abs w' ^ 2) := by
@@ -65,7 +65,7 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
     generalize hz2 : zr2.lo.add zi2.lo false = z2
     generalize hw : (⟨zr2 - zi2, (z.re * z.im).scaleB 1⟩ : Box) + c = w
     have we : w = z.sqr + c := by rw [←hw, Box.sqr, hzr2, hzi2]
-    have wa : f' 2 c' z' ∈ approx w := by rw [we, f']; mono
+    have wa : f' 2 c' z' ∈ approx w := by rw [we, f']; approx
     generalize hw' : f' 2 c' z' = w' at wa
     by_cases z2n : z2 = nan
     · simpa only [z2n, ite_true, le_refl, ge_iff_le, tsub_eq_zero_of_le, Function.iterate_zero,
@@ -79,8 +79,8 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
       rcases Floating.ne_nan_of_add z2n with ⟨nr, ni⟩
       simp only [ne_eq, Interval.lo_eq_nan] at nr ni
       refine le_trans (Floating.add_le z2n) (add_le_add ?_ ?_)
-      · apply Interval.lo_le nr; mono
-      · apply Interval.lo_le ni; mono
+      · apply Interval.lo_le nr; approx
+      · apply Interval.lo_le ni; approx
     · simp only [rz, ite_false, z2n]
       generalize hi : iterate' c w rs (k + 1) n = i
       specialize h wa (k+1)
@@ -91,14 +91,14 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
       exact h.2
 
 /-- `iterate` produces a correct iterate -/
-@[mono] lemma mem_approx_iterate {c z : Box} {rs : Floating} {c' z' : ℂ}
+@[approx] lemma mem_approx_iterate {c z : Box} {rs : Floating} {c' z' : ℂ}
     (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) :
     (f' 2 c')^[(iterate c z rs n).n] z' ∈ approx (iterate c z rs n).z := by
   rw [iterate]
   by_cases rsn : rs = nan
   · simpa only [rsn, ite_true, Function.iterate_zero, id_eq]
   · simp only [rsn, ite_false]
-    exact (iterate'_correct cm zm rsn (le_refl _) 0 n).2.1
+    exact (iterate'_correct cm zm (le_refl _) 0 n).2.1
 
 /-- If `iterate` claims the result is large, it is` -/
 lemma iterate_large {c z : Box} {rs : Floating} {n : ℕ} {c' z' : ℂ}
@@ -108,7 +108,7 @@ lemma iterate_large {c z : Box} {rs : Floating} {n : ℕ} {c' z' : ℂ}
   by_cases rsn : rs = nan
   · simp only [rsn, ↓reduceIte] at l
   · simp only [rsn, ite_false] at l ⊢
-    simpa only [not_lt, Nat.sub_zero] using (iterate'_correct cm zm rsn (le_refl _) 0 n).2.2 l
+    simpa only [not_lt, Nat.sub_zero] using (iterate'_correct cm zm (le_refl _) 0 n).2.2 l
 
 /-- Iterate exits with `.nan` when `rs = nan` -/
 @[simp] lemma iterate_nan {c z : Box} {n : ℕ} : (iterate c z nan n).exit = .nan := by

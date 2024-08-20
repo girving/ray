@@ -21,7 +21,7 @@ to make `simp` go through correctly.
 -/
 
 open Classical
-open Filter (eventually_of_forall Tendsto)
+open Filter (Tendsto)
 open Function (uncurry)
 open OneDimension
 open Set
@@ -108,13 +108,14 @@ lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := 
   · rw [i.zz]
     exact (HolomorphicAt.extChartAt (mem_extChartAt_source _ _)).mdifferentiableAt.hasMFDerivAt
   · simp only [Cinv.df]
-    apply MDifferentiableAt.hasMFDerivAt_comp2 (J := I) (co := cms)
-    rw [i.zz]; exact i.fa.mdifferentiableAt
-    apply hasMFDerivAt_fst
-    refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _ _ _)
-    exact (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
-    rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
-    rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
+    have fd := i.fa.mdifferentiableAt
+    rw [← i.zz] at fd
+    apply MDifferentiableAt.hasMFDerivAt_comp2 fd
+    · apply hasMFDerivAt_fst
+    · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _ _ _)
+      exact (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
+    · rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
+    · rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
 
 lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
   refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst

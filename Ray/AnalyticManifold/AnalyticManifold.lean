@@ -3,6 +3,7 @@ import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.Data.Complex.Basic
+import Mathlib.Geometry.Manifold.AnalyticManifold
 import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
@@ -34,7 +35,6 @@ Other things we show:
 -/
 
 open ChartedSpace (chartAt)
-open Filter (eventually_of_forall)
 open Function (uncurry)
 open Set
 open scoped Manifold Topology
@@ -222,20 +222,15 @@ theorem extChartAt_self_analytic {E : Type} [NormedAddCommGroup E] [NormedSpace 
       modelWithCornersSelf_coe_symm, PartialHomeomorph.coe_trans] at m ⊢
     rw [f.right_inv m.1]
 
-variable {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E]
-  [TopologicalSpace A]
-variable {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [CompleteSpace F]
-  [TopologicalSpace B]
+variable {E A : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [TopologicalSpace A]
+variable {F B : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [TopologicalSpace B]
 variable {G C : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] [TopologicalSpace C]
 variable {H D : Type} [NormedAddCommGroup H] [NormedSpace 𝕜 H] [TopologicalSpace D]
 variable {M : Type} {I : ModelWithCorners 𝕜 E A} [TopologicalSpace M]
 variable {N : Type} {J : ModelWithCorners 𝕜 F B} [TopologicalSpace N]
 variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]
 variable {P : Type} {L : ModelWithCorners 𝕜 H D} [TopologicalSpace P]
-variable [I.Boundaryless] [ChartedSpace A M] [cm : AnalyticManifold I M]
-variable [J.Boundaryless] [ChartedSpace B N] [cn : AnalyticManifold J N]
-variable [K.Boundaryless] [ChartedSpace C O] [co : AnalyticManifold K O]
-variable [L.Boundaryless] [ChartedSpace D P] [cp : AnalyticManifold L P]
+variable [ChartedSpace A M] [ChartedSpace B N] [ChartedSpace C O] [ChartedSpace D P]
 
 /-- Holomorphic at a point -/
 def HolomorphicAt (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
@@ -284,6 +279,7 @@ theorem Holomorphic.continuous {f : M → N} (h : Holomorphic I J f) : Continuou
 /-- Holomorphic functions are continuous (explicit `I`, `J` version) -/
 theorem HolomorphicAt.continuousAt' (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
     {M N : Type} [TopologicalSpace M] [ChartedSpace A M] [TopologicalSpace N] [ChartedSpace B N]
+    [I.Boundaryless] [AnalyticManifold I M] [J.Boundaryless] [AnalyticManifold J N]
     {f : M → N} {x : M} (h : HolomorphicAt I J f x) :
     ContinuousAt f x := h.continuousAt
 
@@ -334,7 +330,7 @@ theorem HolomorphicAt.comp {f : N → O} {g : M → N} {x : M} (fh : Holomorphic
       · exact continuousAt_extChartAt_symm I x
     · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
       exact extChartAt_source_mem_nhds _ _
-  refine m.mp (eventually_of_forall fun y m ↦ ?_)
+  refine m.mp (.of_forall fun y m ↦ ?_)
   simp_rw [PartialEquiv.left_inv _ m]
 
 /-- Holomorphic functions compose -/
@@ -351,8 +347,8 @@ theorem HolomorphicAt.comp_of_eq {f : N → O} {g : M → N} {x : M} {y : N}
 theorem HolomorphicAt.prod {f : M → N} {g : M → O} {x : M} (fh : HolomorphicAt I J f x)
     (gh : HolomorphicAt I K g x) : HolomorphicAt I (J.prod K) (fun x ↦ (f x, g x)) x := by
   rw [holomorphicAt_iff] at fh gh ⊢; use fh.1.prod gh.1
-  refine (fh.2.prod gh.2).congr (eventually_of_forall fun y ↦ ?_)
-  funext; simp only [extChartAt_prod, Function.comp, PartialEquiv.prod_coe]
+  refine (fh.2.prod gh.2).congr (.of_forall fun y ↦ ?_)
+  simp only [extChartAt_prod, Function.comp, PartialEquiv.prod_coe]
 
 /-- `Holomorphic` for `x ↦ (f x, g x)` -/
 theorem Holomorphic.prod {f : M → N} {g : M → O} (fh : Holomorphic I J f) (gh : Holomorphic I K g) :
@@ -371,14 +367,16 @@ theorem HolomorphicAt.comp₂_of_eq {h : N → O → P} {f : M → N} {g : M →
     HolomorphicAt I L (fun x ↦ h (f x) (g x)) x := by rw [← e] at ha; exact ha.comp₂ fa ga
 
 /-- `id` is holomorphic -/
-theorem holomorphicAt_id {x : M} : HolomorphicAt I I (fun x ↦ x) x := by
+theorem holomorphicAt_id [I.Boundaryless] [AnalyticManifold I M] {x : M} :
+    HolomorphicAt I I (fun x ↦ x) x := by
   rw [holomorphicAt_iff]; use continuousAt_id; apply (analyticAt_id _ _).congr
   filter_upwards [((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x))]
   intro y m
   simp only [Function.comp, PartialEquiv.right_inv _ m, id]
 
 /-- `id` is holomorphic -/
-theorem holomorphic_id : Holomorphic I I fun x : M ↦ x := fun _ ↦ holomorphicAt_id
+theorem holomorphic_id [I.Boundaryless] [AnalyticManifold I M] : Holomorphic I I fun x : M ↦ x :=
+  fun _ ↦ holomorphicAt_id
 
 /-- Constants are holomorphic -/
 theorem holomorphicAt_const {x : M} {c : N} : HolomorphicAt I J (fun _ ↦ c) x := by
@@ -389,26 +387,30 @@ theorem holomorphicAt_const {x : M} {c : N} : HolomorphicAt I J (fun _ ↦ c) x 
 theorem holomorphic_const {c : N} : Holomorphic I J fun _ : M ↦ c := fun _ ↦ holomorphicAt_const
 
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
-theorem HolomorphicAt.along_fst [I.Boundaryless] {f : M → N → O} {x : M} {y : N}
-    (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt I K (fun x ↦ f x y) x :=
+theorem HolomorphicAt.along_fst [I.Boundaryless] [AnalyticManifold I M] {f : M → N → O} {x : M}
+    {y : N} (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) :
+    HolomorphicAt I K (fun x ↦ f x y) x :=
   HolomorphicAt.comp₂ fa holomorphicAt_id holomorphicAt_const
 
 /-- Curried holomorphic functions are holomorphic in the second coordinate -/
-theorem HolomorphicAt.along_snd [J.Boundaryless] {f : M → N → O} {x : M} {y : N}
+theorem HolomorphicAt.along_snd [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M]
+    [AnalyticManifold J N] {f : M → N → O} {x : M} {y : N}
     (fa : HolomorphicAt (I.prod J) K (uncurry f) (x, y)) : HolomorphicAt J K (fun y ↦ f x y) y :=
   HolomorphicAt.comp₂ fa holomorphicAt_const holomorphicAt_id
 
 /-- Curried holomorphic functions are holomorphic in the first coordinate -/
-theorem Holomorphic.along_fst [I.Boundaryless] {f : M → N → O} (fa : Holomorphic (I.prod J) K (uncurry f))
-    {y : N} : Holomorphic I K fun x ↦ f x y := fun _ ↦ (fa _).along_fst
+theorem Holomorphic.along_fst [I.Boundaryless] [AnalyticManifold I M] {f : M → N → O}
+    (fa : Holomorphic (I.prod J) K (uncurry f)) {y : N} :
+    Holomorphic I K fun x ↦ f x y := fun _ ↦ (fa _).along_fst
 
 /-- Curried holomorphic functions are holomorphic in the second coordinate -/
-theorem Holomorphic.along_snd [J.Boundaryless] {f : M → N → O} {x : M}
+theorem Holomorphic.along_snd [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M]
+    [AnalyticManifold J N] {f : M → N → O} {x : M}
     (fa : Holomorphic (I.prod J) K (uncurry f)) : Holomorphic J K fun y ↦ f x y := fun _ ↦
   (fa _).along_snd
 
 /-- `fst` is holomorphic -/
-theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
+theorem holomorphicAt_fst [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M] {x : M × N} :
     HolomorphicAt (I.prod J) I (fun p : M × N ↦ p.fst) x := by
   rw [holomorphicAt_iff]; use continuousAt_fst; refine (analyticAt_fst _).congr ?_
   filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
@@ -430,7 +432,7 @@ theorem holomorphicAt_snd [I.Boundaryless] [J.Boundaryless] {x : M × N} :
   exact ((extChartAt J x.2).right_inv m.2).symm
 
 /-- `fst` is holomorphic -/
-theorem holomorphic_fst [I.Boundaryless] [J.Boundaryless] :
+theorem holomorphic_fst [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M] :
     Holomorphic (I.prod J) I fun p : M × N ↦ p.fst := fun _ ↦ holomorphicAt_fst
 
 /-- `snd` is holomorphic -/
@@ -445,7 +447,8 @@ theorem ModelWithCorners.coe_coe_symm (I : ModelWithCorners 𝕜 E A) :
     ⇑I.toPartialEquiv.symm = (I.symm : E → A) := rfl
 
 /-- `extChartAt` is holomorphic -/
-theorem HolomorphicAt.extChartAt {x y : M} (ys : y ∈ (extChartAt I x).source) :
+theorem HolomorphicAt.extChartAt [CompleteSpace E] [I.Boundaryless] [cm : AnalyticManifold I M]
+    {x y : M} (ys : y ∈ (extChartAt I x).source) :
     HolomorphicAt I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y := by
   rw [holomorphicAt_iff]; use continuousAt_extChartAt' I ys
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
@@ -466,7 +469,8 @@ theorem HolomorphicAt.extChartAt {x y : M} (ys : y ∈ (extChartAt I x).source) 
   apply a.2; clear a; use chartAt A y y; aesop
 
 /-- `extChartAt.symm` is holomorphic -/
-theorem HolomorphicAt.extChartAt_symm {x : M} {y : E} (ys : y ∈ (_root_.extChartAt I x).target) :
+theorem HolomorphicAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : AnalyticManifold I M]
+    {x : M} {y : E} (ys : y ∈ (_root_.extChartAt I x).target) :
     HolomorphicAt (modelWithCornersSelf 𝕜 E) I (_root_.extChartAt I x).symm y := by
   rw [holomorphicAt_iff]; use continuousAt_extChartAt_symm'' I ys
   simp only [extChartAt_eq_refl, PartialEquiv.refl_coe, Function.comp, id, extChartAt,
@@ -529,6 +533,7 @@ theorem HolomorphicAt.pow {f : M → 𝕜} {x : M} (fa : HolomorphicAt I (modelW
 /-- Complex powers `f x ^ g x` are holomorphic if `f x` avoids the negative real axis  -/
 theorem HolomorphicAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
     [TopologicalSpace A] {I : ModelWithCorners ℂ E A} [TopologicalSpace M] [ChartedSpace A M]
+    [I.Boundaryless] [AnalyticManifold I M]
     {f g : M → ℂ} {x : M}
     (fa : HolomorphicAt I (modelWithCornersSelf ℂ ℂ) f x)
     (ga : HolomorphicAt I (modelWithCornersSelf ℂ ℂ) g x) (a : 0 < (f x).re ∨ (f x).im ≠ 0) :
@@ -539,27 +544,31 @@ theorem HolomorphicAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace �
   exact a
 
 /-- Holomorphic functions are smooth -/
-theorem HolomorphicAt.smoothAt {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
+theorem HolomorphicAt.smoothAt [CompleteSpace F] {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
     SmoothAt I J f x := by
   rw [holomorphicAt_iff] at fa; simp only [SmoothAt, contMDiffAt_iff]
   use fa.1; use fa.2.contDiffAt.contDiffWithinAt
 
 /-- Holomorphic functions are smooth -/
-theorem HolomorphicOn.smoothOn {f : M → N} {s : Set M} (fa : HolomorphicOn I J f s) :
-    SmoothOn I J f s := fun x m ↦ (fa x m).smoothAt.smoothWithinAt
+theorem HolomorphicOn.smoothOn [CompleteSpace F] {f : M → N} {s : Set M}
+    (fa : HolomorphicOn I J f s) : SmoothOn I J f s :=
+  fun x m ↦ (fa x m).smoothAt.smoothWithinAt
 
 /-- Holomorphic functions are differentiable -/
-theorem HolomorphicAt.mdifferentiableAt {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
-    MDifferentiableAt I J f x :=
+theorem HolomorphicAt.mdifferentiableAt [CompleteSpace F] {f : M → N} {x : M}
+    (fa : HolomorphicAt I J f x) : MDifferentiableAt I J f x :=
   fa.smoothAt.mdifferentiableAt
 
 /-- Iterated holomorphic functions are holomorphic -/
-theorem Holomorphic.iter {f : M → M} (fa : Holomorphic I I f) (n : ℕ) : Holomorphic I I f^[n] := by
+theorem Holomorphic.iter [I.Boundaryless] [AnalyticManifold I M] {f : M → M}
+    (fa : Holomorphic I I f) (n : ℕ) :
+    Holomorphic I I f^[n] := by
   induction' n with n h; simp only [Function.iterate_zero]; exact holomorphic_id
   simp only [Function.iterate_succ']; exact fa.comp h
 
 /-- Chart derivatives are invertible (left inverse) -/
-theorem extChartAt_mderiv_left_inverse {x y : M} (m : y ∈ (extChartAt I x).source) :
+theorem extChartAt_mderiv_left_inverse [CompleteSpace E] [I.Boundaryless] [AnalyticManifold I M]
+    {x y : M} (m : y ∈ (extChartAt I x).source) :
     (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)).comp
         (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y) =
       ContinuousLinearMap.id 𝕜 (TangentSpace I y) := by
@@ -572,7 +581,8 @@ theorem extChartAt_mderiv_left_inverse {x y : M} (m : y ∈ (extChartAt I x).sou
   intro z zm; simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
 
 /-- Chart derivatives are invertible (right inverse) -/
-theorem extChartAt_mderiv_right_inverse {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
+theorem extChartAt_mderiv_right_inverse [CompleteSpace E] [I.Boundaryless] [AnalyticManifold I M]
+    {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
     (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) ((extChartAt I x).symm y)).comp
         (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm y) =
       ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) y) := by
@@ -588,7 +598,8 @@ theorem extChartAt_mderiv_right_inverse {x : M} {y : E} (m : y ∈ (extChartAt I
   simp only [Function.comp, id, PartialEquiv.right_inv _ zm, Function.comp]
 
 /-- Chart derivatives are invertible (right inverse) -/
-theorem extChartAt_mderiv_right_inverse' {x y : M} (m : y ∈ (extChartAt I x).source) :
+theorem extChartAt_mderiv_right_inverse' [CompleteSpace E] [I.Boundaryless] [AnalyticManifold I M]
+    {x y : M} (m : y ∈ (extChartAt I x).source) :
     (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y).comp
         (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)) =
       ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) (extChartAt I x y)) := by
@@ -605,14 +616,16 @@ theorem HolomorphicAt.congr {f g : M → N} {x : M} (fa : HolomorphicAt I J f x)
   exact e.comp_tendsto t
 
 /-- If we're holomorphic at a point, we're locally holomorphic -/
-theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
+theorem HolomorphicAt.eventually [CompleteSpace E] [CompleteSpace F] [I.Boundaryless]
+    [J.Boundaryless] [AnalyticManifold I M] [AnalyticManifold J N]
+    {f : M → N} {x : M} (fa : HolomorphicAt I J f x) :
     ∀ᶠ y in 𝓝 x, HolomorphicAt I J f y := by
   apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source J (f x)).mem_nhds
     (mem_extChartAt_source J (f x)))).eventually_nhds.mp
   apply ((isOpen_extChartAt_source I x).eventually_mem (mem_extChartAt_source I x)).mp
   apply ((continuousAt_extChartAt I x).eventually
     ((isOpen_analyticAt _ _).eventually_mem (holomorphicAt_iff.mp fa).2)).mp
-  refine eventually_of_forall fun y a m fm ↦ ?_
+  refine .of_forall fun y a m fm ↦ ?_
   simp only at a m fm; rw [mem_setOf] at a
   have h := a.holomorphicAt (modelWithCornersSelf 𝕜 E) (modelWithCornersSelf 𝕜 F); clear a
   have h' := (HolomorphicAt.extChartAt_symm (PartialEquiv.map_source _ fm.self_of_nhds)).comp_of_eq
@@ -620,15 +633,19 @@ theorem HolomorphicAt.eventually {f : M → N} {x : M} (fa : HolomorphicAt I J f
   swap; simp only [Function.comp, PartialEquiv.left_inv _ m]
   apply h'.congr; clear h h'; simp only [Function.comp]
   apply ((isOpen_extChartAt_source I x).eventually_mem m).mp
-  refine fm.mp (eventually_of_forall fun z mf m ↦ ?_)
+  refine fm.mp (.of_forall fun z mf m ↦ ?_)
   simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ mf]
 
 /-- The domain of holomorphicity is open -/
-theorem isOpen_holomorphicAt {f : M → N} : IsOpen {x | HolomorphicAt I J f x} := by
+theorem isOpen_holomorphicAt [CompleteSpace E] [CompleteSpace F] [I.Boundaryless] [J.Boundaryless]
+    [AnalyticManifold I M] [AnalyticManifold J N] {f : M → N} :
+    IsOpen {x | HolomorphicAt I J f x} := by
   rw [isOpen_iff_eventually]; intro x fa; exact fa.eventually
 
 /-- `HasMFDerivAt` of `x ↦ (f x, g x)` is `df.prod dg` -/
-theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
+theorem HasMFDerivAt.prod [SmoothManifoldWithCorners I M] [SmoothManifoldWithCorners J N]
+    [SmoothManifoldWithCorners K O]
+    {f : M → N} {g : M → O} {x : M}
     {df : TangentSpace I x →L[𝕜] TangentSpace J (f x)} (fh : HasMFDerivAt I J f x df)
     {dg : TangentSpace I x →L[𝕜] TangentSpace K (g x)} (gh : HasMFDerivAt I K g x dg) :
     HasMFDerivAt I (J.prod K) (fun y ↦ (f y, g y)) x (df.prod dg) := by
@@ -636,13 +653,15 @@ theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
   use fh.1.prod gh.1; exact fh.2.prod gh.2
 
 /-- `TangentSpace` commutes with products -/
-theorem tangentSpace_prod (x : M) (y : N) :
+theorem tangentSpace_prod [SmoothManifoldWithCorners I M] [SmoothManifoldWithCorners J N] (x : M) (y : N) :
     TangentSpace (I.prod J) (x, y) = (TangentSpace I x × TangentSpace J y) := by
   simp only [TangentSpace]
 
 /-- `HasMFDerivAt` composition for curried functions.
     This was oddly difficult to prove. -/
-theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : O}
+theorem MDifferentiableAt.hasMFDerivAt_uncurry [SmoothManifoldWithCorners J N]
+    [SmoothManifoldWithCorners K O] [SmoothManifoldWithCorners L P]
+    {f : N → O → P} {y : N} {z : O}
     (fd : MDifferentiableAt (J.prod K) L (uncurry f) (y, z))
     {df0 : TangentSpace J y →L[𝕜] TangentSpace L (f y z)}
     (fh0 : HasMFDerivAt J L (fun x ↦ f x z) y df0)
@@ -686,7 +705,9 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
   exact congr_arg₂ _ (hu u) (hv v)
 
 /-- `HasMFDerivAt` composition for curried functions -/
-theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}
+theorem MDifferentiableAt.hasMFDerivAt_comp2 [SmoothManifoldWithCorners I M]
+    [SmoothManifoldWithCorners J N] [SmoothManifoldWithCorners K O] [SmoothManifoldWithCorners L P]
+    {f : N → O → P} {g : M → N} {h : M → O} {x : M}
     (fd : MDifferentiableAt (J.prod K) L (uncurry f) (g x, h x))
     {dg : TangentSpace I x →L[𝕜] TangentSpace J (g x)} (gh : HasMFDerivAt I J g x dg)
     {dh : TangentSpace I x →L[𝕜] TangentSpace K (h x)} (hh : HasMFDerivAt I K h x dh)
@@ -716,7 +737,9 @@ theorem hasMFDerivAt_iff_hasFDerivAt'
 
 /-- Holomorphic functions have continuous tangent maps.
     Obviously more is true and the tangent map is holomorphic, but I don't need that yet -/
-theorem HolomorphicOn.continuousOn_tangentMap {f : M → N} {s : Set M} (fa : HolomorphicOn I J f s) :
+theorem HolomorphicOn.continuousOn_tangentMap [CompleteSpace E] [CompleteSpace F] [I.Boundaryless]
+    [J.Boundaryless] [AnalyticManifold I M] [AnalyticManifold J N]
+    {f : M → N} {s : Set M} (fa : HolomorphicOn I J f s) :
     ContinuousOn (tangentMap I J f) (Bundle.TotalSpace.proj ⁻¹' s) := by
   generalize ht : {x | HolomorphicAt I J f x} = t
   have o : IsOpen t := by rw [← ht]; exact isOpen_holomorphicAt
@@ -738,24 +761,24 @@ def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [Top
   continuousOn_invFun := continuousOn_extChartAt_symm I x
 
 /-- `extChartAt` maps `𝓝` to `𝓝` -/
-theorem extChartAt_map_nhds {x y : M} (m : y ∈ (extChartAt I x).source) :
+theorem extChartAt_map_nhds [I.Boundaryless] {x y : M} (m : y ∈ (extChartAt I x).source) :
     Filter.map (extChartAt I x) (𝓝 y) = 𝓝 (extChartAt I x y) :=
   (extChartAt' I x).map_nhds_eq m
 
 /-- `extChartAt` maps `𝓝` to `𝓝` -/
 theorem extChartAt_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
-    [TopologicalSpace M] [ChartedSpace A M] (x : M) :
+    [TopologicalSpace M] [ChartedSpace A M] [AnalyticManifold I M] (x : M) :
     Filter.map (extChartAt I x) (𝓝 x) = 𝓝 (extChartAt I x x) :=
   extChartAt_map_nhds (mem_extChartAt_source I x)
 
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
-theorem extChartAt_symm_map_nhds {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
+theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
     Filter.map (extChartAt I x).symm (𝓝 y) = 𝓝 ((extChartAt I x).symm y) :=
   (extChartAt' I x).symm.map_nhds_eq m
 
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
 theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
-    [TopologicalSpace M] [ChartedSpace A M] (x : M) :
+    [TopologicalSpace M] [ChartedSpace A M] [AnalyticManifold I M] (x : M) :
     Filter.map (extChartAt I x).symm (𝓝 (extChartAt I x x)) = 𝓝 x := by
   convert extChartAt_symm_map_nhds (mem_extChartAt_target I x)
   simp only [PartialEquiv.left_inv _ (mem_extChartAt_source I x)]
@@ -763,14 +786,14 @@ theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryles
 /-- Nontrivial manifolds have no isolated points.
     Unfortunately, making this an instance gives "cannot find synthesization order for instance" -/
 theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I.Boundaryless]
-    [Nontrivial E] (x : M) : (𝓝[{x}ᶜ] x).NeBot := by
+    [AnalyticManifold I M] [Nontrivial E] (x : M) : (𝓝[{x}ᶜ] x).NeBot := by
   have p := Module.punctured_nhds_neBot 𝕜 E (extChartAt I x x)
   simp only [← Filter.frequently_true_iff_neBot, frequently_nhdsWithin_iff, ←
     extChartAt_symm_map_nhds' I x, Filter.frequently_map, true_and_iff,
     mem_compl_singleton_iff] at p ⊢
   apply p.mp
   apply ((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x)).mp
-  refine eventually_of_forall fun y m h ↦ ?_
+  refine .of_forall fun y m h ↦ ?_
   contrapose h; simp only [not_not] at m h ⊢; nth_rw 2 [← h]
   rw [PartialEquiv.right_inv _ m]
 

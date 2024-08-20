@@ -17,7 +17,7 @@ These results follow straightforwardly by stitching together local inverses, exc
 -/
 
 open Classical
-open Filter (eventually_of_forall Tendsto)
+open Filter (Tendsto)
 open Function (uncurry)
 open OneDimension
 open Set
@@ -59,7 +59,7 @@ theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : 
     have n := nontrivialHolomorphicAt_of_mfderiv_ne_zero (fa _ m).along_snd (nc _ m); simp only at n
     simp only [n.nhds_eq_map_nhds_param (fa _ m), Filter.eventually_map]
     apply (i _ m).left_inv.mp; apply (so.eventually_mem m).mp
-    apply eventually_of_forall; intro ⟨e, w⟩ wm gf
+    refine .of_forall fun ⟨e, w⟩ wm gf ↦ ?_
     simp only at gf
     simp only [left _ _ wm, gf]
   use g; constructor
@@ -90,16 +90,16 @@ theorem global_complex_inverse_fun_compact {f : ℂ → S → T} [Nonempty S] [T
   rcases t with ⟨t, ot, st, ti⟩
   -- Shrink t to recover openness and deriv ≠ 0
   set u := t ∩ {p | HolomorphicAt II I (uncurry f) p ∧ mfderiv I I (f p.1) p.2 ≠ 0}
-  have tu : u ⊆ t := inter_subset_left t _
+  have tu : u ⊆ t := inter_subset_left
   have su : s ⊆ u := subset_inter st (subset_inter fa nc)
   have uo : IsOpen u := by
     apply ot.inter; rw [isOpen_iff_eventually]; intro ⟨c, z⟩ ⟨fa, nc⟩
-    refine fa.eventually.mp ((mfderiv_ne_zero_eventually' fa nc).mp (eventually_of_forall ?_))
+    refine fa.eventually.mp ((mfderiv_ne_zero_eventually' fa nc).mp (.of_forall ?_))
     intro ⟨c, z⟩ nc fa; use fa, nc
   -- Find our inverse on u
-  have fa' : HolomorphicOn II I (uncurry f) u := fun _ m ↦ (inter_subset_right _ _ m).1
+  have fa' : HolomorphicOn II I (uncurry f) u := fun _ m ↦ (inter_subset_right m).1
   have d0 : ∀ (p : ℂ × S), p ∈ u → mfderiv I I (f p.fst) p.snd ≠ 0 :=
-    fun _ m ↦ (inter_subset_right _ _ m).2
+    fun _ m ↦ (inter_subset_right m).2
   rcases global_complex_inverse_fun_open fa' d0 (ti.mono tu) uo with ⟨g, ga, gf⟩
   use g, ga.mono (image_subset _ su), Filter.eventually_of_mem (uo.mem_nhdsSet.mpr su) gf
 

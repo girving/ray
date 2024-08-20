@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
+import Mathlib.Tactic.Bound
 import Interval.Misc.Int
 import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
@@ -8,7 +9,6 @@ import Ray.Hartogs.FubiniBall
 import Ray.Hartogs.MaxLog
 import Ray.Misc.Max
 import Ray.Misc.Measure
-import Ray.Tactic.Bound
 
 /-!
 ## Subharmonic and harmonic functions and Hartogs' lemma
@@ -51,9 +51,8 @@ noncomputable section
 variable {S : Type} [_root_.RCLike S] [SMulCommClass ℝ S S]
 variable {T : Type} [_root_.RCLike T] [SMulCommClass ℝ T T]
 variable {E : Type} [NormedAddCommGroup E] [CompleteSpace E] [NormedSpace ℝ E]
-variable {F : Type} [NormedAddCommGroup F] [CompleteSpace F] [NormedSpace ℝ F]
-variable {H : Type} [NormedAddCommGroup H] [CompleteSpace H] [NormedSpace ℂ H]
-variable [SecondCountableTopology E] [SecondCountableTopology F] [SecondCountableTopology H]
+variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℝ F]
+variable {H : Type} [NormedAddCommGroup H] [NormedSpace ℂ H]
 
 /-- `f : ℂ → E` is harmonic if it is continuous and equal to means on circles.
     We require the mean property for large circles because it is easy to prove
@@ -127,7 +126,7 @@ theorem SubharmonicOn.congr {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicO
       have hs : (fun u ↦ f (circleMap c t u)) =ᵐ[volume.restrict itau]
           fun u ↦ g (circleMap c t u) := by
         rw [Filter.EventuallyEq]; rw [ae_restrict_iff' measurableSet_itau]
-        apply Filter.eventually_of_forall
+        apply Filter.Eventually.of_forall
         intro u _; apply h.symm
         apply _root_.trans r0s interior_subset
         simp only [Metric.mem_ball, Complex.dist_eq, circleMap_sub_center, abs_circleMap_zero,
@@ -150,7 +149,7 @@ theorem HarmonicOn.const (a : E) {s : Set ℂ} : HarmonicOn (fun _ ↦ a) s :=
       field_simp [NiceVolume.itau.real_pos.ne'] }
 
 /-- Differences are harmonic -/
-theorem HarmonicOn.sub {f g : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) (gh : HarmonicOn g s) :
+theorem HarmonicOn.sub {f g : ℂ → F} {s : Set ℂ} (fh : HarmonicOn f s) (gh : HarmonicOn g s) :
     HarmonicOn (f - g) s :=
   { cont := ContinuousOn.sub fh.cont gh.cont
     mean := by
@@ -183,7 +182,7 @@ theorem SubharmonicOn.add {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn 
 
 /-- Negations are harmonic -/
 theorem HarmonicOn.neg {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) : HarmonicOn (-f) s := by
-  have nh := HarmonicOn.sub (HarmonicOn.const 0) fh
+  have nh := HarmonicOn.sub (HarmonicOn.const (0 : E)) fh
   have e : (fun _ : ℂ ↦ (0 : E)) - f = -f := by ext; simp
   rwa [← e]
 
@@ -217,8 +216,9 @@ theorem SubharmonicOn.constMul {f : ℂ → ℝ} {s : Set ℂ} {a : ℝ} (fs : S
           rw [integral_mul_left] }
 
 /-- Analytic functions equal circle means -/
-theorem AnalyticOn.circle_mean_eq {f : ℂ → H} {c : ℂ} {r : ℝ} (fa : AnalyticOn ℂ f (closedBall c r))
-    (rp : r > 0) : ⨍ t in itau, f (circleMap c r t) = f c := by
+theorem AnalyticOn.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ} {r : ℝ}
+    (fa : AnalyticOn ℂ f (closedBall c r)) (rp : r > 0) :
+    ⨍ t in itau, f (circleMap c r t) = f c := by
   have h := Complex.circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
     Set.countable_empty (Metric.mem_ball_self rp) fa.continuousOn ?_
   · simp_rw [circleIntegral, deriv_circleMap, circleMap_sub_center, smul_smul, mul_comm _ I] at h
@@ -234,13 +234,14 @@ theorem AnalyticOn.circle_mean_eq {f : ℂ → H} {c : ℂ} {r : ℝ} (fa : Anal
     exact (fa z (Metric.ball_subset_closedBall zs)).differentiableAt
 
 /-- Analytic functions are harmonic -/
-theorem AnalyticOn.harmonicOn {f : ℂ → H} {s : Set ℂ} (fa : AnalyticOn ℂ f s) : HarmonicOn f s :=
+theorem AnalyticOn.harmonicOn [CompleteSpace H] {f : ℂ → H} {s : Set ℂ} (fa : AnalyticOn ℂ f s) :
+    HarmonicOn f s :=
   { cont := fa.continuousOn
     mean := by intro c r rp cs; rw [(fa.mono cs).circle_mean_eq rp] }
 
 /-- Harmonic functions compose with linear maps -/
-theorem HarmonicOn.linear {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) (g : E →L[ℝ] F) :
-    HarmonicOn (fun z ↦ g (f z)) s :=
+theorem HarmonicOn.linear [CompleteSpace F] {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s)
+    (g : E →L[ℝ] F) : HarmonicOn (fun z ↦ g (f z)) s :=
   { cont := g.continuous.comp_continuousOn fh.cont
     mean := by
       intro c r rp cs
@@ -400,7 +401,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   simp only [← hs, ← hy, Set.mem_preimage, Set.mem_singleton_iff] at us
   have unz : (u : ℂ) ≠ 0 := by
     simp only [u0.ne', Ne, Complex.ofReal_eq_zero, not_false_iff]
-  field_simp [unz] at us; ring_nf at us
+  field_simp [unz] at us
   exact us.symm
 
 /-- A subharmonic function achieves its maximum on the boundary -/
@@ -429,9 +430,9 @@ theorem HarmonicOn.maximum_principle {f : ℂ → E} {s : Set ℂ} (fh : Harmoni
   rcases fh.norm.maximum_principle sc sn with ⟨w, wf, wh⟩; exists w, wf
 
 /-- Uniform limits of harmonic functions are harmonic -/
-theorem uniform_harmonic_lim {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set ℂ} (h : ∀ n, HarmonicOn (f n) s)
-    (u : TendstoUniformlyOn f g atTop s) : HarmonicOn g s :=
-  { cont := u.continuousOn (Filter.eventually_of_forall fun n ↦ (h n).cont)
+theorem uniform_harmonic_lim [SecondCountableTopology E] {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set ℂ}
+    (h : ∀ n, HarmonicOn (f n) s) (u : TendstoUniformlyOn f g atTop s) : HarmonicOn g s :=
+  { cont := u.continuousOn (Filter.Eventually.of_forall fun n ↦ (h n).cont)
     mean := by
       intro c r rp cs
       have m := fun n ↦ (h n).mean c r rp cs
@@ -478,17 +479,18 @@ theorem rir (rp : r > 0) (z : ℂ) : (↑r)⁻¹ * (c + r * z - c) = z := by
   ring_nf; field_simp [rp.ne']
 
 /-- The continuous function `f` on the circle has a Harmonic extension `g` on the disk -/
-structure HasExtension (f : C(Real.Angle, S)) (g : ℂ → S) (c : ℂ) (r : ℝ) : Prop where
+structure HasExtension (f : C(AddCircle (2*π), S)) (g : ℂ → S) (c : ℂ) (r : ℝ) : Prop where
   gh : HarmonicOn g (closedBall c r)
   b : ∀ t, f t = g (c + r * t.toCircle)
 
 /-- `f` has some harmonic extension to the disk -/
-def Extendable (f : C(Real.Angle, S)) (c : ℂ) (r : ℝ) :=
+def Extendable (f : C(AddCircle (2*π), S)) (c : ℂ) (r : ℝ) :=
   ∃ g : ℂ → S, HasExtension f g c r
 
 /-- `HasExtension` is linear -/
-theorem HasExtension.sub {f0 f1 : C(Real.Angle, ℂ)} {g0 g1 : ℂ → ℂ} (e0 : HasExtension f0 g0 c r)
-    (e1 : HasExtension f1 g1 c r) : HasExtension (f0 - f1) (g0 - g1) c r :=
+theorem HasExtension.sub {f0 f1 : C(AddCircle (2*π), ℂ)} {g0 g1 : ℂ → ℂ}
+    (e0 : HasExtension f0 g0 c r) (e1 : HasExtension f1 g1 c r) :
+    HasExtension (f0 - f1) (g0 - g1) c r :=
   { gh := e0.gh.sub e1.gh
     b := by simp only [e0.b, e1.b, ContinuousMap.coe_sub, Pi.sub_apply, eq_self_iff_true,
       forall_const] }
@@ -496,10 +498,10 @@ theorem HasExtension.sub {f0 f1 : C(Real.Angle, ℂ)} {g0 g1 : ℂ → ℂ} (e0 
 theorem mem_addCircle_iff_abs {z : ℂ} : abs z = 1 ↔ ∃ t : AddCircle (2 * π), z = t.toCircle := by
   constructor
   · intro az; rcases(Complex.abs_eq_one_iff z).mp az with ⟨t, h⟩; use t
-    simp only [← h, AddCircle.toCircle, Function.Periodic.lift_coe, expMapCircle_apply,
+    simp only [← h, AddCircle.toCircle, Function.Periodic.lift_coe, Circle.coe_exp,
       Complex.ofReal_mul, Complex.ofReal_div, Complex.ofReal_one]
     field_simp [Real.pi_pos.ne']
-  · intro h; rcases h with ⟨t, h⟩; simp only [h, abs_coe_circle]
+  · intro h; rcases h with ⟨t, h⟩; simp only [h, Circle.abs_coe]
 
 /-- The extension is bounded by values on the circle -/
 theorem Extension.maximum_principle {f : C(Real.Angle, ℂ)} {g : ℂ → ℂ} (e : HasExtension f g c r)
@@ -513,9 +515,9 @@ theorem Extension.maximum_principle {f : C(Real.Angle, ℂ)} {g : ℂ → ℂ} (
     simp only [wf, abs_of_pos rp, AbsoluteValue.map_mul, map_inv₀, Complex.abs_ofReal, ← hw']
     field_simp [rp.ne']
   rcases mem_addCircle_iff_abs.mp wf' with ⟨t, tw⟩
-  have b := e.b t
-  simp only [← tw, rri rp, ← hw'] at b
-  rw [← b] at wh
+  have fg := e.b t
+  simp only [← tw, rri rp, ← hw'] at fg
+  rw [← fg] at wh
   exact le_trans wh (fb _)
 
 @[instance]
@@ -567,18 +569,20 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
         exact fF.tendsto_at z }
 
 theorem toCircle_neg {T : ℝ} (x : AddCircle T) : (-x).toCircle = x.toCircle⁻¹ := by
-  induction x using QuotientAddGroup.induction_on'
+  induction x using QuotientAddGroup.induction_on
   rw [←AddCircle.coe_neg]
   simp only [← AddCircle.coe_neg, AddCircle.toCircle, Function.Periodic.lift_coe, mul_neg,
-    expMapCircle_neg]
+    Circle.exp_neg]
 
 theorem toCircle_smul {T : ℝ} (n : ℕ) (x : AddCircle T) : (n • x).toCircle = x.toCircle ^ n := by
-  induction' x using QuotientAddGroup.induction_on' with z
+  induction' x using QuotientAddGroup.induction_on with z
   rw [←AddCircle.coe_nsmul]; simp only [AddCircle.toCircle, Function.Periodic.lift_coe]
   induction' n with n h
-  · simp only [expMapCircle_zero, nsmul_eq_mul, algebraMap.coe_zero, MulZeroClass.zero_mul,
+  · simp only [Circle.exp_zero, nsmul_eq_mul, algebraMap.coe_zero, MulZeroClass.zero_mul,
       MulZeroClass.mul_zero, pow_zero, Nat.zero_eq, zero_smul, Function.Periodic.lift_coe]
-  · simp only [succ_nsmul, left_distrib, expMapCircle_add, h, pow_succ]
+  · simp only [succ_nsmul, left_distrib, Circle.exp_add, h, pow_succ]
+
+@[simp] lemma Circle.pow_coe (z : Circle) (n : ℕ) : (↑(z ^ n) : ℂ) = z ^ n := rfl
 
 /-- Fourier terms extend -/
 theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
@@ -594,16 +598,17 @@ theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply
-          simp only [natCast_zsmul, toCircle_smul, SubmonoidClass.coe_pow] }
+          simp only [natCast_zsmul, toCircle_smul]
+          rfl }
   · exists fun z : ℂ ↦ conj (((↑r)⁻¹ * (z - c)) ^ n)
     exact
       { gh := (mh n).conj
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply
-          simp only [neg_smul, natCast_zsmul, toCircle_neg, toCircle_smul, coe_inv_unitSphere,
-            SubmonoidClass.coe_pow, Complex.inv_def, map_pow, normSq_eq_of_mem_circle, one_pow,
-            inv_one, Complex.ofReal_one, mul_one] }
+          simp only [neg_smul, natCast_zsmul, toCircle_neg, toCircle_smul, Circle.coe_inv,
+            Circle.pow_coe, Complex.inv_def, map_pow, Circle.normSq_coe, one_pow, inv_one,
+            Complex.ofReal_one, mul_one] }
 
 /-- Fourier sums extend -/
 theorem fourierExtend {f : C(Real.Angle, ℂ)} (rp : r > 0)
@@ -641,7 +646,8 @@ theorem continuousExtend (f : C(Real.Angle, ℂ)) (c : ℂ) (rp : r > 0) : Exten
 end HarmonicExtension
 
 /-- Everything is "harmonic" on singletons -/
-theorem HarmonicOn.subsingleton {f : ℂ → S} {s : Set ℂ} (ss : s.Subsingleton) : HarmonicOn f s :=
+theorem HarmonicOn.subsingleton {S : Type} [NormedAddCommGroup S] [NormedSpace ℝ S]
+    {f : ℂ → S} {s : Set ℂ} (ss : s.Subsingleton) : HarmonicOn f s :=
   { cont := ss.continuousOn _
     mean := by
       intro c r rp cs
@@ -659,24 +665,28 @@ theorem continuous_to_harmonic_complex {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
   by_cases rp : r ≤ 0
   · use f; use HarmonicOn.subsingleton (Metric.subsingleton_closedBall _ rp); intros; rfl
   simp only [not_le] at rp
-  generalize hf' : (fun t : Real.Angle ↦ f (c + r * t.toCircle)) = f'
+  generalize hf' : (fun t : AddCircle (2 * π) ↦ f (c + r * t.toCircle)) = f'
   have fc' : Continuous f' := by
     rw [← hf']; apply fc.comp_continuous
     · exact continuous_const.add
         (continuous_const.mul (continuous_subtype_val.comp AddCircle.continuous_toCircle))
     · simp only [mem_sphere_iff_norm, add_sub_cancel_left, Complex.norm_eq_abs,
-        AbsoluteValue.map_mul, Complex.abs_ofReal, abs_coe_circle, mul_one, abs_eq_self]
+        AbsoluteValue.map_mul, Complex.abs_ofReal, Circle.abs_coe, mul_one, abs_eq_self]
       intro _; bound
   rcases continuousExtend ⟨f', fc'⟩ c rp with ⟨g, e⟩
   use g, e.gh; intro z zs
   generalize hz' : (↑r)⁻¹ * (z - c) = z'
   have za' : abs z' = 1 := by
     simp only [mem_sphere_iff_norm, Complex.norm_eq_abs] at zs
-    simp only [zs, abs_of_pos rp, inv_mul_cancel rp.ne', AbsoluteValue.map_mul, map_inv₀,
+    simp only [zs, abs_of_pos rp, inv_mul_cancel₀ rp.ne', AbsoluteValue.map_mul, map_inv₀,
       Complex.abs_ofReal, ← hz']
   rcases mem_addCircle_iff_abs.mp za' with ⟨t, tz⟩
   have rr : c + r * t.toCircle = z := by rw [← tz, ← hz']; exact rri rp _
-  nth_rw 2 [← rr]; rw [← e.b t]; simp only [← hf', rr, ContinuousMap.coe_mk]
+  have h := e.b t
+  simp only [ContinuousMap.coe_mk] at h
+  nth_rw 2 [← rr]
+  rw [← h]
+  simp only [← hf', rr, ContinuousMap.coe_mk]
 
 /-- Continuous functions on the sphere extend to harmonic functions on the ball (`ℝ` case) -/
 theorem continuous_to_harmonic_real {f : ℂ → ℝ} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (sphere c r)) :
@@ -753,7 +763,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     rw [hi] at im; clear hi m
     simp only [← intervalIntegral.integral_of_le rp.le, Algebra.id.smul_eq_mul,
       intervalIntegral.integral_mul_const, intervalIntegral.integral_const_mul, integral_id,
-      zero_pow, Ne, bit0_eq_zero, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
+      zero_pow, Ne, Nat.one_ne_zero, not_false_iff, tsub_zero] at im
     rw [intervalIntegral.integral_const_mul] at im
     simp only [integral_id, ne_eq, zero_pow, sub_zero] at im
     ring_nf at im ⊢
@@ -852,8 +862,8 @@ theorem SubharmonicOn.monotone_lim {f : ℕ → ℂ → ℝ} {g : ℂ → ℝ} {
     Some machinery is required to handle general Banach spaces: we rewrite `‖f z‖` as the limit
     of norms along larger and larger finite subspaces, and use the fact that `linear ∘ analytic`
     is analytic to reduce to the case of `H = ℂ`. -/
-theorem AnalyticOn.maxLog_norm_subharmonicOn {f : ℂ → H} {s : Set ℂ} (fa : AnalyticOn ℂ f s)
-    (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
+theorem AnalyticOn.maxLog_norm_subharmonicOn [SecondCountableTopology H] {f : ℂ → H} {s : Set ℂ}
+    (fa : AnalyticOn ℂ f s) (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
   have gc := fa.continuousOn.maxLog_norm b
   have ft := fun z (_ : z ∈ s) ↦ duals_lim_tendsto_maxLog_norm b (f z)
   have fs : ∀ n, SubharmonicOn (fun z ↦ partialSups (fun k ↦ maxLog b ‖duals k (f z)‖) n) s := by
@@ -928,7 +938,7 @@ theorem SubharmonicOn.neg {f : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f 
         exact (fs.mono cs).submean_disk rp; bound
       · exact (fs.mono cs).cont.neg.integrableOn_closedBall
       · rw [Filter.EventuallyLE]; rw [ae_restrict_iff' measurableSet_closedBall]
-        apply Filter.eventually_of_forall
+        apply Filter.Eventually.of_forall
         intro z zs; simp only [Pi.zero_apply, Right.nonneg_neg_iff]; exact fn z (cs zs) }
 
 lemma NNReal.pi_eq_ofReal_pi : (NNReal.pi : ENNReal) = .ofReal π := by
@@ -960,10 +970,10 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   · simp only [Set.mem_empty_iff_false, IsEmpty.forall_iff, Filter.eventually_atTop, imp_true_iff,
       exists_const]
   · intro k0 k1 k01 h1
-    refine h1.mp (Filter.eventually_of_forall ?_)
+    refine h1.mp (.of_forall ?_)
     exact fun n a1 z z0 ↦ a1 z (k01 z0)
   · intro k0 k1 h0 h1
-    refine (h0.and h1).mp (Filter.eventually_of_forall ?_)
+    refine (h0.and h1).mp (.of_forall ?_)
     intro n h z zs; cases' zs with zs zs; exact h.1 z zs; exact h.2 z zs
   -- Base case: Hartogs's lemma near a point.  We choose radii r1 < r2 within s, apply
   -- Fatou's lemma at r1, use monotonicity to bound by r2 integrals, and apply the submean
@@ -990,8 +1000,8 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
       calc π * (r2 ^ 2 * (d.toReal / e.toReal)) * (π * r2 ^ 2)⁻¹
         _ = π * (r2 ^ 2 * (d.toReal / e.toReal)) * (π⁻¹ * (r2 ^ 2)⁻¹) := by simp_rw [mul_inv]
         _ = d.toReal / e.toReal * (π * π⁻¹) * (r2 ^ 2 * (r2 ^ 2)⁻¹) := by ring_nf
-        _ = d.toReal / e.toReal := by simp only [mul_inv_cancel Real.pi_pos.ne',
-            mul_inv_cancel (pow_ne_zero _ r2p.ne'), mul_one]
+        _ = d.toReal / e.toReal := by simp only [mul_inv_cancel₀ Real.pi_pos.ne',
+            mul_inv_cancel₀ (pow_ne_zero _ r2p.ne'), mul_one]
     rw [smash, ENNReal.ofReal_div_of_pos erp, ENNReal.ofReal_toReal df, ENNReal.ofReal_toReal ef]
     rw [ENNReal.mul_div_cancel' ez ef]
   have s12 : ∀ w, w ∈ closedBall z (r2 - r1) → closedBall z r1 ⊆ closedBall w r2 := by
@@ -1023,7 +1033,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   -- Within radius r2-r1, Fatou's lemma implies local Hartogs's
   use closedBall z (r2 - r1),
     mem_nhdsWithin_of_mem_nhds (Metric.closedBall_mem_nhds _ (by bound))
-  refine fatou.mp (Filter.eventually_of_forall ?_)
+  refine fatou.mp (.of_forall ?_)
   intro n fn w ws
   calc d
     _ = e * (ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹) := by rw [rde]
@@ -1046,9 +1056,8 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
     (ks : k ⊆ interior s) : ∀ d, d > c → ∀ᶠ n in atTop, ∀ z, z ∈ k → f n z ≤ d := by
   -- Deal with degenerate b ≤ c case
   by_cases bc : b ≤ c
-  · exact fun d dc ↦
-      Filter.eventually_of_forall fun n z zk ↦
-        _root_.trans (fb n z (_root_.trans ks interior_subset zk)) (_root_.trans bc dc.le)
+  · exact fun d dc ↦ .of_forall fun n z zk ↦
+      le_trans (fb n z (_root_.trans ks interior_subset zk)) (_root_.trans bc dc.le)
   simp only [not_le] at bc
   -- Port subharmonic problem to superharmonic ennreal problem
   generalize hf' : (fun n z ↦ f n z - b) = f'
@@ -1069,7 +1078,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
           sub_lt_sub_left ((ENNReal.toReal_lt_toReal df ENNReal.ofReal_ne_top).mpr dc) b
         _ = b - (b - c) := by rw [ENNReal.toReal_ofReal (sub_pos.mpr bc).le]
         _ = c := by ring_nf
-    refine (fc _ dc').mp (Filter.eventually_of_forall ?_); intro n fb
+    refine (fc _ dc').mp (.of_forall ?_); intro n fb
     calc
       g n z = ENNReal.ofReal (b - f n z) := by simp only [← hg, ← hf', neg_sub]
       _ ≥ ENNReal.ofReal (b - (b - d.toReal)) := by bound
@@ -1083,7 +1092,7 @@ theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : �
   intro d dc
   have dc' : ENNReal.ofReal (b - d) < ENNReal.ofReal (b - c) := by
     rw [ENNReal.ofReal_lt_ofReal_iff (sub_pos.mpr bc)]; simpa only [sub_lt_sub_iff_left]
-  refine (h _ dc').mp (Filter.eventually_of_forall ?_)
+  refine (h _ dc').mp (.of_forall ?_)
   intro n hn z zk; specialize hn z zk
   simp only [← hg, ← hf', neg_sub, ge_iff_le] at hn
   rw [ENNReal.ofReal_le_ofReal_iff (sub_nonneg.mpr (fb n z (interior_subset (ks zk))))] at hn

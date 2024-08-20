@@ -50,7 +50,7 @@ private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
 -/
 
 /-- Repeated square roots: `x ^ (2 ^ -n)` -/
-@[irreducible, pp_dot] def Interval.iter_sqrt (x : Interval) (n : ℕ) : Interval :=
+@[irreducible] def Interval.iter_sqrt (x : Interval) (n : ℕ) : Interval :=
   exp ((log x).scaleB' (-.ofNat0 n))
 
 /-- Approximate the potential of a large `z`.
@@ -104,10 +104,10 @@ lemma Interval.mem_approx_iter_sqrt {a : ℝ} {x : Interval} {n : ℕ} (ax : a �
   by_cases a0 : a ≤ 0
   · simp only [log_nonpos a0 ax, nan_scaleB', exp_nan, approx_nan, mem_univ]
   · rw [Real.rpow_def_of_pos (not_le.mp a0)]
-    mono
+    approx
 
 /-- `Interval.iter_sqrt` is conservative, more inferable version -/
-@[mono] lemma Interval.mem_approx_iter_sqrt' {a : ℝ} {x : Interval} {n : ℕ}
+@[approx] lemma Interval.mem_approx_iter_sqrt' {a : ℝ} {x : Interval} {n : ℕ}
     (a0 : 0 ≤ a) (ax : a^(2^n) ∈ approx x) : a ∈ approx (x.iter_sqrt n) := by
   generalize hb : a^(2^n) = b at ax
   have ab : a = b ^ (2 ^ (-n : ℝ) : ℝ) := by
@@ -142,16 +142,16 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
     have e : Real.log (Complex.abs z') * -1.927 = Real.log (Complex.abs z' ^ 2) * -0.9635 := by
       rw [Real.log_pow, Nat.cast_two, mul_comm (2:ℝ), mul_assoc]; norm_num
     rw [e]
-    mono
+    approx
   · have e : 1 / Complex.abs z' = Real.exp (-(Real.log (Complex.abs z' ^ 2) / 2)) := by
       simp only [one_div, Real.log_pow, Nat.cast_ofNat, neg_mul, Real.rpow_neg zero_le_two,
         Real.rpow_one, ←mul_assoc, mul_comm _ (2:ℝ)⁻¹]
       rw [mul_div_cancel_left₀ _ two_ne_zero, Real.exp_neg, Real.exp_log (by linarith)]
     rw [e]
-    mono
+    approx
 
 /-- `Box.potential` is conservative -/
-@[mono] lemma Box.mem_approx_potential {c' z' : ℂ} {c z : Box}
+@[approx] lemma Box.mem_approx_potential {c' z' : ℂ} {c z : Box}
     (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) (r : Floating) :
     (superF 2).potential c' z' ∈ approx (Box.potential c z n r).1 := by
   set s := superF 2
@@ -212,7 +212,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
   · simp only [Interval.approx_nan, mem_univ]
 
 /-- `Box.potential` is conservative, diagonal version -/
-@[mono] lemma Box.mem_approx_potential' {c' : ℂ} {c : Box} (cm : c' ∈ approx c) (n : ℕ)
+@[approx] lemma Box.mem_approx_potential' {c' : ℂ} {c : Box} (cm : c' ∈ approx c) (n : ℕ)
     (r : Floating) : _root_.potential 2 c' ∈ approx (Box.potential c c n r).1 := by
   simp only [_root_.potential, RiemannSphere.fill_coe, mem_approx_potential cm cm]
 

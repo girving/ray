@@ -1,6 +1,5 @@
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
@@ -11,7 +10,7 @@ import Mathlib.Topology.Semicontinuous
 -/
 
 open Metric (ball closedBall sphere mem_sphere mem_ball)
-open Filter (atTop Tendsto eventually_of_forall)
+open Filter
 open OrderDual (ofDual toDual)
 open Set
 open scoped Real NNReal Topology Filter
@@ -116,7 +115,7 @@ lemma IsPreconnected.sUnion_of_pairwise_exists_isPreconnected {X : Type*} [Topol
     · simp [*]
     · simp [*]
     · refine ((hSc s hs).union' hsu hu).union' (hut.mono ?_) (hSc t ht)
-      exact inter_subset_inter_left _ (subset_union_right _ _)
+      exact inter_subset_inter_left _ subset_union_right
 
 lemma IsPreconnected.iUnion_of_pairwise_exists_isPreconnected {ι X : Type*} [TopologicalSpace X]
     {s : ι → Set X} (hsc : ∀ i, IsPreconnected (s i))
@@ -181,7 +180,7 @@ theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace 
   rcases mem_nhds_prod_iff.mp n with ⟨u, un, v, vn, sub⟩
   apply (fa _ un).mp
   apply (Filter.tendsto_iff_forall_eventually_mem.mp ga v vn).mp
-  exact eventually_of_forall fun x gv fu ↦ sub (mk_mem_prod fu gv)
+  exact .of_forall fun x gv fu ↦ sub (mk_mem_prod fu gv)
 
 /-- If we converge to `g`, we're eventually greater than anything less than `g` -/
 theorem Filter.Tendsto.exists_lt {X : Type} [LinearOrder X] [TopologicalSpace X]

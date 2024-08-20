@@ -1,5 +1,5 @@
+import Mathlib.Tactic.Bound
 import Ray.Misc.Connected
-import Ray.Tactic.Bound
 
 /-!
 ## Continuation of a function from a convex set to its closure
@@ -62,9 +62,8 @@ lemma Base.ball (b : Base p s f) (x : closure s) :
   intro z ⟨zs, zr⟩; simp only [← Filter.eventually_iff]
   have n : {z | p g z ∧ p f z} ∈ 𝓝ˢ (s ∩ Metric.ball x r) := by
     refine Filter.inter_mem ?_ ?_
-    · exact nhdsSet_mono (inter_subset_right _ _)
-        (Filter.mem_of_superset isOpen_ball.mem_nhdsSet_self pg)
-    · exact nhdsSet_mono (inter_subset_left _ _) b.start
+    · exact nhdsSet_mono inter_subset_right (Filter.mem_of_superset isOpen_ball.mem_nhdsSet_self pg)
+    · exact nhdsSet_mono inter_subset_left b.start
   rcases local_preconnected_nhdsSet (b.convex.inter (convex_ball _ _)).isPreconnected n with
     ⟨u, uo, iu, up, uc⟩
   have eq := b.unique uo uc (fun _ m ↦ (up m).1) (fun _ m ↦ (up m).2) ⟨y, iu ⟨ys, yb⟩, e⟩
@@ -168,7 +167,7 @@ theorem Base.ug (b : Base p s f) (x : closure s) :
   intro z ⟨zt, m⟩; simp only [Base.u, zt, dif_pos]
   refine b.unique (isOpen_ball.inter isOpen_ball)
     ((convex_ball _ _).inter (convex_ball _ _)).isPreconnected
-    (fun _ m ↦ b.gp _ (inter_subset_left _ _ m)) (fun _ m ↦ b.gp _ (inter_subset_right _ _ m))
+    (fun _ m ↦ b.gp _ (inter_subset_left m)) (fun _ m ↦ b.gp _ (inter_subset_right m))
     ?_ ⟨b.yt zt, m⟩
   rcases b.convex.inter_ball (b.y zt) x (b.rp _) (b.rp _) ⟨_, ⟨b.yt zt, m⟩⟩ with ⟨w, m⟩
   exact ⟨w, ⟨m.1.2, m.2⟩, _root_.trans ((b.gf _).self_of_nhdsSet ⟨m.1.1, m.1.2⟩)

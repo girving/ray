@@ -5,8 +5,9 @@ import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
+import Mathlib.Tactic.Bound
+import Mathlib.Topology.Constructions
 import Ray.Misc.Topology
-import Ray.Tactic.Bound
 
 /-!
 ## Miscellaneous measure theory lemmas
@@ -21,14 +22,17 @@ open scoped Real ENNReal Topology
 noncomputable section
 
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+variable {G : Type} [NormedAddCommGroup G] [NormedSpace ℝ G]
+variable {V : Type} [NormedAddCommGroup V]
 variable [SecondCountableTopology E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
 variable {X : Type} [MeasureSpace X] [MetricSpace X] [BorelSpace X]
 variable {Y : Type} [MeasureSpace Y] [MetricSpace Y] [BorelSpace Y]
 variable {A : Type} [TopologicalSpace A]
+variable {M : Type} [MeasureSpace M]
 
 /-- Removing a null set isn't significant measure-wise -/
-theorem ae_minus_null {s t : Set X} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
+theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
   simp only [Filter.EventuallyEq, Pi.sdiff_apply, eq_iff_iff]
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
     intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true_iff]
@@ -37,8 +41,8 @@ theorem ae_minus_null {s t : Set X} (tz : volume t = 0) : s =ᵐ[volume] s \ t :
   rw [ae_iff]; simpa [Set.setOf_set]
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
-theorem ae_minus_point [NoAtoms (volume : Measure X)] {s : Set X} {x : X} :
-    s =ᵐ[volume] (s \ {x} : Set X) :=
+theorem ae_minus_point [NoAtoms (volume : Measure M)] {s : Set M} {x : M} :
+    s =ᵐ[volume] (s \ {x} : Set M) :=
   ae_minus_null (measure_singleton x)
 
 /-- `ℝ × ℝ` has additive Haar measure.
@@ -85,27 +89,28 @@ instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
 
 /-- The property that a set has finite, positive measure.
     This means that multiplication and division by the measure are invertible operations. -/
-structure NiceVolume (s : Set X) : Prop where
+structure NiceVolume (s : Set M) : Prop where
   measurable : MeasurableSet s
   finite : volume s < ∞
   pos : volume s > 0
 
 -- Useful lemmas about NiceVolume
-theorem NiceVolume.ne_zero {s : Set X} (sn : NiceVolume s) : volume s ≠ 0 := sn.pos.ne'
-theorem NiceVolume.ne_top {s : Set X} (sn : NiceVolume s) : volume s ≠ ⊤ := sn.finite.ne
-theorem NiceVolume.real_pos {s : Set X} (sn : NiceVolume s) : 0 < (volume s).toReal :=
+theorem NiceVolume.ne_zero {s : Set M} (sn : NiceVolume s) : volume s ≠ 0 := sn.pos.ne'
+theorem NiceVolume.ne_top {s : Set M} (sn : NiceVolume s) : volume s ≠ ⊤ := sn.finite.ne
+theorem NiceVolume.real_pos {s : Set M} (sn : NiceVolume s) : 0 < (volume s).toReal :=
   ENNReal.toReal_pos_iff.mpr ⟨sn.pos, sn.finite⟩
-theorem NiceVolume.real_nonneg {s : Set X} (sn : NiceVolume s) : (volume s).toReal ≠ 0 :=
+theorem NiceVolume.real_nonneg {s : Set M} (sn : NiceVolume s) : (volume s).toReal ≠ 0 :=
   sn.real_pos.ne'
 
 /-- Constants are integrable on NiceVolume sets -/
-theorem NiceVolume.integrableOn_const {s : Set X} (sn : NiceVolume s) (c : ℝ) :
-    IntegrableOn (fun _ : X ↦ c) s :=
-  integrableOn_const.mpr (Or.inr sn.finite)
+theorem NiceVolume.integrableOn_const {s : Set M} (sn : NiceVolume s) (c : ℝ) :
+    IntegrableOn (fun _ : M ↦ c) s :=
+  MeasureTheory.integrableOn_const.mpr (Or.inr sn.finite)
 
 /-- Uniform limits of continuous functions and integrals commute -/
-theorem TendstoUniformlyOn.integral_tendsto {f : ℕ → X → E} {g : X → E} {s : Set X}
-    [IsLocallyFiniteMeasure (volume : Measure X)] (u : TendstoUniformlyOn f g atTop s)
+theorem TendstoUniformlyOn.integral_tendsto {f : ℕ → X → G} {g : X → G} {s : Set X}
+    [SecondCountableTopology G] [IsLocallyFiniteMeasure (volume : Measure X)]
+    (u : TendstoUniformlyOn f g atTop s)
     (fc : ∀ n, ContinuousOn (f n) s) (sc : IsCompact s) :
     Tendsto (fun n ↦ ∫ x in s, f n x) atTop (nhds (∫ x in s, g x)) := by
   rcases u.uniformCauchySeqOn.bounded fc sc with ⟨b, _, bh⟩
@@ -137,7 +142,7 @@ theorem tau_mem_itau : 2*π ∈ itau := by
     le_refl, and_self]
 
 /-- Continuous functions are integrable on spheres -/
-theorem ContinuousOn.integrableOn_sphere {f : ℂ → E} {c : ℂ} {r : ℝ}
+theorem ContinuousOn.integrableOn_sphere {f : ℂ → V} {c : ℂ} {r : ℝ}
     (fc : ContinuousOn f (closedBall c r)) (rp : 0 < r) :
     IntegrableOn (fun t ↦ f (circleMap c r t)) itau := by
   apply Continuous.integrableOn_Ioc; apply fc.comp_continuous (continuous_circleMap _ _)
@@ -145,23 +150,23 @@ theorem ContinuousOn.integrableOn_sphere {f : ℂ → E} {c : ℂ} {r : ℝ}
     abs_circleMap_zero, abs_of_pos rp, le_refl]
 
 /-- Continuous functions are integrable on `closedBall` -/
-theorem ContinuousOn.integrableOn_closedBall {f : ℂ → E} {c : ℂ} {r : ℝ}
+theorem ContinuousOn.integrableOn_closedBall {f : ℂ → V} {c : ℂ} {r : ℝ}
     (fc : ContinuousOn f (closedBall c r)) : IntegrableOn f (closedBall c r) :=
   fc.integrableOn_compact (isCompact_closedBall _ _)
 
 /-- Averages add -/
-theorem Average.add {f g : X → E} {s : Set X} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
+theorem Average.add {f g : M → G} {s : Set M} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
     ⨍ z in s, f z + g z = (⨍ z in s, f z) + ⨍ z in s, g z := by
   simp_rw [average_eq, integral_add fi gi, smul_add]
 
 /-- Averages subtract -/
-theorem Average.sub {f g : X → E} {s : Set X} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
+theorem Average.sub {f g : M → G} {s : Set M} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
     ⨍ z in s, f z - g z = (⨍ z in s, f z) - ⨍ z in s, g z := by
   simp_rw [average_eq, integral_sub fi gi, smul_sub]
 
 /-- Averages commute with linear maps -/
-theorem average_linear_comm {f : X → E} {s : Set X} (fi : IntegrableOn f s) (g : E →L[ℝ] F) :
-    ⨍ x in s, g (f x) = g (⨍ x in s, f x) := by
+theorem average_linear_comm [CompleteSpace G] {f : M → G} {s : Set M} (fi : IntegrableOn f s)
+    (g : G →L[ℝ] F) : ⨍ x in s, g (f x) = g (⨍ x in s, f x) := by
   simp only [average_eq, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
     LinearMapClass.map_smul]
   by_cases v0 : (volume s).toReal = 0; simp [v0]
@@ -169,12 +174,12 @@ theorem average_linear_comm {f : X → E} {s : Set X} (fi : IntegrableOn f s) (g
   exact ContinuousLinearMap.integral_comp_comm _ fi
 
 /-- Averages on a set depend only on ae values within the set -/
-theorem average_congr_on {f g : X → E} {s : Set X} (sn : NiceVolume s)
+theorem average_congr_on {f g : M → G} {s : Set M} (sn : NiceVolume s)
     (h : ∀ᵐ x, x ∈ s → f x = g x) : ⨍ x in s, f x = ⨍ x in s, g x := by
   simp only [← ae_restrict_iff' sn.measurable] at h; exact average_congr h
 
 /-- Means are at most the values of the function -/
-theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi : IntegrableOn f s)
+theorem mean_bound {f : M → ℝ} {s : Set M} {b : ℝ} (sn : NiceVolume s) (fi : IntegrableOn f s)
     (fb : ∀ z, z ∈ s → f z ≤ b) : ⨍ x in s, f x ≤ b := by
   rw [average_eq, smul_eq_mul]
   have bi := sn.integrableOn_const b
@@ -184,14 +189,15 @@ theorem mean_bound {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (fi
   · gcongr; apply le_trans ib
     simp only [integral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
       smul_eq_mul, le_refl]
-  · rw [←mul_assoc _ _ b, inv_mul_cancel sn.real_nonneg, one_mul]
+  · rw [←mul_assoc _ _ b, inv_mul_cancel₀ sn.real_nonneg, one_mul]
 
 /-- Sets where each point is near positive volume -/
 def LocalVolumeSet (s : Set X) :=
   ∀ x r, x ∈ s → 0 < r → 0 < volume (s ∩ ball x r)
 
 /-- Sets in the closure of their interior have local volume -/
-theorem LocalVolume.closure_interior (s : Set X) (bp : ∀ (x : X) (r), r > 0 → volume (ball x r) > 0)
+theorem LocalVolume.closure_interior {M : Type} [MetricSpace M] [MeasureSpace M] (s : Set M)
+    (bp : ∀ (x : M) (r), r > 0 → volume (ball x r) > 0)
     (ci : s ⊆ closure (interior s)) : LocalVolumeSet s := by
   intro x r xs rp
   have xci := ci xs
@@ -210,7 +216,7 @@ theorem LocalVolume.Ioc {a b : ℝ} : LocalVolumeSet (Set.Ioc a b) := by
   apply LocalVolume.closure_interior
   · intro x r rp
     simp only [Real.volume_ball, gt_iff_lt, ENNReal.ofReal_pos, mul_pos_iff_of_pos_left,
-      zero_lt_bit0, zero_lt_one]
+      zero_lt_one]
     bound
   · by_cases ab : a = b; · simp only [ab, Set.Ioc_self, Set.empty_subset]
     simp only [interior_Ioc, closure_Ioo ab, Set.Ioc_subset_Icc_self]
@@ -230,7 +236,7 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
   rcases Metric.continuousOn_iff.mp fc x xs ((b - f x) / 2) (by linarith) with ⟨e, ep, he⟩
   have vtp' := lv x e xs ep
   generalize ht : s ∩ ball x e = t; rw [ht] at vtp'
-  have ts : t ⊆ s := by rw [← ht]; exact Set.inter_subset_left _ _
+  have ts : t ⊆ s := by rw [← ht]; exact Set.inter_subset_left
   have tf : volume t < ⊤ := lt_of_le_of_lt (measure_mono ts) sn.finite
   have tm : MeasurableSet t := by
     rw [← ht]; exact MeasurableSet.inter sn.measurable measurableSet_ball
@@ -249,10 +255,10 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
         _ < (b + b) / 2 := (div_lt_div_right (by norm_num)).mpr (by bound)
         _ = b := by ring
     have i0 : ∫ x in s \ t, f x ≤ (vs - vt) * b := by
-      have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono (Set.diff_subset _ _)) sn.finite
+      have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono Set.diff_subset) sn.finite
       have dm : MeasurableSet (s \ t) := MeasurableSet.diff sn.measurable tm
       have fb := @setIntegral_mono_on _ _ volume f (fun _ ↦ b) (s \ t)
-        (fi.mono (Set.diff_subset _ _) (le_refl _)) (integrableOn_const.mpr (Or.inr df)) dm ?_
+        (fi.mono Set.diff_subset (le_refl _)) (integrableOn_const.mpr (Or.inr df)) dm ?_
       simp [measure_diff ts tm (lt_top_iff_ne_top.mp tf),
         ENNReal.toReal_sub_of_le (measure_mono ts) (lt_top_iff_ne_top.mp sn.finite)] at fb
       exact fb
@@ -277,10 +283,11 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
       _ = b * vs := by ring
   · rw [disjoint_comm]; exact Set.disjoint_sdiff_right
   · exact tm
-  · exact fi.mono (Set.diff_subset _ _) (le_refl _)
+  · exact fi.mono Set.diff_subset (le_refl _)
   · exact fi.mono ts (le_refl _)
 
-theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : ℝ}
+theorem ContinuousOn.intervalIntegral {M : Type} [TopologicalSpace M] [FirstCountableTopology M]
+    {f : M → ℝ → G} {s : Set M} {a b : ℝ}
     (fc : ContinuousOn (uncurry f) (s ×ˢ Icc a b)) (sc : IsCompact s) (ab : a ≤ b) :
     ContinuousOn (fun x ↦ ∫ t in a..b, f x t) s := by
   rcases ((sc.prod isCompact_Icc).bddAbove_image fc.norm).exists_ge 0 with ⟨c, _, fb⟩
@@ -292,7 +299,7 @@ theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : �
   apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := fun _ ↦ c)
   · apply eventually_nhdsWithin_of_forall; intro y ys
     refine ContinuousOn.aestronglyMeasurable ?_ measurableSet_Ioc
-    rw [Set.uIoc_of_le ab]; simp_rw [e]; apply fc.comp
+    rw [Set.uIoc_of_le ab, (by rfl : f y = fun x ↦ f y x)]; simp_rw [e]; apply fc.comp
     · apply Continuous.continuousOn; exact Continuous.Prod.mk y
     · intro t ts; exact Set.mk_mem_prod ys (Set.Ioc_subset_Icc_self ts)
   · apply eventually_nhdsWithin_of_forall; intro y ys; rw [Set.uIoc_of_le ab]
@@ -305,7 +312,7 @@ theorem ContinuousOn.intervalIntegral {f : X → ℝ → E} {s : Set X} {a b : �
     · assumption
 
 /-- `liminf` preserves ae measurability, general filter version -/
-theorem aEMeasurable_liminf' {I I' : Type} {u : Filter I} {f : I → X → ENNReal} {μ : Measure X}
+theorem aEMeasurable_liminf' {I I' : Type} {u : Filter I} {f : I → M → ENNReal} {μ : Measure M}
     {p : I' → Prop} {s : I' → Set I} (fm : ∀ n, AEMeasurable (f n) μ) (uc : u.HasCountableBasis p s)
     (sc : ∀ i, (s i).Countable) : AEMeasurable (fun x ↦ u.liminf fun n ↦ f n x) μ := by
   simp_rw [uc.toHasBasis.liminf_eq_iSup_iInf]
@@ -313,10 +320,10 @@ theorem aEMeasurable_liminf' {I I' : Type} {u : Filter I} {f : I → X → ENNRe
   intro i _; exact aemeasurable_biInf _ (sc i) (fun n _ ↦ fm n)
 
 /-- `liminf` preserves ae measurability, `ℕ` version -/
-theorem aEMeasurable_liminf {f : ℕ → X → ENNReal} {μ : Measure X} (fm : ∀ n, AEMeasurable (f n) μ) :
+theorem aEMeasurable_liminf {f : ℕ → M → ENNReal} {μ : Measure M} (fm : ∀ n, AEMeasurable (f n) μ) :
     AEMeasurable (fun x ↦ atTop.liminf fun n ↦ f n x) μ :=
   aEMeasurable_liminf' fm Filter.atTop_countable_basis fun _ ↦ Set.to_countable _
 
-theorem set_lintegral_mono_aEMeasurable {s : Set X} {f g : X → ENNReal}
+theorem set_lintegral_mono_aEMeasurable {s : Set M} {f g : M → ENNReal}
     (sm : MeasurableSet s) (fg : ∀ x, x ∈ s → f x ≤ g x) : ∫⁻ x in s, f x ≤ ∫⁻ x in s, g x := by
   apply lintegral_mono_ae; rw [ae_restrict_iff' sm]; exact ae_of_all _ fg

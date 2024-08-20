@@ -4,7 +4,6 @@ import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
-import Ray.Tactic.Bound
 import Ray.Misc.Measure
 import Ray.Misc.Prod
 
@@ -85,6 +84,8 @@ theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere 
   · intro n; contrapose n
     rw [← not_nonempty_iff_eq_empty] at n
     simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
+
+attribute [bound] Int.ceil_lt_add_one
 
 /-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
 theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
@@ -312,7 +313,7 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
   simp only [ENNReal.toReal_ofReal Real.two_pi_pos.le, ←
     intervalIntegral.integral_of_le rp, integral_const, Measure.restrict_apply, MeasurableSet.univ,
     univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
-    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne, bit0_eq_zero,
+    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne,
     Nat.one_ne_zero, not_false_iff] at f
   ring_nf at f ⊢; exact f
 

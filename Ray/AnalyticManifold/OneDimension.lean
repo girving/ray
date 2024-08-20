@@ -2,7 +2,6 @@ import Ray.Analytic.Analytic
 import Ray.AnalyticManifold.AnalyticManifold
 import Ray.Hartogs.Osgood
 import Ray.Misc.Multilinear
-import Ray.Tactic.Bound
 
 /-!
 ## Special properties of 1D complex manifolds
@@ -13,7 +12,7 @@ Unfortunately, a lot of proofs here are messy, as we abuse the definitional qual
 of `TangentSpace I z = ℂ` to do noncanonical field arithmetic over `ℂ`.
 -/
 
-open Filter (eventually_of_forall Tendsto)
+open Filter (Tendsto)
 open Function (uncurry)
 open Set
 open scoped Manifold Topology
@@ -103,7 +102,7 @@ theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Tange
   · rw [or_iff_not_imp_right]; intro f0 u0
     apply ContinuousLinearMap.ext; intro v
     simp only [TangentSpace] at f u v u0
-    have e : v = (v * u⁻¹) • u := by simp only [smul_eq_mul, mul_assoc, inv_mul_cancel u0, mul_one]
+    have e : v = (v * u⁻¹) • u := by simp only [smul_eq_mul, mul_assoc, inv_mul_cancel₀ u0, mul_one]
     rw [ContinuousLinearMap.zero_apply, e]
     refine Eq.trans (f.map_smul _ _) ?_
     rw [smul_eq_zero]; right; exact f0
@@ -173,7 +172,7 @@ def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w
     have e : f x = (f u) * x := by
       rw [mul_comm, ← smul_eq_mul, ← f.map_smul, smul_eq_mul, ←hu, mul_one]
     simp only [e, ← mul_assoc, inv_mul_cancel, one_mul]
-    rw [inv_mul_cancel, one_mul]
+    rw [inv_mul_cancel₀, one_mul]
     exact h.mpr f0
   right_inv := by
     generalize hu : (1:ℂ) = u
@@ -182,7 +181,7 @@ def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w
     intro x; simp only [TangentSpace] at f x ⊢
     have e : ∀ y : ℂ, f y = (f u) * y := by
       intro y; rw [mul_comm, ← smul_eq_mul, ← f.map_smul, smul_eq_mul, ←hu, mul_one]
-    rw [e ((f u)⁻¹ * x), ← mul_assoc, mul_inv_cancel, one_mul]
+    rw [e ((f u)⁻¹ * x), ← mul_assoc, mul_inv_cancel₀, one_mul]
     exact h.mpr f0
   continuous_toFun := f.cont
   continuous_invFun := by
@@ -230,7 +229,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
     apply ((isOpen_extChartAt_target I z).eventually_mem (mem_extChartAt_target I z)).mp
-    refine eventually_of_forall fun w m ↦ ?_
+    refine .of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
     ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply]
@@ -309,7 +308,7 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source I (f c z)).mem_nhds
     (mem_extChartAt_source I (f c z)))).mp
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
-  refine fa.eventually.mp (eventually_of_forall ?_); intro ⟨e, w⟩ fa m fm
+  refine fa.eventually.mp (.of_forall ?_); intro ⟨e, w⟩ fa m fm
   simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
     mem_prod, mem_univ, true_and_iff] at m
   simp only [uncurry] at fm
@@ -348,7 +347,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
         (continuousAt_fst.prod ((continuousAt_extChartAt I z).comp_of_eq continuousAt_snd rfl))
         rfl
     · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
-  refine g0.mp (g0n.mp (eventually_of_forall fun w g0 e ↦ ?_))
+  refine g0.mp (g0n.mp (.of_forall fun w g0 e ↦ ?_))
   rw [Ne, e]; exact g0
 
 /-- `mfderiv` is nonzero near where it is nonzero -/
@@ -387,7 +386,7 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
     simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
     apply mem_extChartAt_source
   apply ((isOpen_extChartAt_target II p).eventually_mem (mem_extChartAt_target II p)).mp
-  refine fm.mp (eventually_of_forall fun q fm m ↦ ⟨?_, ?_, ?_⟩)
+  refine fm.mp (.of_forall fun q fm m ↦ ⟨?_, ?_, ?_⟩)
   · exact (continuousAt_extChartAt' I fm).comp_of_eq
         (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl
   · apply HolomorphicAt.analyticAt I I

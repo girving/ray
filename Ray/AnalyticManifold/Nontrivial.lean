@@ -4,7 +4,6 @@ import Ray.Analytic.Holomorphic
 import Ray.AnalyticManifold.OneDimension
 import Ray.Misc.Connected
 import Ray.Misc.TotallyDisconnected
-import Ray.Tactic.Bound
 
 /-!
 ## Nontriviality of holomorphic functions, and consequences
@@ -37,7 +36,7 @@ From these, we have a variety of consequences, such as:
 
 open Classical
 open Complex (abs)
-open Filter (Tendsto eventually_of_forall)
+open Filter (Tendsto)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
@@ -47,9 +46,9 @@ open scoped Real Topology Manifold
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : AnalyticManifold I T]
-variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U] [cmu : AnalyticManifold I U]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
+variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 
 section Nontrivial
 
@@ -151,7 +150,7 @@ theorem NontrivialAnalyticOn.const (n : NontrivialAnalyticOn f s) {p : X → ℂ
   have disc : DiscreteTopology (↥(s ∩ f ⁻¹' {b})) := n.discreteTopology b
   rcases p1 with ⟨z, zt, z1⟩; simp only [← z1]
   intro x xt
-  refine @IsPreconnected.constant_of_mapsTo _ _ _ _ _ tc _ disc _ pc ?_ _ _ xt zt
+  refine @IsPreconnected.constant_of_mapsTo _ _ _ tc _ _ _ disc _ pc ?_ _ _ xt zt
   intro y yt; simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff]
   use ps yt, fp _ yt
 
@@ -213,7 +212,7 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
     apply (fc.eventually_mem ((extChartAt_source_mem_nhds I (f z)))).mp
     apply (gc.eventually_mem ((extChartAt_source_mem_nhds I (g z)))).mp
     apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-    refine e.mp (eventually_of_forall ?_); clear e
+    refine e.mp (.of_forall ?_); clear e
     intro x h xm gm fm xz; rw [← fg] at gm
     simp only [← fg, PartialEquiv.left_inv _ xm] at h
     specialize h ((PartialEquiv.injOn _).ne xm (mem_extChartAt_source _ _) xz)
@@ -229,7 +228,7 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
   · rw [isOpen_iff_eventually]
     intro z m
     simp only [Set.mem_setOf_eq, ← ht] at m ⊢
-    exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (eventually_of_forall fun y h ↦ h)
+    exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (.of_forall fun y h ↦ h)
   · use z; simp only [Set.mem_inter_iff, ← ht]; exact ⟨zs, zs, c⟩
   · intro z m; simp only [Set.mem_inter_iff, mem_closure_iff_frequently] at m
     have aa : HolomorphicAt I I (fun _ ↦ a) z := holomorphicAt_const
@@ -237,13 +236,14 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
     · rw [← ht]; use m.2, h
     · simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at h
       have m' := m.1; contrapose m'; simp only [Filter.not_frequently]
-      refine h.mp (eventually_of_forall ?_); intro x i
+      refine h.mp (.of_forall ?_); intro x i
       by_cases xz : x = z; rwa [xz]; specialize i xz; contrapose i
       simp only [not_not, ← ht] at i ⊢; exact i.2.self_of_nhds
 
 /-- If `S` is locally connected, we don't need the open assumption in
     `HolomorphicOn.const_of_locally_const` -/
-theorem HolomorphicOn.const_of_locally_const' [LocallyConnectedSpace S] [T2Space T] {f : S → T}
+theorem HolomorphicOn.const_of_locally_const' [LocallyConnectedSpace S] [T2Space T]
+    [AnalyticManifold I S] [AnalyticManifold I T] {f : S → T}
     {s : Set S} (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
   rcases local_preconnected_nhdsSet p (isOpen_holomorphicAt.mem_nhdsSet.mpr fa)
@@ -280,8 +280,9 @@ theorem NontrivialHolomorphicAt.on_preconnected [T2Space T] {f : S → T} {s : S
   intro x m; rw [c _ m, c _ zs]
 
 /-- If a `f` is nontrivial at `z`, it is nontrivial near `z` -/
-theorem NontrivialHolomorphicAt.eventually [T2Space T] {f : S → T} {z : S}
-    (n : NontrivialHolomorphicAt f z) : ∀ᶠ w in 𝓝 z, NontrivialHolomorphicAt f w := by
+theorem NontrivialHolomorphicAt.eventually [T2Space T] [AnalyticManifold I S] [AnalyticManifold I T]
+    {f : S → T} {z : S} (n : NontrivialHolomorphicAt f z) :
+    ∀ᶠ w in 𝓝 z, NontrivialHolomorphicAt f w := by
   have lc : LocallyConnectedSpace S := ChartedSpace.locallyConnectedSpace ℂ _
   rcases eventually_nhds_iff.mp n.holomorphicAt.eventually with ⟨s, fa, os, zs⟩
   rcases locallyConnectedSpace_iff_open_connected_subsets.mp lc z s (os.mem_nhds zs) with
@@ -290,8 +291,9 @@ theorem NontrivialHolomorphicAt.eventually [T2Space T] {f : S → T} {z : S}
   exact n.on_preconnected (HolomorphicOn.mono fa ts) zt ot ct.isPreconnected
 
 /-- If the derivative isn't zero, we're nontrivial -/
-theorem nontrivialHolomorphicAt_of_mfderiv_ne_zero {f : S → T} {z : S} (fa : HolomorphicAt I I f z)
-    (d : mfderiv I I f z ≠ 0) : NontrivialHolomorphicAt f z := by
+theorem nontrivialHolomorphicAt_of_mfderiv_ne_zero [AnalyticManifold I S] [AnalyticManifold I T]
+    {f : S → T} {z : S} (fa : HolomorphicAt I I f z) (d : mfderiv I I f z ≠ 0) :
+    NontrivialHolomorphicAt f z := by
   refine ⟨fa, ?_⟩; contrapose d; simp only [Filter.not_frequently, not_not] at d ⊢
   generalize ha : f z = a; rw [ha] at d; apply HasMFDerivAt.mfderiv
   exact (hasMFDerivAt_const I I a _).congr_of_eventuallyEq d
@@ -311,13 +313,14 @@ theorem NontrivialHolomorphicAt.anti {f : T → U} {g : S → T} {z : S}
     NontrivialHolomorphicAt f (g z) ∧ NontrivialHolomorphicAt g z := by
   replace h := h.nonconst; refine ⟨⟨fa, ?_⟩, ⟨ga, ?_⟩⟩
   · contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
-    exact (ga.continuousAt.eventually h).mp (eventually_of_forall fun _ h ↦ h)
+    exact (ga.continuousAt.eventually h).mp (.of_forall fun _ h ↦ h)
   · contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
-    exact h.mp (eventually_of_forall fun x h ↦ by rw [h])
+    exact h.mp (.of_forall fun x h ↦ by rw [h])
 
 /-- `id` is nontrivial -/
 -- There's definitely a better way to prove this, but I'm blanking at the moment.
-theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ w) z := by
+theorem nontrivialHolomorphicAt_id [AnalyticManifold I S] (z : S) :
+    NontrivialHolomorphicAt (fun w ↦ w) z := by
   use holomorphicAt_id
   rw [Filter.frequently_iff]; intro s sz
   rcases mem_nhds_iff.mp sz with ⟨t, ts, ot, zt⟩
@@ -338,7 +341,7 @@ theorem nontrivialHolomorphicAt_id (z : S) : NontrivialHolomorphicAt (fun w ↦ 
   use ts au.2
   rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
   rw [PartialEquiv.right_inv _ au.1, ← ha]
-  simp only [Ne, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero, bit0_eq_zero,
+  simp only [Ne, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero,
     one_ne_zero, or_false_iff, rp.ne', not_false_iff]; norm_num
 
 /-- If `orderAt f z ≠ 0` (`f` has a zero of positive order), then `f` is nontrivial at `z` -/
@@ -374,19 +377,17 @@ theorem NontrivialHolomorphicAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : 
 theorem NontrivialHolomorphicAt.congr {f g : S → T} {z : S} (n : NontrivialHolomorphicAt f z)
     (e : f =ᶠ[𝓝 z] g) : NontrivialHolomorphicAt g z := by
   use n.holomorphicAt.congr e
-  refine n.nonconst.mp (e.mp (eventually_of_forall fun w ew n ↦ ?_))
+  refine n.nonconst.mp (e.mp (.of_forall fun w ew n ↦ ?_))
   rwa [← ew, ← e.self_of_nhds]
 
 section EqOfLocallyEq
 
-variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
-variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F] [CompleteSpace F]
-variable {A : Type} [TopologicalSpace A] {J : ModelWithCorners ℂ E A}
-  [ModelWithCorners.Boundaryless J]
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
+variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F]
+variable {A : Type} [TopologicalSpace A] {J : ModelWithCorners ℂ E A} [J.Boundaryless]
 variable {B : Type} [TopologicalSpace B] {K : ModelWithCorners ℂ F B}
-  [ModelWithCorners.Boundaryless K]
 variable {M : Type} [TopologicalSpace M] [ChartedSpace A M] [AnalyticManifold J M]
-variable {N : Type} [TopologicalSpace N] [ChartedSpace B N] [AnalyticManifold K N]
+variable {N : Type} [TopologicalSpace N] [ChartedSpace B N]
 
 /-- If two holomorphic functions are equal locally, they are equal on preconnected sets.
 
@@ -394,13 +395,13 @@ variable {N : Type} [TopologicalSpace N] [ChartedSpace B N] [AnalyticManifold K 
     This is the one higher dimension result in this file, which shows up in that `e`
     requires `f =ᶠ[𝓝 x] g` everywhere near a point rather than only frequent equality
     as would be required in 1D. -/
-theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
+theorem HolomorphicOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space N] {s : Set M}
     (fa : HolomorphicOn J K f s) (ga : HolomorphicOn J K g s) (sp : IsPreconnected s)
     (e : ∃ x, x ∈ s ∧ f =ᶠ[𝓝 x] g) : f =ᶠ[𝓝ˢ s] g := by
   generalize ht :  {x | f =ᶠ[𝓝 x] g} = t
   suffices h : s ⊆ interior t by
     simp only [subset_interior_iff_mem_nhdsSet, ← Filter.eventually_iff, ← ht] at h
-    exact h.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
+    exact h.mp (.of_forall fun _ e ↦ e.self_of_nhds)
   apply sp.relative_clopen
   · rw [← ht]; exact e
   · intro x ⟨_, xt⟩
@@ -408,7 +409,7 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
     exact xt.eventually_nhds
   · intro x ⟨xs, xt⟩; rw [mem_closure_iff_frequently] at xt
     have ex' : ∃ᶠ y in 𝓝 x, f y = g y := by
-      rw [← ht] at xt; exact xt.mp (eventually_of_forall fun _ e ↦ e.self_of_nhds)
+      rw [← ht] at xt; exact xt.mp (.of_forall fun _ e ↦ e.self_of_nhds)
     have ex : f x = g x :=
       tendsto_nhds_unique_of_frequently_eq (fa _ xs).continuousAt (ga _ xs).continuousAt ex'
     generalize hd : (fun y : E ↦
@@ -424,7 +425,7 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
           (mem_extChartAt_source K (f x)))).mp
       apply ((ga _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
           (mem_extChartAt_source K (g x)))).mp
-      refine eventually_of_forall fun y gm fm m e ↦ ?_
+      refine .of_forall fun y gm fm m e ↦ ?_
       rw [← hd, Pi.zero_apply, sub_eq_zero, (extChartAt J x).left_inv m, ex] at e
       rw [ex] at fm; exact (extChartAt K (g x)).injOn fm gm e
     have d0 : ∃ᶠ y in 𝓝 z, d =ᶠ[𝓝 y] 0 := by
@@ -432,13 +433,13 @@ theorem HolomorphicOn.eq_of_locally_eq {f g : M → N} [T2Space N] {s : Set M}
       have xt' : ∃ᶠ y in 𝓝 x, (extChartAt J x).symm (extChartAt J x y) ∈ t := by
         apply xt.mp
         apply ((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp
-        refine eventually_of_forall fun y m e ↦ ?_; rw [(extChartAt J x).left_inv m]; exact e
+        refine .of_forall fun y m e ↦ ?_; rw [(extChartAt J x).left_inv m]; exact e
       apply (Filter.Tendsto.frequently (p := fun y ↦ (extChartAt J x).symm y ∈ t)
           (continuousAt_extChartAt J x) xt').mp
       apply ((isOpen_extChartAt_target J x).eventually_mem (mem_extChartAt_target J x)).mp
-      refine eventually_of_forall fun y m e ↦ ?_; simp only [← ht] at e
+      refine .of_forall fun y m e ↦ ?_; simp only [← ht] at e
       apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
-      refine eventually_of_forall fun z e ↦ ?_; simp only at e
+      refine .of_forall fun z e ↦ ?_; simp only at e
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
     have da : AnalyticAt ℂ d z := by rw [← hd, ← hz]; exact (fa _ xs).2.sub (ga _ xs).2
     clear hd ex ex' xt t e fa ga f g xs hz x sp ht

@@ -12,7 +12,6 @@ complex dimensions.
 -/
 
 open Complex (abs)
-open Filter (eventually_of_forall)
 open Metric (ball mem_ball)
 open OneDimension
 open Set
@@ -21,7 +20,7 @@ noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
 variable {Y : Type} [TopologicalSpace Y]
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S]
 
 /-- A sufficient condition on `t` such that removing it from a connected open set does not
     disconnect the set -/
@@ -107,7 +106,7 @@ theorem Nonseparating.complexManifold {t : Set S}
         · intro ⟨⟨y, ⟨⟨yz, yt⟩, yx⟩⟩, _⟩
           simp only [← yx, yt, PartialEquiv.map_target _ yz, not_false_iff, true_and_iff]
       · rw [e]; apply cp.image; apply (continuousOn_extChartAt_symm I z).mono
-        exact _root_.trans cs (_root_.trans (diff_subset _ _) (inter_subset_left _ _)) }
+        exact _root_.trans cs (_root_.trans diff_subset inter_subset_left) }
 
 /-- A sufficient condition on `t` for `s \ t` to be preconnected, for `s` open and preconnected.
     Roughly, `t` has empty interior and there are arbitrarily small connected rings around each
@@ -117,12 +116,12 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
   rw [isPreconnected_iff_subset_of_disjoint] at sc ⊢
   intro u v uo vo suv duv
   generalize hf : (fun u : Set X ↦ u ∪ {x | x ∈ s ∧ x ∈ t ∧ ∀ᶠ y in 𝓝[tᶜ] x, y ∈ u}) = f
-  have mono : ∀ u, u ⊆ f u := by rw [← hf]; exact fun _ ↦ subset_union_left _ _
+  have mono : ∀ u, u ⊆ f u := by rw [← hf]; exact fun _ ↦ subset_union_left
   have fopen : ∀ {u}, IsOpen u → IsOpen (f u) := by
     intro u o; rw [isOpen_iff_eventually]; intro x m
     by_cases xu : x ∈ u
     · rw [← hf]
-      exact (o.eventually_mem xu).mp (eventually_of_forall fun q m ↦ subset_union_left _ _ m)
+      exact (o.eventually_mem xu).mp (.of_forall fun q m ↦ subset_union_left m)
     by_cases xt : x ∉ t
     · contrapose xu; clear xu
       simp only [mem_union, mem_setOf, xt, false_and_iff, and_false_iff, or_false_iff, ← hf] at m
@@ -131,7 +130,7 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     have n := m
     simp only [mem_union, xt, xu, false_or_iff, true_and_iff, mem_setOf,
       eventually_nhdsWithin_iff, ← hf] at n
-    refine (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (eventually_of_forall fun y n m ↦ ?_))
+    refine (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (.of_forall fun y n m ↦ ?_))
     by_cases yt : y ∈ t
     simp only [mem_union, mem_setOf, eventually_nhdsWithin_iff, ← hf]; right; use m, yt, n
     exact mono _ (n.self_of_nhds yt)
@@ -145,8 +144,8 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     rcases ts.loc x s xt (so.mem_nhds m) with ⟨c, cst, cn, cp⟩
     have d := inter_subset_inter_left (u ∩ v) cst; rw [duv, subset_empty_iff] at d
     cases' isPreconnected_iff_subset_of_disjoint.mp cp u v uo vo (_root_.trans cst suv) d with cu cv
-    exact subset_union_left _ _ (mem m xt cn cu)
-    exact subset_union_right _ _ (mem m xt cn cv)
+    exact subset_union_left (mem m xt cn cu)
+    exact subset_union_right (mem m xt cn cv)
   have fdiff : ∀ {u}, f u \ t ⊆ u := by
     intro u x m; simp only [mem_diff, mem_union, mem_setOf, ← hf] at m
     simp only [m.2, false_and_iff, and_false_iff, or_false_iff, not_false_iff, and_true_iff] at m
@@ -205,7 +204,7 @@ theorem Complex.nonseparating_singleton (a : ℂ) : Nonseparating ({a} : Set ℂ
       rcases Metric.isOpen_iff.mp uo a m with ⟨r, rp, rs⟩
       use a + r / 2
       simp only [mem_inter_iff, mem_compl_iff, mem_singleton_iff, add_right_eq_self,
-        div_eq_zero_iff, Complex.ofReal_eq_zero, bit0_eq_zero, one_ne_zero, or_false_iff,
+        div_eq_zero_iff, Complex.ofReal_eq_zero, one_ne_zero, or_false_iff,
         rp.ne', not_false_iff, and_true_iff, false_or, two_ne_zero]
       apply rs
       simp only [mem_ball, dist_self_add_left, Complex.norm_eq_abs, map_div₀, Complex.abs_ofReal,

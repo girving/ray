@@ -1,7 +1,6 @@
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.NNReal
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Init
@@ -10,7 +9,6 @@ import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
 import Ray.Analytic.Uniform
 import Ray.Misc.Bounds
-import Ray.Tactic.Bound
 
 /-!
 ## Infinite series of analytic functions
@@ -115,7 +113,7 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
   by_cases c0 : c ≤ 0
   · have fz := CNonpos.degenerate c0 a0 hf; simp only at fz
     rw [HasUniformSum, Metric.tendstoUniformlyOn_iff]
-    intro e ep; apply Filter.eventually_of_forall; intro n z zs
+    intro e ep; refine .of_forall ?_; intro n z zs
     rw [tsumOn]
     simp_rw [fz _ z zs]
     simp only [tsum_zero, Finset.sum_const_zero, dist_zero_left, Complex.norm_eq_abs,
@@ -137,7 +135,7 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
       _ ≤ t * (c * (1 - a)⁻¹) := by bound
       _ = (1 - a) / c * (e / 2) * (c * (1 - a)⁻¹) := rfl
       _ = (1 - a) * (1 - a)⁻¹ * (c / c) * (e / 2) := by ring
-      _ = 1 * 1 * (e / 2) := by rw [mul_inv_cancel a1p.ne', div_self c0.ne']
+      _ = 1 * 1 * (e / 2) := by rw [mul_inv_cancel₀ a1p.ne', div_self c0.ne']
       _ = e / 2 := by ring
       _ < e := by linarith
 

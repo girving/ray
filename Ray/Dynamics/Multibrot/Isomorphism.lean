@@ -21,7 +21,7 @@ Connectivity of the Multibrot set and its complement are easy consequences of (5
 -/
 
 open Complex (abs)
-open Filter (eventually_of_forall Tendsto atTop)
+open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
 open Real (exp log)
@@ -66,16 +66,16 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     · simp only [mem_setOf, ← hb, ← abs_bottcher, bxy, le_refl, u]
   clear x xm y ym bxy xy hb
   have ue : u ⊆ multibrotExt d := by intro c m; rw [← potential_lt_one]; exact lt_of_le_of_lt m b1
-  have t01 : t1 ⊆ t0 := inter_subset_right _ _
-  have t12 : t2 ⊆ t1 := inter_subset_right _ _
+  have t01 : t1 ⊆ t0 := inter_subset_right
+  have t12 : t2 ⊆ t1 := inter_subset_right
   have uc : IsClosed u := isClosed_le potential_continuous continuous_const
   have t0c : IsClosed t0 := uc.prod uc
   have t1c : IsClosed t1 := by
     rw [isClosed_iff_frequently]; intro ⟨x, y⟩ f
     have m0 : (x, y) ∈ t0 :=
-      Filter.Frequently.mem_of_closed (f.mp (eventually_of_forall fun _ m ↦ t01 m)) t0c
+      Filter.Frequently.mem_of_closed (f.mp (.of_forall fun _ m ↦ t01 m)) t0c
     refine ⟨tendsto_nhds_unique_of_frequently_eq ?_ ?_
-      (f.mp (eventually_of_forall fun _ m ↦ m.1)), m0⟩
+      (f.mp (.of_forall fun _ m ↦ m.1)), m0⟩
     · exact (bottcherHolomorphic d _ (ue m0.1)).continuousAt.comp continuousAt_fst
     · exact (bottcherHolomorphic d _ (ue m0.2)).continuousAt.comp continuousAt_snd
   have t12' : closure t2 ⊆ t1 := by rw [← t1c.closure_eq]; exact closure_mono t12
@@ -117,7 +117,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   rw [← xy] at m1 m2 p0i; clear xy ym yp y
   have db : mfderiv I I (bottcher d) x = 0 := by
     contrapose m2; simp only [mem_closure_iff_frequently, Filter.not_frequently]
-    refine ((bottcherHolomorphic d _ xm).local_inj m2).mp (eventually_of_forall ?_)
+    refine ((bottcherHolomorphic d _ xm).local_inj m2).mp (.of_forall ?_)
     intro ⟨x, y⟩ inj ⟨xy, e, _⟩; simp only at xy e inj; exact xy (inj e)
   by_cases p0 : p ≠ 0
   · -- Case 2: At a singular point we're not locally injective,
@@ -128,7 +128,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     have h := frequently_smaller p0
     rw [(bottcherNontrivial xm).nhds_eq_map_nhds, Filter.frequently_map] at h
     have m : ∃ᶠ z in 𝓝 x, potential d z < p ∧ (z, r z) ∈ t2 := by
-      refine h.mp (e.mp (eventually_of_forall fun z e lt ↦ ?_))
+      refine h.mp (e.mp (.of_forall fun z e lt ↦ ?_))
       have zx : z ≠ x := by
         contrapose lt; simp only [not_not, not_lt] at lt ⊢; simp only [lt, le_refl]
       rw [abs_bottcher, abs_bottcher, xp] at lt
