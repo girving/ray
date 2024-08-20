@@ -61,15 +61,12 @@ def bad_potential_image (n : ℕ) (r : Floating) (c : ℚ × ℚ) : Color UInt8 
 lemma approx_bad_potential_image {c : ℚ × ℚ} {n : ℕ} {r : Floating} :
     potential_image c ∈ approx (bad_potential_image n r c) := by
   rw [potential_image, bad_potential_image]
-  have e : ∀ p : ℝ, p^16 = (((p^2)^2)^2)^2 := by intro p; rw [←pow_mul, ←pow_mul, ←pow_mul]
+  have e : ∀ p : ℝ, p^16 = (((p^2)^2)^2)^2 := by intro p; simp only [← pow_mul]
   simp only [far', outside', clear', green', e]
   -- mono is timing out for some reason, so we expand a bit
   apply Color.mem_approx_quantize
   apply mem_approx_lerp
-  · apply Interval.mem_approx_sqr
-    apply Interval.mem_approx_sqr
-    apply Interval.mem_approx_sqr
-    apply Interval.mem_approx_sqr
+  · repeat apply Interval.mem_approx_sqr
     approx
   · approx
   · approx
