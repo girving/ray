@@ -1,6 +1,8 @@
 The Mandelbrot set is connected
 ===============================
 
+[![build](https://github.com/girving/ray/actions/workflows/lean.yml/badge.svg)](https://github.com/girving/ray/actions/workflows/lean.yml)
+
 The goal of this repository is to formalize standard results about the
 Mandelbrot set in Lean. The main result is that [the Mandelbrot set and its
 complement are connected](http://github.com/girving/ray/blob/main/Ray/Dynamics/Mandelbrot.lean#L37), by exhibiting the
