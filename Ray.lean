@@ -11,6 +11,7 @@ import Ray.Dynamics.Multibrot.Postcritical
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
+import Ray.Misc.ChartedSpace
 import Ray.Render.Grid
 import Ray.Render.Mandelbrot
 import Ray.Render.Image
