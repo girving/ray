@@ -267,7 +267,7 @@ def Precritical (f : S → S) (z : S) :=
   ∃ n, Critical f (f^[n] z)
 
 /-- Critical points of iterations are precritical points -/
-theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : Holomorphic I I f) (c : Critical f^[n] z) :
+theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : MAnalytic I I f) (c : Critical f^[n] z) :
     Precritical f z := by
   induction' n with n h
   · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
@@ -279,9 +279,9 @@ theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : Holomorphic I I f) (
     cases' c with c c; use n, c; exact h c
 
 /-!
-## Facts about `mfderiv` related to continuity and holomorphicity
+## Facts about `mfderiv` related to continuity and analyticity
 
-These facts would ideally follow from continuity and holomorphicity of `mfderiv`, but we can't
+These facts would ideally follow from continuity and analyticity of `mfderiv`, but we can't
 express that directly as `mfderiv` lives in a different type at each point.  Rather than detour
 into the necessary theory, I'm going to express what I need in coordinates for now.
 -/
@@ -291,18 +291,18 @@ def inChart (f : ℂ → S → T) (c : ℂ) (z : S) : ℂ → ℂ → ℂ := fun
   extChartAt I (f c z) (f e ((extChartAt I z).symm w))
 
 /-- `inChart` is analytic -/
-theorem HolomorphicAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : HolomorphicAt II I (uncurry f) (c, z)) :
+theorem MAnalyticAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
+    (fa : MAnalyticAt II I (uncurry f) (c, z)) :
     AnalyticAt ℂ (uncurry (inChart f c z)) (c, _root_.extChartAt I z z) := by
-  apply HolomorphicAt.analyticAt II I
-  apply (HolomorphicAt.extChartAt (mem_extChartAt_source I (f c z))).comp_of_eq
-  apply fa.comp₂_of_eq holomorphicAt_fst
-  apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq holomorphicAt_snd
+  apply MAnalyticAt.analyticAt II I
+  apply (MAnalyticAt.extChartAt (mem_extChartAt_source I (f c z))).comp_of_eq
+  apply fa.comp₂_of_eq mAnalyticAt_fst
+  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq mAnalyticAt_snd
   repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source I z)]
 
 /-- `inChart` preserves critical points locally -/
 theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : HolomorphicAt II I (uncurry f) (c, z)) :
+    (fa : MAnalyticAt II I (uncurry f) (c, z)) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z),
       mfderiv I I (f p.1) p.2 = 0 ↔ deriv (inChart f c z p.1) (extChartAt I z p.2) = 0 := by
   apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source I (f c z)).mem_nhds
@@ -314,15 +314,15 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   simp only [uncurry] at fm
   have m' := PartialEquiv.map_source _ m
   simp only [← mfderiv_eq_zero_iff_deriv_eq_zero]
-  have cd : HolomorphicAt I I (extChartAt I (f c z)) (f e w) := HolomorphicAt.extChartAt fm
-  have fd : HolomorphicAt I I (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
+  have cd : MAnalyticAt I I (extChartAt I (f c z)) (f e w) := MAnalyticAt.extChartAt fm
+  have fd : MAnalyticAt I I (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
     simp only [Function.comp]
-    exact HolomorphicAt.comp_of_eq fa.along_snd (HolomorphicAt.extChartAt_symm m')
+    exact MAnalyticAt.comp_of_eq fa.along_snd (MAnalyticAt.extChartAt_symm m')
       (PartialEquiv.right_inv _ m)
   have ce : inChart f c z e = extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
   rw [ce, mfderiv_comp_of_eq cd.mdifferentiableAt fd.mdifferentiableAt ?blah,
     mfderiv_comp_of_eq fa.along_snd.mdifferentiableAt
-      (HolomorphicAt.extChartAt_symm m').mdifferentiableAt]
+      (MAnalyticAt.extChartAt_symm m').mdifferentiableAt]
   · simp only [mderiv_comp_eq_zero_iff, Function.comp]
     rw [(extChartAt I z).left_inv m]
     simp only [extChartAt_mderiv_ne_zero' fm, false_or]
@@ -334,7 +334,7 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
 
 /-- `mfderiv` is nonzero near where it is nonzero (parameterized version) -/
 theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : HolomorphicAt II I (uncurry f) (c, z)) (f0 : mfderiv I I (f c) z ≠ 0) :
+    (fa : MAnalyticAt II I (uncurry f) (c, z)) (f0 : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z), mfderiv I I (f p.1) p.2 ≠ 0 := by
   set g := inChart f c z
   have g0 := inChart_critical fa
@@ -351,23 +351,23 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
   rw [Ne, e]; exact g0
 
 /-- `mfderiv` is nonzero near where it is nonzero -/
-theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : HolomorphicAt I I f z)
+theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : MAnalyticAt I I f z)
     (f0 : mfderiv I I f z ≠ 0) : ∀ᶠ w in 𝓝 z, mfderiv I I f w ≠ 0 := by
   set c : ℂ := 0
   set g : ℂ → S → T := fun _ z ↦ f z
-  have ga : HolomorphicAt II I (uncurry g) (c, z) := by
+  have ga : MAnalyticAt II I (uncurry g) (c, z) := by
     have e : uncurry g = f ∘ fun p ↦ p.2 := rfl; rw [e]
-    apply HolomorphicAt.comp_of_eq fa holomorphicAt_snd; simp only
+    apply MAnalyticAt.comp_of_eq fa mAnalyticAt_snd; simp only
   have pc : Tendsto (fun z ↦ (c, z)) (𝓝 z) (𝓝 (c, z)) := continuousAt_const.prod continuousAt_id
   exact pc.eventually (mfderiv_ne_zero_eventually' ga f0)
 
 /-- The set of noncritical points is open -/
-theorem isOpen_noncritical {f : ℂ → S → T} (fa : Holomorphic II I (uncurry f)) :
+theorem isOpen_noncritical {f : ℂ → S → T} (fa : MAnalytic II I (uncurry f)) :
     IsOpen {p : ℂ × S | ¬Critical (f p.1) p.2} := by
   rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m; exact mfderiv_ne_zero_eventually' (fa _) m
 
 /-- The set of critical points is closed -/
-theorem isClosed_critical {f : ℂ → S → T} (fa : Holomorphic II I (uncurry f)) :
+theorem isClosed_critical {f : ℂ → S → T} (fa : MAnalytic II I (uncurry f)) :
     IsClosed {p : ℂ × S | Critical (f p.1) p.2} := by
   have c := (isOpen_noncritical fa).isClosed_compl
   simp only [compl_setOf, not_not] at c; exact c
@@ -376,9 +376,9 @@ theorem isClosed_critical {f : ℂ → S → T} (fa : Holomorphic II I (uncurry 
     implies joint analyticity.  I'm not sure if a Hartogs' analogue is possible,
     since we use continuity to remain within the right charts. -/
 theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
-    (f0 : ∀ x y, HolomorphicAt I I (fun x ↦ f (x, y)) x)
-    (f1 : ∀ x y, HolomorphicAt I I (fun y ↦ f (x, y)) y) : Holomorphic II I f := by
-  rw [holomorphic_iff]; use fc; intro p; apply osgood_at'
+    (f0 : ∀ x y, MAnalyticAt I I (fun x ↦ f (x, y)) x)
+    (f1 : ∀ x y, MAnalyticAt I I (fun y ↦ f (x, y)) y) : MAnalytic II I f := by
+  rw [mAnalytic_iff]; use fc; intro p; apply osgood_at'
   have fm : ∀ᶠ q in 𝓝 (extChartAt II p p),
       f ((extChartAt II p).symm q) ∈ (extChartAt I (f p)).source := by
     refine (fc.continuousAt.comp (continuousAt_extChartAt_symm II p)).eventually_mem
@@ -389,15 +389,15 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
   refine fm.mp (.of_forall fun q fm m ↦ ⟨?_, ?_, ?_⟩)
   · exact (continuousAt_extChartAt' I fm).comp_of_eq
         (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl
-  · apply HolomorphicAt.analyticAt I I
-    refine (HolomorphicAt.extChartAt fm).comp_of_eq ?_ rfl
+  · apply MAnalyticAt.analyticAt I I
+    refine (MAnalyticAt.extChartAt fm).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢
-    exact (f0 _ _).comp (HolomorphicAt.extChartAt_symm m.1)
-  · apply HolomorphicAt.analyticAt I I
-    refine (HolomorphicAt.extChartAt fm).comp_of_eq ?_ rfl
+    exact (f0 _ _).comp (MAnalyticAt.extChartAt_symm m.1)
+  · apply MAnalyticAt.analyticAt I I
+    refine (MAnalyticAt.extChartAt fm).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢
-    exact (f1 _ _).comp (HolomorphicAt.extChartAt_symm m.2)
+    exact (f1 _ _).comp (MAnalyticAt.extChartAt_symm m.2)

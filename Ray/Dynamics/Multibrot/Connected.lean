@@ -30,7 +30,7 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 theorem isPathConnected_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsPathConnected (multibrotExt d) := by
   rw [← ray_surj d]; apply IsPathConnected.image_of_continuousOn
   exact (convex_ball _ _).isPathConnected (Metric.nonempty_ball.mpr one_pos)
-  exact (rayHolomorphic d).continuousOn
+  exact (rayMAnalytic d).continuousOn
 
 /-- Levelsets of `potential d` are connected -/
 theorem isPathConnected_potential_levelset (p : ℝ) (p0 : 0 ≤ p) (p1 : p < 1) :
@@ -45,7 +45,7 @@ theorem isPathConnected_potential_levelset (p : ℝ) (p0 : 0 ≤ p) (p1 : p < 1)
     · intro ⟨e, ep, ec⟩; rw [← ec, bottcher_ray]; exact ep
       simp only [mem_ball, Complex.dist_eq, sub_zero, ep, p1]
   rw [e]; apply (isPathConnected_sphere p0).image_of_continuousOn
-  exact (rayHolomorphic d).continuousOn.mono (Metric.sphere_subset_ball p1)
+  exact (rayMAnalytic d).continuousOn.mono (Metric.sphere_subset_ball p1)
 
 /-- `(multibrotEext d)ᶜ` is connected, since it is the downward intersection of the compact,
     connected sets `potential d ⁻¹' (Ici p)`. -/

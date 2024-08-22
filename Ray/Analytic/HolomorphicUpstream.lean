@@ -13,7 +13,7 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic
 
 /-!
-## Basics about complex analytic (holomorphic) functions
+## Basics about complex analytic functions
 -/
 
 open Complex (abs exp I log)

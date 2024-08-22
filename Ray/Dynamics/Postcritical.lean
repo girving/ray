@@ -194,18 +194,18 @@ theorem Super.basin_post (s : Super f d a) [OnePreimage s] [T2Space S] (m : (c, 
 /-- `s.bottcherNearIter` is nontrivial at postcritical points -/
 theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z) ∈ s.near)
     (p : Postcritical s c z) [OnePreimage s] [T2Space S] :
-    NontrivialHolomorphicAt (s.bottcherNearIter n c) z := by
+    NontrivialMAnalyticAt (s.bottcherNearIter n c) z := by
   rcases((Filter.eventually_ge_atTop n).and (s.eventually_noncritical ⟨_, r⟩)).exists with
     ⟨m, nm, mc⟩
   have r' := s.iter_stays_near' r nm
-  have h : NontrivialHolomorphicAt (s.bottcherNearIter m c) z := by
+  have h : NontrivialMAnalyticAt (s.bottcherNearIter m c) z := by
     by_cases p0 : s.potential c z = 0
     · rw [s.potential_eq_zero_of_onePreimage] at p0
       rw [p0]; exact s.bottcherNearIter_nontrivial_a
-    · exact nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic r').along_snd
+    · exact nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.bottcherNearIter_mAnalytic r').along_snd
           (s.bottcherNearIter_mfderiv_ne_zero mc (p.not_precritical p0))
   replace h := h.nonconst
-  refine ⟨(s.bottcherNearIter_holomorphic r).along_snd, ?_⟩
+  refine ⟨(s.bottcherNearIter_mAnalytic r).along_snd, ?_⟩
   contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
   rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
   have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
@@ -223,7 +223,7 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space
   rcases s.nice_nz p.basin z (le_refl _) with ⟨near, nc⟩
   set f : S → ℂ := s.bottcherNearIter (s.nz c z) c
   have o : 𝓝 (f z) = Filter.map f (𝓝 z) :=
-    (nontrivialHolomorphicAt_of_mfderiv_ne_zero (s.bottcherNearIter_holomorphic near).along_snd
+    (nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.bottcherNearIter_mAnalytic near).along_snd
         (s.bottcherNearIter_mfderiv_ne_zero (nc _ (le_refl _))
           (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
   have e : ∃ᶠ x : ℂ in 𝓝 (f z), abs x < abs (f z) := by

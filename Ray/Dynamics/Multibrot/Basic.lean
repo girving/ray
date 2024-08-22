@@ -125,8 +125,8 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
       _ = max r 0 := by ring_nf
       _ ≥ r := le_max_left _ _
 
-theorem holomorphicF : Holomorphic II I (uncurry (f d)) :=
-  holomorphicLift' analytic_f' tendsto_f'_atInf
+theorem mAnalyticAt_f : MAnalytic II I (uncurry (f d)) :=
+  mAnalytic_lift' analytic_f' tendsto_f'_atInf
 
 theorem writtenInExtChartAt_coe_f {d : ℕ} {z : ℂ} :
     writtenInExtChartAt I I (z : 𝕊) (f d c) = f' d c := by
@@ -196,7 +196,7 @@ theorem f_inf {d : ℕ} : f d c ∞ = ∞ := by
 -- f has a superattracting fixpoint at ∞
 theorem superF (d : ℕ) [Fact (2 ≤ d)] : Super (f d) d ∞ :=
   { d2 := two_le_d d
-    fa := holomorphicF
+    fa := mAnalyticAt_f
     fc := fun _ ↦ fc_f
     fd := fun _ ↦ fd_f
     f0 := fun _ ↦ f_inf }
@@ -270,7 +270,7 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
   · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ ContinuousLinearMap.zero_apply _
-    simp only [Critical, mfderiv, (holomorphicF (c, z)).along_snd.mdifferentiableAt, if_pos,
+    simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt, if_pos,
       ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
       RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply, toComplex_coe, coe_eq_zero,
       coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
@@ -565,22 +565,22 @@ theorem bottcher_tendsto_zero : Tendsto (bottcher' d) atInf (𝓝 0) := by
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
   rw [div_lt_iff rp] at rz; rw [map_inv₀, mul_inv_lt_iff (lt_trans (by norm_num) lo)]; exact rz
 
-/-- `bottcher' d` is holomorphic outside the Multibrot set -/
+/-- `bottcher' d` is analytic outside the Multibrot set -/
 theorem bottcher_analytic : AnalyticOn ℂ (bottcher' d) (multibrot d)ᶜ := by
-  set s := superF d; intro c m; apply HolomorphicAt.analyticAt I I
-  exact (s.bottcher_holomorphicOn (c, c) (multibrotPost m)).comp₂_of_eq holomorphicAt_id
-    (holomorphic_coe _) rfl
+  set s := superF d; intro c m; apply MAnalyticAt.analyticAt I I
+  exact (s.bottcher_mAnalyticOn (c, c) (multibrotPost m)).comp₂_of_eq mAnalyticAt_id
+    (mAnalytic_coe _) rfl
 
-/-- `bottcher d` is holomorphic outside the Multibrot set -/
-theorem bottcherHolomorphic (d : ℕ) [Fact (2 ≤ d)] :
-    HolomorphicOn I I (bottcher d) (multibrotExt d) := by
+/-- `bottcher d` is analytic outside the Multibrot set -/
+theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
+    MAnalyticOn I I (bottcher d) (multibrotExt d) := by
   intro c m; induction c using OnePoint.rec
-  · refine holomorphicAt_fill_inf ?_ bottcher_tendsto_zero
+  · refine mAnalyticAt_fill_inf ?_ bottcher_tendsto_zero
     rw [atInf_basis.eventually_iff]; use 2
     simp only [true_and_iff, mem_setOf, Complex.norm_eq_abs]
-    intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).holomorphicAt I I
+    intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).mAnalyticAt I I
   · simp only [multibrotExt_coe] at m
-    exact holomorphicAt_fill_coe ((bottcher_analytic (d := d) _ m).holomorphicAt I I)
+    exact mAnalyticAt_fill_coe ((bottcher_analytic (d := d) _ m).mAnalyticAt I I)
 
 /-!
 ## The Multibrot potential map
@@ -602,7 +602,7 @@ theorem potential_continuous : Continuous (potential d) := by
       refine .of_forall fun c ↦ ?_; rw [← abs_bottcher]
     rw [continuousAt_congr e]
     exact Complex.continuous_abs.continuousAt.comp
-      (bottcherHolomorphic d _ multibrotExt_inf).continuousAt
+      (bottcherMAnalytic d _ multibrotExt_inf).continuousAt
   · exact continuousAt_fill_coe ((Continuous.potential s).comp₂
       continuous_id continuous_coe).continuousAt
 
@@ -636,10 +636,10 @@ theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = ∞ := by
 /-- `bottcher d` is nontrivial everywhere in `multibrotExt`,
     as otherwise trivality spreads throughout `𝕊` -/
 theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
-    NontrivialHolomorphicAt (bottcher d) c := by
+    NontrivialMAnalyticAt (bottcher d) c := by
   by_cases h : ∃ᶠ e in 𝓝 c, bottcher d e ≠ bottcher d c
   exact
-    { holomorphicAt := bottcherHolomorphic d _ m
+    { mAnalyticAt := bottcherMAnalytic d _ m
       nonconst := h }
   exfalso; simp only [Filter.not_frequently, not_not] at h
   set b := bottcher d c
@@ -659,8 +659,8 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
         refine e.mp (.of_forall fun z zt ↦ ⟨zt, ?_⟩)
         contrapose xt; simp only [not_not] at xt ⊢; rwa [← xt]
       contrapose xt; clear xt; simp only [not_not]; use b1
-      cases' HolomorphicAt.eventually_eq_or_eventually_ne (bottcherHolomorphic d _ b1)
-        holomorphicAt_const with h h
+      cases' MAnalyticAt.eventually_eq_or_eventually_ne (bottcherMAnalytic d _ b1)
+        mAnalyticAt_const with h h
       use h; contrapose h; simp only [Filter.not_eventually, not_not] at h ⊢
       exact e'.mp (.of_forall fun y yt ↦ yt.2.self_of_nhds)
     · rw [isOpen_iff_eventually]; intro e ⟨m, h⟩
@@ -709,7 +709,7 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
         exact ⟨c, lt.le, rfl⟩
       apply image_subset _ ts; rw [IsClosed.closure_eq] at mt; exact mt
       apply IsCompact.isClosed; apply IsCompact.image_of_continuousOn ct
-      refine ContinuousOn.mono ?_ ts; exact (bottcherHolomorphic d).continuousOn
+      refine ContinuousOn.mono ?_ ts; exact (bottcherMAnalytic d).continuousOn
 
 /-!
 ### Ineffective approximations

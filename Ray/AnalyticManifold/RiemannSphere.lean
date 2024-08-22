@@ -367,23 +367,23 @@ theorem prod_mem_inf_of_mem_atInf {s : Set (X × ℂ)} {x : X} (f : s ∈ (𝓝 
     rcases m with ⟨w, wu, wz⟩; refine ⟨⟨y, z⟩, sub (mk_mem_prod yt ?_), rfl, rfl⟩; rw [← wz]
     exact wu
 
-/-- `coe : ℂ → 𝕊` is holomorphic -/
-theorem holomorphic_coe : Holomorphic I I (fun z : ℂ ↦ (z : 𝕊)) := by
-  rw [holomorphic_iff]; use continuous_coe; intro z
+/-- `coe : ℂ → 𝕊` is analytic -/
+theorem mAnalytic_coe : MAnalytic I I (fun z : ℂ ↦ (z : 𝕊)) := by
+  rw [mAnalytic_iff]; use continuous_coe; intro z
   simp only [extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_symm, PartialEquiv.refl_coe,
     Function.comp_id, id_eq, Function.comp, PartialEquiv.invFun_as_coe]
   rw [← PartialEquiv.invFun_as_coe]; simp only [coePartialEquiv, toComplex_coe]; apply analyticAt_id
 
-/-- `OnePoint.toComplex : 𝕊 → ℂ` is holomorphic except at `∞` -/
-theorem holomorphicAt_toComplex {z : ℂ} : HolomorphicAt I I (OnePoint.toComplex : 𝕊 → ℂ) z := by
-  rw [holomorphicAt_iff]; use continuousAt_toComplex
+/-- `OnePoint.toComplex : 𝕊 → ℂ` is analytic except at `∞` -/
+theorem mAnalyticAt_toComplex {z : ℂ} : MAnalyticAt I I (OnePoint.toComplex : 𝕊 → ℂ) z := by
+  rw [mAnalyticAt_iff]; use continuousAt_toComplex
   simp only [toComplex_coe, Function.comp, extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_coe,
     id, PartialEquiv.symm_symm, coePartialEquiv_apply, coePartialEquiv_symm_apply]
   apply analyticAt_id
 
-/-- Inversion is holomorphic -/
-theorem holomorphic_inv : Holomorphic I I fun z : 𝕊 ↦ z⁻¹ := by
-  rw [holomorphic_iff]; use continuous_inv; intro z; induction' z using OnePoint.rec with z
+/-- Inversion is analytic -/
+theorem mAnalytic_inv : MAnalytic I I fun z : 𝕊 ↦ z⁻¹ := by
+  rw [mAnalytic_iff]; use continuous_inv; intro z; induction' z using OnePoint.rec with z
   · simp only [inv_inf, extChartAt_inf, ← coe_zero, extChartAt_coe, Function.comp,
       PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, coePartialEquiv_symm_apply,
       toComplex_coe, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm, coePartialEquiv_apply,
@@ -450,21 +450,21 @@ theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f) (fi : Tendst
   · exact continuousAt_fill_inf fi
   · exact continuousAt_fill_coe fc.continuousAt
 
-/-- `fill` is holomorphic at finite values -/
-theorem holomorphicAt_fill_coe {f : ℂ → T} {y : T} (fa : HolomorphicAt I I f z) :
-    HolomorphicAt I I (fill f y) z := by
+/-- `fill` is analytic at finite values -/
+theorem mAnalyticAt_fill_coe {f : ℂ → T} {y : T} (fa : MAnalyticAt I I f z) :
+    MAnalyticAt I I (fill f y) z := by
   have e : (fun x : 𝕊 ↦ f x.toComplex) =ᶠ[𝓝 ↑z] fill f y := by
     simp only [OnePoint.nhds_coe_eq, Filter.EventuallyEq, Filter.eventually_map, toComplex_coe,
       fill_coe, eq_self_iff_true, Filter.eventually_true]
-  refine HolomorphicAt.congr ?_ e
-  refine fa.comp_of_eq holomorphicAt_toComplex ?_
+  refine MAnalyticAt.congr ?_ e
+  refine fa.comp_of_eq mAnalyticAt_toComplex ?_
   simp only [toComplex_coe]
 
-/-- `fill` is holomorphic at `∞` -/
-theorem holomorphicAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
-    (fa : ∀ᶠ z in atInf, HolomorphicAt I I f z) (fi : Tendsto f atInf (𝓝 y)) :
-    HolomorphicAt I I (fill f y) ∞ := by
-  rw [holomorphicAt_iff]; use continuousAt_fill_inf fi
+/-- `fill` is analytic at `∞` -/
+theorem mAnalyticAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
+    (fa : ∀ᶠ z in atInf, MAnalyticAt I I f z) (fi : Tendsto f atInf (𝓝 y)) :
+    MAnalyticAt I I (fill f y) ∞ := by
+  rw [mAnalyticAt_iff]; use continuousAt_fill_inf fi
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, fill, rec_inf,
     modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, chartAt_inf,
     PartialHomeomorph.symm_toPartialEquiv, PartialEquiv.symm_symm, PartialHomeomorph.toFun_eq_coe,
@@ -491,9 +491,9 @@ theorem holomorphicAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
       refine (continuousAt_id.eventually_ne z0).mp (.of_forall fun w w0 ↦ ?_)
       simp only [Ne, id_eq] at w0; simp only [w0, if_false]
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
-    apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
-    refine (HolomorphicAt.extChartAt ?_).comp ?_; exact m
-    exact fa.comp (holomorphicAt_id.inv z0)
+    apply AnalyticAt.differentiableAt; apply MAnalyticAt.analyticAt I I
+    refine (MAnalyticAt.extChartAt ?_).comp ?_; exact m
+    exact fa.comp (mAnalyticAt_id.inv z0)
   · refine (continuousAt_extChartAt' I ?_).comp ?_
     · simp only [eq_self_iff_true, if_pos, mem_extChartAt_source]
     · simp only [← continuousWithinAt_compl_self, ContinuousWithinAt]
@@ -502,12 +502,12 @@ theorem holomorphicAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
       simp only [z0, if_false]
       exact Filter.Tendsto.comp fi inv_tendsto_atInf
 
-/-- `fill` is holomorphic -/
-theorem holomorphic_fill [AnalyticManifold I T] {f : ℂ → T} {y : T} (fa : Holomorphic I I f)
-    (fi : Tendsto f atInf (𝓝 y)) : Holomorphic I I (fill f y) := by
+/-- `fill` is analytic -/
+theorem mAnalytic_fill [AnalyticManifold I T] {f : ℂ → T} {y : T} (fa : MAnalytic I I f)
+    (fi : Tendsto f atInf (𝓝 y)) : MAnalytic I I (fill f y) := by
   intro z; induction z using OnePoint.rec
-  · exact holomorphicAt_fill_inf (.of_forall fa) fi
-  · exact holomorphicAt_fill_coe (fa _)
+  · exact mAnalyticAt_fill_inf (.of_forall fa) fi
+  · exact mAnalyticAt_fill_coe (fa _)
 
 /-- `lift'` is continuous at finite values -/
 theorem continuousAt_lift_coe' (gc : ContinuousAt (uncurry g) (x, z)) :
@@ -564,35 +564,35 @@ theorem continuous_lift (fc : Continuous f) (fi : Tendsto f atInf atInf) :
   · exact continuousAt_lift_inf fi
   · exact continuousAt_lift_coe fc.continuousAt
 
-/-- `lift` is holomorphic at finite values -/
-theorem holomorphicAt_lift_coe (fa : AnalyticAt ℂ f z) : HolomorphicAt I I (lift f y) z := by
-  rw [lift_eq_fill]; exact holomorphicAt_fill_coe ((holomorphic_coe _).comp (fa.holomorphicAt I I))
+/-- `lift` is analytic at finite values -/
+theorem mAnalyticAt_lift_coe (fa : AnalyticAt ℂ f z) : MAnalyticAt I I (lift f y) z := by
+  rw [lift_eq_fill]; exact mAnalyticAt_fill_coe ((mAnalytic_coe _).comp (fa.mAnalyticAt I I))
 
-/-- `lift` is holomorphic at `∞` -/
-theorem holomorphicAt_lift_inf (fa : ∀ᶠ z in atInf, AnalyticAt ℂ f z) (fi : Tendsto f atInf atInf) :
-    HolomorphicAt I I (lift f ∞) ∞ := by
-  rw [lift_eq_fill]; apply holomorphicAt_fill_inf
-  exact fa.mp (.of_forall fun z fa ↦ (holomorphic_coe _).comp (fa.holomorphicAt I I))
+/-- `lift` is analytic at `∞` -/
+theorem mAnalyticAt_lift_inf (fa : ∀ᶠ z in atInf, AnalyticAt ℂ f z) (fi : Tendsto f atInf atInf) :
+    MAnalyticAt I I (lift f ∞) ∞ := by
+  rw [lift_eq_fill]; apply mAnalyticAt_fill_inf
+  exact fa.mp (.of_forall fun z fa ↦ (mAnalytic_coe _).comp (fa.mAnalyticAt I I))
   exact coe_tendsto_inf.comp fi
 
-/-- `lift` is holomorphic -/
-theorem holomorphic_lift (fa : AnalyticOn ℂ f univ) (fi : Tendsto f atInf atInf) :
-    Holomorphic I I (lift f ∞) := by
+/-- `lift` is analytic -/
+theorem mAnalytic_lift (fa : AnalyticOn ℂ f univ) (fi : Tendsto f atInf atInf) :
+    MAnalytic I I (lift f ∞) := by
   intro z; induction z using OnePoint.rec
-  · exact holomorphicAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
-  · exact holomorphicAt_lift_coe (fa _ (mem_univ _))
+  · exact mAnalyticAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
+  · exact mAnalyticAt_lift_coe (fa _ (mem_univ _))
 
-/-- `lift'` is holomorphic (the parameterized version) -/
-theorem holomorphicLift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOn ℂ (uncurry f) univ)
+/-- `lift'` is analytic (the parameterized version) -/
+theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOn ℂ (uncurry f) univ)
     (fi : ∀ x, Tendsto (uncurry f) ((𝓝 x).prod atInf) atInf) :
-    Holomorphic II I (uncurry (lift' f ∞)) := by
+    MAnalytic II I (uncurry (lift' f ∞)) := by
   apply osgoodManifold (continuous_lift' fa.continuous fi)
   · intro x z
     induction z using OnePoint.rec
-    · simp only [uncurry, lift_inf']; exact holomorphicAt_const
-    · exact (holomorphic_coe _).comp ((fa _ (mem_univ ⟨_,_⟩)).along_fst.holomorphicAt _ _)
+    · simp only [uncurry, lift_inf']; exact mAnalyticAt_const
+    · exact (mAnalytic_coe _).comp ((fa _ (mem_univ ⟨_,_⟩)).along_fst.mAnalyticAt _ _)
   · intro x z
-    exact holomorphic_lift (fun _ _ ↦ (fa _ (mem_univ ⟨_,_⟩)).along_snd)
+    exact mAnalytic_lift (fun _ _ ↦ (fa _ (mem_univ ⟨_,_⟩)).along_snd)
       ((fi x).comp (tendsto_const_nhds.prod_mk Filter.tendsto_id)) z
 
 /-- `𝕊` is path connected -/

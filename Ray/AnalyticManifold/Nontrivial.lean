@@ -6,19 +6,19 @@ import Ray.Misc.Connected
 import Ray.Misc.TotallyDisconnected
 
 /-!
-## Nontriviality of holomorphic functions, and consequences
+## Nontriviality of analytic functions, and consequences
 
 We define several structures representing global and local nontriviality (nonconstness)
-of analytic and holomorphic functions, and in 1D or parameterized 1D:
+of analytic and analytic functions, and in 1D or parameterized 1D:
 
-1. `NontrivialAnalyticOn f s`: Near every point `z ∈ s`, `f` is locally holomorphic and nonconstant
-1. `NontrivialHolomorphicOn f s`: The same for holomorphic functions between 1D analytic manifolds
-2. `NontrivialHolomorphicAt f z`: Near `z`, `f` is holomorphic and nonconstant
+1. `NontrivialAnalyticOn f s`: Near every point `z ∈ s`, `f` is locally analytic and nonconstant
+1. `NontrivialMAnalyticOn f s`: The same for analytic functions between 1D analytic manifolds
+2. `NontrivialMAnalyticAt f z`: Near `z`, `f` is analytic and nonconstant
 
 These "everyone nontrivial" properties can be derived from properties at one point:
 
 1. If an analytic function is nonconstant on a preconnected set, is it nontrivial there
-2. Nonzero holomorphic derivative implies nontriviality
+2. Nonzero analytic derivative implies nontriviality
 3. Nontriviality is preserved by composition
 4. If a composition is nontrivial, both parts are nontrivial
 5. `id` is nontrivial
@@ -30,7 +30,7 @@ From these, we have a variety of consequences, such as:
 2. The zeros (or preimages of another value) of a nontrivial function have a discrete topology
 3. Pow is nontrivial, so roots of unity are totally disconnected
 4. If a nontrivial function is constant on the image of a preconnected set, the image is a singleton
-5. Near a point, holomorphic functions are either locally constant or locally ≠ to the point value
+5. Near a point, analytic functions are either locally constant or locally ≠ to the point value
 6. Locally constant functions are constant on preconnected sets
 -/
 
@@ -181,13 +181,13 @@ theorem eq_of_pow_eq {p q : X → ℂ} {t : Set X} {d : ℕ} (pc : ContinuousOn 
     · exact (pqd _ m).symm
     · exact pow_ne_zero _ (p0 _ m)
 
-/-- At a point, a holomorphic function is either locally constant or locally different from its
-    value at the point.  This is the `HolomorphicAt` version of
+/-- At a point, a analytic function is either locally constant or locally different from its
+    value at the point.  This is the `MAnalyticAt` version of
     `AnalyticAt.eventuallyEq_or_eventually_ne` -/
-theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
-    (fa : HolomorphicAt I I f z) (ga : HolomorphicAt I I g z) :
+theorem MAnalyticAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
+    (fa : MAnalyticAt I I f z) (ga : MAnalyticAt I I g z) :
     (∀ᶠ w in 𝓝 z, f w = g w) ∨ ∀ᶠ w in 𝓝[{z}ᶜ] z, f w ≠ g w := by
-  simp only [holomorphicAt_iff, Function.comp] at fa ga
+  simp only [mAnalyticAt_iff, Function.comp] at fa ga
   rcases fa with ⟨fc, fa⟩; rcases ga with ⟨gc, ga⟩
   by_cases fg : f z ≠ g z
   · right; contrapose fg; simp only [not_not]
@@ -219,8 +219,8 @@ theorem HolomorphicAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T}
     rwa [← (PartialEquiv.injOn _).ne_iff fm gm]
 
 /-- Locally constant functions are constant on preconnected sets -/
-theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
-    (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
+theorem MAnalyticOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
+    (fa : MAnalyticOn I I f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
   generalize ht : {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a} = t
   suffices st : s ⊆ t by rw [← ht] at st; exact fun z m ↦ (st m).2.self_of_nhds
@@ -231,7 +231,7 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
     exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (.of_forall fun y h ↦ h)
   · use z; simp only [Set.mem_inter_iff, ← ht]; exact ⟨zs, zs, c⟩
   · intro z m; simp only [Set.mem_inter_iff, mem_closure_iff_frequently] at m
-    have aa : HolomorphicAt I I (fun _ ↦ a) z := holomorphicAt_const
+    have aa : MAnalyticAt I I (fun _ ↦ a) z := mAnalyticAt_const
     cases' (fa _ m.2).eventually_eq_or_eventually_ne aa with h h
     · rw [← ht]; use m.2, h
     · simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at h
@@ -241,37 +241,37 @@ theorem HolomorphicOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set 
       simp only [not_not, ← ht] at i ⊢; exact i.2.self_of_nhds
 
 /-- If `S` is locally connected, we don't need the open assumption in
-    `HolomorphicOn.const_of_locally_const` -/
-theorem HolomorphicOn.const_of_locally_const' [LocallyConnectedSpace S] [T2Space T]
+    `MAnalyticOn.const_of_locally_const` -/
+theorem MAnalyticOn.const_of_locally_const' [LocallyConnectedSpace S] [T2Space T]
     [AnalyticManifold I S] [AnalyticManifold I T] {f : S → T}
-    {s : Set S} (fa : HolomorphicOn I I f s) {z : S} {a : T} (zs : z ∈ s) (p : IsPreconnected s)
+    {s : Set S} (fa : MAnalyticOn I I f s) {z : S} {a : T} (zs : z ∈ s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
-  rcases local_preconnected_nhdsSet p (isOpen_holomorphicAt.mem_nhdsSet.mpr fa)
+  rcases local_preconnected_nhdsSet p (isOpen_mAnalyticAt.mem_nhdsSet.mpr fa)
     with ⟨u, uo, su, ua, uc⟩
-  exact fun w ws ↦ HolomorphicOn.const_of_locally_const (fun _ m ↦ ua m) (su zs) uo uc c w (su ws)
+  exact fun w ws ↦ MAnalyticOn.const_of_locally_const (fun _ m ↦ ua m) (su zs) uo uc c w (su ws)
 
-/-- A holomorphic function that is nonconstant near a point -/
-structure NontrivialHolomorphicAt (f : S → T) (z : S) : Prop where
-  holomorphicAt : HolomorphicAt I I f z
+/-- A analytic function that is nonconstant near a point -/
+structure NontrivialMAnalyticAt (f : S → T) (z : S) : Prop where
+  mAnalyticAt : MAnalyticAt I I f z
   nonconst : ∃ᶠ w in 𝓝 z, f w ≠ f z
 
-/-- `NontrivialHolomorphicAt f z` implies `f z` is never locally repeated -/
-theorem NontrivialHolomorphicAt.eventually_ne [T2Space T] {f : S → T} {z : S}
-    (n : NontrivialHolomorphicAt f z) : ∀ᶠ w in 𝓝 z, w ≠ z → f w ≠ f z := by
-  have ca : _root_.HolomorphicAt I I (fun _ ↦ f z) z := holomorphicAt_const
-  cases' n.holomorphicAt.eventually_eq_or_eventually_ne ca with h h
+/-- `NontrivialMAnalyticAt f z` implies `f z` is never locally repeated -/
+theorem NontrivialMAnalyticAt.eventually_ne [T2Space T] {f : S → T} {z : S}
+    (n : NontrivialMAnalyticAt f z) : ∀ᶠ w in 𝓝 z, w ≠ z → f w ≠ f z := by
+  have ca : _root_.MAnalyticAt I I (fun _ ↦ f z) z := mAnalyticAt_const
+  cases' n.mAnalyticAt.eventually_eq_or_eventually_ne ca with h h
   · have b := h.and_frequently n.nonconst
     simp only [and_not_self_iff, Filter.frequently_false] at b
   · simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff] at h; convert h
 
-/-- `f` is nontrivial holomorphic everyone in `s` -/
-def NontrivialHolomorphicOn (f : S → T) (s : Set S) : Prop :=
-  ∀ z, z ∈ s → NontrivialHolomorphicAt f z
+/-- `f` is nontrivial analytic everyone in `s` -/
+def NontrivialMAnalyticOn (f : S → T) (s : Set S) : Prop :=
+  ∀ z, z ∈ s → NontrivialMAnalyticAt f z
 
 /-- Nontrivially at a point of a preconnected set implies nontriviality throughout the set -/
-theorem NontrivialHolomorphicAt.on_preconnected [T2Space T] {f : S → T} {s : Set S} {z : S}
-    (fa : HolomorphicOn I I f s) (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
-    (n : NontrivialHolomorphicAt f z) : NontrivialHolomorphicOn f s := by
+theorem NontrivialMAnalyticAt.on_preconnected [T2Space T] {f : S → T} {s : Set S} {z : S}
+    (fa : MAnalyticOn I I f s) (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
+    (n : NontrivialMAnalyticAt f z) : NontrivialMAnalyticOn f s := by
   intro w ws; replace n := n.nonconst; refine ⟨fa _ ws, ?_⟩; contrapose n
   simp only [Filter.not_frequently, not_not] at n ⊢; generalize ha : f w = a
   rw [ha] at n
@@ -280,37 +280,37 @@ theorem NontrivialHolomorphicAt.on_preconnected [T2Space T] {f : S → T} {s : S
   intro x m; rw [c _ m, c _ zs]
 
 /-- If a `f` is nontrivial at `z`, it is nontrivial near `z` -/
-theorem NontrivialHolomorphicAt.eventually [T2Space T] [AnalyticManifold I S] [AnalyticManifold I T]
-    {f : S → T} {z : S} (n : NontrivialHolomorphicAt f z) :
-    ∀ᶠ w in 𝓝 z, NontrivialHolomorphicAt f w := by
+theorem NontrivialMAnalyticAt.eventually [T2Space T] [AnalyticManifold I S] [AnalyticManifold I T]
+    {f : S → T} {z : S} (n : NontrivialMAnalyticAt f z) :
+    ∀ᶠ w in 𝓝 z, NontrivialMAnalyticAt f w := by
   have lc : LocallyConnectedSpace S := ChartedSpace.locallyConnectedSpace ℂ _
-  rcases eventually_nhds_iff.mp n.holomorphicAt.eventually with ⟨s, fa, os, zs⟩
+  rcases eventually_nhds_iff.mp n.mAnalyticAt.eventually with ⟨s, fa, os, zs⟩
   rcases locallyConnectedSpace_iff_open_connected_subsets.mp lc z s (os.mem_nhds zs) with
     ⟨t, ts, ot, zt, ct⟩
   rw [eventually_nhds_iff]; refine ⟨t, ?_, ot, zt⟩
-  exact n.on_preconnected (HolomorphicOn.mono fa ts) zt ot ct.isPreconnected
+  exact n.on_preconnected (MAnalyticOn.mono fa ts) zt ot ct.isPreconnected
 
 /-- If the derivative isn't zero, we're nontrivial -/
-theorem nontrivialHolomorphicAt_of_mfderiv_ne_zero [AnalyticManifold I S] [AnalyticManifold I T]
-    {f : S → T} {z : S} (fa : HolomorphicAt I I f z) (d : mfderiv I I f z ≠ 0) :
-    NontrivialHolomorphicAt f z := by
+theorem nontrivialMAnalyticAt_of_mfderiv_ne_zero [AnalyticManifold I S] [AnalyticManifold I T]
+    {f : S → T} {z : S} (fa : MAnalyticAt I I f z) (d : mfderiv I I f z ≠ 0) :
+    NontrivialMAnalyticAt f z := by
   refine ⟨fa, ?_⟩; contrapose d; simp only [Filter.not_frequently, not_not] at d ⊢
   generalize ha : f z = a; rw [ha] at d; apply HasMFDerivAt.mfderiv
   exact (hasMFDerivAt_const I I a _).congr_of_eventuallyEq d
 
 /-- If `f` and `g` are nontrivial, `f ∘ g` is nontrivial -/
-theorem NontrivialHolomorphicAt.comp [T2Space U] {f : T → U} {g : S → T} {z : S}
-    (fn : NontrivialHolomorphicAt f (g z)) (gn : NontrivialHolomorphicAt g z) :
-    NontrivialHolomorphicAt (fun z ↦ f (g z)) z := by
-  use fn.holomorphicAt.comp gn.holomorphicAt
-  convert gn.nonconst.and_eventually (gn.holomorphicAt.continuousAt.eventually fn.eventually_ne)
+theorem NontrivialMAnalyticAt.comp [T2Space U] {f : T → U} {g : S → T} {z : S}
+    (fn : NontrivialMAnalyticAt f (g z)) (gn : NontrivialMAnalyticAt g z) :
+    NontrivialMAnalyticAt (fun z ↦ f (g z)) z := by
+  use fn.mAnalyticAt.comp gn.mAnalyticAt
+  convert gn.nonconst.and_eventually (gn.mAnalyticAt.continuousAt.eventually fn.eventually_ne)
   tauto
 
-/-- If `f ∘ g` is nontrivial, and `f, g` are holomorphic, `f, g` are nontrivial -/
-theorem NontrivialHolomorphicAt.anti {f : T → U} {g : S → T} {z : S}
-    (h : NontrivialHolomorphicAt (fun z ↦ f (g z)) z) (fa : HolomorphicAt I I f (g z))
-    (ga : HolomorphicAt I I g z) :
-    NontrivialHolomorphicAt f (g z) ∧ NontrivialHolomorphicAt g z := by
+/-- If `f ∘ g` is nontrivial, and `f, g` are analytic, `f, g` are nontrivial -/
+theorem NontrivialMAnalyticAt.anti {f : T → U} {g : S → T} {z : S}
+    (h : NontrivialMAnalyticAt (fun z ↦ f (g z)) z) (fa : MAnalyticAt I I f (g z))
+    (ga : MAnalyticAt I I g z) :
+    NontrivialMAnalyticAt f (g z) ∧ NontrivialMAnalyticAt g z := by
   replace h := h.nonconst; refine ⟨⟨fa, ?_⟩, ⟨ga, ?_⟩⟩
   · contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
     exact (ga.continuousAt.eventually h).mp (.of_forall fun _ h ↦ h)
@@ -319,9 +319,9 @@ theorem NontrivialHolomorphicAt.anti {f : T → U} {g : S → T} {z : S}
 
 /-- `id` is nontrivial -/
 -- There's definitely a better way to prove this, but I'm blanking at the moment.
-theorem nontrivialHolomorphicAt_id [AnalyticManifold I S] (z : S) :
-    NontrivialHolomorphicAt (fun w ↦ w) z := by
-  use holomorphicAt_id
+theorem nontrivialMAnalyticAt_id [AnalyticManifold I S] (z : S) :
+    NontrivialMAnalyticAt (fun w ↦ w) z := by
+  use mAnalyticAt_id
   rw [Filter.frequently_iff]; intro s sz
   rcases mem_nhds_iff.mp sz with ⟨t, ts, ot, zt⟩
   generalize hu : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t = u
@@ -345,9 +345,9 @@ theorem nontrivialHolomorphicAt_id [AnalyticManifold I S] (z : S) :
     one_ne_zero, or_false_iff, rp.ne', not_false_iff]; norm_num
 
 /-- If `orderAt f z ≠ 0` (`f` has a zero of positive order), then `f` is nontrivial at `z` -/
-theorem nontrivialHolomorphicAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z)
-    (h : orderAt f z ≠ 0) : NontrivialHolomorphicAt f z := by
-  use fa.holomorphicAt I I; contrapose h
+theorem nontrivialMAnalyticAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z)
+    (h : orderAt f z ≠ 0) : NontrivialMAnalyticAt f z := by
+  use fa.mAnalyticAt I I; contrapose h
   simp only [Filter.not_frequently, not_not] at h ⊢
   have fp : HasFPowerSeriesAt f (constFormalMultilinearSeries ℂ ℂ (f z)) z :=
     hasFPowerSeriesAt_const.congr (Filter.EventuallyEq.symm h)
@@ -355,28 +355,28 @@ theorem nontrivialHolomorphicAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : Analy
   have b := FormalMultilinearSeries.apply_order_ne_zero' p0
   simp only [constFormalMultilinearSeries_apply p0, Ne, eq_self_iff_true, not_true] at b
 
-/-- `NontrivialAnalyticOn → NontrivialHolomorphicOn` over `ℂ` -/
-theorem NontrivialAnalyticOn.nontrivialHolomorphicOn {f : ℂ → ℂ} {s : Set ℂ}
-    (n : NontrivialAnalyticOn f s) : NontrivialHolomorphicOn f s := fun z m ↦
-  { holomorphicAt := (n.analyticOn z m).holomorphicAt I I
+/-- `NontrivialAnalyticOn → NontrivialMAnalyticOn` over `ℂ` -/
+theorem NontrivialAnalyticOn.nontrivialMAnalyticOn {f : ℂ → ℂ} {s : Set ℂ}
+    (n : NontrivialAnalyticOn f s) : NontrivialMAnalyticOn f s := fun z m ↦
+  { mAnalyticAt := (n.analyticOn z m).mAnalyticAt I I
     nonconst := n.nonconst z m }
 
 /-- pow is nontrivial -/
-theorem nontrivialHolomorphicAtPow {d : ℕ} (d0 : d > 0) {z : ℂ} :
-    NontrivialHolomorphicAt (fun z ↦ z ^ d) z :=
-  (powNontrivial d0).nontrivialHolomorphicOn z (mem_univ _)
+theorem nontrivialMAnalyticAt_pow {d : ℕ} (d0 : d > 0) {z : ℂ} :
+    NontrivialMAnalyticAt (fun z ↦ z ^ d) z :=
+  (powNontrivial d0).nontrivialMAnalyticOn z (mem_univ _)
 
 /-- Nontriviality is invariant to positive powers -/
-theorem NontrivialHolomorphicAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : HolomorphicAt I I f z)
-    (d0 : 0 < d) : NontrivialHolomorphicAt (fun z ↦ f z ^ d) z ↔ NontrivialHolomorphicAt f z := by
-  refine ⟨?_, (nontrivialHolomorphicAtPow d0).comp⟩
-  have pa : HolomorphicAt I I (fun z ↦ z ^ d) (f z) := HolomorphicAt.pow holomorphicAt_id
-  intro h; refine (NontrivialHolomorphicAt.anti ?_ pa fa).2; exact h
+theorem NontrivialMAnalyticAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : MAnalyticAt I I f z)
+    (d0 : 0 < d) : NontrivialMAnalyticAt (fun z ↦ f z ^ d) z ↔ NontrivialMAnalyticAt f z := by
+  refine ⟨?_, (nontrivialMAnalyticAt_pow d0).comp⟩
+  have pa : MAnalyticAt I I (fun z ↦ z ^ d) (f z) := MAnalyticAt.pow mAnalyticAt_id
+  intro h; refine (NontrivialMAnalyticAt.anti ?_ pa fa).2; exact h
 
 /-- Nontriviality depends only locally on `f` -/
-theorem NontrivialHolomorphicAt.congr {f g : S → T} {z : S} (n : NontrivialHolomorphicAt f z)
-    (e : f =ᶠ[𝓝 z] g) : NontrivialHolomorphicAt g z := by
-  use n.holomorphicAt.congr e
+theorem NontrivialMAnalyticAt.congr {f g : S → T} {z : S} (n : NontrivialMAnalyticAt f z)
+    (e : f =ᶠ[𝓝 z] g) : NontrivialMAnalyticAt g z := by
+  use n.mAnalyticAt.congr e
   refine n.nonconst.mp (e.mp (.of_forall fun w ew n ↦ ?_))
   rwa [← ew, ← e.self_of_nhds]
 
@@ -386,17 +386,17 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F]
 variable {A : Type} [TopologicalSpace A] {J : ModelWithCorners ℂ E A} [J.Boundaryless]
 variable {B : Type} [TopologicalSpace B] {K : ModelWithCorners ℂ F B}
-variable {M : Type} [TopologicalSpace M] [ChartedSpace A M] [AnalyticManifold J M]
+variable {M : Type} [TopologicalSpace M] [ChartedSpace A M]
 variable {N : Type} [TopologicalSpace N] [ChartedSpace B N]
 
-/-- If two holomorphic functions are equal locally, they are equal on preconnected sets.
+/-- If two analytic functions are equal locally, they are equal on preconnected sets.
 
     This is a manifold version of `AnalyticOn.eqOn_of_preconnected_of_eventuallyEq`.
     This is the one higher dimension result in this file, which shows up in that `e`
     requires `f =ᶠ[𝓝 x] g` everywhere near a point rather than only frequent equality
     as would be required in 1D. -/
-theorem HolomorphicOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space N] {s : Set M}
-    (fa : HolomorphicOn J K f s) (ga : HolomorphicOn J K g s) (sp : IsPreconnected s)
+theorem MAnalyticOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space N] {s : Set M}
+    (fa : MAnalyticOn J K f s) (ga : MAnalyticOn J K g s) (sp : IsPreconnected s)
     (e : ∃ x, x ∈ s ∧ f =ᶠ[𝓝 x] g) : f =ᶠ[𝓝ˢ s] g := by
   generalize ht :  {x | f =ᶠ[𝓝 x] g} = t
   suffices h : s ⊆ interior t by

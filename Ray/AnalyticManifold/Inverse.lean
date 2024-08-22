@@ -35,7 +35,7 @@ namespace ComplexInverseFun
 
 /-- Data for our 1D inverse function theorem -/
 structure Cinv (f : ℂ → S → T) (c : ℂ) (z : S) : Prop where
-  fa : HolomorphicAt II I (uncurry f) (c, z)
+  fa : MAnalyticAt II I (uncurry f) (c, z)
   nc : mfderiv I I (f c) z ≠ 0
 
 variable {f : ℂ → S → T} {c : ℂ} {z : S}
@@ -59,7 +59,7 @@ def Cinv.h (i : Cinv f c z) : ℂ × ℂ → ℂ × ℂ := fun x ↦ (x.1, i.f' 
 -- f' and h are analytic
 theorem Cinv.fa' (i : Cinv f c z) : AnalyticAt ℂ i.f' (c, i.z') := by
   have fa := i.fa
-  simp only [holomorphicAt_iff, uncurry, extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm,
+  simp only [mAnalyticAt_iff, uncurry, extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm,
     PartialEquiv.prod_coe] at fa
   exact fa.2
 theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := (analyticAt_fst _).prod i.fa'
@@ -106,14 +106,14 @@ def Cinv.dh (i : Cinv f c z) : ℂ × ℂ →L[ℂ] ℂ × ℂ := dc.prod i.df'
 lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := by
   apply HasMFDerivAt.comp (I' := I) (c, i.z')
   · rw [i.zz]
-    exact (HolomorphicAt.extChartAt (mem_extChartAt_source _ _)).mdifferentiableAt.hasMFDerivAt
+    exact (MAnalyticAt.extChartAt (mem_extChartAt_source _ _)).mdifferentiableAt.hasMFDerivAt
   · simp only [Cinv.df]
     have fd := i.fa.mdifferentiableAt
     rw [← i.zz] at fd
     apply MDifferentiableAt.hasMFDerivAt_comp2 fd
     · apply hasMFDerivAt_fst
     · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _ _ _)
-      exact (HolomorphicAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
+      exact (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
     · rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
     · rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
 
@@ -284,8 +284,8 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   nth_rw 2 [← PartialEquiv.left_inv _ m.1]; nth_rw 2 [← inv.2]
   refine (PartialEquiv.left_inv _ mf).symm
 
-theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.symm (c, i.fz') := by
-  apply AnalyticAt.holomorphicAt
+theorem Cinv.he_symm_mAnalytic (i : Cinv f c z) : MAnalyticAt II II i.he.symm (c, i.fz') := by
+  apply AnalyticAt.mAnalyticAt
   have d : ContDiffAt ℂ ⊤ i.he.symm _ :=
     ContDiffAt.to_localInverse i.ha.contDiffAt i.has_dhe le_top
   have e : i.h (c, i.z') = (c, i.fz') := by
@@ -293,12 +293,12 @@ theorem Cinv.he_symm_holomorphic (i : Cinv f c z) : HolomorphicAt II II i.he.sym
     simp only [Cinv.z', (extChartAt I z).left_inv (mem_extChartAt_source _ _)]
   rw [e] at d; exact (contDiffAt_iff_analytic_at2 le_top).mp d
 
-/-- Our inverse `g` is holomorphic -/
-theorem Cinv.ga (i : Cinv f c z) : HolomorphicAt II I (uncurry i.g) (c, f c z) := by
-  apply (HolomorphicAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq
-  · refine holomorphicAt_snd.comp (i.he_symm_holomorphic.comp_of_eq ?_ ?_)
-    · apply holomorphicAt_fst.prod
-      refine (HolomorphicAt.extChartAt ?_).comp holomorphicAt_snd
+/-- Our inverse `g` is analytic -/
+theorem Cinv.ga (i : Cinv f c z) : MAnalyticAt II I (uncurry i.g) (c, f c z) := by
+  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq
+  · refine mAnalyticAt_snd.comp (i.he_symm_mAnalytic.comp_of_eq ?_ ?_)
+    · apply mAnalyticAt_fst.prod
+      refine (MAnalyticAt.extChartAt ?_).comp mAnalyticAt_snd
       exact mem_extChartAt_source _ _
     · rfl
   · exact i.inv_at
@@ -306,13 +306,13 @@ theorem Cinv.ga (i : Cinv f c z) : HolomorphicAt II I (uncurry i.g) (c, f c z) :
 end ComplexInverseFun
 
 /-- The 1D inverse function theorem for complex manifolds (parameterized version):
-    If `f : ℂ → S → T` is holomorphic with nonzero derivative (w.r.t. the second
+    If `f : ℂ → S → T` is analytic with nonzero derivative (w.r.t. the second
     argument) at a point `(c,z)`, it is a parameterized local inverse `g : ℂ → T → S` s.t.
     `g c (f c z) = z` and `f c (g c z) = z` locally. -/
 theorem complex_inverse_fun {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : HolomorphicAt II I (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
+    (fa : MAnalyticAt II I (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∃ g : ℂ → T → S,
-      HolomorphicAt II I (uncurry g) (c, f c z) ∧
+      MAnalyticAt II I (uncurry g) (c, f c z) ∧
         (∀ᶠ x : ℂ × S in 𝓝 (c, z), g x.1 (f x.1 x.2) = x.2) ∧
           ∀ᶠ x : ℂ × T in 𝓝 (c, f c z), f x.1 (g x.1 x.2) = x.2 := by
   have i : ComplexInverseFun.Cinv f c z :=
@@ -321,14 +321,14 @@ theorem complex_inverse_fun {f : ℂ → S → T} {c : ℂ} {z : S}
   use i.g, i.ga, i.left_inv, i.right_inv
 
 /-- The 1D inverse function theorem for complex manifolds (nonparameterized version):
-    If `f : S → T` is holomorphic with nonzero derivative, it has a local inverse `g : T → S`. -/
-theorem complex_inverse_fun' {f : S → T} {z : S} (fa : HolomorphicAt I I f z)
+    If `f : S → T` is analytic with nonzero derivative, it has a local inverse `g : T → S`. -/
+theorem complex_inverse_fun' {f : S → T} {z : S} (fa : MAnalyticAt I I f z)
     (nc : mfderiv I I f z ≠ 0) :
     ∃ g : T → S,
-      HolomorphicAt I I g (f z) ∧ (∀ᶠ x in 𝓝 z, g (f x) = x) ∧ ∀ᶠ x in 𝓝 (f z), f (g x) = x := by
+      MAnalyticAt I I g (f z) ∧ (∀ᶠ x in 𝓝 z, g (f x) = x) ∧ ∀ᶠ x in 𝓝 (f z), f (g x) = x := by
   set f' : ℂ → S → T := fun _ z ↦ f z
-  have fa' : HolomorphicAt II I (uncurry f') (0, z) := fa.comp_of_eq holomorphicAt_snd rfl
+  have fa' : MAnalyticAt II I (uncurry f') (0, z) := fa.comp_of_eq mAnalyticAt_snd rfl
   rcases complex_inverse_fun fa' nc with ⟨g, ga, gf, fg⟩
-  use g 0, ga.comp (holomorphicAt_const.prod holomorphicAt_id),
+  use g 0, ga.comp (mAnalyticAt_const.prod mAnalyticAt_id),
     (continuousAt_const.prod continuousAt_id).eventually gf,
     (continuousAt_const.prod continuousAt_id).eventually fg

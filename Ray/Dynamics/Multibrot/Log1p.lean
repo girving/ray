@@ -71,7 +71,7 @@ lemma Real.abs_log_one_add_le {x : ℝ} (x1 : |x| < 1) :
   · rw [←Complex.ofReal_one, ←Complex.ofReal_add, ←Complex.ofReal_log, Complex.abs_ofReal,
       Complex.abs_ofReal] at h
     · exact h
-    · simp only [abs_lt] at x1 ; linarith
+    · simp only [abs_lt] at x1; linarith
   · simpa only [Complex.abs_ofReal]
 
 /-- Our bound is monotonic -/

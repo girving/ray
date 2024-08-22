@@ -38,7 +38,7 @@ Given such a function `f`, the proof proceeds in several stages:
 5. Since we can choose `(c0,c1)` as desired, we're done.
 
 References:
-1. https://en.wikipedia.org/wiki/Hartogs's_theorem_on_separate_holomorphicity
+1. https://en.wikipedia.org/wiki/Hartogs's_theorem_on_separate_mAnalyticity
 2. https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf
 -/
 

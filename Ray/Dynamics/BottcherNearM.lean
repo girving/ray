@@ -9,7 +9,7 @@ import Ray.Misc.Topology
 /-!
 ## Böttcher map near a superattracting fixed point
 
-We define superattracting fixed points of a parameterized holomorphic map `f : ℂ → S → S` on a 1D
+We define superattracting fixed points of a parameterized analytic map `f : ℂ → S → S` on a 1D
 complex manifold S (fixed points of order `d ≥ 2`).  If `a` is such a fixpoint, we get Böttcher
 coordinates `s.bottcherNear : ℂ → S → ℂ` that conjugate `f c` to `z ^ d` near `a`
 
@@ -58,7 +58,7 @@ structure Super {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace �
     [AnalyticManifold I S]
     (f : ℂ → S → S) (d : ℕ) (a : S) : Prop where
   d2 : 2 ≤ d
-  fa : Holomorphic ((modelWithCornersSelf ℂ ℂ).prod I) I (uncurry f)
+  fa : MAnalytic ((modelWithCornersSelf ℂ ℂ).prod I) I (uncurry f)
   f0 : ∀ c, f c a = a
   fd : ∀ c, orderAt (fl f a c) 0 = d
   fc : ∀ c, leadingCoeff (fl f a c) 0 = 1
@@ -84,28 +84,28 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
-  rw [@analyticAt_iff_holomorphicAt _ _ (ℂ × ℂ) (ModelProd ℂ ℂ) _ _ _ ℂ ℂ _ _ _ II I]
-  refine (((analyticAt_id _ _).sub analyticAt_const).holomorphicAt I I).comp ?_
-  refine (HolomorphicAt.extChartAt ?_).comp ?_
+  rw [analyticAt_iff_mAnalyticAt II I]
+  refine (((analyticAt_id _ _).sub analyticAt_const).mAnalyticAt I I).comp ?_
+  refine (MAnalyticAt.extChartAt ?_).comp ?_
   · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
       ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
       PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm, ModelWithCorners.toPartialEquiv_coe_symm,
       ModelWithCorners.left_inv, PartialHomeomorph.left_inv, mem_chart_source, PartialEquiv.trans_source,
       ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
-  · refine (s.fa _).comp₂ holomorphicAt_fst ?_
-    refine (HolomorphicAt.extChartAt_symm ?_).comp ?_
+  · refine (s.fa _).comp₂ mAnalyticAt_fst ?_
+    refine (MAnalyticAt.extChartAt_symm ?_).comp ?_
     · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
         ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
         PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
         Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
         PartialHomeomorph.map_source, mem_chart_source, and_self_iff]
-    · exact ((analyticAt_snd _).add analyticAt_const).holomorphicAt _ _
+    · exact ((analyticAt_snd _).add analyticAt_const).mAnalyticAt _ _
 
-/-- `(f c)^[k]` is holomorphic -/
-theorem Super.holomorphicAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
+/-- `(f c)^[k]` is analytic -/
+theorem Super.mAnalyticAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
     [ChartedSpace ℂ T] {g : ℂ × T → ℂ} {h : ℂ × T → S} {p : ℂ × T} {n : ℕ}
-    (ga : HolomorphicAt II I g p) (ha : HolomorphicAt II I h p) :
-    HolomorphicAt II I (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
+    (ga : MAnalyticAt II I g p) (ha : MAnalyticAt II I h p) :
+    MAnalyticAt II I (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact ha
   simp_rw [Function.iterate_succ']; exact (s.fa _).comp₂ ga h
 
@@ -130,15 +130,15 @@ theorem Super.continuousAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T
   induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
   simp_rw [Function.iterate_succ']; exact (s.fa _).continuousAt.comp (gc.prod h)
 
-/-- `(f c)^[k]` is holomorphic -/
-theorem Super.holomorphic_iter (s : Super f d a) {k : ℕ} :
-    Holomorphic II I fun p : ℂ × S ↦ (f p.1)^[k] p.2 := fun _ ↦
-  s.holomorphicAt_iter holomorphicAt_fst holomorphicAt_snd
+/-- `(f c)^[k]` is analytic -/
+theorem Super.mAnalytic_iter (s : Super f d a) {k : ℕ} :
+    MAnalytic II I fun p : ℂ × S ↦ (f p.1)^[k] p.2 := fun _ ↦
+  s.mAnalyticAt_iter mAnalyticAt_fst mAnalyticAt_snd
 
-/-- `(c,z) ↦ (c, (f c)^[k] z)` is holomorphic -/
-theorem Super.holomorphic_prod_iter (s : Super f d a) (n : ℕ) :
-    Holomorphic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by
-  intro p; apply holomorphicAt_fst.prod; apply s.holomorphic_iter
+/-- `(c,z) ↦ (c, (f c)^[k] z)` is analytic -/
+theorem Super.mAnalytic_prod_iter (s : Super f d a) (n : ℕ) :
+    MAnalytic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by
+  intro p; apply mAnalyticAt_fst.prod; apply s.mAnalytic_iter
 
 /-- `fl c 0 = 0` -/
 theorem Super.fl0 (s : Super f d a) {c : ℂ} : s.fl c 0 = 0 := by
@@ -188,10 +188,10 @@ theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
     apply mem_extChartAt_source
 
 /-- `f c` is nontrivial at `a` -/
-theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialHolomorphicAt (f c) a := by
+theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialMAnalyticAt (f c) a := by
   refine ⟨(s.fa _).along_snd, ?_⟩; simp only [s.f0]
   have n : ∃ᶠ w in 𝓝 (0 : ℂ), s.fl c w ≠ 0 := by
-    have e := (nontrivialHolomorphicAt_of_order (s.fla c).along_snd ?_).nonconst
+    have e := (nontrivialMAnalyticAt_of_order (s.fla c).along_snd ?_).nonconst
     · simp only [s.fl0, uncurry] at e; exact e
     · simp only [Super.fl, s.fd, uncurry]; exact s.d0
   contrapose n
@@ -426,9 +426,9 @@ theorem Super.basin_iff_attracts (s : Super f d a) : (c, z) ∈ s.basin ↔ Attr
 @[nolint unusedArguments]
 def Super.fp (_ : Super f d a) : ℂ × S → ℂ × S := fun p : ℂ × S ↦ (p.1, f p.1 p.2)
 
-/-- `s.fp` is holomorphic -/
-theorem Super.fpa (s : Super f d a) : Holomorphic II II s.fp := fun _ ↦
-  holomorphicAt_fst.prod (s.fa _)
+/-- `s.fp` is analytic -/
+theorem Super.fpa (s : Super f d a) : MAnalytic II II s.fp := fun _ ↦
+  mAnalyticAt_fst.prod (s.fa _)
 
 theorem Super.fp1 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).1 = p.1 := by
   induction' n with n h
@@ -450,20 +450,20 @@ def Super.bottcherNearp (s : Super f d a) : ℂ × S → ℂ :=
   uncurry s.bottcherNear
 
 /-- `s.bottcherNear` is analytic -/
-theorem Super.bottcherNear_holomorphic (s : Super f d a) :
-    HolomorphicOn II I (uncurry s.bottcherNear) s.near := by
+theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
+    MAnalyticOn II I (uncurry s.bottcherNear) s.near := by
   intro p m
   have e : uncurry s.bottcherNear =
       (fun p : ℂ × ℂ ↦ _root_.bottcherNear (s.fl p.1) d p.2) ∘ fun p : ℂ × S ↦
         (p.1, extChartAt I a p.2 - extChartAt I a a) :=
     rfl
   rw [e]; clear e
-  have h1 := (bottcherNear_analytic s.superNearC _ (s.mem_near_to_near' m)).holomorphicAt II I
-  have h2 : HolomorphicAt II II (fun p : ℂ × S ↦
+  have h1 := (bottcherNear_analytic s.superNearC _ (s.mem_near_to_near' m)).mAnalyticAt II I
+  have h2 : MAnalyticAt II II (fun p : ℂ × S ↦
       (p.1, extChartAt I a p.2 - extChartAt I a a)) p := by
-    apply holomorphicAt_fst.prod; apply HolomorphicAt.sub
-    exact (HolomorphicAt.extChartAt (s.near_subset_chart m)).comp holomorphicAt_snd
-    exact holomorphicAt_const
+    apply mAnalyticAt_fst.prod; apply MAnalyticAt.sub
+    exact (MAnalyticAt.extChartAt (s.near_subset_chart m)).comp mAnalyticAt_snd
+    exact mAnalyticAt_const
   refine h1.comp_of_eq h2 ?_
   simp only [sub_self]
 
@@ -471,10 +471,10 @@ theorem Super.bottcherNear_holomorphic (s : Super f d a) :
 def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fun c z ↦
   s.bottcherNear c ((f c)^[n] z)
 
-theorem Super.bottcherNearIter_holomorphic (s : Super f d a) {n : ℕ}
+theorem Super.bottcherNearIter_mAnalytic (s : Super f d a) {n : ℕ}
     (r : (c, (f c)^[n] z) ∈ s.near) :
-    HolomorphicAt II I (uncurry (s.bottcherNearIter n)) (c, z) := by
-  refine (s.bottcherNear_holomorphic _ ?_).comp₂ holomorphicAt_fst (s.holomorphic_iter _)
+    MAnalyticAt II I (uncurry (s.bottcherNearIter n)) (c, z) := by
+  refine (s.bottcherNear_mAnalytic _ ?_).comp₂ mAnalyticAt_fst (s.mAnalytic_iter _)
   exact r
 
 /-- `s.bottcherNear` satisfies the defining equation -/
@@ -530,16 +530,16 @@ theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     rw [u, mfderiv_sub, mfderiv_const, sub_zero]
     exact extChartAt_mderiv_ne_zero a
-    exact (HolomorphicAt.extChartAt (mem_extChartAt_source I a)).mdifferentiableAt
+    exact (MAnalyticAt.extChartAt (mem_extChartAt_source I a)).mdifferentiableAt
     apply mdifferentiableAt_const
 
 /-- `s.bottcherNear` is invertible near any `(c,a)` -/
 theorem Super.bottcherNear_has_inv (s : Super f d a) (c : ℂ) :
     ∃ bi : ℂ → ℂ → S,
-      HolomorphicAt II I (uncurry bi) (c, 0) ∧
+      MAnalyticAt II I (uncurry bi) (c, 0) ∧
         (∀ᶠ p : ℂ × S in 𝓝 (c, a), bi p.1 (s.bottcherNear p.1 p.2) = p.2) ∧
           ∀ᶠ p : ℂ × ℂ in 𝓝 (c, 0), s.bottcherNear p.1 (bi p.1 p.2) = p.2 := by
-  have h := complex_inverse_fun (s.bottcherNear_holomorphic _ (s.mem_near c))
+  have h := complex_inverse_fun (s.bottcherNear_mAnalytic _ (s.mem_near c))
       (s.bottcherNear_mfderiv_ne_zero c)
   simp only [s.bottcherNear_a] at h; exact h
 
@@ -571,10 +571,10 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     rw [← hg]; simp only [Function.comp, s.f0]
   rw [_root_.fl, hg']; clear hg'; rw [Iff.comm]
   have dg : DifferentiableAt ℂ g (extChartAt I a z) := by
-    rw [← hg]; apply AnalyticAt.differentiableAt; apply HolomorphicAt.analyticAt I I
+    rw [← hg]; apply AnalyticAt.differentiableAt; apply MAnalyticAt.analyticAt I I
     simp only [s.f0]
-    apply (HolomorphicAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
-    exact HolomorphicAt.extChartAt_symm (PartialEquiv.map_source _ zm)
+    apply (MAnalyticAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
+    exact MAnalyticAt.extChartAt_symm (PartialEquiv.map_source _ zm)
     simp only [PartialEquiv.left_inv _ zm, s.f0]; exact ezm
   have d0 : ∀ z, DifferentiableAt ℂ (fun z ↦ z - extChartAt I a a) z := fun z ↦
     differentiableAt_id.sub (differentiableAt_const _)
@@ -603,7 +603,7 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
 theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
     ∀ᶠ n in atTop, mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0 :=
   (s.basin_attracts m).eventually
-    (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
+    (mfderiv_ne_zero_eventually (s.bottcherNear_mAnalytic _ (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c))
 
 /-- `s.bottcherNearIter` is noncritical given noncriticality of the two parts -/
@@ -615,17 +615,17 @@ theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
 
 /-- `f c^[n]` is nontrivial at `a` -/
 theorem Super.iter_nontrivial_a [T2Space S] (s : Super f d a) :
-    NontrivialHolomorphicAt (fun z ↦ (f c)^[n] z) a := by
-  induction' n with n h; simp only [Function.iterate_zero_apply]; apply nontrivialHolomorphicAt_id
-  simp only [Function.iterate_succ_apply']; refine NontrivialHolomorphicAt.comp ?_ h
+    NontrivialMAnalyticAt (fun z ↦ (f c)^[n] z) a := by
+  induction' n with n h; simp only [Function.iterate_zero_apply]; apply nontrivialMAnalyticAt_id
+  simp only [Function.iterate_succ_apply']; refine NontrivialMAnalyticAt.comp ?_ h
   simp only [s.iter_a]; exact s.f_nontrivial c
 
 /-- `s.bottcherNearIter` is nontrivial at `a` -/
 theorem Super.bottcherNearIter_nontrivial_a [T2Space S] (s : Super f d a) :
-    NontrivialHolomorphicAt (s.bottcherNearIter n c) a :=
-  haveI b : NontrivialHolomorphicAt (s.bottcherNear c) ((f c)^[n] a) := by
+    NontrivialMAnalyticAt (s.bottcherNearIter n c) a :=
+  haveI b : NontrivialMAnalyticAt (s.bottcherNear c) ((f c)^[n] a) := by
     simp only [s.iter_a]
-    exact nontrivialHolomorphicAt_of_mfderiv_ne_zero
-      (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
+    exact nontrivialMAnalyticAt_of_mfderiv_ne_zero
+      (s.bottcherNear_mAnalytic _ (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c)
   b.comp s.iter_nontrivial_a

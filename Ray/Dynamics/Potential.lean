@@ -155,15 +155,15 @@ theorem Super.potential_eqn_iter (s : Super f d a) (n : ℕ) :
       Function.comp]
 
 /-- Our standard iteration is analytic -/
-theorem Super.iter_holomorphic' (s : Super f d a) (n : ℕ) :
-    Holomorphic II I fun p : ℂ × S ↦ (f p.1)^[n] p.2 := by
-  intro p; induction' n with n h; simp [Function.iterate_zero, holomorphicAt_snd]
+theorem Super.iter_mAnalytic' (s : Super f d a) (n : ℕ) :
+    MAnalytic II I fun p : ℂ × S ↦ (f p.1)^[n] p.2 := by
+  intro p; induction' n with n h; simp [Function.iterate_zero, mAnalyticAt_snd]
   simp only [Function.iterate_succ', Function.comp]
-  exact (s.fa _).comp₂ holomorphicAt_fst h
+  exact (s.fa _).comp₂ mAnalyticAt_fst h
 
-theorem Super.iter_holomorphic (s : Super f d a) (n : ℕ) :
-    Holomorphic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by
-  intro p; apply holomorphicAt_fst.prod; apply s.iter_holomorphic'
+theorem Super.iter_mAnalytic (s : Super f d a) (n : ℕ) :
+    MAnalytic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by
+  intro p; apply mAnalyticAt_fst.prod; apply s.iter_mAnalytic'
 
 /-- `s.potential` is continuous where we attract -/
 theorem ContinuousAt.potential_of_reaches (s : Super f d a) (a : ∃ n, (c, (f c)^[n] z) ∈ s.near) :
@@ -171,13 +171,13 @@ theorem ContinuousAt.potential_of_reaches (s : Super f d a) (a : ∃ n, (c, (f c
   rcases a with ⟨n, a⟩
   have e : uncurry s.potential =ᶠ[𝓝 (c, z)] fun p : ℂ × S ↦ s.potential' p.1 p.2 n := by
     have a' : ∀ᶠ p : ℂ × S in 𝓝 (c, z), (p.1, (f p.1)^[n] p.2) ∈ s.near :=
-      (s.iter_holomorphic n _).continuousAt.eventually_mem (s.isOpen_near.mem_nhds a)
+      (s.iter_mAnalytic n _).continuousAt.eventually_mem (s.isOpen_near.mem_nhds a)
     refine a'.mp (.of_forall fun p h ↦ ?_)
     simp only [uncurry, s.potential_eq h]
   simp only [continuousAt_congr e, Super.potential']
   refine ContinuousAt.rpow ?_ continuousAt_const ?_
   · apply Complex.continuous_abs.continuousAt.comp
-    refine ((s.bottcherNear_holomorphic _ ?_).comp (s.iter_holomorphic n (c, z))).continuousAt
+    refine ((s.bottcherNear_mAnalytic _ ?_).comp (s.iter_mAnalytic n (c, z))).continuousAt
     exact a
   · right; bound
 
@@ -479,7 +479,7 @@ theorem Super.has_nice_n (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op 
     ∃ n, s.IsNiceN c p n := by
   have et : ∀ᶠ z in 𝓝 a, (c, z) ∈ s.near ∧ mfderiv I I (s.bottcherNear c) z ≠ 0 := by
     apply
-      (mfderiv_ne_zero_eventually (s.bottcherNear_holomorphic _ (s.mem_near c)).along_snd
+      (mfderiv_ne_zero_eventually (s.bottcherNear_mAnalytic _ (s.mem_near c)).along_snd
           (s.bottcherNear_mfderiv_ne_zero c)).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
     refine .of_forall fun z m nc ↦ ?_; use m, nc

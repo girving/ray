@@ -15,8 +15,8 @@ open neighborhoods).  We slightly generalize this result, to
 
 1. Parameterized analytic maps `f : ℂ → ℂ → ℂ`, where the analogue of openness for `f`
    is openness of `(c,z) ↦ (c, f c z)`.
-2. Holomorphic maps `S → T` where `S, T` are 1D analytic manifolds
-3. (1) and (2) together: parameterized holomorphic maps `f : ℂ → S → T`, where
+2. MAnalytic maps `S → T` where `S, T` are 1D analytic manifolds
+3. (1) and (2) together: parameterized analytic maps `f : ℂ → S → T`, where
    `S, T` are 1D analytic manifolds.
 
 The parameterized versions follow straightforwardly from effective versions of the
@@ -37,7 +37,7 @@ open scoped Real Topology Manifold
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S]
 variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
 variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 
@@ -45,8 +45,8 @@ variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
     (fa : AnalyticOn ℂ f (closedBall z r))
     (rp : 0 < r) (ep : 0 < e) (ef : ∀ w, w ∈ sphere z r → e ≤ ‖f w - f z‖) :
-    NontrivialHolomorphicAt f z := by
-  have fh : HolomorphicOn I I f (closedBall z r) := fun _ m ↦ (fa _ m).holomorphicAt I I
+    NontrivialMAnalyticAt f z := by
+  have fh : MAnalyticOn I I f (closedBall z r) := fun _ m ↦ (fa _ m).mAnalyticAt I I
   have zs : z ∈ closedBall z r := mem_closedBall_self rp.le
   use fh _ zs
   contrapose ef
@@ -105,8 +105,8 @@ theorem abs_sub_self_lt {z : ℂ} {r : ℝ} (rp : 0 < r) : abs (z - z) < r := by
 
 /-- The parameterized open mapping theorem for analytic `f : ℂ → ℂ → ℂ`:
     `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods if `f` is nontrivial. -/
-theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} {c z : ℂ}
-    (n : NontrivialHolomorphicAt (f c) z) (fa : AnalyticAt ℂ (uncurry f) (c, z)) :
+theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} {c z : ℂ}
+    (n : NontrivialMAnalyticAt (f c) z) (fa : AnalyticAt ℂ (uncurry f) (c, z)) :
     𝓝 (c, f c z) ≤ Filter.map (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
   -- Reduce to a neighborhood of (c,z) on which f is analytic
   rw [Filter.le_map_iff]
@@ -179,16 +179,16 @@ theorem NontrivialHolomorphicAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ
     (Metric.ball_mem_nhds _ (by bound)) ef) (image_subset _ ss)
 
 /-- If `f : S → T` is nontrivial, it is nontrivial when written in charts -/
-theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHolomorphicAt f z) :
-    NontrivialHolomorphicAt (fun w ↦ extChartAt I (f z) (f ((extChartAt I z).symm w)))
+theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAnalyticAt f z) :
+    NontrivialMAnalyticAt (fun w ↦ extChartAt I (f z) (f ((extChartAt I z).symm w)))
       (extChartAt I z z) := by
-  use n.holomorphicAt.2.holomorphicAt I I
+  use n.mAnalyticAt.2.mAnalyticAt I I
   have c := n.nonconst; contrapose c
   simp only [Filter.not_frequently, not_not, ← extChartAt_map_nhds' I z,
     Filter.eventually_map] at c ⊢
   apply c.mp
   apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-  apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
+  apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
   refine .of_forall fun w fm m fn ↦ ?_
   simp only at fm m fn
   rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
@@ -197,11 +197,11 @@ theorem NontrivialHolomorphicAt.inCharts {f : S → T} {z : S} (n : NontrivialHo
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
     `AnalyticAt.eventually_constant_or_nhds_le_map_nhds`. -/
-theorem NontrivialHolomorphicAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S → T} {z : S}
-    (n : NontrivialHolomorphicAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
-  refine le_antisymm ?_ n.holomorphicAt.continuousAt
+theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S → T} {z : S}
+    (n : NontrivialMAnalyticAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
+  refine le_antisymm ?_ n.mAnalyticAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
-  have ga : AnalyticAt ℂ g (extChartAt I z z) := by rw [← hg]; exact n.holomorphicAt.2
+  have ga : AnalyticAt ℂ g (extChartAt I z z) := by rw [← hg]; exact n.mAnalyticAt.2
   cases' ga.eventually_constant_or_nhds_le_map_nhds with h h
   · contrapose h; clear h; simp only [Filter.not_eventually]
     apply n.inCharts.nonconst.mp; simp only [← hg, Ne, imp_self, Filter.eventually_true]
@@ -218,7 +218,7 @@ theorem NontrivialHolomorphicAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S �
     have e : (fun w ↦ (extChartAt I (f z)).symm
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
       apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-      apply (n.holomorphicAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
+      apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
       refine .of_forall fun w fm m ↦ ?_
       simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
@@ -230,17 +230,17 @@ theorem Filter.prod_map_id_map_eq {A B C : Type} {f : Filter A} {g : Filter B} {
 
 /-- The local open mapping theorem, parameterized manifold version: if `f : ℂ → S → T` is
     nontrivial, then `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods. -/
-theorem NontrivialHolomorphicAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f : ℂ → S → T}
-    {c : ℂ} {z : S} (n : NontrivialHolomorphicAt (f c) z)
-    (fa : HolomorphicAt II I (uncurry f) (c, z)) :
+theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f : ℂ → S → T}
+    {c : ℂ} {z : S} (n : NontrivialMAnalyticAt (f c) z)
+    (fa : MAnalyticAt II I (uncurry f) (c, z)) :
     𝓝 (c, f c z) = Filter.map (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
   refine le_antisymm ?_ (continuousAt_fst.prod fa.continuousAt)
   generalize hg : (fun e x ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ (uncurry g) (c, extChartAt I z z) := by
-    rw [← hg]; exact (holomorphicAt_iff.mp fa).2
-  have gn : NontrivialHolomorphicAt (g c) (extChartAt I z z) := by rw [← hg]; exact n.inCharts
+    rw [← hg]; exact (mAnalyticAt_iff.mp fa).2
+  have gn : NontrivialMAnalyticAt (g c) (extChartAt I z z) := by rw [← hg]; exact n.inCharts
   have h := gn.nhds_le_map_nhds_param' ga
-  -- We follow the 𝓝 ≤ 𝓝 argument of nontrivial_holomorphic_at.nhds_le_map_nhds
+  -- We follow the 𝓝 ≤ 𝓝 argument of nontrivial_mAnalytic_at.nhds_le_map_nhds
   -- above, but a bit more complicated due to the parameterization.
   simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map, Filter.prod_map_id_map_eq,
     Function.comp] at h

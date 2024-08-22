@@ -14,9 +14,9 @@ Combining `s.ray` and `s.bottcher`, we have an analytic bijection `s.homeomorphS
 postcritical points `{z | s.potential c z < s.p c}` and the disk `ball 0 (s.p c)` (or equivalently
 an all-`c` bijection `s.homeomorph` between `s.post` and `s.ext`).
 
-To make `s.bottcher` easier to work with later, define it nonholomorphically everywhere on `ℂ × S`
+To make `s.bottcher` easier to work with later, define it nonanalytically everywhere on `ℂ × S`
 such that the defining equation always holds.  In particular, this means that
-`s.potential c z = abs (s.bottcher c z)` unconditionally.  It is holomorphic only on `s.post`,
+`s.potential c z = abs (s.bottcher c z)` unconditionally.  It is analytic only on `s.post`,
 since for higher potentials we choose roots arbitrarily.
 -/
 
@@ -42,10 +42,10 @@ variable {y : ℂ × ℂ}
 
 /-- `s.ray` has a global inverse -/
 theorem Super.ray_inv (s : Super f d a) [OnePreimage s] : ∃ b : ℂ → S → ℂ,
-    HolomorphicOn II I (uncurry b) s.post ∧
+    MAnalyticOn II I (uncurry b) s.post ∧
       ∀ y : ℂ × ℂ, y ∈ s.ext → b y.1 (s.ray y.1 y.2) = y.2 := by
   rw [← s.ray_bij.image_eq]
-  exact global_complex_inverse_fun_open s.ray_holomorphicOn (fun _ m ↦ s.ray_noncritical m)
+  exact global_complex_inverse_fun_open s.ray_mAnalyticOn (fun _ m ↦ s.ray_noncritical m)
       s.ray_bij.injOn s.isOpen_ext
 
 /-- The bottcher map throughout `s.post` -/
@@ -54,7 +54,7 @@ def Super.bottcherPost (s : Super f d a) [OnePreimage s] : ℂ → S → ℂ :=
 
 /-- The bottcher map tweaked so the defining equation holds even where it isn't continuous.
 
-    On `s.post`, `s.bottcher` is holomorphic.  Otherwise, we iterate until we reach `s.post` and
+    On `s.post`, `s.bottcher` is analytic.  Otherwise, we iterate until we reach `s.post` and
     pull back the value using an arbitrary `d^n`th root (or use 1 outside `s.basin`). -/
 def Super.bottcher (s : Super f d a) [OnePreimage s] : ℂ → S → ℂ := fun c z ↦
   if h : ∃ n, (c, (f c)^[n] z) ∈ s.post then
@@ -76,9 +76,9 @@ theorem Super.eqOn_bottcher_bottcherPost (s : Super f d a) [OnePreimage s] :
     EqOn (uncurry s.bottcher) (uncurry s.bottcherPost) s.post := fun _ m ↦
   s.bottcher_eq_bottcherPost m
 
-/-- `s.bottcher` is holomorphic on `s.post` -/
-theorem Super.bottcher_holomorphicOn (s : Super f d a) [OnePreimage s] :
-    HolomorphicOn II I (uncurry s.bottcher) s.post := by
+/-- `s.bottcher` is analytic on `s.post` -/
+theorem Super.bottcher_mAnalyticOn (s : Super f d a) [OnePreimage s] :
+    MAnalyticOn II I (uncurry s.bottcher) s.post := by
   intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr
   exact s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)
 
@@ -123,8 +123,8 @@ def Super.homeomorph (s : Super f d a) [OnePreimage s] : PartialHomeomorph (ℂ 
   toPartialEquiv := s.equiv
   open_source := s.isOpen_ext
   open_target := s.isOpen_post
-  continuousOn_toFun := continuousOn_fst.prod s.ray_holomorphicOn.continuousOn
-  continuousOn_invFun := continuousOn_fst.prod s.bottcher_holomorphicOn.continuousOn
+  continuousOn_toFun := continuousOn_fst.prod s.ray_mAnalyticOn.continuousOn
+  continuousOn_invFun := continuousOn_fst.prod s.bottcher_mAnalyticOn.continuousOn
 
 /-- `c`-slices of `s.ext` and `s.post` are (analytically) bijective -/
 def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialEquiv ℂ S where
@@ -142,8 +142,8 @@ def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialH
   toPartialEquiv := s.equivSlice c
   open_source := s.isOpen_ext.snd_preimage c
   open_target := s.isOpen_post.snd_preimage c
-  continuousOn_toFun _ m := (s.ray_holomorphic m).along_snd.continuousAt.continuousWithinAt
-  continuousOn_invFun _ m := (s.bottcher_holomorphicOn _ m).along_snd.continuousAt.continuousWithinAt
+  continuousOn_toFun _ m := (s.ray_mAnalytic m).along_snd.continuousAt.continuousWithinAt
+  continuousOn_invFun _ m := (s.bottcher_mAnalyticOn _ m).along_snd.continuousAt.continuousWithinAt
 
 /-- `s.post` is connected -/
 theorem Super.post_connected (s : Super f d a) [OnePreimage s] : IsConnected s.post := by
@@ -176,11 +176,11 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
   have h0 : ∀ {c z}, (c, z) ∈ s.post → s.bottcher c (f c z) = s.bottcher c z ^ d := by
     intro c z m
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d by
-      refine (HolomorphicOn.eq_of_locally_eq ?_ (fun z m ↦
-        (s.bottcher_holomorphicOn (c, z) m).along_snd.pow) (s.post_slice_connected c).isPreconnected
+      refine (MAnalyticOn.eq_of_locally_eq ?_ (fun z m ↦
+        (s.bottcher_mAnalyticOn (c, z) m).along_snd.pow) (s.post_slice_connected c).isPreconnected
         ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
       intro z m
-      exact (s.bottcher_holomorphicOn _ (s.stays_post m)).along_snd.comp (s.fa _).along_snd
+      exact (s.bottcher_mAnalyticOn _ (s.stays_post m)).along_snd.comp (s.fa _).along_snd
     have e := s.bottcher_eq_bottcherNear c
     have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp

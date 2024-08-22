@@ -6,7 +6,7 @@ import Ray.Dynamics.Multibrot.Postcritical
 We derive effective bounds and estimates for the Böttcher coordinates of the Multibrot sets.  These
 are used in `Isomorphism.lean` and `Connected.lean` to prove our main theoretical results.
 
-We mainly need that our diagonal Böttcher `bottcher d c` is holomorphic with derivative 1 at `∞`,
+We mainly need that our diagonal Böttcher `bottcher d c` is analytic with derivative 1 at `∞`,
 by showing that the analytically continued map is given by the infinite product for large `c`.
 This does not follow immediately from our dynamical work, which covers only finite `c : ℂ`.  I'm
 uneasy that I've missed some basic conceptual arguments that would get to the analyticity result
@@ -46,15 +46,15 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
     have z0' : z ≠ 0 := Complex.abs.ne_zero_iff.mp z0.ne'
     convert @e z⁻¹ _; rw [inv_coe (inv_ne_zero z0'), inv_inv]
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz, t]
-  have a0 : HolomorphicOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
+  have a0 : MAnalyticOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
     intro z m
-    refine (s.bottcher_holomorphicOn _ ?_).along_snd.comp (holomorphic_inv.comp holomorphic_coe _)
+    refine (s.bottcher_mAnalyticOn _ ?_).along_snd.comp (mAnalytic_inv.comp mAnalytic_coe _)
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, t] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
     rw [inv_coe z0]; refine postcritical_large (by linarith) ?_
     rwa [map_inv₀, le_inv c0]; exact Complex.abs.pos z0
-  have a1 : HolomorphicOn I I (bottcherNear (fl (f d) ∞ c) d) t := by
-    intro z m; apply AnalyticAt.holomorphicAt
+  have a1 : MAnalyticOn I I (bottcherNear (fl (f d) ∞ c) d) t := by
+    intro z m; apply AnalyticAt.mAnalyticAt
     apply bottcherNear_analytic_z (superNearF d c)
     simp only [mem_setOf, mem_closedBall, Complex.dist_eq, sub_zero, t] at m ⊢
     refine lt_of_le_of_lt m ?_
@@ -182,7 +182,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
 
 /-- bottcher is nonsingular at `∞` -/
 theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
-  simp only [mfderiv, (bottcherHolomorphic d _ multibrotExt_inf).mdifferentiableAt, if_pos,
+  simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt, if_pos,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
     RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,

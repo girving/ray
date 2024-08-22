@@ -55,7 +55,7 @@ variable {r : ℂ → ℂ → S}
 /-- `Eqn s n r (c,z)` means `r` looks locally like external rays near `z`, mapping forwards
     by `f c^[n]` to hit `s.near`. -/
 structure Eqn (s : Super f d a) (n : ℕ) (r : ℂ → ℂ → S) (x : ℂ × ℂ) : Prop where
-  holo : HolomorphicAt II I (uncurry r) x
+  holo : MAnalyticAt II I (uncurry r) x
   near : (x.1, (f x.1)^[n] (r x.1 x.2)) ∈ s.near
   eqn : s.bottcherNear x.1 ((f x.1)^[n] (r x.1 x.2)) = x.2 ^ d ^ n
 
@@ -68,7 +68,7 @@ structure Grow (s : Super f d a) (c : ℂ) (p : ℝ) (n : ℕ) (r : ℂ → ℂ 
 
 /-- Construct `Eqn` using fewer `∀ᶠ` -/
 theorem eqn_near {s : Super f d a} {n : ℕ} {r : ℂ → ℂ → S} {c x : ℂ}
-    (holo : HolomorphicAt II I (uncurry r) (c, x)) (mem : (c, (f c)^[n] (r c x)) ∈ s.near)
+    (holo : MAnalyticAt II I (uncurry r) (c, x)) (mem : (c, (f c)^[n] (r c x)) ∈ s.near)
     (loc : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), s.bottcherNear y.1 ((f y.1)^[n] (r y.1 y.2)) = y.2 ^ d ^ n) :
     ∀ᶠ y in 𝓝 (c, x), Eqn s n r y := by
   have m : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), (y.1, (f y.1)^[n] (r y.1 y.2)) ∈ s.near := by
@@ -182,7 +182,7 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
   rcases x with ⟨c, x⟩; contrapose x0; simp only [not_not] at x0 ⊢
   replace x0 : mfderiv I I (fun y ↦ s.bottcherNearIter n c (r c y)) x = 0 := by
     rw [←Function.comp_def,
-      mfderiv_comp x (s.bottcherNearIter_holomorphic e.self_of_nhds.near).along_snd.mdifferentiableAt
+      mfderiv_comp x (s.bottcherNearIter_mAnalytic e.self_of_nhds.near).along_snd.mdifferentiableAt
         e.self_of_nhds.holo.along_snd.mdifferentiableAt,
       x0, ContinuousLinearMap.zero_comp]
   have loc : (fun y ↦ s.bottcherNearIter n c (r c y)) =ᶠ[𝓝 x] fun y ↦ y ^ d ^ n :=
@@ -207,12 +207,12 @@ theorem Grow.p1 (g : Grow s c p n r) : p < 1 := by
       Prod.mk.inj_iff, eq_self_iff_true, true_and_iff, exists_eq_right, Complex.abs.map_one]
 
 /-- `r` is analytic throughout the domain -/
-theorem Grow.holo (g : Grow s c p n r) : HolomorphicOn II I (uncurry r) ({c} ×ˢ closedBall 0 p) :=
+theorem Grow.holo (g : Grow s c p n r) : MAnalyticOn II I (uncurry r) ({c} ×ˢ closedBall 0 p) :=
   fun _ m ↦ (g.eqn.filter_mono (nhds_le_nhdsSet m)).self_of_nhds.holo
 
 /-- `Grow` exists for small `p`, since small `p` is near `a` -/
 theorem Super.grow_start (s : Super f d a) (c : ℂ) : ∃ p r, 0 < p ∧ Grow s c p 0 r := by
-  have ba := s.bottcherNear_holomorphic _ (s.mem_near c)
+  have ba := s.bottcherNear_mAnalytic _ (s.mem_near c)
   have nc := s.bottcherNear_mfderiv_ne_zero c
   rcases complex_inverse_fun ba nc with ⟨r, ra, rb, br⟩
   rw [s.bottcherNear_a] at ra br
@@ -278,7 +278,7 @@ theorem Grow.anti (g : Grow s c p n r) {q : ℝ} (nonneg : 0 ≤ q) (le : q ≤ 
 theorem eqn_unique {r0 r1 : ℂ → ℂ → S} {x : ℂ × ℂ} (e0 : ∀ᶠ y in 𝓝 x, Eqn s n r0 y)
     (e1 : ∀ᶠ y in 𝓝 x, Eqn s n r1 y) (r01 : r0 x.1 x.2 = r1 x.1 x.2) (x0 : x.2 ≠ 0) :
     uncurry r0 =ᶠ[𝓝 x] uncurry r1 := by
-  have ba := s.bottcherNearIter_holomorphic e0.self_of_nhds.near
+  have ba := s.bottcherNearIter_mAnalytic e0.self_of_nhds.near
   have inj := ba.local_inj' (eqn_noncritical e0 x0); nth_rw 2 [r01] at inj
   have t : Tendsto (fun x : ℂ × ℂ ↦ (x.1, r0 x.1 x.2, r1 x.1 x.2)) (𝓝 x)
       (𝓝 (x.1, r0 x.1 x.2, r1 x.1 x.2)) :=
@@ -299,7 +299,7 @@ structure Eqns (s : Super f d a) (n : ℕ) (r0 r : ℂ → ℂ → S) (x : ℂ �
 
 /-- `Eqns` implies `r` is analytic -/
 theorem Eqns.holo {r0 r : ℂ → ℂ → S} {x : ℂ × ℂ} (e : Eqns s n r0 r x) :
-    HolomorphicAt II I (uncurry r) x :=
+    MAnalyticAt II I (uncurry r) x :=
   e.eqn.self_of_nhds.holo
 
 /-- `Eqns` is local -/
@@ -354,7 +354,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   generalize hb : s.bottcherNearIter n = b
   have bz : b c z = x ^ d ^ n := by
     refine eq_of_nhds_neBot (cp.map ?_ (Filter.tendsto_map' ?_))
-    · rw [← hb]; exact (s.bottcherNearIter_holomorphic m).along_snd.continuousAt
+    · rw [← hb]; exact (s.bottcherNearIter_mAnalytic m).along_snd.continuousAt
     · have e : ∀ y, y ∈ t → (b c ∘ r c) y = y ^ d ^ n := by
         intro y m
         simp only [Function.comp, ← hb, ← hn]
@@ -363,14 +363,14 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
   have post : Postcritical s c z := lt_of_le_of_lt (_root_.trans (le_of_eq pz) ax) g.post
   rw [← pz] at za
   -- Invert s.bottcherNearIter at z
-  have ba := s.bottcherNearIter_holomorphic m
+  have ba := s.bottcherNearIter_mAnalytic m
   replace nc := s.bottcherNearIter_mfderiv_ne_zero nc (post.not_precritical za.ne')
   rcases complex_inverse_fun ba nc with ⟨i, ia, ib, bi⟩
   simp only [hb, bz] at ia bi ib
   have pt : Tendsto (fun p : ℂ × ℂ ↦ (p.1, p.2 ^ d ^ n)) (𝓝 (c, x)) (𝓝 (c, x ^ d ^ n)) :=
     continuousAt_fst.prod (continuousAt_snd.pow _)
-  have ian : HolomorphicAt II I (uncurry fun e y : ℂ ↦ i e (y ^ d ^ n)) (c, x) :=
-    ia.comp₂_of_eq holomorphicAt_fst holomorphicAt_snd.pow rfl
+  have ian : MAnalyticAt II I (uncurry fun e y : ℂ ↦ i e (y ^ d ^ n)) (c, x) :=
+    ia.comp₂_of_eq mAnalyticAt_fst mAnalyticAt_snd.pow rfl
   use fun e y ↦ i e (y ^ d ^ n); constructor
   · -- We satisfy eqn near x
     apply eqn_near ian
@@ -420,7 +420,7 @@ theorem Grow.unique {r0 r1 : ℂ → ℂ → S} {p0 p1 : ℝ} {n0 n1 : ℕ} (g0 
   · simp only [Metric.closedBall_eq_empty.mpr pos, singleton_prod, image_empty, nhdsSet_empty,
       Filter.EventuallyEq, Filter.eventually_bot]
   have m : (c, (0 : ℂ)) ∈ {c} ×ˢ closedBall (0 : ℂ) p0 := mem_domain c (not_lt.mp pos)
-  refine HolomorphicOn.eq_of_locally_eq g0.holo (g1.holo.mono (domain_mono _ p01))
+  refine MAnalyticOn.eq_of_locally_eq g0.holo (g1.holo.mono (domain_mono _ p01))
       (domain_preconnected _ _) ⟨(c, 0), m, ?_⟩
   -- Injectivity of s.bottcherNear gives us the rest
   have t : ContinuousAt (fun x : ℂ × ℂ ↦ (x.1, r0 x.1 x.2, r1 x.1 x.2)) (c, 0) :=
@@ -428,7 +428,7 @@ theorem Grow.unique {r0 r1 : ℂ → ℂ → S} {p0 p1 : ℝ} {n0 n1 : ℕ} (g0 
       ((g0.eqn.filter_mono (nhds_le_nhdsSet m)).self_of_nhds.holo.continuousAt.prod
         (g1.eqn.filter_mono (nhds_le_nhdsSet (domain_mono c p01 m))).self_of_nhds.holo.continuousAt)
   simp only [ContinuousAt, g0.zero, g1.zero] at t
-  have inj := (s.bottcherNear_holomorphic _ (s.mem_near c)).local_inj'
+  have inj := (s.bottcherNear_mAnalytic _ (s.mem_near c)).local_inj'
     (s.bottcherNear_mfderiv_ne_zero c)
   refine ((t.eventually inj).and (g0.start.and g1.start)).mp (.of_forall ?_)
   intro ⟨e, y⟩ ⟨inj, s0, s1⟩; exact inj (s0.trans s1.symm)

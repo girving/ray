@@ -8,7 +8,7 @@ We show that
 1. `(c,c)` is postcritical for each `c` not in the Multibrot set.  To see this, note that `0` and
    `∞` are the only critical points of `f z = z^d + c`, and `c` is postcritical since it is the
    image of `0` (and thus has smaller potential).
-2. Therefore, the diagonal Böttcher map `bottcher d c = s.bottcher c c` is holomorphic throughout
+2. Therefore, the diagonal Böttcher map `bottcher d c = s.bottcher c c` is analytic throughout
    the exterior of the Multibrot set.
 3. `bottcher d` is nontrivial throughout the exterior of the Multibrot set, as otherwise triviality
    spreads throughout `𝕊`.
@@ -76,8 +76,8 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
       Filter.Frequently.mem_of_closed (f.mp (.of_forall fun _ m ↦ t01 m)) t0c
     refine ⟨tendsto_nhds_unique_of_frequently_eq ?_ ?_
       (f.mp (.of_forall fun _ m ↦ m.1)), m0⟩
-    · exact (bottcherHolomorphic d _ (ue m0.1)).continuousAt.comp continuousAt_fst
-    · exact (bottcherHolomorphic d _ (ue m0.2)).continuousAt.comp continuousAt_snd
+    · exact (bottcherMAnalytic d _ (ue m0.1)).continuousAt.comp continuousAt_fst
+    · exact (bottcherMAnalytic d _ (ue m0.2)).continuousAt.comp continuousAt_snd
   have t12' : closure t2 ⊆ t1 := by rw [← t1c.closure_eq]; exact closure_mono t12
   have t2c' : IsCompact (closure t2) := isClosed_closure.isCompact
   have t2ne' : (closure t2).Nonempty := t2ne.closure
@@ -117,12 +117,12 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   rw [← xy] at m1 m2 p0i; clear xy ym yp y
   have db : mfderiv I I (bottcher d) x = 0 := by
     contrapose m2; simp only [mem_closure_iff_frequently, Filter.not_frequently]
-    refine ((bottcherHolomorphic d _ xm).local_inj m2).mp (.of_forall ?_)
+    refine ((bottcherMAnalytic d _ xm).local_inj m2).mp (.of_forall ?_)
     intro ⟨x, y⟩ inj ⟨xy, e, _⟩; simp only at xy e inj; exact xy (inj e)
   by_cases p0 : p ≠ 0
   · -- Case 2: At a singular point we're not locally injective,
     -- so we can find a smaller potential value
-    rcases not_local_inj_of_mfderiv_zero (bottcherHolomorphic d _ xm) db with ⟨r, ra, rx, e⟩
+    rcases not_local_inj_of_mfderiv_zero (bottcherMAnalytic d _ xm) db with ⟨r, ra, rx, e⟩
     simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff] at e
     rw [← xp, ← abs_bottcher, Complex.abs.ne_zero_iff] at p0
     have h := frequently_smaller p0
@@ -146,16 +146,16 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
 -/
 
 lemma ray_exists (d : ℕ) [Fact (2 ≤ d)] :
-    ∃ g, HolomorphicOn I I g (bottcher d '' multibrotExt d) ∧
+    ∃ g, MAnalyticOn I I g (bottcher d '' multibrotExt d) ∧
       ∀ z : 𝕊, z ∈ multibrotExt d → g (bottcher d z) = z :=
-  global_complex_inverse_fun_open' (bottcherHolomorphic d) bottcher_inj isOpen_multibrotExt
+  global_complex_inverse_fun_open' (bottcherMAnalytic d) bottcher_inj isOpen_multibrotExt
 
 /-- The inverse to `bottcher d`, defining external rays throughout the exterior -/
 def ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → 𝕊 :=
   Classical.choose (ray_exists d)
 
-/-- `ray d` is holomorphic on `ball 0 1` -/
-theorem rayHolomorphic (d : ℕ) [Fact (2 ≤ d)] : HolomorphicOn I I (ray d) (ball 0 1) := by
+/-- `ray d` is analytic on `ball 0 1` -/
+theorem rayMAnalytic (d : ℕ) [Fact (2 ≤ d)] : MAnalyticOn I I (ray d) (ball 0 1) := by
   rw [← bottcher_surj d]; exact (Classical.choose_spec (ray_exists d)).1
 
 /-- `ray d` is the left inverse to `bottcher d` -/
@@ -185,5 +185,5 @@ def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : PartialHomeomorph 𝕊 ℂ w
   right_inv' z m := bottcher_ray m
   open_source := isOpen_multibrotExt
   open_target := isOpen_ball
-  continuousOn_toFun := (bottcherHolomorphic d).continuousOn
-  continuousOn_invFun := (rayHolomorphic d).continuousOn
+  continuousOn_toFun := (bottcherMAnalytic d).continuousOn
+  continuousOn_invFun := (rayMAnalytic d).continuousOn

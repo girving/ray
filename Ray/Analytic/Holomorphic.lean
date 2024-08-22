@@ -18,7 +18,7 @@ import Ray.Hartogs.Osgood
 import Ray.Misc.Topology
 
 /-!
-## Basics about complex analytic (holomorphic) functions
+## Basics about complex analytic functions
 -/
 
 open Complex (abs exp I log)
