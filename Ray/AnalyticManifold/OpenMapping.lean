@@ -182,7 +182,7 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
 theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAnalyticAt f z) :
     NontrivialMAnalyticAt (fun w ↦ extChartAt I (f z) (f ((extChartAt I z).symm w)))
       (extChartAt I z z) := by
-  use n.mAnalyticAt.2.mAnalyticAt I I
+  use (mAnalyticAt_iff_of_boundaryless.mp n.mAnalyticAt).2.mAnalyticAt I I
   have c := n.nonconst; contrapose c
   simp only [Filter.not_frequently, not_not, ← extChartAt_map_nhds' I z,
     Filter.eventually_map] at c ⊢
@@ -201,7 +201,8 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S →
     (n : NontrivialMAnalyticAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
   refine le_antisymm ?_ n.mAnalyticAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
-  have ga : AnalyticAt ℂ g (extChartAt I z z) := by rw [← hg]; exact n.mAnalyticAt.2
+  have ga : AnalyticAt ℂ g (extChartAt I z z) := by
+    rw [← hg]; exact (mAnalyticAt_iff_of_boundaryless.mp n.mAnalyticAt).2
   cases' ga.eventually_constant_or_nhds_le_map_nhds with h h
   · contrapose h; clear h; simp only [Filter.not_eventually]
     apply n.inCharts.nonconst.mp; simp only [← hg, Ne, imp_self, Filter.eventually_true]
@@ -237,7 +238,7 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f :
   refine le_antisymm ?_ (continuousAt_fst.prod fa.continuousAt)
   generalize hg : (fun e x ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ (uncurry g) (c, extChartAt I z z) := by
-    rw [← hg]; exact (mAnalyticAt_iff.mp fa).2
+    rw [← hg]; exact (mAnalyticAt_iff_of_boundaryless.mp fa).2
   have gn : NontrivialMAnalyticAt (g c) (extChartAt I z z) := by rw [← hg]; exact n.inCharts
   have h := gn.nhds_le_map_nhds_param' ga
   -- We follow the 𝓝 ≤ 𝓝 argument of nontrivial_mAnalytic_at.nhds_le_map_nhds

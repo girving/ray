@@ -369,21 +369,27 @@ theorem prod_mem_inf_of_mem_atInf {s : Set (X × ℂ)} {x : X} (f : s ∈ (𝓝 
 
 /-- `coe : ℂ → 𝕊` is analytic -/
 theorem mAnalytic_coe : MAnalytic I I (fun z : ℂ ↦ (z : 𝕊)) := by
-  rw [mAnalytic_iff]; use continuous_coe; intro z
+  rw [mAnalytic_iff_of_boundaryless]; use continuous_coe; intro z
   simp only [extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_symm, PartialEquiv.refl_coe,
     Function.comp_id, id_eq, Function.comp, PartialEquiv.invFun_as_coe]
-  rw [← PartialEquiv.invFun_as_coe]; simp only [coePartialEquiv, toComplex_coe]; apply analyticAt_id
+  rw [← PartialEquiv.invFun_as_coe]
+  simp only [coePartialEquiv, toComplex_coe]
+  apply analyticAt_id
 
 /-- `OnePoint.toComplex : 𝕊 → ℂ` is analytic except at `∞` -/
 theorem mAnalyticAt_toComplex {z : ℂ} : MAnalyticAt I I (OnePoint.toComplex : 𝕊 → ℂ) z := by
-  rw [mAnalyticAt_iff]; use continuousAt_toComplex
+  rw [mAnalyticAt_iff_of_boundaryless]
+  use continuousAt_toComplex
   simp only [toComplex_coe, Function.comp, extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_coe,
     id, PartialEquiv.symm_symm, coePartialEquiv_apply, coePartialEquiv_symm_apply]
   apply analyticAt_id
 
 /-- Inversion is analytic -/
 theorem mAnalytic_inv : MAnalytic I I fun z : 𝕊 ↦ z⁻¹ := by
-  rw [mAnalytic_iff]; use continuous_inv; intro z; induction' z using OnePoint.rec with z
+  rw [mAnalytic_iff_of_boundaryless]
+  use continuous_inv
+  intro z
+  induction' z using OnePoint.rec with z
   · simp only [inv_inf, extChartAt_inf, ← coe_zero, extChartAt_coe, Function.comp,
       PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, coePartialEquiv_symm_apply,
       toComplex_coe, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm, coePartialEquiv_apply,
@@ -464,7 +470,8 @@ theorem mAnalyticAt_fill_coe {f : ℂ → T} {y : T} (fa : MAnalyticAt I I f z) 
 theorem mAnalyticAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
     (fa : ∀ᶠ z in atInf, MAnalyticAt I I f z) (fi : Tendsto f atInf (𝓝 y)) :
     MAnalyticAt I I (fill f y) ∞ := by
-  rw [mAnalyticAt_iff]; use continuousAt_fill_inf fi
+  rw [mAnalyticAt_iff_of_boundaryless]
+  use continuousAt_fill_inf fi
   simp only [Function.comp, extChartAt, PartialHomeomorph.extend, fill, rec_inf,
     modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, chartAt_inf,
     PartialHomeomorph.symm_toPartialEquiv, PartialEquiv.symm_symm, PartialHomeomorph.toFun_eq_coe,

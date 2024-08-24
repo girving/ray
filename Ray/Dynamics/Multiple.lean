@@ -183,7 +183,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : MAnalyticAt I 
     apply mem_extChartAt_source; apply mem_extChartAt_source
     exact MDifferentiableAt.comp _ fd
       (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt
-  simp only [mAnalyticAt_iff, Function.comp, hg] at fa
+  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'

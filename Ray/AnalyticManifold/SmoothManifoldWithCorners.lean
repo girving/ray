@@ -208,4 +208,55 @@ theorem mfderiv_comp' {f : M → N} (x : M) {g : N → O} (hg : MDifferentiableA
     mfderiv I K (fun x ↦ g (f x)) x = (mfderiv J K g (f x)).comp (mfderiv I J f x) :=
   mfderiv_comp _ hg hf
 
+/-- Chart derivatives are invertible (left inverse) -/
+theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
+    (m : y ∈ (extChartAt I x).source) :
+    (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)).comp
+        (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y) =
+      ContinuousLinearMap.id 𝕜 (TangentSpace I y) := by
+  have m' : extChartAt I x y ∈ (extChartAt I x).target := PartialEquiv.map_source _ m
+  have mc : y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m
+  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m').mdifferentiableWithinAt le_top
+  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
+  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' _ m')
+  simp only [mdifferentiableWithinAt_univ] at d1
+  have c := mfderiv_comp y d0 d1
+  refine Eq.trans c.symm ?_
+  rw [← mfderiv_id]
+  apply Filter.EventuallyEq.mfderiv_eq
+  rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).source
+  use extChartAt_source_mem_nhds' I m
+  intro z zm
+  simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
+
+/-- Chart derivatives are invertible (right inverse) -/
+theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
+    (m : y ∈ (extChartAt I x).target) :
+    (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) ((extChartAt I x).symm y)).comp
+        (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm y) =
+      ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) y) := by
+  have m' : (extChartAt I x).symm y ∈ (extChartAt I x).source := PartialEquiv.map_target _ m
+  have mc : (extChartAt I x).symm y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m'
+  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m).mdifferentiableWithinAt le_top
+  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
+  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' _ m)
+  simp only [mdifferentiableWithinAt_univ] at d1
+  have c := mfderiv_comp y d1 d0
+  refine Eq.trans c.symm ?_; clear c; rw [← mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
+  rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).target
+  have n := extChartAt_target_mem_nhdsWithin' I m'
+  simp only [ModelWithCorners.range_eq_univ, nhdsWithin_univ,
+    PartialEquiv.right_inv _ m] at n
+  use n; intro z zm
+  simp only [Function.comp, id, PartialEquiv.right_inv _ zm, Function.comp]
+
+/-- Chart derivatives are invertible (right inverse) -/
+theorem extChartAt_mderiv_right_inverse' [I.Boundaryless] {x y : M}
+    (m : y ∈ (extChartAt I x).source) :
+    (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y).comp
+        (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)) =
+      ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) (extChartAt I x y)) := by
+  have h := extChartAt_mderiv_right_inverse (PartialEquiv.map_source _ m)
+  rw [PartialEquiv.left_inv _ m] at h; exact h
+
 end Deriv

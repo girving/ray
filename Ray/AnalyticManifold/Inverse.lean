@@ -59,8 +59,8 @@ def Cinv.h (i : Cinv f c z) : ℂ × ℂ → ℂ × ℂ := fun x ↦ (x.1, i.f' 
 -- f' and h are analytic
 theorem Cinv.fa' (i : Cinv f c z) : AnalyticAt ℂ i.f' (c, i.z') := by
   have fa := i.fa
-  simp only [mAnalyticAt_iff, uncurry, extChartAt_prod, Function.comp, PartialEquiv.prod_coe_symm,
-    PartialEquiv.prod_coe] at fa
+  simp only [mAnalyticAt_iff_of_boundaryless, uncurry, extChartAt_prod, Function.comp,
+    PartialEquiv.prod_coe_symm, PartialEquiv.prod_coe] at fa
   exact fa.2
 theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := (analyticAt_fst _).prod i.fa'
 

@@ -378,7 +378,7 @@ theorem isClosed_critical {f : ℂ → S → T} (fa : MAnalytic II I (uncurry f)
 theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
     (f0 : ∀ x y, MAnalyticAt I I (fun x ↦ f (x, y)) x)
     (f1 : ∀ x y, MAnalyticAt I I (fun y ↦ f (x, y)) y) : MAnalytic II I f := by
-  rw [mAnalytic_iff]; use fc; intro p; apply osgood_at'
+  rw [mAnalytic_iff_of_boundaryless]; use fc; intro p; apply osgood_at'
   have fm : ∀ᶠ q in 𝓝 (extChartAt II p p),
       f ((extChartAt II p).symm q) ∈ (extChartAt I (f p)).source := by
     refine (fc.continuousAt.comp (continuousAt_extChartAt_symm II p)).eventually_mem

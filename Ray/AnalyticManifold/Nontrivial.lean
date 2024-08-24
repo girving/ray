@@ -187,7 +187,7 @@ theorem eq_of_pow_eq {p q : X → ℂ} {t : Set X} {d : ℕ} (pc : ContinuousOn 
 theorem MAnalyticAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
     (fa : MAnalyticAt I I f z) (ga : MAnalyticAt I I g z) :
     (∀ᶠ w in 𝓝 z, f w = g w) ∨ ∀ᶠ w in 𝓝[{z}ᶜ] z, f w ≠ g w := by
-  simp only [mAnalyticAt_iff, Function.comp] at fa ga
+  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp] at fa ga
   rcases fa with ⟨fc, fa⟩; rcases ga with ⟨gc, ga⟩
   by_cases fg : f z ≠ g z
   · right; contrapose fg; simp only [not_not]
@@ -441,7 +441,10 @@ theorem MAnalyticOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space 
       apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
       refine .of_forall fun z e ↦ ?_; simp only at e
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
-    have da : AnalyticAt ℂ d z := by rw [← hd, ← hz]; exact (fa _ xs).2.sub (ga _ xs).2
+    have da : AnalyticAt ℂ d z := by
+      rw [← hd, ← hz]
+      exact (mAnalyticAt_iff_of_boundaryless.mp (fa _ xs)).2.sub
+        (mAnalyticAt_iff_of_boundaryless.mp (ga _ xs)).2
     clear hd ex ex' xt t e fa ga f g xs hz x sp ht
     -- Forget about manifolds
     rcases da.exists_ball_analyticOn with ⟨r, rp, da⟩
