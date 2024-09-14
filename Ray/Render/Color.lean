@@ -230,7 +230,7 @@ def Interval.quantize (x : Interval) : Option UInt8 :=
 /-- `Color.quantize` is conservative -/
 @[approx] lemma Color.mem_approx_quantize {c' : Color ℝ} {c : Color Interval} (cm : c' ∈ approx c) :
     c' ∈ approx c.quantize := by
-  rw [quantize]
+  unfold quantize
   generalize hr : c.r.quantize = r
   generalize hg : c.g.quantize = g
   generalize hb : c.b.quantize = b

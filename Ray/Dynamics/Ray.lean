@@ -78,7 +78,7 @@ theorem Super.ext_connected (s : Super f d a) [OnePreimage s] : IsConnected s.ex
   refine ⟨⟨(0, 0), s.mem_ext 0⟩, isPreconnected_of_forall (0, 0) ?_⟩; intro ⟨c, x⟩ m
   use(fun x ↦ (c, x)) '' {x | (c, x) ∈ s.ext} ∪ univ ×ˢ {0}
   simp only [mem_image, mem_union, union_subset_iff, mem_setOf, mem_prod_eq, mem_univ,
-    true_and_iff, mem_singleton_iff, eq_self_iff_true, or_true_iff]
+    true_and, mem_singleton_iff, eq_self_iff_true, or_true]
   refine ⟨⟨?_, ?_⟩, ?_, ?_⟩
   · intro y n; simp only [mem_image, mem_setOf] at n; rcases n with ⟨x, m, e⟩; rw [e] at m; exact m
   · intro ⟨c, x⟩ m; simp only [mem_prod_eq, mem_singleton_iff] at m; rw [m.2]; exact s.mem_ext c
@@ -178,7 +178,7 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
     rw [x0] at d
     replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
     rw [deriv_pow, mul_eq_zero, Nat.cast_eq_zero, pow_eq_zero_iff', pow_eq_zero_iff'] at d
-    simp only [s.d0, false_and_iff, false_or_iff] at d; exact d.1
+    simp only [s.d0, false_and, false_or] at d; exact d.1
   simp only [mfderiv_comp x
       (s.bottcherNearIter_mAnalytic (s.ray_near post)).along_snd.mdifferentiableAt
       (s.ray_mAnalytic post).along_snd.mdifferentiableAt,

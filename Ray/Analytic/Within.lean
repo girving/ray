@@ -27,21 +27,26 @@ lemma AnalyticWithinAt.congr_set {f : E → F} {s t : Set E} {x : E} (hf : Analy
     r_pos := by bound
     hasSum := by
       intro y m n
-      simp only [EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, dist_zero_right] at m n ⊢
-      exact hp.hasSum (by simpa only [mem_def, dist_self_add_left, n.1, @st (x + y)]) n.2
-    continuousWithinAt := by
-      have e : 𝓝[s] x = 𝓝[t] x := nhdsWithin_eq_iff_eventuallyEq.mpr hst
-      simpa only [ContinuousWithinAt, e] using hp.continuousWithinAt }⟩
+      apply hp.hasSum
+      simp only [mem_insert_iff, add_right_eq_self, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal,
+        dist_zero_right] at m n ⊢
+      rcases m with m | m
+      · exact .inl m
+      · specialize @st (x + y) _
+        · simpa only [dist_self_add_left] using n.1
+        · simp only [eq_iff_iff] at st
+          exact Or.inr (st.mpr m)
+      · simp only [EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, dist_zero_right] at n ⊢
+        exact n.2 }⟩
 
 /-- Analyticity within is open (within the set) -/
 lemma AnalyticWithinAt.eventually_analyticWithinAt [CompleteSpace F] {f : E → F} {s : Set E} {x : E}
     (hf : AnalyticWithinAt 𝕜 f s x) : ∀ᶠ y in 𝓝[s] x, AnalyticWithinAt 𝕜 f s y := by
-  obtain ⟨_, g, fg, ga⟩ := analyticWithinAt_iff_exists_analyticAt.mp hf
+  obtain ⟨g, fg, ga⟩ := analyticWithinAt_iff_exists_analyticAt.mp hf
   simp only [Filter.EventuallyEq, eventually_nhdsWithin_iff] at fg ⊢
   filter_upwards [fg.eventually_nhds, ga.eventually_analyticAt]
   intro z fg ga zs
-  refine analyticWithinAt_iff_exists_analyticAt.mpr ⟨?_, g, ?_, ga⟩
-  · refine ga.continuousAt.continuousWithinAt.congr_of_eventuallyEq ?_ (fg.self_of_nhds zs)
-    rw [← eventually_nhdsWithin_iff] at fg
-    exact fg
-  · simpa only [Filter.EventuallyEq, eventually_nhdsWithin_iff]
+  refine analyticWithinAt_iff_exists_analyticAt.mpr ⟨g, ?_, ga⟩
+  rw [← eventually_nhdsWithin_iff] at fg
+  refine fg.filter_mono (nhdsWithin_mono _ ?_)
+  simp only [zs, insert_eq_of_mem, subset_insert]

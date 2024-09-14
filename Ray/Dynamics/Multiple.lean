@@ -66,7 +66,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero
     rw [(Filter.EventuallyEq.symm ib).mfderiv_eq] at d0
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
-    simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false_iff] at d0
+    simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false] at d0
     rw [bottcherNear_zero] at d0; exact d0
     rw [bottcherNear_zero]; exact ia.mdifferentiableAt
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
@@ -84,7 +84,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     have t2 : ContinuousAt f 0 := s.fa0.continuousAt
     have m0 : ∀ᶠ z in 𝓝 0, i (a * bottcherNear f d z) ∈ t := by
       refine (ia.continuousAt.comp_of_eq t0 ?_).eventually_mem (s.o.mem_nhds ?_)
-      repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0, s.t0, Function.comp]
+      repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0, s.t0, Function.comp_def]
     have m1 : ∀ᶠ z in 𝓝 0, z ∈ t := s.o.eventually_mem s.t0
     simp only [ContinuousAt, bottcherNear_zero, MulZeroClass.mul_zero, i0, s.f0] at t0 t1 t2
     have tp := t0.prod_mk ba.continuousAt
@@ -109,13 +109,13 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     (f0 : f 0 = 0) :
     ∃ g : ℂ → ℂ, AnalyticAt ℂ g 0 ∧ g 0 = 0 ∧ ∀ᶠ z in 𝓝[{0}ᶜ] 0, g z ≠ z ∧ f (g z) = f z := by
   by_cases o0 : orderAt f 0 = 0
-  · simp only [orderAt_eq_zero_iff fa, f0, Ne, eq_self_iff_true, not_true, or_false_iff] at o0
+  · simp only [orderAt_eq_zero_iff fa, f0, Ne, eq_self_iff_true, not_true, or_false] at o0
     use fun z ↦ -z, (analyticAt_id _ _).neg, neg_zero; rw [eventually_nhdsWithin_iff]
     have e0 : ∀ᶠ z in 𝓝 0, f (-z) = 0 := by
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
     refine o0.mp (e0.mp (.of_forall fun z f0' f0 z0 ↦ ?_))
     simp only [mem_compl_singleton_iff] at z0; rw [Pi.zero_apply] at f0
-    rwa [f0, f0', eq_self_iff_true, and_true_iff, neg_ne_self ℂ]
+    rwa [f0, f0', eq_self_iff_true, and_true, neg_ne_self ℂ]
   have o1 : orderAt f 0 ≠ 1 := by
     have d := df.deriv; contrapose d; simp only [not_not] at d
     exact deriv_ne_zero_of_orderAt_eq_one d
@@ -183,7 +183,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : MAnalyticAt I 
     apply mem_extChartAt_source; apply mem_extChartAt_source
     exact MDifferentiableAt.comp _ fd
       (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt
-  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp, hg] at fa
+  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'

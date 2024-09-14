@@ -85,8 +85,6 @@ theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere 
     rw [← not_nonempty_iff_eq_empty] at n
     simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
 
-attribute [bound] Int.ceil_lt_add_one
-
 /-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
 theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     ∃ t, t ∈ Ioc 0 (2 * π) ∧ z = circleMap c r t := by
@@ -323,9 +321,8 @@ theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (clo
     finite := by
       simp only [Complex.volume_closedBall]
       apply ENNReal.mul_lt_top
-      · simp only [ne_eq, ENNReal.pow_eq_top_iff, ENNReal.ofReal_ne_top, OfNat.ofNat_ne_zero,
-          not_false_eq_true, and_true]
-      · simp only [ne_eq, ENNReal.coe_ne_top, not_false_eq_true]
+      · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+      · exact ENNReal.coe_lt_top
     pos := by
       simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
         ENNReal.coe_pos, NNReal.pi_pos, and_true]

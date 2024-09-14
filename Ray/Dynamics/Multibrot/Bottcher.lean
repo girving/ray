@@ -143,7 +143,7 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs
   rcases term_prod_exists (superNearF d c) _ (inv_mem_t c16 cz) with ⟨p, h⟩
   rw [h.tprod_eq]; simp only [HasProd] at h
   apply le_of_tendsto' (Filter.Tendsto.comp Complex.continuous_abs.continuousAt (h.sub_const 1))
-  clear h; intro A; simp only [Function.comp]
+  clear h; intro A; simp only [Function.comp_def]
   rw [(by norm_num : (16 : ℝ) = 4 * 4), mul_assoc]
   refine dist_prod_one_le_abs_sum ?_ (by linarith)
   refine le_trans (Finset.sum_le_sum fun n _ ↦ term_approx d (by linarith) cz n) ?_
@@ -183,7 +183,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
 /-- bottcher is nonsingular at `∞` -/
 theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
   simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt, if_pos,
-    writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp,
+    writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp_def,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
     RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,

@@ -14,7 +14,7 @@ over the extended reals.  `log (f z)` is subharmonic if `f z` is analytic, but `
 
 open Complex (abs)
 open scoped Real
-open Set (univ Ici)
+open Set
 noncomputable section
 
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
@@ -94,8 +94,8 @@ theorem LipschitzOnWith.log (b : ℝ) : LipschitzOnWith (-b).exp.toNNReal Real.l
 /-- `maxLog` is Lipschitz -/
 theorem LipschitzWith.maxLog (b : ℝ) : LipschitzWith (-b).exp.toNNReal (maxLog b) := by
   rw [← lipschitzOnWith_univ]
-  have h := (LipschitzOnWith.log b).comp ((LipschitzWith.id.const_max b.exp).lipschitzOnWith univ)
-    (by simp only [id_eq, Set.mapsTo_univ_iff, Set.mem_Ici, le_max_iff, le_refl, true_or,
-      forall_const])
+  have h := (LipschitzOnWith.log b).comp ((LipschitzWith.id.const_max b.exp).lipschitzOnWith
+    (s := univ)) (by simp only [id_eq, Set.mapsTo_univ_iff, Set.mem_Ici, le_max_iff, le_refl,
+      true_or, forall_const])
   have e : Real.log ∘ max (Real.exp b) = _root_.maxLog b := by funext x; simp [_root_.maxLog]
   simpa only [e, mul_one, id_eq, ge_iff_le, lipschitzOnWith_univ] using h

@@ -44,7 +44,7 @@ def Super.p (s : Super f d a) (c : ℂ) : ℝ :=
 
 /-- `s.ps c` is nonempty (since it contains 1) -/
 theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
-  ⟨1, by simp only [Super.ps, mem_setOf, eq_self_iff_true, true_or_iff]⟩
+  ⟨1, by simp only [Super.ps, mem_setOf, eq_self_iff_true, true_or]⟩
 
 /-- `s.ps c` is compact -/
 theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] : IsCompact (s.ps c) := by

@@ -176,7 +176,7 @@ theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
   have h := s.critical_0 c
   have e := PartialEquiv.left_inv _ (mem_extChartAt_source I a)
   contrapose h; simp only [Critical, Super.fl, fl, ← ne_eq] at h ⊢
-  simp only [mfderiv_eq_fderiv, _root_.fl, Function.comp]
+  simp only [mfderiv_eq_fderiv, _root_.fl, Function.comp_def]
   rw [fderiv_sub_const, ←mfderiv_eq_fderiv]
   apply mderiv_comp_ne_zero' (extChartAt_mderiv_ne_zero' ?_)
   · apply mderiv_comp_ne_zero' (f := f c)
@@ -195,13 +195,13 @@ theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialMAnalyticAt (
     · simp only [s.fl0, uncurry] at e; exact e
     · simp only [Super.fl, s.fd, uncurry]; exact s.d0
   contrapose n
-  simp only [Filter.not_frequently, not_not, Super.fl, fl, Function.comp, sub_eq_zero] at n ⊢
+  simp only [Filter.not_frequently, not_not, Super.fl, fl, Function.comp_def, sub_eq_zero] at n ⊢
   have gc : ContinuousAt (fun x ↦ (extChartAt I a).symm (x + extChartAt I a a)) 0 := by
     refine (continuousAt_extChartAt_symm I a).comp_of_eq ?_ (by simp only [zero_add])
     exact continuousAt_id.add continuousAt_const
   simp only [ContinuousAt, zero_add, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)] at gc
   refine (gc.eventually n).mp (.of_forall ?_)
-  intro x h; simp only [_root_.fl, Function.comp, h, sub_self]
+  intro x h; simp only [_root_.fl, Function.comp_def, h, sub_self]
 
 /-- Close enough to `a`, `f c z ∈ (ext_chart_at I a).source` -/
 theorem Super.stays_in_chart (s : Super f d a) (c : ℂ) :
@@ -302,7 +302,7 @@ theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
 /-- `(c,a)` is near -/
 theorem Super.mem_near (s : Super f d a) (c : ℂ) : (c, a) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
-    mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and_iff,
+    mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and,
     Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq, sub_self]
   exact (s.superNearC.s (Set.mem_univ _)).t0
 
@@ -324,7 +324,7 @@ theorem Super.mem_near_to_near' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.ne
 theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) :
     (c, f c z) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
-    mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and_iff,
+    mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and,
     Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq,
     sub_self] at m ⊢
   rcases mem_iUnion.mp (s.near_subset' m.2) with ⟨b, mb⟩
@@ -334,22 +334,23 @@ theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.n
   · apply s.fr_stays b (c, z)
     simp only [m.1, Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod,
       Set.mem_inter_iff, mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-      Set.mem_univ, true_and_iff, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
+      Set.mem_univ, true_and, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
       Set.mem_setOf_eq, sub_self]
     simp only [m.1, mb.1, mb.2, Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod,
       Set.mem_inter_iff, mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-      Set.mem_univ, true_and_iff, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
+      Set.mem_univ, true_and, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
       Set.mem_setOf_eq, sub_self, mem_ball_iff_norm, Prod.norm_def, max_lt_iff, Prod.fst_sub,
       Prod.snd_sub, sub_zero]
   · have h := (s.superNearC.s (Set.mem_univ c)).ft m.2
-    simp only [Super.fl, _root_.fl, Function.comp, sub_add_cancel, PartialEquiv.left_inv _ m.1] at h
+    simp only [Super.fl, _root_.fl, Function.comp_def, sub_add_cancel,
+      PartialEquiv.left_inv _ m.1] at h
     exact h
 
 /-- Once we're in `s.near`, we stay there forever -/
 theorem Super.iter_stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) (n : ℕ) :
     (c, (f c)^[n] z) ∈ s.near := by
   induction' n with n h; simp only [Function.iterate_zero, id, m]
-  simp only [Nat.add_succ, Function.iterate_succ', s.stays_near h, Function.comp]
+  simp only [Nat.add_succ, Function.iterate_succ', s.stays_near h, Function.comp_def]
 
 /-- More iterations stay in `s.near` -/
 theorem Super.iter_stays_near' (s : Super f d a) {a b : ℕ} (m : (c, (f c)^[a] z) ∈ s.near)
@@ -377,7 +378,7 @@ theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.n
   have g0 : g 0 = a := by
     simp only [← hg]; simp only [zero_add]; exact PartialEquiv.left_inv _ (mem_extChartAt_source _ _)
   have h := gc.tendsto.comp t; clear t gc m
-  simp only [Function.comp, g0] at h
+  simp only [Function.comp_def, g0] at h
   rw [← attracts_shift n]
   refine Filter.Tendsto.congr ?_ h; clear h
   intro k; simp only [← hg]; induction' k with k h
@@ -385,7 +386,7 @@ theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.n
   exact PartialEquiv.left_inv _ (s.near_subset_chart r)
   simp only [Function.iterate_succ_apply']
   generalize hx : (s.fl c)^[k] (extChartAt I a ((f c)^[n] z) - extChartAt I a a) = x; rw [hx] at h
-  simp only [Super.fl, _root_.fl, Function.comp, sub_add_cancel, h,
+  simp only [Super.fl, _root_.fl, Function.comp_def, sub_add_cancel, h,
     ←Function.iterate_succ_apply' (f c)]
   apply PartialEquiv.left_inv _ (s.near_subset_chart (s.iter_stays_near r _))
 
@@ -483,7 +484,7 @@ theorem Super.bottcherNear_eqn (s : Super f d a) (m : (c, z) ∈ s.near) :
   simp only [Super.bottcherNear]
   have e : extChartAt I a (f c z) - extChartAt I a a =
       s.fl c (extChartAt I a z - extChartAt I a a) := by
-    simp only [Function.comp, Super.fl, _root_.fl, sub_add_cancel,
+    simp only [Function.comp_def, Super.fl, _root_.fl, sub_add_cancel,
       PartialEquiv.left_inv _ (s.near_subset_chart m)]
   rw [e, _root_.bottcherNear_eqn (s.superNearC.s (Set.mem_univ c)) (s.mem_near_to_near' m)]
 
@@ -568,7 +569,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
   clear m0 d0
   generalize hg : (fun w ↦ extChartAt I (f c a) (f e ((extChartAt I a).symm w))) = g
   have hg' : extChartAt I a ∘ f e ∘ (extChartAt I a).symm = g := by
-    rw [← hg]; simp only [Function.comp, s.f0]
+    rw [← hg]; simp only [Function.comp_def, s.f0]
   rw [_root_.fl, hg']; clear hg'; rw [Iff.comm]
   have dg : DifferentiableAt ℂ g (extChartAt I a z) := by
     rw [← hg]; apply AnalyticAt.differentiableAt; apply MAnalyticAt.analyticAt I I
@@ -584,7 +585,8 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     exact differentiableAt_id.add (differentiableAt_const _)
   simp only [deriv.comp _ (d0 _) d1, deriv_sub_const, deriv_id'', one_mul]
   rw [deriv.comp _ _ _]
-  · simp only [deriv_add_const, deriv_sub_const, deriv_id'', mul_one, sub_add_cancel, Function.comp]
+  · simp only [deriv_add_const, deriv_sub_const, deriv_id'', mul_one, sub_add_cancel,
+      Function.comp_def]
   · simp only [sub_add_cancel, dg]
   · exact differentiableAt_id.add (differentiableAt_const _)
 

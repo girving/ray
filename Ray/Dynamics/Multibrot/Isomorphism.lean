@@ -104,7 +104,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
       rw [nhds_prod_eq, ← Filter.prod_map_map_eq, ← (bottcherNontrivial xm).nhds_eq_map_nhds, ←
         (bottcherNontrivial ym).nhds_eq_map_nhds, m1.1, ← nhds_prod_eq]
       apply (continuous_id.prod_mk continuous_id).continuousAt.frequently
-      simp only [eq_self_iff_true, true_and_iff, ← yp, ← abs_bottcher]; apply frequently_smaller
+      simp only [eq_self_iff_true, true_and, ← yp, ← abs_bottcher]; apply frequently_smaller
       rw [← Complex.abs.ne_zero_iff, abs_bottcher, yp]; exact p0
     simp only [Filter.frequently_map] at f
     rcases(f.and_eventually (Ne.eventually_ne xy)).exists with ⟨⟨v, w⟩, ⟨bvw, pv⟩, vw⟩

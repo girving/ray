@@ -66,14 +66,14 @@ theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedF
   constructor
   · intro h t tl; rcases h t tl with ⟨r, _, m⟩
     by_cases rp : 0 < r
-    · use r⁻¹; simp only [rp, inv_pos, true_and_iff]; intro x xs; refine m ?_
+    · use r⁻¹; simp only [rp, inv_pos, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
       simp only [← lt_inv (norm_pos_iff.mpr xs.2) rp, xs.1, mem_setOf_eq, norm_inv]
-    · use 1; simp only [zero_lt_one, true_and_iff]; intro x xs; refine m ?_
+    · use 1; simp only [zero_lt_one, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
       simp only [mem_setOf_eq, norm_inv]; simp only [not_lt] at rp
       exact lt_of_le_of_lt rp (inv_pos.mpr (norm_pos_iff.mpr xs.2))
-  · intro h t tl; rcases h t tl with ⟨r, rp, m⟩; use r⁻¹; simp only [true_and_iff]
+  · intro h t tl; rcases h t tl with ⟨r, rp, m⟩; use r⁻¹; simp only [true_and]
     intro x xs; simp only [mem_setOf_eq] at xs
     have m := @m x⁻¹ ?_; · simp only [inv_inv] at m; exact m
     simp only [mem_inter_iff, mem_ball_zero_iff, norm_inv, mem_compl_iff, mem_singleton_iff,

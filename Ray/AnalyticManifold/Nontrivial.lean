@@ -89,7 +89,7 @@ theorem IsPreconnected.nontrivialAnalyticOn (p : IsPreconnected s) (fa : Analyti
 /-- Nonconstant entire functions are nontrivial -/
 theorem Entire.nontrivialAnalyticOn (fa : AnalyticOn ℂ f univ) (ne : ∃ a b, f a ≠ f b) :
     NontrivialAnalyticOn f univ := by
-  refine isPreconnected_univ.nontrivialAnalyticOn fa ?_; simpa only [Set.mem_univ, true_and_iff]
+  refine isPreconnected_univ.nontrivialAnalyticOn fa ?_; simpa only [Set.mem_univ, true_and]
 
 /-- The roots of a nontrivial analytic function form a discrete topology -/
 theorem NontrivialAnalyticOn.discreteTopology (n : NontrivialAnalyticOn f s) (a : ℂ) :
@@ -128,8 +128,8 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
   apply IsCountable.isTotallyDisconnected
   simp only [_root_.allRootsOfUnity, setOf_exists]; apply countable_iUnion; intro n
   by_cases n0 : n = 0
-  simp only [n0, Ne, eq_self_iff_true, not_true, false_and_iff, setOf_false, countable_empty]
-  simp only [Ne, n0, not_false_iff, true_and_iff]
+  simp only [n0, Ne, eq_self_iff_true, not_true, false_and, setOf_false, countable_empty]
+  simp only [Ne, n0, not_false_iff, true_and]
   have np : 0 < n := Nat.pos_of_ne_zero n0
   generalize hn' : (⟨n, np⟩ : ℕ+) = n'
   have e : {z : ℂ | z ^ n = 1} ⊆ (fun x : ℂˣ ↦ (x : ℂ)) '' (rootsOfUnity n' ℂ : Set ℂˣ) := by
@@ -187,7 +187,7 @@ theorem eq_of_pow_eq {p q : X → ℂ} {t : Set X} {d : ℕ} (pc : ContinuousOn 
 theorem MAnalyticAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
     (fa : MAnalyticAt I I f z) (ga : MAnalyticAt I I g z) :
     (∀ᶠ w in 𝓝 z, f w = g w) ∨ ∀ᶠ w in 𝓝[{z}ᶜ] z, f w ≠ g w := by
-  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp] at fa ga
+  simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def] at fa ga
   rcases fa with ⟨fc, fa⟩; rcases ga with ⟨gc, ga⟩
   by_cases fg : f z ≠ g z
   · right; contrapose fg; simp only [not_not]
@@ -198,7 +198,7 @@ theorem MAnalyticAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {
   · left; clear fa ga
     replace e := (continuousAt_extChartAt I z).eventually e
     replace e := Filter.EventuallyEq.fun_comp e (_root_.extChartAt I (f z)).symm
-    apply e.congr; simp only [Function.comp]; clear e
+    apply e.congr; simp only [Function.comp_def]; clear e
     apply (fc.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
     apply (gc.eventually_mem (extChartAt_source_mem_nhds I (g z))).mp
     refine eventually_nhds_iff.mpr ⟨(_root_.extChartAt I z).source,
@@ -329,7 +329,7 @@ theorem nontrivialMAnalyticAt_id [AnalyticManifold I S] (z : S) :
     rw [← hu]
     exact (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target _ _) ot
   have zu : extChartAt I z z ∈ u := by
-    simp only [mem_inter_iff, mem_extChartAt_target, true_and_iff, mem_preimage,
+    simp only [mem_inter_iff, mem_extChartAt_target, true_and, mem_preimage,
       PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt, ← hu]
   rcases Metric.isOpen_iff.mp uo _ zu with ⟨r, rp, ru⟩
   generalize ha : extChartAt I z z + r / 2 = a
@@ -342,7 +342,7 @@ theorem nontrivialMAnalyticAt_id [AnalyticManifold I S] (z : S) :
   rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
   rw [PartialEquiv.right_inv _ au.1, ← ha]
   simp only [Ne, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero,
-    one_ne_zero, or_false_iff, rp.ne', not_false_iff]; norm_num
+    one_ne_zero, or_false, rp.ne', not_false_iff]; norm_num
 
 /-- If `orderAt f z ≠ 0` (`f` has a zero of positive order), then `f` is nontrivial at `z` -/
 theorem nontrivialMAnalyticAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z)

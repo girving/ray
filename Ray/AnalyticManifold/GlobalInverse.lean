@@ -120,7 +120,7 @@ theorem weak_global_complex_inverse_fun_open {f : S → T} [Nonempty S] {s : Set
   rcases global_complex_inverse_fun_open fa' nc' inj' (isOpen_univ.prod so) with ⟨g, ga, gf⟩
   use g 0; constructor
   · intro z ⟨w, m⟩; refine (ga ⟨0, z⟩ ⟨⟨0, w⟩, ⟨mem_univ _, m.1⟩, ?_⟩).along_snd
-    simp only [Prod.ext_iff, eq_self_iff_true, true_and_iff]; exact m.2
+    simp only [Prod.ext_iff, eq_self_iff_true, true_and]; exact m.2
   · intro z m; exact gf ⟨0, z⟩ ⟨mem_univ _, m⟩
 
 /-- The global 1D inverse function theorem (open case): if `f : S → T` is injective on an

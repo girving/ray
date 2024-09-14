@@ -102,7 +102,7 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
     [Nontrivial E] (x : M) : (𝓝[{x}ᶜ] x).NeBot := by
   have p := Module.punctured_nhds_neBot 𝕜 E (extChartAt I x x)
   simp only [← Filter.frequently_true_iff_neBot, frequently_nhdsWithin_iff, ←
-    extChartAt_symm_map_nhds' I x, Filter.frequently_map, true_and_iff,
+    extChartAt_symm_map_nhds' I x, Filter.frequently_map, true_and,
     mem_compl_singleton_iff] at p ⊢
   apply p.mp
   apply ((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x)).mp

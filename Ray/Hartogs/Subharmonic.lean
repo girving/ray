@@ -274,7 +274,7 @@ theorem Minimum.submean {f : ℂ → ℝ} {s : Set ℂ} {c : ℂ} (fc : Continuo
   have m := setIntegral_ge_of_const_le n.measurable n.ne_top fg
     ((fc.mono ss).integrableOn_sphere tp)
   simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, smul_eq_mul, ge_iff_le]
-  simpa only [mul_comm, ← div_eq_mul_inv, le_div_iff n.real_pos]
+  simpa only [mul_comm, ← div_eq_mul_inv, le_div_iff₀ n.real_pos]
 
 /-- `max b (log ‖f z‖)` is subharmonic for analytic `f` (`ℂ` case) -/
 theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOn ℂ f s) (b : ℝ) :
@@ -877,7 +877,7 @@ theorem Limsup.neg {f : ℕ → ℝ} : (atTop.limsup fun n ↦ f n) = -atTop.lim
   rw [Filter.limsup_eq]; rw [Filter.liminf_eq]; rw [Real.sInf_def]
   have ns : -{a | ∀ᶠ n in atTop, a ≤ -f n} = {a | ∀ᶠ n in atTop, f n ≤ a} := by
     apply Set.ext
-    simp only [Set.mem_neg, Set.mem_setOf_eq, neg_le_neg_iff, iff_self_iff, forall_const]
+    simp only [Set.mem_neg, Set.mem_setOf_eq, neg_le_neg_iff, iff_self, forall_const]
   simp_rw [← ns]; simp only [neg_neg]
 
 /-- `p : ENNReal → Prop` is true for all `ENNReal`s if it is true for `⊤` and positive reals -/
@@ -899,7 +899,7 @@ theorem le_liminf.simple {L : Type} [CompleteLinearOrder L] [DenselyOrdered L] {
   · intro h d dc; rw [Filter.liminf_eq, le_sSup_iff, upperBounds] at h
     simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_setOf_eq, forall_exists_index] at h
     specialize h d; contrapose h
-    simp only [dc, not_forall, not_le, exists_prop, and_true_iff, Filter.eventually_atTop,
+    simp only [dc, not_forall, not_le, exists_prop, and_true, Filter.eventually_atTop,
       ge_iff_le, not_exists] at h ⊢
     intro a n an; rcases h n with ⟨m, nm, fmd⟩
     exact _root_.trans (an m nm) fmd.le

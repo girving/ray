@@ -182,7 +182,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
       intro n; induction' n with n _
       · simp only [FormalMultilinearSeries.unshift_coeff_zero,
           FormalMultilinearSeries.norm_apply_eq_norm_coef, pow_zero, mul_one, le_max_iff, le_refl,
-          true_or_iff]
+          true_or]
       · simp only [FormalMultilinearSeries.norm_apply_eq_norm_coef] at h
         simp only [FormalMultilinearSeries.unshift_coeff_succ, pow_succ, ← mul_assoc,
           FormalMultilinearSeries.norm_apply_eq_norm_coef, le_max_iff]
@@ -331,7 +331,7 @@ theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
   by_cases fa : AnalyticAt 𝕜 f c
   · rcases fa with ⟨p, fp⟩
     have e : ∀ n, a • p n ≠ 0 ↔ p n ≠ 0 := fun n ↦ by
-      simp only [a0, Ne, smul_eq_zero, false_or_iff]
+      simp only [a0, Ne, smul_eq_zero, false_or]
     simp only [fp.orderAt_unique, fp.const_smul.orderAt_unique, FormalMultilinearSeries.order, e]
   · have ga := fa; rw [← analyticAt_iff_const_smul a0] at ga
     simp only [orderAt, fa, ga]; rw [dif_neg, dif_neg]

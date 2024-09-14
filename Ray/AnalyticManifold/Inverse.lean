@@ -213,11 +213,11 @@ theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g
     exact (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
       i.he.open_source
   have m : (c, z) ∈ t := by
-    simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff, ← ht]
+    simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and, ← ht]
     exact ContDiffAt.mem_toPartialHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
   apply Filter.eventuallyEq_of_mem (o.mem_nhds m); intro x m
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl, ← ht,
-    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
+    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id] at m
   have inv := i.he.left_inv m.2
   simp only [Cinv.g]
@@ -249,7 +249,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
     rw [e] at m; exact m
   have m : (c, f c z) ∈ t := by
-    simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and_iff, ← ht,
+    simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and, ← ht,
       extChartAt_prod, PartialEquiv.prod_coe, extChartAt_eq_refl, PartialEquiv.refl_coe, id,
       PartialEquiv.prod_source, prod_mk_mem_set_prod_eq, PartialEquiv.refl_source, mem_univ]
   have fm : ∀ᶠ x : ℂ × T in 𝓝 (c, f c z),
@@ -273,7 +273,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   refine fm.mp (Filter.eventually_of_mem (o.mem_nhds m) ?_)
   intro x m mf
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl,
-    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and_iff,
+    PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and,
     PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, ← ht] at m
   have inv := i.he.right_inv m.2
   simp only [Cinv.g]

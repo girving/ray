@@ -32,7 +32,7 @@ lean_exe primes {
 
 target png.o pkg : FilePath := do
   let o := pkg.buildDir / "Ray/Render/png.o"
-  let src ← inputFile <| pkg.dir / "Ray/Render/png.cc"
+  let src ← inputTextFile <| pkg.dir / "Ray/Render/png.cc"
   let args := #["-I", (←getLeanIncludeDir).toString, "-I/opt/homebrew/include"]
   buildO o src args #["-fPIC"] "c++" getLeanTrace
 
@@ -40,4 +40,3 @@ extern_lib libray pkg := do
   let name := nameToStaticLib "ray"
   let png ← fetch <| pkg.target ``png.o
   buildStaticLib (pkg.nativeLibDir / name) #[png]
-

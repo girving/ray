@@ -110,7 +110,7 @@ lemma neg_log_one_sub_le_linear {x c : ℝ} (x0 : 0 ≤ x) (c1 : 1 < c)
   apply mul_le_mul_of_nonneg_right _ x0
   nth_rw 1 [←inv_inv x]
   rw [←mul_inv, mul_sub, mul_one, inv_mul_cancel₀ xz]
-  rw [add_comm, ←le_sub_iff_add_le, div_le_iff (by norm_num)]
+  rw [add_comm, ←le_sub_iff_add_le, div_le_iff₀ (by norm_num)]
   apply inv_le_of_inv_le c1p
   rw [le_sub_iff_add_le, le_inv (add_pos (inv_pos.mpr c1p) (by norm_num)) x0']
   exact xc

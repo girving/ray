@@ -155,7 +155,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
     (cm : c' ∈ approx c) (zm : z' ∈ approx z) (n : ℕ) (r : Floating) :
     (superF 2).potential c' z' ∈ approx (Box.potential c z n r).1 := by
   set s := superF 2
-  rw [Box.potential]
+  unfold Box.potential
   generalize hcs : (normSq c).hi = cs
   generalize hi : iterate c z (cs.max 9) n = i
   by_cases csn : cs = nan

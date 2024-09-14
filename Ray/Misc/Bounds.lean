@@ -232,7 +232,7 @@ theorem le_of_forall_small_le_add {a b t : ℝ} (tp : 0 < t) (h : ∀ e, 0 < e �
 theorem one_over_one_sub_le {x : ℝ} : 0 ≤ x → x ≤ 1/2 → 1/(1 - x) ≤ 1 + 2*x := by
   intro xp xh
   have x1 : 1 - x > 0 := by linarith
-  rw [div_le_iff x1]
+  rw [div_le_iff₀ x1]
   calc (1 + 2*x) * (1 - x) = 1 + x * (1 - 2*x) := by ring
     _ ≥ 1 + x * (1 - 2 * (1/2)) := by bound
     _ = 1 := by ring

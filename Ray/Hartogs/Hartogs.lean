@@ -234,7 +234,7 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
     intro b; rw [← hS]; simp only [← forall_const_and_distrib]
     rw [Set.setOf_forall]; apply isClosed_iInter; intro z1
     by_cases z1r : z1 ∉ closedBall c1 r
-    · simp only [z1r, false_imp_iff, and_true_iff, Set.setOf_mem_eq, Metric.isClosed_ball]
+    · simp only [z1r, false_imp_iff, and_true, Set.setOf_mem_eq, Metric.isClosed_ball]
     · rw [Set.not_not_mem] at z1r
       simp only [z1r, true_imp_iff]
       refine ContinuousOn.isClosed_le Metric.isClosed_ball ?_ continuousOn_const
@@ -360,7 +360,7 @@ theorem to_uneven [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r 
   have a' : AnalyticOn ℂ f (ball c0' (min r0 (r / 2)) ×ˢ ball c1 (r / 2)) := by
     apply a.mono; apply Set.prod_mono
     apply Metric.ball_subset_ball'
-    simp only [dist_self, add_zero, min_le_iff, le_refl, true_or_iff]
+    simp only [dist_self, add_zero, min_le_iff, le_refl, true_or]
     apply Metric.ball_subset_ball; linarith
   use c0', min r0 (r / 2), r / 2, _root_.trans Metric.ball_subset_closedBall sub, c0m
   exact
@@ -597,7 +597,7 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
     simp only [Prod.ext_iff, Prod.fst_zero, Prod.snd_zero, sub_self, and_self_iff]
   rw [g0] at pa
   have ta := pa.comp (ga z1 (Set.mem_univ _))
-  simp_rw [Function.comp] at ta; clear pa ga g0
+  simp_rw [Function.comp_def] at ta; clear pa ga g0
   have pu : ∀ᶠ w1 in nhds z1, unevenSeries u w1 n = (p.changeOrigin (g w1)).along0 n := by
     rw [eventually_nhds_iff]
     set s' := r1 - dist z1 c1
@@ -665,7 +665,7 @@ theorem unevenLog_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s 
   gcongr
   · bound
   · trans max 1 c ^ 1
-    · simp only [pow_one, le_max_iff, le_refl, or_true_iff]
+    · simp only [pow_one, le_max_iff, le_refl, or_true]
     · bound
   · bound
 
@@ -692,7 +692,7 @@ theorem unevenLog_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1)
   calc ‖r1 ^ n • unevenTerm u z1 n‖
     _ = r1 ^ n * t := by
       simp only [← ht, norm_smul, abs_of_pos u.r1p, norm_pow, Real.norm_eq_abs, mul_eq_mul_left_iff,
-        eq_self_iff_true, true_or_iff, abs_pow]
+        eq_self_iff_true, true_or, abs_pow]
     _ ≤ r1 ^ n * (c * s⁻¹ ^ n) := by bound
     _ = r1 ^ n * (c * (e.exp ^ n / r1 ^ n)) := by rw [inv_div, div_pow]
     _ = r1 ^ n / r1 ^ n * c * e.exp ^ n := by ring
@@ -715,8 +715,6 @@ theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology
   apply DifferentiableOn.const_smul
   rw [← analyticOn_iff_differentiableOn Metric.isOpen_ball]
   apply unevenTerm.analytic u
-
-attribute [bound] Real.log_pos
 
 /-- The nonuniform bound holds uniformly -/
 theorem unevenSeries_strong_bound [CompleteSpace E] [SecondCountableTopology E]

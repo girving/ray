@@ -110,7 +110,7 @@ theorem inv_coe {z : ℂ} (z0 : z ≠ 0) : (z : 𝕊)⁻¹ = ↑(z : ℂ)⁻¹ :
   · simp only [inv_inf, eq_self_iff_true]
   · simp only [inv_def, inv, toComplex_coe]
     by_cases z0 : (z : 𝕊) = 0; simp only [if_pos, z0, inf_ne_zero, inf_ne_zero.symm]
-    simp only [if_neg z0, coe_ne_inf, iff_false_iff]; rw [coe_eq_zero, _root_.inv_eq_zero]
+    simp only [if_neg z0, coe_ne_inf, iff_false]; rw [coe_eq_zero, _root_.inv_eq_zero]
     simpa only [coe_eq_zero] using z0
 theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
   induction' z using OnePoint.rec with z
@@ -145,7 +145,7 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
       simp only [gt_iff_lt, Complex.norm_eq_abs, AbsoluteValue.pos_iff] at z0; rw [inv_coe z0]
     apply Filter.Tendsto.congr' e
     exact Filter.Tendsto.comp continuous_coe.continuousAt inv_tendsto_atInf'
-  · simp only [OnePoint.continuousAt_coe, Function.comp, inv_def, inv, WithTop.coe_eq_zero,
+  · simp only [OnePoint.continuousAt_coe, Function.comp_def, inv_def, inv, WithTop.coe_eq_zero,
       toComplex_coe]
     by_cases z0 : z = 0
     · simp only [z0, ContinuousAt, OnePoint.nhds_infty_eq, eq_self_iff_true, if_true,
@@ -154,7 +154,9 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
       constructor
       · refine Filter.Tendsto.mono_right ?_ le_sup_left
         apply tendsto_nhdsWithin_congr (f := fun z : ℂ ↦ (↑z⁻¹ : 𝕊))
-        · intro z m; rw [mem_compl_singleton_iff] at m; simp only [coe_eq_zero, m, ite_false]
+        · intro z m
+          rw [mem_compl_singleton_iff] at m
+          simp only [coe_eq_zero, m, ite_false]
         · simp only [coe_zero, ite_true]; apply coe_tendsto_inf'.comp
           rw [← @tendsto_atInf_iff_tendsto_nhds_zero ℂ ℂ _ _ fun z : ℂ ↦ z]
           exact Filter.tendsto_id
@@ -244,8 +246,8 @@ instance : ChartedSpace ℂ 𝕊 where
         not_false_eq_true]
   chart_mem_atlas := by
     intro z; induction z using OnePoint.rec
-    · simp only [rec_inf, eq_self_iff_true, mem_setOf_eq, or_true_iff]
-    · simp only [rec_coe, mem_setOf_eq, eq_self_iff_true, true_or_iff]
+    · simp only [rec_inf, eq_self_iff_true, mem_setOf_eq, or_true]
+    · simp only [rec_coe, mem_setOf_eq, eq_self_iff_true, true_or]
 
 /-- There are just two charts on `𝕊` -/
 theorem two_charts {e : PartialHomeomorph 𝕊 ℂ} (m : e ∈ atlas ℂ 𝕊) :
@@ -307,10 +309,10 @@ instance : HasGroupoid 𝕊 (analyticGroupoid I) where
     · cases' two_charts ga with gh gh
       · simp only [←fh, gh]; constructor; repeat apply extChartAt_self_analytic
       · simp [fh, gh, invCoePartialHomeomorph, coePartialHomeomorph, coePartialEquiv, invHomeomorph,
-          invEquiv, Function.comp, e0, e1, and_self, a]
+          invEquiv, Function.comp_def, e0, e1, and_self, a]
     · cases' two_charts ga with gh gh
       · simp [fh, gh, invCoePartialHomeomorph, coePartialHomeomorph, coePartialEquiv, invHomeomorph,
-          invEquiv, Function.comp, e0, e1, and_self, a]
+          invEquiv, Function.comp_def, e0, e1, and_self, a]
       · simp only [←fh, gh]; constructor; repeat apply extChartAt_self_analytic
 
 /-- `𝕊` is an analytic manifold -/
@@ -337,7 +339,7 @@ theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
     apply Set.ext; intro z
     simp only [mem_image, mem_inter_iff, mem_compl_singleton_iff, mem_preimage]
     constructor
-    intro ⟨x, m, e⟩; simp only [← e, toComplex_coe, m, and_true_iff]; exact inf_ne_coe.symm
+    intro ⟨x, m, e⟩; simp only [← e, toComplex_coe, m, and_true]; exact inf_ne_coe.symm
     intro ⟨n, m⟩; use z.toComplex, m, coe_toComplex n
   rw [e]; exact continuousOn_toComplex.isOpen_inter_preimage isOpen_compl_singleton o
 
@@ -359,11 +361,11 @@ theorem prod_mem_inf_of_mem_atInf {s : Set (X × ℂ)} {x : X} (f : s ∈ (𝓝 
   refine Filter.mem_prod_iff.mpr ⟨t, tx, (fun z : ℂ ↦ (z : 𝕊)) '' u ∪ {∞}, mem_inf_of_mem_atInf ui,
     ?_⟩
   intro ⟨y, z⟩ ⟨yt, m⟩
-  simp only [mem_prod_eq, mem_image, mem_union, mem_singleton_iff, mem_univ, true_and_iff,
+  simp only [mem_prod_eq, mem_image, mem_union, mem_singleton_iff, mem_univ, true_and,
     Prod.ext_iff] at yt m ⊢
   induction' z using OnePoint.rec with z
-  · simp only [eq_self_iff_true, or_true_iff]
-  · simp only [coe_eq_inf_iff, or_false_iff, coe_eq_coe] at m ⊢
+  · simp only [eq_self_iff_true, or_true]
+  · simp only [coe_eq_inf_iff, or_false, coe_eq_coe] at m ⊢
     rcases m with ⟨w, wu, wz⟩; refine ⟨⟨y, z⟩, sub (mk_mem_prod yt ?_), rfl, rfl⟩; rw [← wz]
     exact wu
 
@@ -390,12 +392,12 @@ theorem mAnalytic_inv : MAnalytic I I fun z : 𝕊 ↦ z⁻¹ := by
   use continuous_inv
   intro z
   induction' z using OnePoint.rec with z
-  · simp only [inv_inf, extChartAt_inf, ← coe_zero, extChartAt_coe, Function.comp,
+  · simp only [inv_inf, extChartAt_inf, ← coe_zero, extChartAt_coe, Function.comp_def,
       PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply, coePartialEquiv_symm_apply,
       toComplex_coe, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm, coePartialEquiv_apply,
       Equiv.toPartialEquiv_symm_apply, invEquiv_symm, inv_inv]
     apply analyticAt_id
-  · simp only [extChartAt_coe, PartialEquiv.symm_symm, Function.comp, coePartialEquiv_apply,
+  · simp only [extChartAt_coe, PartialEquiv.symm_symm, Function.comp_def, coePartialEquiv_apply,
       coePartialEquiv_symm_apply, toComplex_coe]
     by_cases z0 : z = 0
     · simp only [z0, coe_zero, extChartAt_inf, PartialEquiv.trans_apply, coePartialEquiv_symm_apply,
@@ -441,13 +443,13 @@ theorem lift_eq_fill : lift f y = fill (fun z ↦ (f z : 𝕊)) y := rfl
 /-- `fill` is continuous at finite values -/
 theorem continuousAt_fill_coe {f : ℂ → X} {y : X} (fc : ContinuousAt f z) :
     ContinuousAt (fill f y) z := by
-  simp only [OnePoint.continuousAt_coe, Function.comp, fill_coe, fc]
+  simp only [OnePoint.continuousAt_coe, Function.comp_def, fill_coe, fc]
 
 /-- `fill` is continuous at `∞` -/
 theorem continuousAt_fill_inf {f : ℂ → X} {y : X} (fi : Tendsto f atInf (𝓝 y)) :
     ContinuousAt (fill f y) ∞ := by
   simp only [OnePoint.continuousAt_infty', lift_inf, Filter.coclosedCompact_eq_cocompact, ←
-    atInf_eq_cocompact, Function.comp, fill_coe, fill_inf, fi]
+    atInf_eq_cocompact, Function.comp_def, fill_coe, fill_inf, fi]
 
 /-- `fill` is continuous -/
 theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f) (fi : Tendsto f atInf (𝓝 y)) :
@@ -472,7 +474,7 @@ theorem mAnalyticAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
     MAnalyticAt I I (fill f y) ∞ := by
   rw [mAnalyticAt_iff_of_boundaryless]
   use continuousAt_fill_inf fi
-  simp only [Function.comp, extChartAt, PartialHomeomorph.extend, fill, rec_inf,
+  simp only [Function.comp_def, extChartAt, PartialHomeomorph.extend, fill, rec_inf,
     modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, chartAt_inf,
     PartialHomeomorph.symm_toPartialEquiv, PartialEquiv.symm_symm, PartialHomeomorph.toFun_eq_coe,
     invCoePartialHomeomorph_apply, PartialHomeomorph.coe_coe_symm, invCoePartialHomeomorph_symm_apply,
@@ -520,7 +522,7 @@ theorem mAnalytic_fill [AnalyticManifold I T] {f : ℂ → T} {y : T} (fa : MAna
 theorem continuousAt_lift_coe' (gc : ContinuousAt (uncurry g) (x, z)) :
     ContinuousAt (uncurry (lift' g y)) (x, ↑z) := by
   simp only [lift', ContinuousAt, uncurry, rec_coe, OnePoint.nhds_coe_eq, prod_nhds_eq,
-    Filter.tendsto_map'_iff, Function.comp]
+    Filter.tendsto_map'_iff, Function.comp_def]
   exact Filter.Tendsto.comp Filter.tendsto_map gc
 
 /-- `lift'` is continuous at `∞` -/
@@ -535,8 +537,8 @@ theorem continuousAt_lift_inf' (gi : Tendsto (uncurry g) ((𝓝 x).prod atInf) a
       (fun x : X × ℂ ↦ (x.1, (x.2 : 𝕊))) ''
         ((fun x : X × ℂ ↦ (g x.1 x.2 : 𝕊)) ⁻¹' s) ∪ univ ×ˢ {∞} := by
     apply Set.ext; intro ⟨x, z⟩; induction z using OnePoint.rec
-    · simp only [mem_preimage, mem_image, mem_union, mem_prod_eq, mem_univ, true_and_iff,
-        mem_singleton_iff, eq_self_iff_true, or_true_iff, iff_true_iff, uncurry, lift', rec_inf,
+    · simp only [mem_preimage, mem_image, mem_union, mem_prod_eq, mem_univ, true_and,
+        mem_singleton_iff, eq_self_iff_true, or_true, iff_true, uncurry, lift', rec_inf,
         m.2]
     · simp only [uncurry, lift', mem_preimage, rec_coe, prod_singleton, image_univ, mem_union,
         mem_image, Prod.ext_iff, coe_eq_coe, Prod.exists, exists_eq_right_right, exists_eq_right,

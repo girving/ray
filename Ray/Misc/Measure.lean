@@ -35,7 +35,7 @@ variable {M : Type} [MeasureSpace M]
 theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
   simp only [Filter.EventuallyEq, Pi.sdiff_apply, eq_iff_iff]
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
-    intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true_iff]
+    intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true]
   simp_rw [Set.mem_def] at e
   refine Filter.Eventually.mono ?_ e
   rw [ae_iff]; simpa [Set.setOf_set]
@@ -259,7 +259,7 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
       have dm : MeasurableSet (s \ t) := MeasurableSet.diff sn.measurable tm
       have fb := @setIntegral_mono_on _ _ volume f (fun _ ↦ b) (s \ t)
         (fi.mono Set.diff_subset (le_refl _)) (integrableOn_const.mpr (Or.inr df)) dm ?_
-      simp [measure_diff ts tm (lt_top_iff_ne_top.mp tf),
+      simp [measure_diff ts tm.nullMeasurableSet (lt_top_iff_ne_top.mp tf),
         ENNReal.toReal_sub_of_le (measure_mono ts) (lt_top_iff_ne_top.mp sn.finite)] at fb
       exact fb
       intro y yd; simp at yd; exact hi y yd.left

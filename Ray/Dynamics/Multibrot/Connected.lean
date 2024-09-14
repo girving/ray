@@ -78,7 +78,7 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
   have e : _root_.multibrot d = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d)ᶜ := by
     apply Set.ext; intro z; simp only [mem_image, mem_compl_iff]; constructor
     intro m; use z
-    simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and_iff,
+    simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and,
       eq_self_iff_true]
     intro ⟨w, m, wz⟩; induction w using OnePoint.rec
     · contrapose m; clear m; simp only [not_not, multibrotExt_inf]
@@ -101,8 +101,8 @@ theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_r
   have e : (_root_.multibrot d)ᶜ = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d \ {∞}) := by
     apply Set.ext; intro z; simp only [mem_compl_iff, mem_image]; constructor
     · intro m; use z
-      simp only [multibrotExt_coe, m, true_and_iff, toComplex_coe, not_false_iff, true_and_iff,
-        mem_diff, eq_self_iff_true, and_true_iff, mem_singleton_iff, coe_ne_inf]
+      simp only [multibrotExt_coe, m, true_and, toComplex_coe, not_false_iff, true_and,
+        mem_diff, eq_self_iff_true, and_true, mem_singleton_iff, coe_ne_inf]
     · intro ⟨w, ⟨m, wi⟩, wz⟩; induction w using OnePoint.rec
       · contrapose wi; clear wi; simp only [mem_singleton_iff, not_not]
       · simp only [multibrotExt_coe, toComplex_coe, mem_diff] at m wz; rwa [← wz]

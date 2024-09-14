@@ -113,7 +113,7 @@ theorem mderiv_eq_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Tange
 /-- Given nonzero `u`, a tangent space map `x` is `0` iff `x u = 0` -/
 theorem mderiv_eq_zero_iff' {z : S} {w : T} {f : TangentSpace I z →L[ℂ] TangentSpace I w}
     {u : TangentSpace I z} (u0 : u ≠ 0) : f u = 0 ↔ f = 0 := by
-  simp only [mderiv_eq_zero_iff, u0, or_false_iff]
+  simp only [mderiv_eq_zero_iff, u0, or_false]
 
 /-- Given nonzero `u`, a tangent space map `x` is `≠ 0` iff `x u ≠ 0` -/
 theorem mderiv_ne_zero_iff {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w)
@@ -232,7 +232,7 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
     refine .of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
-    ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply]
+    ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply, Function.comp_def]
   use 1, one_ne_zero
 
 /-- Nonzeroness of `mfderiv` reduces to nonzeroness of `deriv` -/
@@ -310,13 +310,13 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
   refine fa.eventually.mp (.of_forall ?_); intro ⟨e, w⟩ fa m fm
   simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-    mem_prod, mem_univ, true_and_iff] at m
+    mem_prod, mem_univ, true_and] at m
   simp only [uncurry] at fm
   have m' := PartialEquiv.map_source _ m
   simp only [← mfderiv_eq_zero_iff_deriv_eq_zero]
   have cd : MAnalyticAt I I (extChartAt I (f c z)) (f e w) := MAnalyticAt.extChartAt fm
   have fd : MAnalyticAt I I (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
-    simp only [Function.comp]
+    simp only [Function.comp_def]
     exact MAnalyticAt.comp_of_eq fa.along_snd (MAnalyticAt.extChartAt_symm m')
       (PartialEquiv.right_inv _ m)
   have ce : inChart f c z e = extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl

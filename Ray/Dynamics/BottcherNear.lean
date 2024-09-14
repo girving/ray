@@ -601,11 +601,11 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
           intro p m; simp only [← ball_prod_same, Set.mem_prod] at m
           exact Metric.ball_subset_ball (by linarith) m.1
         s := by
-          intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]
+          intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and]
           apply (s.s (rc m)).super_on_ball rp rh
           · apply fa.comp₂ analyticOn_const (analyticOn_id _)
             intro z zm; apply Metric.ball_subset_ball (by bound : r ≤ r2)
-            simp only [← ball_prod_same, Set.mem_prod, m, true_and_iff]; exact zm
+            simp only [← ball_prod_same, Set.mem_prod, m, true_and]; exact zm
           · simp only [Complex.dist_eq, Prod.dist_eq, sub_zero, max_lt_iff, and_imp, g2, g0] at gs
             simp only [Metric.mem_ball, Complex.dist_eq] at m
             intro z zr; exact @gs ⟨c', z⟩ (lt_of_lt_of_le m rr4) (lt_of_lt_of_le zr rr4)

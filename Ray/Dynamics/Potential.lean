@@ -103,7 +103,7 @@ theorem Super.potential_a (s : Super f d a) : s.potential c a = 0 := by
 /-- If `z` doesn't reach `s.near`, `potential = 1` -/
 theorem Super.potential_eq_one (s : Super f d a) (a : ∀ n, (c, (f c)^[n] z) ∉ s.near) :
     s.potential c z = 1 := by
-  simp only [Super.potential, not_exists.mpr a, not_false_iff, dif_neg, and_false_iff]
+  simp only [Super.potential, not_exists.mpr a, not_false_iff, dif_neg, and_false]
 
 /-- If `z` reaches `s.near`, `potential < 1` -/
 theorem Super.potential_lt_one (s : Super f d a) (a : ∃ n, (c, (f c)^[n] z) ∈ s.near) :
@@ -251,7 +251,7 @@ theorem Super.no_jump (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) (n
     rcases i with ⟨⟨q, qp, m⟩, b⟩
     simp only [Prod.ext_iff] at qp; simp only [qp.1] at b
     simp only [Set.mem_image, Set.mem_compl_iff, Set.mem_inter_iff, Set.mem_prod_eq, Set.mem_univ,
-      and_true_iff, Prod.ext_iff, t]
+      and_true, Prod.ext_iff, t]
     use q, ⟨b, m⟩, qp.1.symm, qp.2.symm
   have m := th.mem_of_closed tc
   rcases(Set.mem_image _ _ _).mp m with ⟨p, m, pa⟩
@@ -260,7 +260,7 @@ theorem Super.no_jump (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) (n
   contrapose m; simp only [not_not, Set.mem_compl_iff] at m ⊢
   rw [← @Prod.mk.eta _ _ p, pa.1, m]
   simp only [Set.mem_inter_iff, Set.prod_mk_mem_set_prod_eq, Metric.mem_closedBall, dist_self,
-    zero_le_one, Set.mem_univ, Set.mem_compl_iff, true_and_iff, Set.not_not_mem, not_not,
+    zero_le_one, Set.mem_univ, Set.mem_compl_iff, true_and, Set.not_not_mem, not_not,
     na]
 
 /-- A barrier is a compact, annular region around `a` (but not containing it) such that
@@ -320,7 +320,7 @@ theorem Barrier.potential_large {s : Super f d a} [OnePreimage s] {n t : Set (�
   by_cases t0 : t = ∅
   · use 1, zero_lt_one
     simp only [t0, gt_iff_lt, Set.mem_empty_iff_false, IsEmpty.forall_iff, forall_const,
-      imp_true_iff, and_true_iff]
+      imp_true_iff, and_true]
   simp only [← ne_eq, ← Set.nonempty_iff_ne_empty] at t0
   have pc : ContinuousOn (uncurry s.potential) t := by
     refine ContinuousOn.mono ?_ b.near
@@ -376,7 +376,7 @@ theorem Continuous.potential (s : Super f d a) [OnePreimage s] [T2Space S] :
   · use 0; simp only [za, Function.iterate_zero_apply, s.mem_near c]
   have sn : {(c, a)}ᶜ ∈ 𝓝 (c, z) :=
     compl_singleton_mem_nhds
-      (by simp only [za, Ne, Prod.mk.inj_iff, and_false_iff, not_false_iff])
+      (by simp only [za, Ne, Prod.mk.inj_iff, and_false, not_false_iff])
   rcases (Filter.hasBasis_iff.mp (compact_basis_nhds (c, z)) ({(c, a)}ᶜ)).mp sn with
     ⟨u, ⟨un, uc⟩, ua⟩
   simp only [Set.subset_compl_singleton_iff] at ua
@@ -415,7 +415,7 @@ theorem Continuous.potential (s : Super f d a) [OnePreimage s] [T2Space S] :
   have ef : ∃ᶠ p in 𝓝 (c, z), p ∈ b.fast n := by
     refine (re.and_eventually ev).mp (.of_forall ?_)
     intro ⟨e, z⟩ ⟨zy, m⟩
-    simp only [Set.mem_inter_iff, Set.mem_prod, Set.mem_univ, and_true_iff] at m
+    simp only [Set.mem_inter_iff, Set.mem_prod, Set.mem_univ, and_true] at m
     exact vh e m.2 z m.1 zy
   rcases b.mem_fast.mp (ef.mem_of_closed (b.closed_fast _)) with ⟨n, _, r⟩
   exact ⟨n, b.near r⟩
@@ -502,17 +502,17 @@ def Super.np (s : Super f d a) (c : ℂ) (p : ℝ) : ℕ :=
 theorem Super.nice_np (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op : OnePreimage s] :
     s.IsNiceN c p (s.np c p) := by
   have q : p < 1 ∧ OnePreimage s := ⟨p1, op⟩
-  simp only [Super.np, q, true_and_iff, dif_pos]
+  simp only [Super.np, q, true_and, dif_pos]
   exact Nat.find_spec (s.has_nice_n c p1)
 
 theorem Super.np_zero (s : Super f d a) (c : ℂ) [op : OnePreimage s] : s.np c 0 = 0 := by
-  simp only [Super.np, zero_lt_one, op, true_and_iff, dif_pos, Nat.find_eq_zero, Super.isNice_zero]
+  simp only [Super.np, zero_lt_one, op, true_and, dif_pos, Nat.find_eq_zero, Super.isNice_zero]
 
 theorem Super.np_mono (s : Super f d a) (c : ℂ) {p0 p1 : ℝ} (le : p0 ≤ p1) (p11 : p1 < 1)
     [op : OnePreimage s] : s.np c p0 ≤ s.np c p1 := by
   have p01 : p0 < 1 := lt_of_le_of_lt le p11
   have e : s.np c p0 = Nat.find (s.has_nice_n c p01) := by
-    simp only [Super.np, p01, op, true_and_iff, dif_pos]
+    simp only [Super.np, p01, op, true_and, dif_pos]
   rw [e]; apply Nat.find_min'; exact fun z zp ↦ s.nice_np c p11 _ (_root_.trans zp le)
 
 /-- An `n` such that `(f c)^[n]` sends everything with potential < `s.potential c z` to `s.near` -/

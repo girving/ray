@@ -141,7 +141,7 @@ theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {
   have p : ∀ t, IsPreconnected (s t) := by
     intro ⟨t, m⟩; rw [← hs]; refine (isPreconnected_Ioc.image _ (rc.mono ?_)).closure
     simp only [mem_Ioc] at m
-    simp only [Subtype.coe_mk, Ioc_subset_Ioc_iff m.1, m.2, le_refl, true_and_iff]
+    simp only [Subtype.coe_mk, Ioc_subset_Ioc_iff m.1, m.2, le_refl, true_and]
   have c : ∀ t, IsCompact (s t) := by intro t; rw [← hs]; exact isClosed_closure.isCompact
   have e : {x | MapClusterPt x (𝓝[Ioc a b] a) r} = ⋂ t, s t := by
     apply Set.ext; intro x
@@ -197,7 +197,7 @@ theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] 
     IsPathConnected (f '' s) := by
   have uc : IsPathConnected (univ : Set s) := by
     convert sc.preimage_coe (subset_refl _); apply Set.ext; intro x
-    simp only [mem_univ, true_iff_iff, mem_preimage, Subtype.mem]
+    simp only [mem_univ, true_iff, mem_preimage, Subtype.mem]
   have e : f '' s = s.restrict f '' univ := by
     apply Set.ext; intro y; constructor
     intro ⟨x, m, e⟩; use⟨x, m⟩, mem_univ _, e

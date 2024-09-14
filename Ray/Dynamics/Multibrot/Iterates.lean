@@ -111,7 +111,7 @@ lemma f_error_nonneg {d : ℕ} [Fact (2 ≤ d)] {z : ℂ} (z3 : 3 ≤ abs z) : 0
   have  l1 : 1 ≤ log (abs z) := le_trans (by norm_num) (le_log_abs_z z3)
   apply Real.log_nonpos
   · simp only [one_div, neg_div, sub_nonneg, neg_le]
-    rw [le_div_iff (by positivity), neg_one_mul, neg_le]
+    rw [le_div_iff₀ (by positivity), neg_one_mul, neg_le]
     trans 2
     · refine le_trans (neg_log_one_sub_le_linear (c := 2) (by positivity) (by norm_num) ?_) ?_
       · exact le_trans (inv_le_inv_of_le (by positivity) z3) (by norm_num)
@@ -459,7 +459,7 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
   generalize hu : log (abs (1 + c / z ^ d)) / (d * log (abs z)) = u
   ring_nf
   have inner : |u| ≤ -log (1 - 1/abs z) / (d * log (abs z)) := by
-    simp only [←hu, abs_div, abs_of_pos l1, div_le_iff l1]
+    simp only [←hu, abs_div, abs_of_pos l1, div_le_iff₀ l1]
     apply le_trans l2; apply le_of_eq; field_simp
   have weak : -log (1 - 1/abs z) / (d * log (abs z)) < 1 := by
     rw [div_lt_one l1]

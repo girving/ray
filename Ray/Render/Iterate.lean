@@ -57,8 +57,8 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
     let w' := (f' 2 c')^[i.n - k] z'
     k ≤ i.n ∧ w' ∈ approx i.z ∧ (i.exit = .large → rs' < abs w' ^ 2) := by
   induction' n with n h generalizing k z z'
-  · simpa only [iterate', le_refl, ge_iff_le, tsub_eq_zero_of_le, Function.iterate_zero, id_eq,
-      IsEmpty.forall_iff, and_true, true_and]
+  · simpa only [iterate', le_refl, tsub_eq_zero_of_le, Function.iterate_zero, id_eq, reduceCtorEq,
+      false_implies, and_true, true_and]
   · simp only [iterate', Floating.val_lt_val]
     generalize hzr2 : z.re.sqr = zr2
     generalize hzi2 : z.im.sqr = zi2
@@ -68,8 +68,8 @@ lemma iterate'_correct {c z : Box} {rs : Floating} {c' z' : ℂ} {rs' : ℝ}
     have wa : f' 2 c' z' ∈ approx w := by rw [we, f']; approx
     generalize hw' : f' 2 c' z' = w' at wa
     by_cases z2n : z2 = nan
-    · simpa only [z2n, ite_true, le_refl, ge_iff_le, tsub_eq_zero_of_le, Function.iterate_zero,
-        id_eq, IsEmpty.forall_iff, and_true, true_and]
+    · simpa only [z2n, ↓reduceIte, le_refl, tsub_eq_zero_of_le, Function.iterate_zero, id_eq,
+        reduceCtorEq, false_implies, and_true, true_and]
     by_cases rz : rs.val < z2.val
     · simp only [z2n, rz, ite_true, le_refl, ge_iff_le, tsub_eq_zero_of_le, Function.iterate_zero,
         id_eq, zm, forall_true_left, true_and, Complex.abs_def,
@@ -106,7 +106,7 @@ lemma iterate_large {c z : Box} {rs : Floating} {n : ℕ} {c' z' : ℂ}
     rs.val < abs ((f' 2 c')^[(iterate c z rs n).n] z') ^ 2 := by
   rw [iterate] at l ⊢
   by_cases rsn : rs = nan
-  · simp only [rsn, ↓reduceIte] at l
+  · simp only [rsn, ↓reduceIte, reduceCtorEq] at l
   · simp only [rsn, ite_false] at l ⊢
     simpa only [not_lt, Nat.sub_zero] using (iterate'_correct cm zm (le_refl _) 0 n).2.2 l
 

@@ -67,15 +67,15 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
     refine fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono ?_) rp ep (ef d m)).nonconst
-    simp only [← closedBall_prod_same, mem_prod_eq, setOf_mem_eq, iff_true_iff.mpr m,
-      true_and_iff, subset_refl]
+    simp only [← closedBall_prod_same, mem_prod_eq, setOf_mem_eq, (iff_true _).mpr m,
+      true_and, subset_refl]
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
     intro d du; refine DiffContOnCl.ball_subset_image_closedBall ?_ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
     rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOn.differentiableOn
     refine fa.comp (analyticOn_const.prod (analyticOn_id _)) ?_
     intro w wr; simp only [closure_ball _ rp.ne'] at wr
-    simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and_iff, du]
+    simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and, du]
   rcases Metric.continuousAt_iff.mp
       (fa (c, z) (mk_mem_prod (mem_of_mem_nhds un) (mem_closedBall_self rp.le))).continuousAt
       (e / 4) (by linarith) with
@@ -97,7 +97,7 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
   specialize op d m.1.1 wm
   rcases (mem_image _ _ _).mp op with ⟨y, yr, yw⟩
   use⟨d, y⟩
-  simp only [mem_prod_eq, Prod.ext_iff, yw, and_true_iff, eq_self_iff_true, true_and_iff, yr, m.1.1]
+  simp only [mem_prod_eq, Prod.ext_iff, yw, and_true, eq_self_iff_true, true_and, yr, m.1.1]
 
 /-- A trivial lemma used repeatedly below -/
 theorem abs_sub_self_lt {z : ℂ} {r : ℝ} (rp : 0 < r) : abs (z - z) < r := by
@@ -215,7 +215,7 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S →
     simp only [← extChartAt_map_nhds' I z, Filter.map_map] at h
     replace h := @Filter.map_mono _ _ (extChartAt I (f z)).symm _ _ h
     simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at h
-    simp only [extChartAt_symm_map_nhds' I (f z), Filter.map_map, Function.comp] at h
+    simp only [extChartAt_symm_map_nhds' I (f z), Filter.map_map, Function.comp_def] at h
     have e : (fun w ↦ (extChartAt I (f z)).symm
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
       apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp

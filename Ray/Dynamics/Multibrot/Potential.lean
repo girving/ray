@@ -220,7 +220,7 @@ lemma potential_error_le' (d : ℕ) [Fact (2 ≤ d)] (i j b : ℝ) {c z : ℂ}
   simp only [add_comm (1:ℝ), ←sub_le_iff_le_add]
   refine le_trans ij (Real.exp_le_exp.mpr ?_)
   simp only [neg_div, neg_le_neg_iff, div_mul_eq_div_div]
-  rw [div_le_iff l0, mul_comm j, ←div_le_iff j0]
+  rw [div_le_iff₀ l0, mul_comm j, ←div_le_iff₀ j0]
   trans 0.8095 / b / j
   · gcongr
   · rw [Real.le_log_iff_exp_le z0]
@@ -255,7 +255,7 @@ lemma iter_error_le_log_log_abs (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 �
     exact le_trans (exp_div_lt).le hl
   refine le_trans ?_ hll
   apply le_trans (iter_error_le_of_z4 d z4 cz)
-  rw [div_le_iff' (by positivity), ←div_le_iff (by norm_num)]
+  rw [div_le_iff₀' (by positivity), ←div_le_iff₀ (by norm_num)]
   refine le_trans (by norm_num) (mul_le_mul z4 hl (by positivity) (by positivity))
 
 /-- `s.potential ≈ 1/abs z` -/

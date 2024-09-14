@@ -111,7 +111,7 @@ theorem mem_domain (c : ℂ) {p : ℝ} (p0 : 0 ≤ p) :
 theorem mem_domain_self {c x : ℂ} :
     (c, x) ∈ ({c} ×ˢ closedBall 0 (Complex.abs x) : Set (ℂ × ℂ)) := by
   simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, mem_closedBall, Complex.dist_eq,
-    sub_zero, true_and_iff, le_refl]
+    sub_zero, true_and, le_refl]
 
 /-- Our domain is preconnected -/
 theorem domain_preconnected (c : ℂ) (p : ℝ) :
@@ -194,7 +194,7 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
   rw [x0] at d
   replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
   rw [deriv_pow, mul_eq_zero, Nat.cast_eq_zero, pow_eq_zero_iff', pow_eq_zero_iff'] at d
-  simp only [s.d0, false_and_iff, false_or_iff] at d; exact d.1
+  simp only [s.d0, false_and, false_or] at d; exact d.1
 
 /-- `p < 1` for any `p` in `Grow` -/
 theorem Grow.p1 (g : Grow s c p n r) : p < 1 := by
@@ -204,7 +204,7 @@ theorem Grow.p1 (g : Grow s c p n r) : p < 1 := by
     rw [e.potential, Complex.abs.map_one, lt_self_iff_false] at lt
     exact lt
   · simp only [p1, singleton_prod, mem_image, mem_closedBall_zero_iff, Complex.norm_eq_abs,
-      Prod.mk.inj_iff, eq_self_iff_true, true_and_iff, exists_eq_right, Complex.abs.map_one]
+      Prod.mk.inj_iff, eq_self_iff_true, true_and, exists_eq_right, Complex.abs.map_one]
 
 /-- `r` is analytic throughout the domain -/
 theorem Grow.holo (g : Grow s c p n r) : MAnalyticOn II I (uncurry r) ({c} ×ˢ closedBall 0 p) :=
@@ -327,7 +327,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : ab
         ∃ᶠ y in 𝓝 x, y ∈ ball (0 : ℂ) p ∧ r' c y = r c y := by
   -- If z = a, we can use r
   by_cases za : abs x = 0
-  · use r; simp only [Complex.abs.eq_zero] at za; simp only [za, eq_self_iff_true, and_true_iff]
+  · use r; simp only [Complex.abs.eq_zero] at za; simp only [za, eq_self_iff_true, and_true]
     constructor
     refine g.eqn.filter_mono (nhds_le_nhdsSet ?_); exact mk_mem_prod rfl (mem_ball_self g.pos)
     exact (isOpen_ball.eventually_mem (mem_ball_self g.pos)).frequently
@@ -465,9 +465,9 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
               { eqn := e
                 start := fun h ↦ (y0 h).elim }
           · refine ct.frequently (rr.mp (.of_forall ?_)); intro x ⟨m, e⟩
-            simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and_iff]; use m, e
+            simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and]; use m, e
         · use uncurry r; simp only [not_not] at x0
-          simp only [m.1, x0, eq_self_iff_true, and_true_iff] at ct ⊢; constructor
+          simp only [m.1, x0, eq_self_iff_true, and_true] at ct ⊢; constructor
           · refine
               (g.eqn.filter_mono (nhds_le_nhdsSet ?_)).eventually_nhds.mp
                 (.of_forall fun y e ↦ ?_)
@@ -477,7 +477,7 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
                 start := by
                   simp only [Filter.EventuallyEq.refl, imp_true_iff, Filter.eventually_true] }
           · refine ct.frequently (Filter.Eventually.frequently ?_)
-            simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and_iff]
+            simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and]
             exact isOpen_ball.eventually_mem (mem_ball_self g.pos)
       unique := by
         intro r0 r1 t _ pre e0 e1 r01
@@ -485,7 +485,7 @@ theorem GrowOpen.grow (g : GrowOpen s c p r) [OnePreimage s] : ∃ r', Grow s c 
         simp only [Function.uncurry_curry] at u; exact u
         simp only [Function.uncurry_curry]; exact r01 }
   have m0 : (c, (0 : ℂ)) ∈ ({c} ×ˢ ball 0 p : Set (ℂ × ℂ)) := by
-    simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and_iff, mem_ball_self g.pos]
+    simp only [mem_prod_eq, mem_singleton_iff, eq_self_iff_true, true_and, mem_ball_self g.pos]
   use curry b.u
   exact
     { nonneg := g.pos.le
@@ -562,11 +562,11 @@ theorem joined_growOpen (s : Super f d a) {p : ℕ → ℝ} {ps : ℝ} {r : ℕ 
     eqn := by
       apply mem_nhdsSet_iff_forall.mpr; intro ⟨c', x⟩ lt
       simp only [mem_prod_eq, mem_singleton_iff, mem_ball, Complex.dist_eq, sub_zero] at lt
-      simp only [lt.1, eq_self_iff_true, true_and_iff, ← Filter.eventually_iff] at lt ⊢; clear c'
+      simp only [lt.1, eq_self_iff_true, true_and, ← Filter.eventually_iff] at lt ⊢; clear c'
       rcases tend.exists_lt lt with ⟨k, ltp⟩
       have m : (c, x) ∈ {c} ×ˢ closedBall (0 : ℂ) (p k) := by
         simp only [mem_prod_eq, mem_singleton_iff, Metric.mem_closedBall, eq_self_iff_true,
-          true_and_iff, Complex.dist_eq, sub_zero, ltp.le]
+          true_and, Complex.dist_eq, sub_zero, ltp.le]
       have lt' : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), abs y.2 < ps :=
         (Complex.continuous_abs.continuousAt.comp continuousAt_snd).eventually_lt
           continuousAt_const lt

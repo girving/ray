@@ -75,7 +75,7 @@ def multibrotExt (d : ℕ) : Set 𝕊 :=
 theorem multibrotExt_inf {d : ℕ} : ∞ ∈ multibrotExt d :=
   subset_union_right rfl
 theorem multibrotExt_coe {d : ℕ} {c : ℂ} : ↑c ∈ multibrotExt d ↔ c ∉ multibrot d := by
-  simp only [multibrotExt, mem_union, mem_singleton_iff, coe_eq_inf_iff, or_false_iff, mem_image,
+  simp only [multibrotExt, mem_union, mem_singleton_iff, coe_eq_inf_iff, or_false, mem_image,
     mem_compl_iff, coe_eq_coe, not_iff_not]
   constructor; intro ⟨x, m, e⟩; rw [e] at m; exact m; intro m; use c, m
 theorem coe_preimage_multibrotExt {d : ℕ} :
@@ -130,12 +130,12 @@ theorem mAnalyticAt_f : MAnalytic II I (uncurry (f d)) :=
 
 theorem writtenInExtChartAt_coe_f {d : ℕ} {z : ℂ} :
     writtenInExtChartAt I I (z : 𝕊) (f d c) = f' d c := by
-  simp only [writtenInExtChartAt, f, Function.comp, lift_coe', RiemannSphere.extChartAt_coe,
+  simp only [writtenInExtChartAt, f, Function.comp_def, lift_coe', RiemannSphere.extChartAt_coe,
     PartialEquiv.symm_symm, coePartialEquiv_apply, coePartialEquiv_symm_apply, toComplex_coe]
 
 theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
   funext c z
-  simp only [fl, RiemannSphere.extChartAt_inf, Function.comp, invEquiv_apply,
+  simp only [fl, RiemannSphere.extChartAt_inf, Function.comp_def, invEquiv_apply,
     PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, PartialEquiv.coe_trans_symm,
     coePartialEquiv_symm_apply, PartialEquiv.symm_symm, coePartialEquiv_apply,
     Equiv.toPartialEquiv_symm_apply, invEquiv_symm, RiemannSphere.inv_inf, toComplex_zero,
@@ -212,7 +212,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     simp only [Complex.abs.map_mul, Complex.abs.map_pow]
     trans abs c * (max 16 (abs c / 2))⁻¹ ^ d; bound
     rw [inv_pow, mul_inv_le_iff]; swap; bound
-    rw [mul_one_div]; rw [le_div_iff, mul_comm]; swap; norm_num
+    rw [mul_one_div]; rw [le_div_iff₀, mul_comm]; swap; norm_num
     refine le_trans ?_ (pow_le_pow_right (le_max_of_le_left (by norm_num)) (two_le_d d))
     by_cases cb : abs c / 2 ≤ 16
     rw [max_eq_left cb, pow_two]; linarith
@@ -242,7 +242,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
       ft := by
         intro z m; specialize cz1 m; specialize zb m
         simp only [fl_f, mem_setOf, map_div₀, Complex.abs.map_pow, ← ht] at m ⊢
-        refine lt_of_le_of_lt ?_ m; rw [div_le_iff (lt_of_lt_of_le (by norm_num) cz1)]
+        refine lt_of_le_of_lt ?_ m; rw [div_le_iff₀ (lt_of_lt_of_le (by norm_num) cz1)]
         refine le_trans (pow_le_pow_of_le_one (Complex.abs.nonneg _)
           (le_trans zb (by norm_num)) (two_le_d d)) ?_
         rw [pow_two]; refine mul_le_mul_of_nonneg_left ?_ (Complex.abs.nonneg _)
@@ -273,13 +273,13 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = ∞ := by
     simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt, if_pos,
       ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
       RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply, toComplex_coe, coe_eq_zero,
-      coe_eq_inf_iff, or_false_iff, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
+      coe_eq_inf_iff, or_false, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
-      one_mul, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or_iff,
+      one_mul, mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or,
       pow_eq_zero_iff (d_minus_one_pos d).ne', zx]
     constructor
     · intro h; specialize h 1
-      simp only [one_mul, mul_eq_zero, one_ne_zero, false_or_iff] at h
+      simp only [one_mul, mul_eq_zero, one_ne_zero, false_or] at h
       exact h
     · exact fun h x ↦ Or.inr h
 
@@ -533,7 +533,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
     generalize hz : g^[n] c⁻¹ = z
     simp only [← hg, fl, extChartAt_inf, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply,
       invEquiv_apply, RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, sub_zero,
-      Function.comp, add_zero, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm,
+      Function.comp_def, add_zero, PartialEquiv.coe_trans_symm, PartialEquiv.symm_symm,
       coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm]
     rw [coe_toComplex]
     simp only [Ne, inv_eq_inf, ← hz, ← h, inv_inv, ← Function.iterate_succ_apply' (f d c)]
@@ -561,7 +561,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
 theorem bottcher_tendsto_zero : Tendsto (bottcher' d) atInf (𝓝 0) := by
   rw [Metric.tendsto_nhds]; intro r rp; rw [atInf_basis.eventually_iff]
   use max 16 (3 / r)
-  simp only [true_and_iff, mem_setOf, Complex.dist_eq, sub_zero, Complex.norm_eq_abs, max_lt_iff]
+  simp only [true_and, mem_setOf, Complex.dist_eq, sub_zero, Complex.norm_eq_abs, max_lt_iff]
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
   rw [div_lt_iff rp] at rz; rw [map_inv₀, mul_inv_lt_iff (lt_trans (by norm_num) lo)]; exact rz
 
@@ -577,7 +577,7 @@ theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
   intro c m; induction c using OnePoint.rec
   · refine mAnalyticAt_fill_inf ?_ bottcher_tendsto_zero
     rw [atInf_basis.eventually_iff]; use 2
-    simp only [true_and_iff, mem_setOf, Complex.norm_eq_abs]
+    simp only [true_and, mem_setOf, Complex.norm_eq_abs]
     intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).mAnalyticAt I I
   · simp only [multibrotExt_coe] at m
     exact mAnalyticAt_fill_coe ((bottcher_analytic (d := d) _ m).mAnalyticAt I I)
@@ -686,7 +686,7 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
   · refine _root_.trans ?_ interior_subset
     refine IsPreconnected.relative_clopen (convex_ball _ _).isPreconnected ?_ ?_ ?_
     · use 0, mem_ball_self one_pos, ∞
-      simp only [multibrotExt_inf, bottcher, fill_inf, true_and_iff]
+      simp only [multibrotExt_inf, bottcher, fill_inf, true_and]
     · -- Relative openness
       rw [IsOpen.interior_eq]; exact inter_subset_right
       rw [isOpen_iff_eventually]; intro z ⟨c, m, e⟩
@@ -729,7 +729,7 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   simp only [hasDerivAt_iff_tendsto, sub_zero, bottcherNear_zero, smul_eq_mul, mul_one,
     Metric.tendsto_nhds_nhds, Real.dist_eq, Complex.norm_eq_abs, Complex.dist_eq, abs_mul,
     abs_of_nonneg (Complex.abs.nonneg _), abs_inv] at m
-  simp only [Metric.tendsto_nhds, atInf_basis.eventually_iff, true_and_iff, mem_setOf,
+  simp only [Metric.tendsto_nhds, atInf_basis.eventually_iff, true_and, mem_setOf,
     Complex.dist_eq, Complex.norm_eq_abs]
   intro e ep; rcases m e ep with ⟨r, rp, h⟩; use 1 / r; intro z zr
   have az0 : abs z ≠ 0 := (lt_trans (one_div_pos.mpr rp) zr).ne'
