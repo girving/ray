@@ -43,7 +43,7 @@ variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 
 /-- Nontriviality at a point from nontriviality on a sphere -/
 theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
-    (fa : AnalyticOn ℂ f (closedBall z r))
+    (fa : AnalyticOnNhd ℂ f (closedBall z r))
     (rp : 0 < r) (ep : 0 < e) (ef : ∀ w, w ∈ sphere z r → e ≤ ‖f w - f z‖) :
     NontrivialMAnalyticAt f z := by
   have fh : MAnalyticOn I I f (closedBall z r) := fun _ m ↦ (fa _ m).mAnalyticAt I I
@@ -61,8 +61,8 @@ theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
 
 /-- The effective parameterized open mapping theorem for analytic `f : ℂ → ℂ → ℂ`.
     We lose more effectiveness than is optimal, since our goal is ineffective versions. -/
-theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} {c z : ℂ} {e r : ℝ}
-    {u : Set ℂ} (fa : AnalyticOn ℂ (uncurry f) (u ×ˢ closedBall z r)) (rp : 0 < r) (ep : 0 < e)
+theorem AnalyticOnNhd.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} {c z : ℂ} {e r : ℝ}
+    {u : Set ℂ} (fa : AnalyticOnNhd ℂ (uncurry f) (u ×ˢ closedBall z r)) (rp : 0 < r) (ep : 0 < e)
     (un : u ∈ 𝓝 c) (ef : ∀ d, d ∈ u → ∀ w, w ∈ sphere z r → e ≤ ‖f d w - f d z‖) :
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
@@ -72,8 +72,8 @@ theorem AnalyticOn.ball_subset_image_closedBall_param {f : ℂ → ℂ → ℂ} 
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
     intro d du; refine DiffContOnCl.ball_subset_image_closedBall ?_ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
-    rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOn.differentiableOn
-    refine fa.comp (analyticOn_const.prod (analyticOn_id _)) ?_
+    rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOnNhd.differentiableOn
+    refine fa.comp (analyticOnNhd_const.prod analyticOnNhd_id) ?_
     intro w wr; simp only [closure_ball _ rp.ne'] at wr
     simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and, du]
   rcases Metric.continuousAt_iff.mp
@@ -114,7 +114,7 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
   generalize hs : s' ∩ {p | AnalyticAt ℂ (uncurry f) p} = s
   have ss : s ⊆ s' := by rw [← hs]; apply inter_subset_left
   replace sn : s ∈ 𝓝 (c, z) := by rw [← hs]; exact Filter.inter_mem sn fa.eventually_analyticAt
-  replace fa : AnalyticOn ℂ (uncurry f) s := by rw [← hs]; apply inter_subset_right
+  replace fa : AnalyticOnNhd ℂ (uncurry f) s := by rw [← hs]; apply inter_subset_right
   refine Filter.mem_of_superset ?_ (image_subset _ ss)
   clear ss hs s'
   rcases Metric.mem_nhds_iff.mp sn with ⟨e, ep, es⟩

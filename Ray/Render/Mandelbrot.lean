@@ -1,4 +1,4 @@
-import Interval.Box
+import Interval.Box.Basic
 import Interval.Interval.Conversion
 import Ray.Dynamics.Mandelbrot
 import Ray.Render.Color

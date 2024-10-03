@@ -77,8 +77,9 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
       ←Real.rpow_two, ←Real.rpow_neg x0.le]
     ring_nf
     simp only [←neg_add', Real.rpow_neg x0.le (1 + p)]
-    rw [mul_inv_le_iff (by positivity), ←Real.rpow_add x0, (by ring_nf : 1 + p + -2 = p - 1)]
-    have p1' : 1/2 ≤ p - 1 := by linarith
+    rw [mul_inv_le_iff₀ (by positivity), ← Real.rpow_add x0]
+    ring_nf
+    have p1' : 1/2 ≤ -1 + p := by linarith
     refine le_trans kp (le_trans ?_ (Real.rpow_le_rpow_of_exponent_le (by linarith) p1'))
     rw [one_div, Real.le_rpow_inv_iff_of_pos (by norm_num) x0.le (by norm_num)]
     norm_num; exact x4.le

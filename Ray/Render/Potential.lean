@@ -1,6 +1,7 @@
-import Interval.Box
+import Interval.Box.Basic
 import Interval.Floating.Conversion
-import Interval.Series
+import Interval.Interval.Exp
+import Interval.Interval.Log
 import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.PotentialLower
 import Ray.Render.Color

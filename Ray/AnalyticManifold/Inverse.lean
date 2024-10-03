@@ -62,7 +62,7 @@ theorem Cinv.fa' (i : Cinv f c z) : AnalyticAt ℂ i.f' (c, i.z') := by
   simp only [mAnalyticAt_iff_of_boundaryless, uncurry, extChartAt_prod, Function.comp,
     PartialEquiv.prod_coe_symm, PartialEquiv.prod_coe] at fa
   exact fa.2
-theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := (analyticAt_fst _).prod i.fa'
+theorem Cinv.ha (i : Cinv f c z) : AnalyticAt ℂ i.h (c, i.z') := analyticAt_fst.prod i.fa'
 
 /-- The key nonzero derivative: `d(f c z)/dz` -/
 @[nolint unusedArguments]

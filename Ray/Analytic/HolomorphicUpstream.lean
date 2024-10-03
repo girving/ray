@@ -29,15 +29,15 @@ variable {G : Type} [NormedAddCommGroup G] [NormedSpace ℂ G]
 
 /-- A function is analytic at `z` iff it's differentiable on a surrounding open set -/
 theorem analyticOn_iff_differentiableOn {f : ℂ → E} {s : Set ℂ} (o : IsOpen s) :
-    AnalyticOn ℂ f s ↔ DifferentiableOn ℂ f s := by
+    AnalyticOnNhd ℂ f s ↔ DifferentiableOn ℂ f s := by
   constructor
-  · exact AnalyticOn.differentiableOn
+  · exact AnalyticOnNhd.differentiableOn
   · intro d z zs
     exact DifferentiableOn.analyticAt d (o.mem_nhds zs)
 
 /-- A function is entire iff it's differentiable everywhere -/
 theorem analyticOn_univ_iff_differentiable {f : ℂ → E} :
-    AnalyticOn ℂ f univ ↔ Differentiable ℂ f := by
+    AnalyticOnNhd ℂ f univ ↔ Differentiable ℂ f := by
   simp only [←  differentiableOn_univ]
   exact analyticOn_iff_differentiableOn isOpen_univ
 
@@ -45,7 +45,7 @@ theorem analyticOn_univ_iff_differentiable {f : ℂ → E} :
 theorem analyticAt_iff_eventually_differentiableAt {f : ℂ → E} {c : ℂ} :
     AnalyticAt ℂ f c ↔ ∀ᶠ z in 𝓝 c, DifferentiableAt ℂ f z := by
   constructor
-  · intro fa; rcases fa.exists_ball_analyticOn with ⟨r, rp, fa⟩
+  · intro fa; rcases fa.exists_ball_analyticOnNhd with ⟨r, rp, fa⟩
     exact fa.differentiableOn.eventually_differentiableAt (Metric.ball_mem_nhds _ rp)
   · intro d; rcases Metric.eventually_nhds_iff.mp d with ⟨r, rp, d⟩
     have dr : DifferentiableOn ℂ f (ball c r) := by
@@ -54,12 +54,12 @@ theorem analyticAt_iff_eventually_differentiableAt {f : ℂ → E} {c : ℂ} :
     exact dr _ (Metric.mem_ball_self rp)
 
 /-- `exp` is entire -/
-theorem AnalyticOn.exp : AnalyticOn ℂ exp univ := by
+theorem AnalyticOnNhd.exp : AnalyticOnNhd ℂ exp univ := by
   rw [analyticOn_univ_iff_differentiable]; exact Complex.differentiable_exp
 
 /-- `exp` is analytic at any point -/
 theorem AnalyticAt.exp {z : ℂ} : AnalyticAt ℂ exp z :=
-  AnalyticOn.exp z (Set.mem_univ _)
+  AnalyticOnNhd.exp z (Set.mem_univ _)
 
 /-- `log` is analytic away from nonpositive reals -/
 theorem analyticAt_log {c : ℂ} (m : c ∈ Complex.slitPlane) : AnalyticAt ℂ log c := by
@@ -74,8 +74,8 @@ theorem AnalyticAt.log {f : G → ℂ} {c : G} (fa : AnalyticAt ℂ f c) (m : f 
   (analyticAt_log m).comp fa
 
 /-- `log` is analytic away from nonpositive reals -/
-theorem AnalyticOn.log {f : G → ℂ} {s : Set G} (fs : AnalyticOn ℂ f s)
-    (m : ∀ z ∈ s, f z ∈ Complex.slitPlane) : AnalyticOn ℂ (fun z ↦ log (f z)) s :=
+theorem AnalyticOnNhd.log {f : G → ℂ} {s : Set G} (fs : AnalyticOnNhd ℂ f s)
+    (m : ∀ z ∈ s, f z ∈ Complex.slitPlane) : AnalyticOnNhd ℂ (fun z ↦ log (f z)) s :=
   fun z n ↦ (analyticAt_log (m z n)).comp (fs z n)
 
 /-- `f z ^ g z` is analytic if `f z` is not a nonpositive real -/

@@ -110,7 +110,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     ∃ g : ℂ → ℂ, AnalyticAt ℂ g 0 ∧ g 0 = 0 ∧ ∀ᶠ z in 𝓝[{0}ᶜ] 0, g z ≠ z ∧ f (g z) = f z := by
   by_cases o0 : orderAt f 0 = 0
   · simp only [orderAt_eq_zero_iff fa, f0, Ne, eq_self_iff_true, not_true, or_false] at o0
-    use fun z ↦ -z, (analyticAt_id _ _).neg, neg_zero; rw [eventually_nhdsWithin_iff]
+    use fun z ↦ -z, analyticAt_id.neg, neg_zero; rw [eventually_nhdsWithin_iff]
     have e0 : ∀ᶠ z in 𝓝 0, f (-z) = 0 := by
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
     refine o0.mp (e0.mp (.of_forall fun z f0' f0 z0 ↦ ?_))
@@ -143,7 +143,7 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
   set f' := fun z ↦ f (z + c) - f c
   have fa' : AnalyticAt ℂ f' 0 :=
     AnalyticAt.sub
-      (AnalyticAt.comp (by simp only [zero_add, fa]) ((analyticAt_id _ _).add analyticAt_const))
+      (AnalyticAt.comp (by simp only [zero_add, fa]) (analyticAt_id.add analyticAt_const))
       analyticAt_const
   have df' : HasDerivAt f' (0 * 1) 0 := by
     refine HasDerivAt.sub_const ?_ _
@@ -155,7 +155,7 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
   rcases not_local_inj_of_deriv_zero' fa' df' f0' with ⟨g, ga, e, h⟩; clear fa df fa' df'
   refine ⟨fun z ↦ g (z - c) + c, ?_, ?_, ?_⟩
   · exact AnalyticAt.add (AnalyticAt.comp (by simp only [sub_self, ga])
-      ((analyticAt_id _ _).sub analyticAt_const)) analyticAt_const
+      (analyticAt_id.sub analyticAt_const)) analyticAt_const
   · simp only [sub_self, e, zero_add]
   · simp only [eventually_nhdsWithin_iff] at h ⊢
     have sc : Tendsto (fun z ↦ z - c) (𝓝 c) (𝓝 0) := by

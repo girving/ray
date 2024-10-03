@@ -28,7 +28,7 @@ open scoped Real NNReal Topology
 noncomputable section
 
 theorem cauchy_on_cball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
-    (h : AnalyticOn ℂ f (closedBall z r)) :
+    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
     HasFPowerSeriesOnBall f (cauchyPowerSeries f z r) z r := by
   have hd : DifferentiableOn ℂ f (closedBall z r) := by
     intro x H; exact AnalyticAt.differentiableWithinAt (h x H)
@@ -36,12 +36,12 @@ theorem cauchy_on_cball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r
   exact DifferentiableOn.hasFPowerSeriesOnBall hd rp
 
 theorem analyticOn_cball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
-    (h : AnalyticOn ℂ f (closedBall z r)) :
+    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
     ∃ p : FormalMultilinearSeries ℂ ℂ ℂ, HasFPowerSeriesOnBall f p z r :=
   ⟨cauchyPowerSeries f z r, cauchy_on_cball_radius rp h⟩
 
-theorem analyticOn_small_cball {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (h : AnalyticOn ℂ f (ball z r))
-    (s : ℝ≥0) (sr : s < r) : AnalyticOn ℂ f (closedBall z s) := by
+theorem analyticOn_small_cball {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (h : AnalyticOnNhd ℂ f (ball z r))
+    (s : ℝ≥0) (sr : s < r) : AnalyticOnNhd ℂ f (closedBall z s) := by
   intro x hx
   rw [closedBall] at hx; simp at hx
   have hb : x ∈ ball z r := by
@@ -49,7 +49,7 @@ theorem analyticOn_small_cball {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (h : An
   exact h x hb
 
 theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
-    (h : AnalyticOn ℂ f (ball z r)) :
+    (h : AnalyticOnNhd ℂ f (ball z r)) :
     ∃ p : FormalMultilinearSeries ℂ ℂ ℂ, HasFPowerSeriesOnBall f p z r := by
   have h0 := analyticOn_small_cball h (r / 2) (NNReal.half_lt_self <| rp.ne')
   rcases analyticOn_cball_radius (half_pos rp) h0 with ⟨p, ph⟩
@@ -184,20 +184,20 @@ theorem cauchy_dist {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} (n
 
 /-- Uniform limits of analytic functions are analytic -/
 theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → ℂ} {g : ℂ → ℂ}
-    {s : Set ℂ} (o : IsOpen s) (h : ∀ n, AnalyticOn ℂ (f n) s)
-    (u : TendstoUniformlyOn f g atTop s) : AnalyticOn ℂ g s := by
+    {s : Set ℂ} (o : IsOpen s) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
+    (u : TendstoUniformlyOn f g atTop s) : AnalyticOnNhd ℂ g s := by
   intro c hc
   rcases Metric.nhds_basis_closedBall.mem_iff.mp (o.mem_nhds hc) with ⟨r, rp, cb⟩
   lift r to ℝ≥0 using rp.le
   simp only [NNReal.coe_pos] at rp
-  have hb : ∀ n, AnalyticOn ℂ (f n) (closedBall c r) := fun n ↦ (h n).mono cb
+  have hb : ∀ n, AnalyticOnNhd ℂ (f n) (closedBall c r) := fun n ↦ (h n).mono cb
   set pr := fun n ↦ cauchyPowerSeries (f n) c r
   have hpf : ∀ n, HasFPowerSeriesOnBall (f n) (pr n) c r := by
     intro n
     have cs := cauchy_on_cball_radius rp (hb n)
     have pn : pr n = cauchyPowerSeries (f n) c r := rfl
     rw [← pn] at cs; exact cs
-  have cfs : ∀ n, ContinuousOn (f n) s := fun n ↦ AnalyticOn.continuousOn (h n)
+  have cfs : ∀ n, ContinuousOn (f n) s := fun n ↦ AnalyticOnNhd.continuousOn (h n)
   have cf : ∀ n, ContinuousOn (f n) (closedBall c r) := fun n ↦ ContinuousOn.mono (cfs n) cb
   have cg : ContinuousOn g (closedBall c r) :=
     ContinuousOn.mono (TendstoUniformlyOn.continuousOn u (.of_forall cfs)) cb

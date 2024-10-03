@@ -55,7 +55,7 @@ lemma iter_large_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs z) (c
 lemma le_self_iter (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) (n : ℕ) :
     abs z ≤ abs ((f' d c)^[n] z) := by
   refine le_trans ?_ (iter_large_z3 d z3 cz n)
-  exact le_mul_of_one_le_left (Complex.abs.nonneg _) (one_le_pow_of_one_le (by norm_num) _)
+  exact le_mul_of_one_le_left (Complex.abs.nonneg _) (one_le_pow₀ (by norm_num))
 
 /-- Iterates tend to infinity for large `z` -/
 theorem tendsto_iter_atInf (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z) (cz : abs c ≤ abs z) :
@@ -224,7 +224,7 @@ lemma iter_error_sum_weak (d : ℕ) [Fact (2 ≤ d)] {b s : ℝ} {c : ℂ} (b3 :
     intro k
     have mk := mf k z bz cz
     have mk' : abs z ≤ abs ((f' d c)^[k] z) :=
-      le_trans (le_mul_of_one_le_left (Complex.abs.nonneg _) (one_le_pow_of_one_le b1.le _)) mk
+      le_trans (le_mul_of_one_le_left (Complex.abs.nonneg _) (one_le_pow₀ b1.le)) mk
     refine le_trans (bs (le_trans bz mk')) ?_
     refine div_le_div_of_nonneg_left s0 (by positivity) ?_
     exact mul_le_mul mk (Real.log_le_log (by positivity) mk') l0.le (by positivity)

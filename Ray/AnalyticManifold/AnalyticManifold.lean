@@ -62,14 +62,14 @@ lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [N
     This lemma helps when proving particular spaces are analytic manifolds. -/
 theorem extChartAt_self_analytic {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     {M : Type} [TopologicalSpace M] (f : PartialHomeomorph M E) :
-    AnalyticOn 𝕜 (𝓘(𝕜, E) ∘ (f.symm.trans f) ∘ ⇑𝓘(𝕜, E).symm)
+    AnalyticOnNhd 𝕜 (𝓘(𝕜, E) ∘ (f.symm.trans f) ∘ ⇑𝓘(𝕜, E).symm)
       (𝓘(𝕜, E) '' (f.symm.trans f).toPartialEquiv.source) := by
-  apply AnalyticOn.congr (f := fun z ↦ z)
+  apply AnalyticOnNhd.congr (f := fun z ↦ z)
   · simp only [modelWithCornersSelf_coe, id_eq, image_id', PartialHomeomorph.trans_toPartialEquiv,
       PartialHomeomorph.symm_toPartialEquiv, PartialEquiv.trans_source, PartialEquiv.symm_source,
       PartialHomeomorph.coe_coe_symm]
     exact f.isOpen_inter_preimage_symm f.open_source
-  · exact analyticOn_id _
+  · exact analyticOnNhd_id
   · intro x m
     simp only [modelWithCornersSelf_coe, id, image_id', PartialHomeomorph.trans_toPartialEquiv,
       PartialHomeomorph.symm_toPartialEquiv, PartialEquiv.trans_source, PartialEquiv.symm_source,
@@ -172,7 +172,7 @@ theorem mAnalyticAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     MAnalyticAt (I.prod J) I (fun p : M × N ↦ p.fst) x := by
   rw [mAnalyticAt_iff]
   use continuousAt_fst
-  refine ((analyticAt_fst _).congr ?_).analyticWithinAt
+  refine (analyticAt_fst.congr ?_).analyticWithinAt
   filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
   intro y m
   rw [extChartAt_prod] at m
@@ -185,7 +185,7 @@ theorem mAnalyticAt_snd [I.Boundaryless] [J.Boundaryless] {x : M × N} :
     MAnalyticAt (I.prod J) J (fun p : M × N ↦ p.snd) x := by
   rw [mAnalyticAt_iff]
   use continuousAt_snd
-  refine ((analyticAt_snd _).congr ?_).analyticWithinAt
+  refine (analyticAt_snd.congr ?_).analyticWithinAt
   filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
   intro y m
   rw [extChartAt_prod] at m
@@ -326,7 +326,7 @@ theorem MAnalytic.prod {f : O → M} {g : O → N} (fh : MAnalytic K I f) (gh : 
 theorem mAnalyticAt_id {x : M} : MAnalyticAt I I (fun x ↦ x) x := by
   rw [mAnalyticAt_iff]
   use continuousAt_id
-  refine (analyticAt_id _ _).analyticWithinAt.congr_of_eventuallyEq ?_ ?_
+  refine analyticAt_id.analyticWithinAt.congr_of_eventuallyEq ?_ ?_
   · simp only [mfld_simps, Filter.EventuallyEq, id, ← I.map_nhds_eq, Filter.eventually_map]
     filter_upwards [(chartAt A x).open_target.eventually_mem (mem_chart_target _ _)]
     intro y m
@@ -336,8 +336,6 @@ theorem mAnalyticAt_id {x : M} : MAnalyticAt I I (fun x ↦ x) x := by
 /-- `id` is analytic -/
 theorem mAnalytic_id : MAnalytic I I fun x : M ↦ x :=
   fun _ ↦ mAnalyticAt_id
-
-variable [CompleteSpace E] [CompleteSpace F]
 
 /-- MAnalytic functions compose -/
 theorem MAnalyticAt.comp {f : N → M} {g : O → N} {x : O}
@@ -453,27 +451,27 @@ theorem MAnalyticAt.add [CompleteSpace G] {f g : O → F} {x : O}
     MAnalyticAt K (modelWithCornersSelf 𝕜 F) (fun x ↦ f x + g x) x := by
   have e : (fun x ↦ f x + g x) = (fun p : F × F ↦ p.1 + p.2) ∘ fun x ↦ (f x, g x) := rfl
   rw [e]
-  exact (((analyticAt_fst _).add (analyticAt_snd _)).mAnalyticAt _ _).comp (fa.prod ga)
+  exact ((analyticAt_fst.add analyticAt_snd).mAnalyticAt _ _).comp (fa.prod ga)
 
 /-- Subtraction is analytic -/
 theorem MAnalyticAt.sub [CompleteSpace G] {f g : O → F} {x : O}
     (fa : MAnalyticAt K (modelWithCornersSelf 𝕜 F) f x)
     (ga : MAnalyticAt K (modelWithCornersSelf 𝕜 F) g x) :
     MAnalyticAt K (modelWithCornersSelf 𝕜 F) (fun x ↦ f x - g x) x :=
-  (((analyticAt_fst _).sub (analyticAt_snd _)).mAnalyticAt _ _).comp (fa.prod ga)
+  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp (fa.prod ga)
 
 /-- Multiplication is analytic -/
 theorem MAnalyticAt.mul [CompleteSpace 𝕜] [CompleteSpace G] {f g : O → 𝕜} {x : O}
     (fa : MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) f x)
     (ga : MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) g x) :
     MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x * g x) x :=
-  (((analyticAt_fst _).mul (analyticAt_snd _)).mAnalyticAt _ _).comp (fa.prod ga)
+  ((analyticAt_fst.mul analyticAt_snd).mAnalyticAt _ _).comp (fa.prod ga)
 
 /-- Inverse is analytic away from zeros -/
 theorem MAnalyticAt.inv [CompleteSpace 𝕜] [CompleteSpace G] {f : O → 𝕜} {x : O}
     (fa : MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) f x) (f0 : f x ≠ 0) :
     MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ (f x)⁻¹) x :=
-  (((analyticAt_id _ _).inv f0).mAnalyticAt _ _).comp fa
+  ((analyticAt_id.inv f0).mAnalyticAt _ _).comp fa
 
 /-- Division is analytic away from denominator zeros -/
 theorem MAnalyticAt.div [CompleteSpace 𝕜] [CompleteSpace G] {f g : O → 𝕜} {x : O}
@@ -487,7 +485,7 @@ theorem MAnalyticAt.pow [CompleteSpace 𝕜] [CompleteSpace G] {f : O → 𝕜} 
     (fa : MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) f x) {n : ℕ} :
     MAnalyticAt K (modelWithCornersSelf 𝕜 𝕜) (fun x ↦ f x ^ n) x := by
   have e : (fun x ↦ f x ^ n) = (fun z : 𝕜 ↦ z ^ n) ∘ f := rfl
-  rw [e]; exact (((analyticAt_id _ _).pow _).mAnalyticAt _ _).comp fa
+  rw [e]; exact ((analyticAt_id.pow _).mAnalyticAt _ _).comp fa
 
 /-- Complex powers `f x ^ g x` are analytic if `f x` avoids the negative real axis  -/
 theorem MAnalyticAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
@@ -498,13 +496,15 @@ theorem MAnalyticAt.cpow {E A M : Type} [NormedAddCommGroup E] [NormedSpace ℂ 
     MAnalyticAt I (modelWithCornersSelf ℂ ℂ) (fun x ↦ f x ^ g x) x := by
   have e : (fun x ↦ f x ^ g x) = (fun p : ℂ × ℂ ↦ p.1 ^ p.2) ∘ fun x ↦ (f x, g x) := rfl
   rw [e]
-  refine (((analyticAt_fst _).cpow (analyticAt_snd _) ?_).mAnalyticAt _ _).comp (fa.prod ga)
+  refine ((analyticAt_fst.cpow analyticAt_snd ?_).mAnalyticAt _ _).comp (fa.prod ga)
   exact a
 
 /-- Iterated analytic functions are analytic -/
 theorem MAnalytic.iter {f : M → M} (fa : MAnalytic I I f) (n : ℕ) : MAnalytic I I f^[n] := by
   induction' n with n h; simp only [Function.iterate_zero]; exact mAnalytic_id
   simp only [Function.iterate_succ']; exact fa.comp h
+
+variable [CompleteSpace E] [CompleteSpace F]
 
 /-- If we're analytic at a point, we're locally analytic.
 This is true even with boundary, but for now we prove only the `Boundaryless` case. -/

@@ -298,10 +298,10 @@ instance : HasGroupoid 𝕊 (analyticGroupoid I) where
       ext; simp only [mem_compl_iff, mem_preimage, mem_singleton_iff, coe_eq_zero]
     have e1 : ((fun z : ℂ ↦ (z : 𝕊)⁻¹) ⁻¹' {∞})ᶜ = {(0 : ℂ)}ᶜ := by
       ext; simp only [mem_compl_iff, mem_preimage, mem_singleton_iff, inv_eq_inf, coe_eq_zero]
-    have a : AnalyticOn ℂ (fun z : ℂ ↦ OnePoint.toComplex (z : 𝕊)⁻¹) {0}ᶜ := by
-      apply AnalyticOn.congr (f := fun z ↦ z⁻¹)
+    have a : AnalyticOnNhd ℂ (fun z : ℂ ↦ OnePoint.toComplex (z : 𝕊)⁻¹) {0}ᶜ := by
+      apply AnalyticOnNhd.congr (f := fun z ↦ z⁻¹)
       · exact isOpen_compl_singleton
-      · apply analyticOn_inv
+      · apply analyticOnNhd_inv
       · intro z z0; simp only [mem_compl_iff, mem_singleton_iff] at z0
         simp only [inv_coe z0, toComplex_coe]
     intro f g fa ga; simp only [mem_analyticGroupoid_of_boundaryless]
@@ -404,7 +404,7 @@ theorem mAnalytic_inv : MAnalytic I I fun z : 𝕊 ↦ z⁻¹ := by
         invEquiv_apply, Equiv.toPartialEquiv_apply, inv_zero', inv_inv, toComplex_coe]
       apply analyticAt_id
     · simp only [inv_coe z0, extChartAt_coe, coePartialEquiv_symm_apply]
-      refine ((analyticAt_id _ _).inv z0).congr ?_
+      refine (analyticAt_id.inv z0).congr ?_
       refine (continuousAt_id.eventually_ne z0).mp (.of_forall fun w w0 ↦ ?_)
       rw [id] at w0; simp only [inv_coe w0, toComplex_coe, id]
 
@@ -585,14 +585,14 @@ theorem mAnalyticAt_lift_inf (fa : ∀ᶠ z in atInf, AnalyticAt ℂ f z) (fi : 
   exact coe_tendsto_inf.comp fi
 
 /-- `lift` is analytic -/
-theorem mAnalytic_lift (fa : AnalyticOn ℂ f univ) (fi : Tendsto f atInf atInf) :
+theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ) (fi : Tendsto f atInf atInf) :
     MAnalytic I I (lift f ∞) := by
   intro z; induction z using OnePoint.rec
   · exact mAnalyticAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
   · exact mAnalyticAt_lift_coe (fa _ (mem_univ _))
 
 /-- `lift'` is analytic (the parameterized version) -/
-theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOn ℂ (uncurry f) univ)
+theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOnNhd ℂ (uncurry f) univ)
     (fi : ∀ x, Tendsto (uncurry f) ((𝓝 x).prod atInf) atInf) :
     MAnalytic II I (uncurry (lift' f ∞)) := by
   apply osgoodManifold (continuous_lift' fa.continuous fi)

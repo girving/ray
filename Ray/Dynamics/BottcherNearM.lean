@@ -85,7 +85,7 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [analyticAt_iff_mAnalyticAt II I]
-  refine (((analyticAt_id _ _).sub analyticAt_const).mAnalyticAt I I).comp ?_
+  refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp ?_
   refine (MAnalyticAt.extChartAt ?_).comp ?_
   · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
       ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
@@ -99,7 +99,7 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
         PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
         Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
         PartialHomeomorph.map_source, mem_chart_source, and_self_iff]
-    · exact ((analyticAt_snd _).add analyticAt_const).mAnalyticAt _ _
+    · exact (analyticAt_snd.add analyticAt_const).mAnalyticAt _ _
 
 /-- `(f c)^[k]` is analytic -/
 theorem Super.mAnalyticAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
@@ -212,11 +212,11 @@ theorem Super.stays_in_chart (s : Super f d a) (c : ℂ) :
 
 /-- There is a open set around the attractor in `ext_chart I a` where things are nice -/
 theorem Super.fr_prop (s : Super f d a) (c : ℂ) :
-    ∃ r, r > 0 ∧ AnalyticOn ℂ (uncurry s.fl) (ball (c, 0) r) ∧
+    ∃ r, r > 0 ∧ AnalyticOnNhd ℂ (uncurry s.fl) (ball (c, 0) r) ∧
       ∀ p : ℂ × S, p ∈ (extChartAt II (c, a)).source →
         extChartAt II (c, a) p ∈ ball (extChartAt II (c, a) (c, a)) r →
           f p.1 p.2 ∈ (extChartAt I a).source := by
-  rcases(s.fla c).exists_ball_analyticOn with ⟨r0, r0p, fla⟩
+  rcases(s.fla c).exists_ball_analyticOnNhd with ⟨r0, r0p, fla⟩
   rcases eventually_nhds_iff.mp (s.stays_in_chart c) with ⟨t, tp, ot, ta⟩
   set ch := extChartAt II (c, a)
   set s := ch.target ∩ ch.symm ⁻¹' t
@@ -242,7 +242,7 @@ theorem Super.frp (s : Super f d a) (c : ℂ) : 0 < s.fr c :=
   (choose_spec (s.fr_prop c)).1
 
 theorem Super.fla_on (s : Super f d a) (c : ℂ) :
-    AnalyticOn ℂ (uncurry s.fl) (ball (c, 0) (s.fr c)) :=
+    AnalyticOnNhd ℂ (uncurry s.fl) (ball (c, 0) (s.fr c)) :=
   (choose_spec (s.fr_prop c)).2.1
 
 theorem Super.fr_stays (s : Super f d a) (c : ℂ) (p : ℂ × S)

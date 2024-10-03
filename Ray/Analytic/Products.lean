@@ -54,9 +54,9 @@ theorem HasProdOn.tprodOn_eq {f : ℕ → ℂ → ℂ} {g : ℂ → ℂ} {s : Se
     For now, we require the constant to be `≤ 1/2` so that we can take logs without
     care, and get nonzero results. -/
 theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : ℝ} (o : IsOpen s)
-    (c12 : c ≤ 1 / 2) (a0 : a ≥ 0) (a1 : a < 1) (h : ∀ n, AnalyticOn ℂ (f n) s)
+    (c12 : c ≤ 1 / 2) (a0 : a ≥ 0) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a ^ n) :
-    ∃ g : ℂ → ℂ, HasProdOn f g s ∧ AnalyticOn ℂ g s ∧ ∀ z, z ∈ s → g z ≠ 0 := by
+    ∃ g : ℂ → ℂ, HasProdOn f g s ∧ AnalyticOnNhd ℂ g s ∧ ∀ z, z ∈ s → g z ≠ 0 := by
   set fl := fun n z ↦ log (f n z)
   have near1 : ∀ n z, z ∈ s → abs (f n z - 1) ≤ 1 / 2 := by
     intro n z zs
@@ -69,7 +69,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
   have expfl : ∀ n z, z ∈ s → exp (fl n z) = f n z := by
     intro n z zs; refine Complex.exp_log ?_
     exact near_one_avoids_zero (near1' n z zs)
-  have hl : ∀ n, AnalyticOn ℂ (fl n) s := fun n ↦
+  have hl : ∀ n, AnalyticOnNhd ℂ (fl n) s := fun n ↦
     (h n).log (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
     --fun n ↦ log_analytic_near_one o (h n) (near1' n)
   set c2 := 2 * c
@@ -98,9 +98,9 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
 
 /-- Same as above, but converge to `tprodOn` -/
 theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
-    (c12 : c ≤ 1 / 2) (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOn ℂ (f n) s)
+    (c12 : c ≤ 1 / 2) (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a ^ n) :
-    ProdExistsOn f s ∧ AnalyticOn ℂ (tprodOn f) s ∧ ∀ z, z ∈ s → tprodOn f z ≠ 0 := by
+    ProdExistsOn f s ∧ AnalyticOnNhd ℂ (tprodOn f) s ∧ ∀ z, z ∈ s → tprodOn f z ≠ 0 := by
   rcases fast_products_converge o c12 a0 a1 h hf with ⟨g, gp, ga, g0⟩
   refine ⟨?_, ?_, ?_⟩
   · exact fun z zs ↦ ⟨g z, gp z zs⟩

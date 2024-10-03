@@ -575,7 +575,7 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedA
     [CompleteSpace E] (o : IsOpen s) (fc : ContinuousOn f s)
     (fa0 : ∀ z0 z1 : ℂ, (z0, z1) ∈ s → AnalyticAt ℂ (fun z0 ↦ f (z0, z1)) z0)
     (fa1 : ∀ z0 z1 : ℂ, (z0, z1) ∈ s → AnalyticAt ℂ (fun z1 ↦ f (z0, z1)) z1) :
-    AnalyticOn ℂ f s := by
+    AnalyticOnNhd ℂ f s := by
   intro c cs
   rcases Metric.isOpen_iff.mp o c cs with ⟨r, rp, rs⟩
   have rs : closedBall c (r / 2) ⊆ s := le_trans (Metric.closedBall_subset_ball (by linarith)) rs

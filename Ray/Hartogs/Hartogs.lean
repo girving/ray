@@ -81,7 +81,7 @@ theorem Har.mono {s t : Set (ℂ × ℂ)} (ts : t ⊆ s) (h : Har f s) : Har f t
 
 /-- Analyticity in the first coordinate -/
 theorem Har.on0 (h : Har f (closedBall (c0, c1) r)) (z1r : z1 ∈ closedBall c1 r) :
-    AnalyticOn ℂ (fun z0 ↦ f (z0, z1)) (closedBall c0 r) := by
+    AnalyticOnNhd ℂ (fun z0 ↦ f (z0, z1)) (closedBall c0 r) := by
   intro z0 z0s; apply h.fa0 z0 z1
   rw [← closedBall_prod_same]
   simp only [Set.prod_mk_mem_set_prod_eq, Metric.mem_closedBall] at z0s ⊢
@@ -89,7 +89,7 @@ theorem Har.on0 (h : Har f (closedBall (c0, c1) r)) (z1r : z1 ∈ closedBall c1 
 
 /-- Analyticity in the second coordinate -/
 theorem Har.on1 (h : Har f (closedBall (c0, c1) r)) (z0r : z0 ∈ closedBall c0 r) :
-    AnalyticOn ℂ (fun z1 ↦ f (z0, z1)) (closedBall c1 r) := by
+    AnalyticOnNhd ℂ (fun z1 ↦ f (z0, z1)) (closedBall c1 r) := by
   intro z1 z1s; apply h.fa1 z0 z1
   rw [← closedBall_prod_same]
   simp only [Set.prod_mk_mem_set_prod_eq, Metric.mem_closedBall] at z1s ⊢
@@ -151,7 +151,7 @@ theorem Bounded.dist1 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
 
 /-- `f` is analytic if it's bounded -/
 theorem of_bounded [CompleteSpace E] (h : Har f s) (o : IsOpen s) {b : ℝ}
-    (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) : AnalyticOn ℂ f s := by
+    (fb : ∀ z, z ∈ s → ‖f z‖ ≤ b) : AnalyticOnNhd ℂ f s := by
   suffices c : ContinuousOn f s by exact osgood o c h.fa0 h.fa1
   by_cases bp : b ≤ 0
   · have fz : ∀ z, z ∈ s → f z = 0 := fun z zs ↦
@@ -224,7 +224,7 @@ theorem ContinuousOn.isClosed_le {A B : Type} [TopologicalSpace A] [TopologicalS
     one dimension.  Proof: Use the Baire category to find a subpolydisk on which `f` is bounded,
     whence it is analytic there by above. -/
 theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r > 0) (ep : e > 0) :
-    ∃ c0' t, t > 0 ∧ c0' ∈ closedBall c0 e ∧ AnalyticOn ℂ f (ball c0' t ×ˢ ball c1 r) := by
+    ∃ c0' t, t > 0 ∧ c0' ∈ closedBall c0 e ∧ AnalyticOnNhd ℂ f (ball c0' t ×ˢ ball c1 r) := by
   set re := min r e
   have esub : closedBall c0 re ⊆ closedBall c0 r :=
     Metric.closedBall_subset_closedBall (min_le_left _ _)
@@ -284,7 +284,7 @@ structure Uneven (f : ℂ × ℂ → E) (c0 c1 : ℂ) (r0 r1 : ℝ) : Prop where
   r1p : r1 > 0
   r01 : r0 ≤ r1
   h : Har f (closedBall (c0, c1) r1)
-  a : AnalyticOn ℂ f (ball c0 r0 ×ˢ ball c1 r1)
+  a : AnalyticOnNhd ℂ f (ball c0 r0 ×ˢ ball c1 r1)
 
 -- Teach `bound` about `Uneven`
 attribute [bound_forward] Uneven.r0p Uneven.r1p Uneven.r01
@@ -357,7 +357,7 @@ theorem to_uneven [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r 
   have h' : Har f (closedBall (c0', c1) (r / 2)) := by
     refine Har.mono ?_ h; simp only [← closedBall_prod_same]; apply Set.prod_mono
     assumption; apply Metric.closedBall_subset_closedBall; linarith
-  have a' : AnalyticOn ℂ f (ball c0' (min r0 (r / 2)) ×ˢ ball c1 (r / 2)) := by
+  have a' : AnalyticOnNhd ℂ f (ball c0' (min r0 (r / 2)) ×ˢ ball c1 (r / 2)) := by
     apply a.mono; apply Set.prod_mono
     apply Metric.ball_subset_ball'
     simp only [dist_self, add_zero, min_le_iff, le_refl, true_or]
@@ -407,7 +407,7 @@ theorem Uneven.has_series [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s : ℝ}
   refine DifferentiableOn.hasFPowerSeriesOnBall ?_ snp
   rw [← sns]
   refine DifferentiableOn.mono ?_ (Metric.closedBall_subset_closedBall sr1)
-  exact AnalyticOn.differentiableOn (u.h.on0 z1s)
+  exact AnalyticOnNhd.differentiableOn (u.h.on0 z1s)
 
 theorem unevenTerm_eq [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {r : ℝ}
     (rp : r > 0) (rr1 : r ≤ r1) {z1 : ℂ} :
@@ -435,7 +435,7 @@ theorem unevenSeries_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) 
     ∃ c a : ℝ, c > 0 ∧ a > 0 ∧ ∀ n z1, z1 ∈ closedBall c1 s →
       ‖unevenSeries u z1 n‖ ≤ c * a ^ n := by
   have fc : ContinuousOn f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) := by
-    suffices fa' : AnalyticOn ℂ f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) by exact fa'.continuousOn
+    suffices fa' : AnalyticOnNhd ℂ f (sphere c0 (r0 / 2) ×ˢ closedBall c1 s) by exact fa'.continuousOn
     refine u.a.mono (Set.prod_mono ?_ ?_)
     · have rh : r0 / 2 < r0 := by linarith [u.r0p]
       exact _root_.trans Metric.sphere_subset_closedBall (Metric.closedBall_subset_ball rh)
@@ -585,12 +585,12 @@ theorem Along0.analyticAt (n : ℕ) : ∀ {p},
 
 /-- `unevenSeries u r1 z1` is analytic as a function of `z1` -/
 theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
-    AnalyticOn ℂ (fun z1 ↦ unevenSeries u z1 n) (ball c1 r1) := by
+    AnalyticOnNhd ℂ (fun z1 ↦ unevenSeries u z1 n) (ball c1 r1) := by
   intro z1 z1s
   rcases u.a (c0, z1) (Set.mk_mem_prod (Metric.mem_ball_self u.r0p) z1s) with ⟨p, r, hp⟩
   have pa := (p.hasFPowerSeriesOnBall_changeOrigin n (lt_of_lt_of_le hp.r_pos hp.r_le)).analyticAt
   set g := fun w1 ↦ ((0 : ℂ), w1 - z1)
-  have ga : AnalyticOn ℂ g univ := by
+  have ga : AnalyticOnNhd ℂ g univ := by
     rw [analyticOn_univ_iff_differentiable]
     exact (differentiable_const _).prod (differentiable_id.sub (differentiable_const _))
   have g0 : 0 = g z1 := by
@@ -634,13 +634,13 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
 
 /-- `unevenTerm u z1 n` is analytic as a function of `z1` -/
 theorem unevenTerm.analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
-    AnalyticOn ℂ (fun z1 ↦ unevenTerm u z1 n) (ball c1 r1) := by
+    AnalyticOnNhd ℂ (fun z1 ↦ unevenTerm u z1 n) (ball c1 r1) := by
   have e : ∀ z1, unevenTerm u z1 n =
       (cmmapApplyCmap ℂ (fun _ : Fin n ↦ ℂ) E fun _ ↦ 1) (unevenSeries u z1 n) := by
     intro z1; simp [unevenTerm, ←unevenSeries_apply, cmmapApplyCmap, unevenSeries,
       ContinuousLinearMap.coe_mk', LinearMap.coe_mk]  -- simp? fails to pretty print, here
   simp_rw [e]
-  exact ContinuousLinearMap.comp_analyticOn _ (unevenSeries_analytic u n)
+  exact ContinuousLinearMap.comp_analyticOnNhd _ (unevenSeries_analytic u n)
 
 /-- The subharmonic functions we'll apply Hartogs's lemma to -/
 def unevenLog (u : Uneven f c0 c1 r0 r1) (n : ℕ) (z1 : ℂ) : ℝ :=
@@ -710,7 +710,7 @@ theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology
     (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
   refine SubharmonicOn.constMul ?_ (by bound)
-  apply AnalyticOn.maxLog_norm_subharmonicOn _ (-1)
+  apply AnalyticOnNhd.maxLog_norm_subharmonicOn _ (-1)
   rw [analyticOn_iff_differentiableOn Metric.isOpen_ball]
   apply DifferentiableOn.const_smul
   rw [← analyticOn_iff_differentiableOn Metric.isOpen_ball]
@@ -809,7 +809,7 @@ end Hartogs
 theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
     [SecondCountableTopology E] {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} (so : IsOpen s)
     (fa0 : ∀ c0 c1, (c0, c1) ∈ s → AnalyticAt ℂ (fun z0 ↦ f (z0, c1)) c0)
-    (fa1 : ∀ c0 c1, (c0, c1) ∈ s → AnalyticAt ℂ (fun z1 ↦ f (c0, z1)) c1) : AnalyticOn ℂ f s := by
+    (fa1 : ∀ c0 c1, (c0, c1) ∈ s → AnalyticAt ℂ (fun z1 ↦ f (c0, z1)) c1) : AnalyticOnNhd ℂ f s := by
   have h : Har f s := ⟨fa0, fa1⟩
   intro c cs
   rcases Metric.isOpen_iff.mp so c cs with ⟨r, rp, rs⟩

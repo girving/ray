@@ -127,7 +127,8 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
       calc 4 * abs (c * w ^ d) * abs (-(1 / ((d ^ (n + 1) : ℕ) : ℂ)))
         _ ≤ 4 * (abs z)⁻¹ * (1/2 : ℝ) ^ (n + 1) := by bound
         _ ≤ 2 * (1/2 : ℝ) ^ n * (abs z)⁻¹ := by
-          simp only [pow_succ, ←mul_assoc, mul_comm _ (1/2:ℝ)]; norm_num
+          simp only [pow_succ, ←mul_assoc, mul_comm _ (1/2:ℝ)]
+          ring_nf
           simp only [mul_comm _ ((2:ℝ)^n)⁻¹, ←mul_assoc, le_refl]
 
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹^2)` -/

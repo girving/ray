@@ -1,4 +1,4 @@
-import Interval.Box
+import Interval.Box.Basic
 import Ray.Render.Grid
 import Ray.Render.Mandelbrot
 import Ray.Render.PNG

@@ -279,7 +279,7 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
 theorem AnalyticAt.fderiv [CompleteSpace F] {f : E → F} {c : E} (fa : AnalyticAt 𝕜 f c) :
     AnalyticAt 𝕜 (fderiv 𝕜 f) c := by
   rcases Metric.isOpen_iff.mp (isOpen_analyticAt 𝕜 f) _ fa with ⟨r, rp, fa⟩
-  exact AnalyticOn.fderiv fa _ (Metric.mem_ball_self rp)
+  exact AnalyticOnNhd.fderiv fa _ (Metric.mem_ball_self rp)
 
 /-- `deriv` is analytic -/
 theorem AnalyticAt.deriv {f : 𝕜 → 𝕜} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) [CompleteSpace 𝕜] :

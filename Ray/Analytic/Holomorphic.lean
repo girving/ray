@@ -34,7 +34,7 @@ variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F] [CompleteSpace F]
 /-- `f : ℂ × ℂ → E` is differentiable iff it is analytic -/
 theorem differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)}
     [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E] (o : IsOpen s) :
-    DifferentiableOn ℂ f s ↔ AnalyticOn ℂ f s := by
+    DifferentiableOn ℂ f s ↔ AnalyticOnNhd ℂ f s := by
   constructor
   · intro d; apply osgood o d.continuousOn
     · intro z0 z1 zs

@@ -59,7 +59,7 @@ structure SuperNear (f : ℂ → ℂ) (d : ℕ) (t : Set ℂ) extends SuperAt f 
   o : IsOpen t
   t0 : (0 : ℂ) ∈ t
   t2 : ∀ {z}, z ∈ t → abs z ≤ 1 / 2
-  fa : AnalyticOn ℂ f t
+  fa : AnalyticOnNhd ℂ f t
   ft : MapsTo f t t
   gs' : ∀ {z : ℂ}, z ≠ 0 → z ∈ t → abs (f z / z ^ d - 1) ≤ 1 / 4
 
@@ -100,11 +100,11 @@ theorem SuperAt.fg (s : SuperAt f d) (z : ℂ) : f z = z ^ d * g f d z := by
 /-- `g` is analytic where `f` is -/
 theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     AnalyticAt ℂ (g f d) c := by
-  rcases fa.exists_ball_analyticOn with ⟨r, rp, fa⟩
+  rcases fa.exists_ball_analyticOnNhd with ⟨r, rp, fa⟩
   have o : IsOpen (ball c r) := isOpen_ball
   generalize ht : ball c r = t
   rw [ht] at fa o
-  suffices h : AnalyticOn ℂ (g f d) t by rw [← ht] at h; exact h _ (mem_ball_self rp)
+  suffices h : AnalyticOnNhd ℂ (g f d) t by rw [← ht] at h; exact h _ (mem_ball_self rp)
   have ga : DifferentiableOn ℂ (g f d) (t \ {0}) := by
     have e : ∀ z : ℂ, z ∈ t \ {0} → g f d z = f z / z ^ d := by
       intro z zs; simp only [Set.mem_diff, Set.mem_singleton_iff] at zs
@@ -139,13 +139,13 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
   exact (Complex.differentiableOn_compl_singleton_and_continuousAt_iff (o.mem_nhds t0)).mp ⟨ga, gc⟩
 
 /-- `g` is analytic -/
-theorem SuperNear.ga (s : SuperNear f d t) : AnalyticOn ℂ (g f d) t := fun z m ↦
+theorem SuperNear.ga (s : SuperNear f d t) : AnalyticOnNhd ℂ (g f d) t := fun z m ↦
   s.ga_of_fa (s.fa z m)
 
 /-- `SuperAt → SuperNear`, manual radius version: if we know a ball where `f` is analytic and
     the resulting `g` is small, then `SuperAt` becomes `SuperNear` -/
 theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r ≤ 1 / 2)
-    (fa : AnalyticOn ℂ f (ball 0 r)) (gs : ∀ {z : ℂ}, abs z < r → abs (g f d z - 1) < 1 / 4) :
+    (fa : AnalyticOnNhd ℂ f (ball 0 r)) (gs : ∀ {z : ℂ}, abs z < r → abs (g f d z - 1) < 1 / 4) :
     SuperNear f d (ball 0 r) :=
   haveI gs : ∀ {z : ℂ}, z ≠ 0 → z ∈ ball (0 : ℂ) r → abs (f z / z ^ d - 1) ≤ 1 / 4 := by
     intro z z0 zs; simp only [mem_ball_zero_iff, Complex.norm_eq_abs, lt_min_iff] at zs
@@ -180,7 +180,7 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
 /-- `SuperAt → SuperNear`, automatic radius version: given `SuperAt`, we can find a ball where the
     smallness conditions needed for `SuperNear` hold. -/
 theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t := by
-  rcases s.fa0.exists_ball_analyticOn with ⟨r0, r0p, fa⟩
+  rcases s.fa0.exists_ball_analyticOnNhd with ⟨r0, r0p, fa⟩
   rcases Metric.continuousAt_iff.mp (s.ga_of_fa (fa 0 (mem_ball_self r0p))).continuousAt (1 / 4)
       (by norm_num) with
     ⟨r1, r1p, gs⟩
@@ -280,7 +280,7 @@ theorem five_eights_pow_le {n : ℕ} {r : ℝ} : r > 0 → (5/8 : ℝ) ^ n * r �
 
 theorem five_eights_pow_lt {n : ℕ} {r : ℝ} : r > 0 → n ≠ 0 → (5/8 : ℝ) ^ n * r < r := by
   intro rp np
-  have h : (5 / 8 : ℝ) ^ n < 1 := pow_lt_one (by norm_num) (by norm_num) np
+  have h : (5 / 8 : ℝ) ^ n < 1 := pow_lt_one₀ (by norm_num) (by norm_num) np
   exact lt_of_lt_of_le (mul_lt_mul_of_pos_right h rp) (by simp only [one_mul, le_refl])
 
 /-- Iterating f remains in t -/
@@ -304,12 +304,12 @@ theorem iterates_converge (s : SuperNear f d t) :
         _ = (5/8 : ℝ) ^ n.succ * abs z := rfl
 
 /-- Iterates are analytic -/
-theorem iterates_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ f^[n] t := by
-  intro n; induction' n with n h; · simp only [Function.iterate_zero]; exact analyticOn_id _
+theorem iterates_analytic (s : SuperNear f d t) : ∀ n, AnalyticOnNhd ℂ f^[n] t := by
+  intro n; induction' n with n h; · simp only [Function.iterate_zero]; exact analyticOnNhd_id
   · rw [Function.iterate_succ']; intro z zt; exact (s.fa _ (s.mapsTo n zt)).comp (h z zt)
 
 /-- `term` is analytic close to 0 -/
-theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOn ℂ (term f d n) t := by
+theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOnNhd ℂ (term f d n) t := by
   intro n z zt
   refine AnalyticAt.cpow ?_ analyticAt_const ?_
   · exact (s.ga _ (s.mapsTo n zt)).comp (iterates_analytic s n z zt)
@@ -326,7 +326,7 @@ theorem term_converges (s : SuperNear f d t) :
     · simp only [one_div, map_inv₀, Complex.abs_pow, Complex.abs_natCast, Nat.cast_pow]
       apply inv_le_one
       have hd : 1 ≤ (d : ℝ) := le_trans (by norm_num) s.dr2
-      exact one_le_pow_of_one_le hd _
+      exact one_le_pow₀ hd
   · have gs : abs (g f d (f^[n] z) - 1) ≤ 1 / 4 := s.gs (s.mapsTo n zt)
     have ps : abs (1 / (d:ℂ) ^ (n + 1) : ℂ) ≤ 1/2 * (1/2 : ℝ) ^ n := by
       have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ' _ _).symm
@@ -344,16 +344,16 @@ theorem term_nonzero (s : SuperNear f d t) : ∀ n, z ∈ t → term f d n z ≠
   intro n zt
   have h := term_converges s n zt
   have o : 1 / 2 * (1 / 2 : ℝ) ^ n < 1 := by
-    have p : (1 / 2 : ℝ) ^ n ≤ 1 := pow_le_one n (by norm_num) (by linarith)
-    calc
-      1 / 2 * (1 / 2 : ℝ) ^ n ≤ 1 / 2 * 1 := by linarith
+    have p : (1 / 2 : ℝ) ^ n ≤ 1 := pow_le_one₀ (by norm_num) (by linarith)
+    calc 1 / 2 * (1 / 2 : ℝ) ^ n
+      _ ≤ 1 / 2 * 1 := by linarith
       _ < 1 := by norm_num
   exact near_one_avoids_zero (lt_of_le_of_lt h o)
 
 /-- The `term` product exists and is analytic -/
 theorem term_prod (s : SuperNear f d t) :
     ProdExistsOn (term f d) t ∧
-      AnalyticOn ℂ (tprodOn (term f d)) t ∧ ∀ z, z ∈ t → tprodOn (term f d) z ≠ 0 := by
+      AnalyticOnNhd ℂ (tprodOn (term f d)) t ∧ ∀ z, z ∈ t → tprodOn (term f d) z ≠ 0 := by
   have c12 : (1 / 2 : ℝ) ≤ 1 / 2 := by norm_num
   have a0 : 0 ≤ (1 / 2 : ℝ) := by norm_num
   exact fast_products_converge' s.o c12 a0 (by linarith) (term_analytic s)
@@ -364,7 +364,7 @@ theorem term_prod_exists (s : SuperNear f d t) : ProdExistsOn (term f d) t :=
   (term_prod s).1
 
 /-- The `term` product is analytic in `z` -/
-theorem term_prod_analytic_z (s : SuperNear f d t) : AnalyticOn ℂ (tprodOn (term f d)) t :=
+theorem term_prod_analytic_z (s : SuperNear f d t) : AnalyticOnNhd ℂ (tprodOn (term f d)) t :=
   (term_prod s).2.1
 
 /-- The `term` product is nonzero -/
@@ -417,8 +417,8 @@ theorem bottcherNear_ne_zero (s : SuperNear f d t) : z ∈ t → z ≠ 0 → bot
   fun zt z0 ↦ mul_ne_zero z0 (term_prod_ne_zero s zt)
 
 /-- `bottcherNear` is analytic in `z` -/
-theorem bottcherNear_analytic_z (s : SuperNear f d t) : AnalyticOn ℂ (bottcherNear f d) t :=
-  (analyticOn_id _).mul (term_prod_analytic_z s)
+theorem bottcherNear_analytic_z (s : SuperNear f d t) : AnalyticOnNhd ℂ (bottcherNear f d) t :=
+  analyticOnNhd_id.mul (term_prod_analytic_z s)
 
 /-- `f^[n] z → 0` -/
 theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
@@ -428,7 +428,7 @@ theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
   simp only [Complex.dist_eq, sub_zero]
   have xp : e / abs z > 0 := div_pos ep (Complex.abs.pos z0)
   rcases exists_pow_lt_of_lt_one xp (by norm_num : (5 / 8 : ℝ) < 1) with ⟨N, Nb⟩
-  simp only [lt_div_iff (Complex.abs.pos z0)] at Nb
+  simp only [lt_div_iff₀ (Complex.abs.pos z0)] at Nb
   use N; intro n nN
   refine lt_of_le_of_lt (iterates_converge s n zt) (lt_of_le_of_lt ?_ Nb)
   bound
@@ -443,7 +443,7 @@ theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : abs (bottcher
     rw [Complex.dist_eq, sub_zero] at h; exact rs h
   rcases b'.exists with ⟨n, b⟩
   contrapose b; simp only [not_lt] at b ⊢
-  simp only [bottcherNear_eqn_iter s zt n, Complex.abs.map_pow, one_le_pow_of_one_le b]
+  simp only [bottcherNear_eqn_iter s zt n, Complex.abs.map_pow, one_le_pow₀ b]
 
 /-- Linear bound on `abs bottcherNear` -/
 theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
@@ -492,7 +492,7 @@ structure SuperNearC (f : ℂ → ℂ → ℂ) (d : ℕ) (u : Set ℂ) (t : Set 
   o : IsOpen t
   tc : ∀ {p : ℂ × ℂ}, p ∈ t → p.1 ∈ u
   s : ∀ {c}, c ∈ u → SuperNear (f c) d {z | (c, z) ∈ t}
-  fa : AnalyticOn ℂ (uncurry f) t
+  fa : AnalyticOnNhd ℂ (uncurry f) t
 
 /-- `SuperNearC → SuperNear` at `p ∈ t` -/
 theorem SuperNearC.ts (s : SuperNearC f d u t) {p : ℂ × ℂ} (m : p ∈ t) :
@@ -523,19 +523,19 @@ def g2 (f : ℂ → ℂ → ℂ) (d : ℕ) := fun p : ℂ × ℂ ↦ g (f p.1) d
 
 /-- `g2` is jointly analytic where `f` is -/
 theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpen t)
-    (fa : AnalyticOn ℂ (uncurry f) t) (tc : ∀ {p : ℂ × ℂ}, p ∈ t → p.1 ∈ u) :
-    AnalyticOn ℂ (g2 f d) t := by
+    (fa : AnalyticOnNhd ℂ (uncurry f) t) (tc : ∀ {p : ℂ × ℂ}, p ∈ t → p.1 ∈ u) :
+    AnalyticOnNhd ℂ (g2 f d) t := by
   refine Pair.hartogs o ?_ ?_
   · intro c z m
     simp only [g2, g]
     by_cases zero : z = 0; · simp only [zero, eq_self_iff_true, if_true]; exact analyticAt_const
     · simp only [zero, if_false]; refine AnalyticAt.div ?_ analyticAt_const (pow_ne_zero _ zero)
-      refine (fa _ ?_).comp₂ (analyticAt_id _ _) analyticAt_const; exact m
+      refine (fa _ ?_).comp₂ analyticAt_id analyticAt_const; exact m
   · intro c z m; apply (s.s (tc m)).ga_of_fa
-    refine (fa _ ?_).comp₂ analyticAt_const (analyticAt_id _ _); exact m
+    refine (fa _ ?_).comp₂ analyticAt_const analyticAt_id; exact m
 
 /-- `g2` is jointly analytic -/
-theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOn ℂ (g2 f d) t :=
+theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOnNhd ℂ (g2 f d) t :=
   s.superAtC.ga_of_fa s.o s.fa fun {_} m ↦ s.tc m
 
 /-- `SuperNearC` commutes with unions -/
@@ -577,7 +577,7 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
       ∃ r, r > 0 ∧ ball c r ⊆ u ∧ ball (c, 0) r ⊆ w ∧
         SuperNearC f d (ball c r) (ball (c, 0) r) := by
     intro c m
-    rcases(s.fa m).exists_ball_analyticOn with ⟨r0, r0p, fa⟩
+    rcases(s.fa m).exists_ball_analyticOnNhd with ⟨r0, r0p, fa⟩
     rcases Metric.isOpen_iff.mp s.o c m with ⟨r1, r1p, rc⟩
     set r2 := min r0 r1
     have fa := fa.mono (Metric.ball_subset_ball (min_le_left r0 r1))
@@ -603,7 +603,7 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
         s := by
           intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and]
           apply (s.s (rc m)).super_on_ball rp rh
-          · apply fa.comp₂ analyticOn_const (analyticOn_id _)
+          · apply fa.comp₂ analyticOnNhd_const analyticOnNhd_id
             intro z zm; apply Metric.ball_subset_ball (by bound : r ≤ r2)
             simp only [← ball_prod_same, Set.mem_prod, m, true_and]; exact zm
           · simp only [Complex.dist_eq, Prod.dist_eq, sub_zero, max_lt_iff, and_imp, g2, g0] at gs
@@ -635,7 +635,7 @@ theorem iterates_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : 
     AnalyticAt ℂ (fun c ↦ (f c)^[n] z) c := by
   induction' n with n nh; · simp only [Function.iterate_zero, id]; exact analyticAt_const
   · simp_rw [Function.iterate_succ']; simp only [Function.comp_apply]
-    refine (s.fa _ ?_).comp ((analyticAt_id _ _).prod nh)
+    refine (s.fa _ ?_).comp (analyticAt_id.prod nh)
     exact (s.ts m).mapsTo n m
 
 theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
@@ -645,7 +645,7 @@ theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, 
     rw [e]
     refine (s.ga _ ?_).comp ?_
     · exact (s.ts m).mapsTo n m
-    · apply (analyticAt_id _ _).prod (iterates_analytic_c s n m)
+    · apply analyticAt_id.prod (iterates_analytic_c s n m)
   · refine mem_slitPlane_of_near_one ?_
     exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (by norm_num)
 
@@ -662,7 +662,7 @@ theorem term_prod_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z) �
 
 /-- `term` prod is jointly analytic (using Hartogs's theorem for simplicity) -/
 theorem term_prod_analytic (s : SuperNearC f d u t) :
-    AnalyticOn ℂ (fun p : ℂ × ℂ ↦ tprod fun n ↦ term (f p.1) d n p.2) t := by
+    AnalyticOnNhd ℂ (fun p : ℂ × ℂ ↦ tprod fun n ↦ term (f p.1) d n p.2) t := by
   refine Pair.hartogs s.o ?_ ?_
   · intro c z m; simp only; exact term_prod_analytic_c s m
   · intro c z m; simp only; exact term_prod_analytic_z (s.ts m) _ m
@@ -674,8 +674,8 @@ theorem bottcherNear_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z)
 
 /-- `bottcherNear` is jointly analytic -/
 theorem bottcherNear_analytic (s : SuperNearC f d u t) :
-    AnalyticOn ℂ (fun p : ℂ × ℂ ↦ bottcherNear (f p.1) d p.2) t := fun _ m ↦
-  (analyticAt_snd _).mul (term_prod_analytic s _ m)
+    AnalyticOnNhd ℂ (fun p : ℂ × ℂ ↦ bottcherNear (f p.1) d p.2) t := fun _ m ↦
+  analyticAt_snd.mul (term_prod_analytic s _ m)
 
 /-- `deriv f` is nonzero away from 0 -/
 theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :

@@ -56,7 +56,7 @@ variable {f : ℂ → ℂ} {s : Set ℂ}
 
 /-- A nontrivial analytic function is one which is not locally constant -/
 structure NontrivialAnalyticOn (f : ℂ → ℂ) (s : Set ℂ) : Prop where
-  analyticOn : AnalyticOn ℂ f s
+  analyticOn : AnalyticOnNhd ℂ f s
   nonconst : ∀ x, x ∈ s → ∃ᶠ y in 𝓝 x, f y ≠ f x
 
 /-- Nontrivial analytic functions have isolated values -/
@@ -75,7 +75,7 @@ theorem NontrivialAnalyticOn.isolated' (n : NontrivialAnalyticOn f s) {z : ℂ} 
   exact ((n.analyticOn _ zs).continuousAt.eventually_ne h).filter_mono nhdsWithin_le_nhds
 
 /-- Nonconstant functions on preconnected sets are nontrivial -/
-theorem IsPreconnected.nontrivialAnalyticOn (p : IsPreconnected s) (fa : AnalyticOn ℂ f s)
+theorem IsPreconnected.nontrivialAnalyticOn (p : IsPreconnected s) (fa : AnalyticOnNhd ℂ f s)
     (ne : ∃ a b, a ∈ s ∧ b ∈ s ∧ f a ≠ f b) : NontrivialAnalyticOn f s :=
   { analyticOn := fa
     nonconst := by
@@ -83,11 +83,11 @@ theorem IsPreconnected.nontrivialAnalyticOn (p : IsPreconnected s) (fa : Analyti
       rcases ne with ⟨z, zs, h⟩
       simp only [not_exists, exists_and_left, not_and, not_not]
       have h' := (h.filter_mono (nhdsWithin_le_nhds (s := {z}ᶜ))).frequently
-      have e := fa.eqOn_of_preconnected_of_frequently_eq analyticOn_const p zs h'
+      have e := fa.eqOn_of_preconnected_of_frequently_eq analyticOnNhd_const p zs h'
       intro x xs y ys; rw [e xs, e ys] }
 
 /-- Nonconstant entire functions are nontrivial -/
-theorem Entire.nontrivialAnalyticOn (fa : AnalyticOn ℂ f univ) (ne : ∃ a b, f a ≠ f b) :
+theorem Entire.nontrivialAnalyticOn (fa : AnalyticOnNhd ℂ f univ) (ne : ∃ a b, f a ≠ f b) :
     NontrivialAnalyticOn f univ := by
   refine isPreconnected_univ.nontrivialAnalyticOn fa ?_; simpa only [Set.mem_univ, true_and]
 
@@ -111,7 +111,7 @@ theorem NontrivialAnalyticOn.discreteTopology (n : NontrivialAnalyticOn f s) (a 
 
 /-- pow is nontrivial -/
 theorem powNontrivial {d : ℕ} (dp : 0 < d) : NontrivialAnalyticOn (fun z ↦ z ^ d) univ := by
-  apply Entire.nontrivialAnalyticOn fun _ _ ↦ (analyticAt_id _ _).pow _; use 0, 1
+  apply Entire.nontrivialAnalyticOn fun _ _ ↦ analyticAt_id.pow _; use 0, 1
   simp only [id, one_pow, zero_pow (Nat.pos_iff_ne_zero.mp dp), Pi.pow_def]; norm_num
 
 /-- All roots of unity as a set -/
@@ -391,7 +391,7 @@ variable {N : Type} [TopologicalSpace N] [ChartedSpace B N]
 
 /-- If two analytic functions are equal locally, they are equal on preconnected sets.
 
-    This is a manifold version of `AnalyticOn.eqOn_of_preconnected_of_eventuallyEq`.
+    This is a manifold version of `AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`.
     This is the one higher dimension result in this file, which shows up in that `e`
     requires `f =ᶠ[𝓝 x] g` everywhere near a point rather than only frequent equality
     as would be required in 1D. -/
@@ -447,7 +447,7 @@ theorem MAnalyticOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space 
         (mAnalyticAt_iff_of_boundaryless.mp (ga _ xs)).2
     clear hd ex ex' xt t e fa ga f g xs hz x sp ht
     -- Forget about manifolds
-    rcases da.exists_ball_analyticOn with ⟨r, rp, da⟩
+    rcases da.exists_ball_analyticOnNhd with ⟨r, rp, da⟩
     rcases Filter.frequently_iff.mp d0 (isOpen_ball.mem_nhds (mem_ball_self rp)) with ⟨z0, m0, ze⟩
     refine eventually_nhds_iff.mpr ⟨_, ?_, isOpen_ball, mem_ball_self rp⟩
     exact da.eqOn_zero_of_preconnected_of_eventuallyEq_zero (convex_ball _ _).isPreconnected m0 ze

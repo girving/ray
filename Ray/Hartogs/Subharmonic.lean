@@ -216,8 +216,8 @@ theorem SubharmonicOn.constMul {f : ℂ → ℝ} {s : Set ℂ} {a : ℝ} (fs : S
           rw [integral_mul_left] }
 
 /-- Analytic functions equal circle means -/
-theorem AnalyticOn.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ} {r : ℝ}
-    (fa : AnalyticOn ℂ f (closedBall c r)) (rp : r > 0) :
+theorem AnalyticOnNhd.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ} {r : ℝ}
+    (fa : AnalyticOnNhd ℂ f (closedBall c r)) (rp : r > 0) :
     ⨍ t in itau, f (circleMap c r t) = f c := by
   have h := Complex.circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
     Set.countable_empty (Metric.mem_ball_self rp) fa.continuousOn ?_
@@ -234,7 +234,7 @@ theorem AnalyticOn.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ} {r
     exact (fa z (Metric.ball_subset_closedBall zs)).differentiableAt
 
 /-- Analytic functions are harmonic -/
-theorem AnalyticOn.harmonicOn [CompleteSpace H] {f : ℂ → H} {s : Set ℂ} (fa : AnalyticOn ℂ f s) :
+theorem AnalyticOnNhd.harmonicOn [CompleteSpace H] {f : ℂ → H} {s : Set ℂ} (fa : AnalyticOnNhd ℂ f s) :
     HarmonicOn f s :=
   { cont := fa.continuousOn
     mean := by intro c r rp cs; rw [(fa.mono cs).circle_mean_eq rp] }
@@ -257,7 +257,7 @@ theorem HarmonicOn.conj {f : ℂ → ℂ} {s : Set ℂ} (fh : HarmonicOn f s) :
     HarmonicOn (fun z ↦ conj (f z)) s := by simp only [← conjCLM_apply]; exact fh.linear _
 
 /-- Real parts of analytic functions are subharmonic -/
-theorem AnalyticOn.reSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOn ℂ f s) :
+theorem AnalyticOnNhd.reSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOnNhd ℂ f s) :
     SubharmonicOn (fun z ↦ (f z).re) s :=
   fa.harmonicOn.re.subharmonicOn
 
@@ -277,7 +277,7 @@ theorem Minimum.submean {f : ℂ → ℝ} {s : Set ℂ} {c : ℂ} (fc : Continuo
   simpa only [mul_comm, ← div_eq_mul_inv, le_div_iff₀ n.real_pos]
 
 /-- `max b (log ‖f z‖)` is subharmonic for analytic `f` (`ℂ` case) -/
-theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOn ℂ f s) (b : ℝ) :
+theorem AnalyticOnNhd.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : AnalyticOnNhd ℂ f s) (b : ℝ) :
     SubharmonicOn (fun z ↦ maxLog b (abs (f z))) s :=
   { cont := fa.continuousOn.maxLog_norm b
     submean' := by
@@ -316,7 +316,7 @@ theorem AnalyticOn.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa : 
         simp only [Complex.log_re, AbsoluteValue.map_mul, map_div₀, Complex.abs_ofReal,
           Complex.abs_abs, div_self anz, one_mul]
       have gs : SubharmonicOn g (ball c r) := by
-        rw [← hg]; apply AnalyticOn.reSubharmonicOn; intro z zs
+        rw [← hg]; apply AnalyticOnNhd.reSubharmonicOn; intro z zs
         exact r0a (Metric.ball_subset_ball (by bound) zs)
       rw [subharmonicOn_congr fg.symm] at gs
       refine gs.submean' c ?_
@@ -587,7 +587,7 @@ theorem toCircle_smul {T : ℝ} (n : ℕ) (x : AddCircle T) : (n • x).toCircle
 /-- Fourier terms extend -/
 theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
   have mh : ∀ n : ℕ, HarmonicOn (fun z ↦ ((↑r)⁻¹ * (z - c)) ^ n) (closedBall c r) := by
-    intro n; apply AnalyticOn.harmonicOn; refine AnalyticOn.mono ?_ (Set.subset_univ _)
+    intro n; apply AnalyticOnNhd.harmonicOn; refine AnalyticOnNhd.mono ?_ (Set.subset_univ _)
     rw [analyticOn_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
     apply Differentiable.pow; apply Differentiable.mul (differentiable_const _)
     apply Differentiable.sub differentiable_id (differentiable_const _)
@@ -862,13 +862,13 @@ theorem SubharmonicOn.monotone_lim {f : ℕ → ℂ → ℝ} {g : ℂ → ℝ} {
     Some machinery is required to handle general Banach spaces: we rewrite `‖f z‖` as the limit
     of norms along larger and larger finite subspaces, and use the fact that `linear ∘ analytic`
     is analytic to reduce to the case of `H = ℂ`. -/
-theorem AnalyticOn.maxLog_norm_subharmonicOn [SecondCountableTopology H] {f : ℂ → H} {s : Set ℂ}
-    (fa : AnalyticOn ℂ f s) (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
+theorem AnalyticOnNhd.maxLog_norm_subharmonicOn [SecondCountableTopology H] {f : ℂ → H} {s : Set ℂ}
+    (fa : AnalyticOnNhd ℂ f s) (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
   have gc := fa.continuousOn.maxLog_norm b
   have ft := fun z (_ : z ∈ s) ↦ duals_lim_tendsto_maxLog_norm b (f z)
   have fs : ∀ n, SubharmonicOn (fun z ↦ partialSups (fun k ↦ maxLog b ‖duals k (f z)‖) n) s := by
     intro m; apply SubharmonicOn.partialSups; intro n; simp_rw [Complex.norm_eq_abs]
-    exact ((duals n).comp_analyticOn fa).maxLogAbsSubharmonicOn b
+    exact ((duals n).comp_analyticOnNhd fa).maxLogAbsSubharmonicOn b
   refine SubharmonicOn.monotone_lim fs ?_ ft gc
   · intro a b ab z; simp only [Complex.norm_eq_abs]; apply (partialSups _).monotone ab
 

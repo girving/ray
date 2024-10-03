@@ -1,4 +1,4 @@
-import Interval.Box
+import Interval.Box.Basic
 import Ray.Dynamics.Mandelbrot
 
 /-!

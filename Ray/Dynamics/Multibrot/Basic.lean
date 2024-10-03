@@ -95,8 +95,8 @@ theorem f_0' (d : ℕ) [Fact (2 ≤ d)] : f' d c 0 = c := by
 theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
   simp only [f, ← coe_zero, lift_coe', f', zero_pow (d_ne_zero _), zero_add]
 
-theorem analytic_f' {d : ℕ} : AnalyticOn ℂ (uncurry (f' d)) univ := fun _ _ ↦
-  ((analyticAt_snd _).pow _).add (analyticAt_fst _)
+theorem analytic_f' {d : ℕ} : AnalyticOnNhd ℂ (uncurry (f' d)) univ := fun _ _ ↦
+  (analyticAt_snd.pow _).add analyticAt_fst
 
 theorem deriv_f' {d : ℕ} {z : ℂ} : deriv (f' d c) z = d * z ^ (d - 1) := by
   have h : HasDerivAt (f' d c) (d * z ^ (d - 1) + 0) z :=
@@ -168,7 +168,7 @@ theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
     mul_one]
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
-  apply (analyticAt_const.add (analyticAt_const.mul ((analyticAt_id _ _).pow _))).inv
+  apply (analyticAt_const.add (analyticAt_const.mul (analyticAt_id.pow _))).inv
   simp only [Pi.pow_apply, id_eq, Pi.add_apply, ne_eq, zero_pow (d_ne_zero _), mul_zero, add_zero,
     one_ne_zero, not_false_eq_true]
 
@@ -211,8 +211,8 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     intro z m; simp only [← ht, mem_setOf] at m
     simp only [Complex.abs.map_mul, Complex.abs.map_pow]
     trans abs c * (max 16 (abs c / 2))⁻¹ ^ d; bound
-    rw [inv_pow, mul_inv_le_iff]; swap; bound
-    rw [mul_one_div]; rw [le_div_iff₀, mul_comm]; swap; norm_num
+    rw [inv_pow, mul_inv_le_iff₀]; swap; bound
+    rw [one_div_mul_eq_div]; rw [le_div_iff₀, mul_comm]; swap; norm_num
     refine le_trans ?_ (pow_le_pow_right (le_max_of_le_left (by norm_num)) (two_le_d d))
     by_cases cb : abs c / 2 ≤ 16
     rw [max_eq_left cb, pow_two]; linarith
@@ -236,8 +236,8 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
       t2 := fun {z} m ↦ le_trans (zb m) (by norm_num)
       fa := by
         intro z m; rw [fl_f]
-        refine ((analyticAt_id _ _).pow _).div (analyticAt_const.add
-          (analyticAt_const.mul ((analyticAt_id _ _).pow _))) ?_
+        refine (analyticAt_id.pow _).div (analyticAt_const.add
+          (analyticAt_const.mul (analyticAt_id.pow _))) ?_
         rw [← Complex.abs.ne_zero_iff]; exact (lt_of_lt_of_le (by norm_num) (cz1 m)).ne'
       ft := by
         intro z m; specialize cz1 m; specialize zb m
@@ -563,10 +563,12 @@ theorem bottcher_tendsto_zero : Tendsto (bottcher' d) atInf (𝓝 0) := by
   use max 16 (3 / r)
   simp only [true_and, mem_setOf, Complex.dist_eq, sub_zero, Complex.norm_eq_abs, max_lt_iff]
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
-  rw [div_lt_iff rp] at rz; rw [map_inv₀, mul_inv_lt_iff (lt_trans (by norm_num) lo)]; exact rz
+  rw [div_lt_iff₀ rp] at rz
+  rw [map_inv₀, mul_inv_lt_iff₀ (lt_trans (by norm_num) lo)]
+  linarith
 
 /-- `bottcher' d` is analytic outside the Multibrot set -/
-theorem bottcher_analytic : AnalyticOn ℂ (bottcher' d) (multibrot d)ᶜ := by
+theorem bottcher_analytic : AnalyticOnNhd ℂ (bottcher' d) (multibrot d)ᶜ := by
   set s := superF d; intro c m; apply MAnalyticAt.analyticAt I I
   exact (s.bottcher_mAnalyticOn (c, c) (multibrotPost m)).comp₂_of_eq mAnalyticAt_id
     (mAnalytic_coe _) rfl
