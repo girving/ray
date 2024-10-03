@@ -85,7 +85,7 @@
    "type": "git",
    "subDir": null,
    "scope": "girving",
-   "rev": "8520c8765eab45ebe12f8e264c9c6a2bd9d4eb43",
+   "rev": "2c59d6c109784bc34a226b8d134ceab6b24daf62",
    "name": "interval",
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
