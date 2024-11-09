@@ -68,10 +68,10 @@ section Nhds
 def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [TopologicalSpace M]
     [ChartedSpace A M] (x : M) : PartialHomeomorph M E where
   toPartialEquiv := extChartAt I x
-  open_source := isOpen_extChartAt_source I x
-  open_target := isOpen_extChartAt_target I x
-  continuousOn_toFun := continuousOn_extChartAt I x
-  continuousOn_invFun := continuousOn_extChartAt_symm I x
+  open_source := isOpen_extChartAt_source x
+  open_target := isOpen_extChartAt_target x
+  continuousOn_toFun := continuousOn_extChartAt x
+  continuousOn_invFun := continuousOn_extChartAt_symm x
 
 /-- `extChartAt` maps `𝓝` to `𝓝` -/
 theorem extChartAt_map_nhds [I.Boundaryless] {x y : M} (m : y ∈ (extChartAt I x).source) :
@@ -82,7 +82,7 @@ theorem extChartAt_map_nhds [I.Boundaryless] {x y : M} (m : y ∈ (extChartAt I 
 theorem extChartAt_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
     [TopologicalSpace M] [ChartedSpace A M] (x : M) :
     Filter.map (extChartAt I x) (𝓝 x) = 𝓝 (extChartAt I x x) :=
-  extChartAt_map_nhds (mem_extChartAt_source I x)
+  extChartAt_map_nhds (mem_extChartAt_source x)
 
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
 theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
@@ -93,8 +93,9 @@ theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E} (m : y ∈ (ex
 theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
     [TopologicalSpace M] [ChartedSpace A M] (x : M) :
     Filter.map (extChartAt I x).symm (𝓝 (extChartAt I x x)) = 𝓝 x := by
-  convert extChartAt_symm_map_nhds (mem_extChartAt_target I x)
-  simp only [PartialEquiv.left_inv _ (mem_extChartAt_source I x)]
+  convert extChartAt_symm_map_nhds (mem_extChartAt_target x)
+  simp only [PartialEquiv.left_inv _ (mem_extChartAt_source x)]
+  infer_instance
 
 /-- Nontrivial manifolds have no isolated points.
     Unfortunately, making this an instance gives "cannot find synthesization order for instance" -/
@@ -105,7 +106,7 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
     extChartAt_symm_map_nhds' I x, Filter.frequently_map, true_and,
     mem_compl_singleton_iff] at p ⊢
   apply p.mp
-  apply ((isOpen_extChartAt_target I x).eventually_mem (mem_extChartAt_target I x)).mp
+  apply ((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target x)).mp
   refine .of_forall fun y m h ↦ ?_
   contrapose h; simp only [not_not] at m h ⊢; nth_rw 2 [← h]
   rw [PartialEquiv.right_inv _ m]
@@ -113,9 +114,6 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
 end Nhds
 
 section Deriv
-
-variable [SmoothManifoldWithCorners I M] [SmoothManifoldWithCorners J N]
-variable [SmoothManifoldWithCorners K O] [SmoothManifoldWithCorners L P]
 
 /-- `HasMFDerivAt` of `x ↦ (f x, g x)` is `df.prod dg` -/
 theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
@@ -153,7 +151,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     intro u
     have d : HasMFDerivAt J L (uncurry f ∘ fun x ↦ (x, z)) y
         (df.comp ((ContinuousLinearMap.id 𝕜 (TangentSpace J y)).prod 0)) :=
-      fh.comp y ((hasMFDerivAt_id _ _).prod (hasMFDerivAt_const _ _ _ _))
+      fh.comp y ((hasMFDerivAt_id _).prod (hasMFDerivAt_const _ _))
     simp only [hasMFDerivAt_unique fh0 d]
     refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
     refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
@@ -164,7 +162,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     have d : HasMFDerivAt K L (uncurry f ∘ fun x ↦ (y, x)) z (df.comp
         ((0 : TangentSpace K z →L[𝕜] TangentSpace J y).prod
           (ContinuousLinearMap.id 𝕜 (TangentSpace K z)))) :=
-      fh.comp z ((hasMFDerivAt_const _ _ _ _).prod (hasMFDerivAt_id _ _))
+      fh.comp z ((hasMFDerivAt_const _ _).prod (hasMFDerivAt_id _))
     rw [hasMFDerivAt_unique fh1 d]
     refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
     refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
@@ -208,6 +206,9 @@ theorem mfderiv_comp' {f : M → N} (x : M) {g : N → O} (hg : MDifferentiableA
     mfderiv I K (fun x ↦ g (f x)) x = (mfderiv J K g (f x)).comp (mfderiv I J f x) :=
   mfderiv_comp _ hg hf
 
+variable [SmoothManifoldWithCorners I M] [SmoothManifoldWithCorners J N]
+variable [SmoothManifoldWithCorners K O] [SmoothManifoldWithCorners L P]
+
 /-- Chart derivatives are invertible (left inverse) -/
 theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
     (m : y ∈ (extChartAt I x).source) :
@@ -218,14 +219,14 @@ theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
   have mc : y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m
   have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m').mdifferentiableWithinAt le_top
   have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
-  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' _ m')
+  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' m')
   simp only [mdifferentiableWithinAt_univ] at d1
   have c := mfderiv_comp y d0 d1
   refine Eq.trans c.symm ?_
   rw [← mfderiv_id]
   apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).source
-  use extChartAt_source_mem_nhds' I m
+  use extChartAt_source_mem_nhds' m
   intro z zm
   simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
 
@@ -239,12 +240,12 @@ theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
   have mc : (extChartAt I x).symm y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m'
   have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m).mdifferentiableWithinAt le_top
   have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
-  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' _ m)
+  replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' m)
   simp only [mdifferentiableWithinAt_univ] at d1
   have c := mfderiv_comp y d1 d0
   refine Eq.trans c.symm ?_; clear c; rw [← mfderiv_id]; apply Filter.EventuallyEq.mfderiv_eq
   rw [Filter.eventuallyEq_iff_exists_mem]; use(extChartAt I x).target
-  have n := extChartAt_target_mem_nhdsWithin' I m'
+  have n := extChartAt_target_mem_nhdsWithin' m'
   simp only [ModelWithCorners.range_eq_univ, nhdsWithin_univ,
     PartialEquiv.right_inv _ m] at n
   use n; intro z zm

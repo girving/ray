@@ -24,6 +24,7 @@ open Filter (Tendsto)
 open Metric (closedBall mem_closedBall mem_closedBall_self)
 open Real (exp log)
 open RiemannSphere
+open OneDimension
 open Set
 open scoped OnePoint RiemannSphere Topology
 noncomputable section
@@ -45,20 +46,20 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < abs c) (cz : abs c �
   suffices e : EqOn (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) (bottcherNear (fl (f d) ∞ c) d) t by
     have z0' : z ≠ 0 := Complex.abs.ne_zero_iff.mp z0.ne'
     convert @e z⁻¹ _; rw [inv_coe (inv_ne_zero z0'), inv_inv]
-    simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv z0 c0, cz, t]
+    simp only [mem_closedBall, Complex.dist_eq, sub_zero, map_inv₀, inv_le_inv₀ z0 c0, cz, t]
   have a0 : MAnalyticOn I I (fun z : ℂ ↦ s.bottcher c (z : 𝕊)⁻¹) t := by
     intro z m
     refine (s.bottcher_mAnalyticOn _ ?_).along_snd.comp (mAnalytic_inv.comp mAnalytic_coe _)
     simp only [mem_closedBall, Complex.dist_eq, sub_zero, t] at m
     by_cases z0 : z = 0; simp only [z0, coe_zero, inv_zero']; exact s.post_a c
     rw [inv_coe z0]; refine postcritical_large (by linarith) ?_
-    rwa [map_inv₀, le_inv c0]; exact Complex.abs.pos z0
+    rwa [map_inv₀, le_inv_comm₀ c0]; exact Complex.abs.pos z0
   have a1 : MAnalyticOn I I (bottcherNear (fl (f d) ∞ c) d) t := by
     intro z m; apply AnalyticAt.mAnalyticAt
     apply bottcherNear_analytic_z (superNearF d c)
     simp only [mem_setOf, mem_closedBall, Complex.dist_eq, sub_zero, t] at m ⊢
     refine lt_of_le_of_lt m ?_
-    refine inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
+    refine inv_strictAnti₀ (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
     exact max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))
   refine (a0.eq_of_locally_eq a1 (convex_closedBall _ _).isPreconnected ?_).self_of_nhdsSet
   use 0, mem_closedBall_self (by bound)
@@ -82,7 +83,7 @@ theorem bottcher_eq_bottcherNear {c : ℂ} (c16 : 16 < abs c) :
 theorem inv_mem_t {c z : ℂ} (c16 : 16 < abs c) (cz : abs c ≤ abs z) :
     z⁻¹ ∈ {z : ℂ | abs z < (max 16 (abs c / 2))⁻¹} := by
   simp only [mem_setOf, map_inv₀]
-  refine inv_lt_inv_of_lt (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
+  refine inv_strictAnti₀ (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
   exact lt_of_lt_of_le (max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))) cz
 
 /-- Terms in the `bottcherNear` product are close to 1 -/
@@ -91,7 +92,7 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs c) (c
   set s := superF d
   have z0 : abs z ≠ 0 := (lt_of_lt_of_le (lt_trans (by norm_num) c16) cz).ne'
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
-    rw [one_div]; apply inv_le_inv_of_le; norm_num
+    rw [one_div]; apply inv_anti₀; norm_num
     exact le_trans (by norm_num) (le_trans c16.le cz)
   have i1 : (abs z)⁻¹ ≤ 1 := le_trans i8 (by norm_num)
   simp only [term]
@@ -136,7 +137,7 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < abs
     (cz : abs c ≤ abs z) : abs ((superF d).bottcher c z - z⁻¹) ≤ (16:ℝ) * (abs z)⁻¹ ^ 2 := by
   set s := superF d
   have i8 : (abs z)⁻¹ ≤ 1 / 8 := by
-    rw [one_div]; apply inv_le_inv_of_le; norm_num
+    rw [one_div]; apply inv_anti₀; norm_num
     exact le_trans (by norm_num) (le_trans c16.le cz)
   simp only [bottcher_eq_bottcherNear_z c16 cz, bottcherNear, Complex.abs.map_mul, ← mul_sub_one,
     pow_two, ← mul_assoc, map_inv₀, mul_comm (abs z)⁻¹]
@@ -179,7 +180,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)�
     calc 16 * abs z
       _ ≤ 16 * (k / 16) := by linarith [le.2]
       _ = k := by ring
-  · rw [map_inv₀, lt_inv (by norm_num) (Complex.abs.pos_iff.mpr z0)]; exact le.1
+  · rw [map_inv₀, lt_inv_comm₀ (by norm_num) (Complex.abs.pos_iff.mpr z0)]; exact le.1
 
 /-- bottcher is nonsingular at `∞` -/
 theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by

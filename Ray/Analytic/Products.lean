@@ -104,7 +104,7 @@ theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : �
   rcases fast_products_converge o c12 a0 a1 h hf with ⟨g, gp, ga, g0⟩
   refine ⟨?_, ?_, ?_⟩
   · exact fun z zs ↦ ⟨g z, gp z zs⟩
-  · rwa [← analyticOn_congr o fun z zs ↦ (gp.tprodOn_eq z zs).symm]
+  · rwa [← analyticOnNhd_congr o fun z zs ↦ (gp.tprodOn_eq z zs).symm]
   · intro z zs; rw [gp.tprodOn_eq z zs]; exact g0 z zs
 
 /-- Powers commute with products -/

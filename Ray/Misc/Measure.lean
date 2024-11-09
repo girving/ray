@@ -242,14 +242,14 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
     rw [← ht]; exact MeasurableSet.inter sn.measurable measurableSet_ball
   have sc : s \ t ∪ t = s := Set.diff_union_of_subset ts
   nth_rw 2 [← sc]
-  rw [integral_union]
+  rw [setIntegral_union]
   simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, gt_iff_lt]
   · set m := (b + f x) / 2
     set vs := (volume s).toReal
     set vt := (volume t).toReal
     have vsp : vs > 0 := sn.real_pos
     have vtp : vt > 0 := ENNReal.toReal_pos (vtp'.ne') (lt_top_iff_ne_top.mp tf)
-    rw [inv_mul_lt_iff' vsp]
+    rw [inv_mul_lt_iff₀' vsp]
     have mb : m < b := by
       calc (b + f x) / 2
         _ < (b + b) / 2 := (div_lt_div_right (by norm_num)).mpr (by bound)
@@ -316,8 +316,8 @@ theorem aEMeasurable_liminf' {I I' : Type} {u : Filter I} {f : I → M → ENNRe
     {p : I' → Prop} {s : I' → Set I} (fm : ∀ n, AEMeasurable (f n) μ) (uc : u.HasCountableBasis p s)
     (sc : ∀ i, (s i).Countable) : AEMeasurable (fun x ↦ u.liminf fun n ↦ f n x) μ := by
   simp_rw [uc.toHasBasis.liminf_eq_iSup_iInf]
-  refine aemeasurable_biSup _ uc.countable ?_
-  intro i _; exact aemeasurable_biInf _ (sc i) (fun n _ ↦ fm n)
+  refine AEMeasurable.biSup _ uc.countable ?_
+  intro i _; exact AEMeasurable.biInf _ (sc i) (fun n _ ↦ fm n)
 
 /-- `liminf` preserves ae measurability, `ℕ` version -/
 theorem aEMeasurable_liminf {f : ℕ → M → ENNReal} {μ : Measure M} (fm : ∀ n, AEMeasurable (f n) μ) :

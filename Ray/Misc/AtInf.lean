@@ -68,7 +68,7 @@ theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedF
     by_cases rp : 0 < r
     · use r⁻¹; simp only [rp, inv_pos, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
-      simp only [← lt_inv (norm_pos_iff.mpr xs.2) rp, xs.1, mem_setOf_eq, norm_inv]
+      simp only [← lt_inv_comm₀ (norm_pos_iff.mpr xs.2) rp, xs.1, mem_setOf_eq, norm_inv]
     · use 1; simp only [zero_lt_one, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
       simp only [mem_setOf_eq, norm_inv]; simp only [not_lt] at rp
@@ -79,7 +79,7 @@ theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedF
     simp only [mem_inter_iff, mem_ball_zero_iff, norm_inv, mem_compl_iff, mem_singleton_iff,
       inv_eq_zero]
     have np : 0 < ‖x‖ := _root_.trans (inv_pos.mpr rp) xs
-    simp [inv_lt np rp, xs, norm_pos_iff.mp np]
+    simp [inv_lt_comm₀ np rp, xs, norm_pos_iff.mp np]
 
 /-- Convergence to `atInf` implies `cocompact` convergence -/
 theorem atInf_le_cocompact {X : Type} [NormedAddCommGroup X] : @atInf X _ ≤ Filter.cocompact X := by

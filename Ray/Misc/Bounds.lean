@@ -207,7 +207,7 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
       · intro w ws
         rw [derivWithin.clog o ws, derivWithin.cid o ws]
         simp only [one_div, norm_inv, Complex.norm_eq_abs]
-        rw [inv_le]
+        rw [inv_le_comm₀]
         have aw := sa w ws; simp at aw; field_simp; assumption
         have aw := sa w ws; linarith; norm_num; assumption
         exact differentiableWithinAt_id

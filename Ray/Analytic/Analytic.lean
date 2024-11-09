@@ -171,7 +171,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
   · refine iSup₂_le ?_; intro r k; refine iSup_le ?_; intro h
     refine le_trans ?_ (le_iSup₂ r (k * ↑r⁻¹))
     have h := fun n ↦ mul_le_mul_of_nonneg_right (h (n + 1)) (NNReal.coe_nonneg r⁻¹)
-    by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero_eq_zero, le_zero_iff]
+    by_cases r0 : r = 0; · simp only [r0, ENNReal.coe_zero, ENNReal.iSup_zero, le_zero_iff]
     simp only [pow_succ, ←mul_assoc _ _ (r:ℝ), mul_assoc _ (r:ℝ) _,
       mul_inv_cancel₀ (NNReal.coe_ne_zero.mpr r0), NNReal.coe_inv, mul_one, p.unshift_norm'] at h
     simp only [NNReal.coe_inv]
@@ -275,12 +275,6 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
       exact ((differentiableAt_id.sub (differentiableAt_const _)).pow _).smul fa.differentiableAt
     rw [e, h]
 
-/-- `fderiv` is analytic -/
-theorem AnalyticAt.fderiv [CompleteSpace F] {f : E → F} {c : E} (fa : AnalyticAt 𝕜 f c) :
-    AnalyticAt 𝕜 (fderiv 𝕜 f) c := by
-  rcases Metric.isOpen_iff.mp (isOpen_analyticAt 𝕜 f) _ fa with ⟨r, rp, fa⟩
-  exact AnalyticOnNhd.fderiv fa _ (Metric.mem_ball_self rp)
-
 /-- `deriv` is analytic -/
 theorem AnalyticAt.deriv {f : 𝕜 → 𝕜} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) [CompleteSpace 𝕜] :
     AnalyticAt 𝕜 (fun x ↦ deriv f x) c := by
@@ -298,7 +292,7 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
     refine fa.eventually_analyticAt.mp (.of_forall ?_)
     intro ⟨x, y⟩ fa; simp only [← fderiv_deriv]
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
-    rw [e]; rw [fderiv.comp]
+    rw [e]; rw [fderiv_comp]
     have pd : _root_.fderiv 𝕜 (fun y : 𝕜 ↦ (x, y)) y = ContinuousLinearMap.inr 𝕜 E 𝕜 := by
       apply HasFDerivAt.fderiv; apply hasFDerivAt_prod_mk_right
     rw [pd, ContinuousLinearMap.comp_apply, ContinuousLinearMap.inr_apply,

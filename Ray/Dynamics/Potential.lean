@@ -497,7 +497,7 @@ theorem Super.has_nice_n (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op 
 
 /-- An `n` such that `(f c)^[n]` sends everything with potential < `p` to `s.near` -/
 def Super.np (s : Super f d a) (c : ℂ) (p : ℝ) : ℕ :=
-  if q : p < 1 ∧ OnePreimage s then Nat.find (Super.has_nice_n c q.1 (op := q.2)) else 0
+  if q : p < 1 ∧ OnePreimage s then Nat.find (s.has_nice_n c q.1 (op := q.2)) else 0
 
 theorem Super.nice_np (s : Super f d a) (c : ℂ) {p : ℝ} (p1 : p < 1) [op : OnePreimage s] :
     s.IsNiceN c p (s.np c p) := by

@@ -1,5 +1,4 @@
 import Mathlib.Analysis.SpecialFunctions.Integrals
-import Mathlib.MeasureTheory.Constructions.Prod.Integral
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
@@ -274,7 +273,7 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
   have e : ∀ x : ℝ × ℝ, x ∈ square r0 r1 → |x.1| • f (circleMap c x.1 x.2) =
       x.1 • f (circleMap c x.1 x.2) := by
     intro x xs; rw [abs_of_pos (square.rp r0p xs)]
-  rw [MeasureTheory.setIntegral_congr Measurable.square e]; clear e
+  rw [MeasureTheory.setIntegral_congr_fun Measurable.square e]; clear e
   rw [square, Measure.volume_eq_prod, MeasureTheory.setIntegral_prod]
   simp [integral_smul]
   have fi : IntegrableOn (fun x : ℝ × ℝ ↦ x.1 • f (circleMap c x.1 x.2))
@@ -297,7 +296,7 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
     ∫ z in closedBall c r, f z =
       ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
-  rw [MeasureTheory.setIntegral_congr_set_ae center]; clear center
+  rw [MeasureTheory.setIntegral_congr_set center]; clear center
   rw [←Metric.closedBall_zero, ←annulus_oc]
   apply fubini_annulus
   · simpa only [annulus_cc, Metric.ball_zero, diff_empty]

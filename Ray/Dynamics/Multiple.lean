@@ -25,6 +25,7 @@ open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)
 open Nat (iterate)
+open OneDimension
 open Set
 open scoped NNReal Topology Real
 noncomputable section
@@ -182,39 +183,39 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : MAnalyticAt I 
     apply mem_extChartAt_source; apply mem_extChartAt_target; rw [PartialEquiv.left_inv]
     apply mem_extChartAt_source; apply mem_extChartAt_source
     exact MDifferentiableAt.comp _ fd
-      (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt
+      (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _)).mdifferentiableAt
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
   refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
-  · apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target I c)).comp_of_eq
+  · apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target c)).comp_of_eq
     apply (ha.mAnalyticAt I I).comp_of_eq
-      (MAnalyticAt.extChartAt (mem_extChartAt_source I c)) rfl
+      (MAnalyticAt.extChartAt (mem_extChartAt_source c)) rfl
     exact h0
-  · simp only [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I c)]
+  · simp only [h0, PartialEquiv.left_inv _ (mem_extChartAt_source c)]
   · rw [eventually_nhdsWithin_iff] at e ⊢
-    apply ((continuousAt_extChartAt I c).eventually e).mp
-    apply ((isOpen_extChartAt_source I c).eventually_mem (mem_extChartAt_source I c)).mp
+    apply ((continuousAt_extChartAt c).eventually e).mp
+    apply ((isOpen_extChartAt_source c).eventually_mem (mem_extChartAt_source (I := I) c)).mp
     have m1 : ∀ᶠ z in 𝓝 c, h (extChartAt I c z) ∈ (extChartAt I c).target := by
-      refine ContinuousAt.eventually_mem ?_ (extChartAt_target_mem_nhds' I ?_)
-      · exact ha.continuousAt.comp_of_eq (continuousAt_extChartAt I c) rfl
-      · rw [h0]; exact mem_extChartAt_target I c
+      refine ContinuousAt.eventually_mem ?_ (extChartAt_target_mem_nhds' ?_)
+      · exact ha.continuousAt.comp_of_eq (continuousAt_extChartAt c) rfl
+      · rw [h0]; exact mem_extChartAt_target c
     have m2 : ∀ᶠ z in 𝓝 c, f z ∈ (extChartAt I (f c)).source :=
-      fa.1.eventually_mem (extChartAt_source_mem_nhds I _)
+      fa.1.eventually_mem (extChartAt_source_mem_nhds _)
     have m3 : ∀ᶠ z in 𝓝 c,
         f ((extChartAt I c).symm (h (extChartAt I c z))) ∈ (extChartAt I (f c)).source := by
-      refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' I ?_)
-      · apply fa.1.comp_of_eq; apply (continuousAt_extChartAt_symm I _).comp_of_eq
-        apply ha.continuousAt.comp_of_eq; exact continuousAt_extChartAt I _
-        rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
-      · rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source I _)]
+      refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' ?_)
+      · apply fa.1.comp_of_eq; apply (continuousAt_extChartAt_symm _).comp_of_eq
+        apply ha.continuousAt.comp_of_eq; exact continuousAt_extChartAt _
+        rfl; exact h0; rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source _)]
+      · rw [h0, PartialEquiv.left_inv _ (mem_extChartAt_source _)]
         apply mem_extChartAt_source
     refine m1.mp (m2.mp (m3.mp (.of_forall ?_)))
     simp only [mem_compl_singleton_iff]
     intro z m3 m2 m1 m0 even zc
-    rcases even ((PartialEquiv.injOn _).ne m0 (mem_extChartAt_source I c) zc) with ⟨hz, gh⟩
+    rcases even ((PartialEquiv.injOn _).ne m0 (mem_extChartAt_source c) zc) with ⟨hz, gh⟩
     constructor
     · nth_rw 2 [← PartialEquiv.left_inv _ m0]
       rw [(PartialEquiv.injOn _).ne_iff]; exact hz

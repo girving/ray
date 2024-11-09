@@ -28,8 +28,8 @@ open Set
 open scoped Topology
 noncomputable section
 
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : AnalyticManifold I T]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
 
 namespace ComplexInverseFun
 
@@ -47,7 +47,7 @@ variable {f : ℂ → S → T} {c : ℂ} {z : S}
 @[nolint unusedArguments] def Cinv.fz' (_ : Cinv f c z) : ℂ := extChartAt I (f c z) (f c z)
 
 lemma Cinv.zz (i : Cinv f c z) : (extChartAt I z).symm (c, i.z').snd = z := by
-  simp only [Prod.snd, Cinv.z', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
+  simp only [Prod.snd, Cinv.z', PartialEquiv.left_inv _ (mem_extChartAt_source _)]
 
 /-- `f` in coordinates -/
 @[nolint unusedArguments] def Cinv.f' (_ : Cinv f c z) : ℂ × ℂ → ℂ := fun x ↦
@@ -85,7 +85,6 @@ lemma Cinv.dfz_dfzi (i : Cinv f c z) : ∀ t, i.dfz (i.dfzi t) = t :=
 /-- The inverse chart derivative at `z` -/
 def Cinv.de (i : Cinv f c z) : ℂ →L[ℂ] TangentSpace I z := mfderiv I I (extChartAt I z).symm i.z'
 /-- The chart derivative at `f c z` -/
-@[nolint unusedArguments]
 def Cinv.de' (_ : Cinv f c z) :
     TangentSpace I (f c z) →L[ℂ] ℂ := mfderiv I I (extChartAt I (f c z)) (f c z)
 /-- The derivative of `(c,z) ↦ c` is `fst` -/
@@ -93,7 +92,6 @@ def dc : ℂ × ℂ →L[ℂ] ℂ := ContinuousLinearMap.fst ℂ ℂ ℂ
 /-- The derivative of `(c,z) ↦ z` is `snd` -/
 def dz : ℂ × ℂ →L[ℂ] ℂ := ContinuousLinearMap.snd ℂ ℂ ℂ
 /-- `d(f c z)/dc` -/
-@[nolint unusedArguments]
 def Cinv.dfc (_ : Cinv f c z) : ℂ →L[ℂ] TangentSpace I (f c z) := mfderiv I I (fun c : ℂ ↦ f c z) c
 /-- `df = d(f c z)/dc dc + d(f c z)/dz dz` -/
 def Cinv.df (i : Cinv f c z) :
@@ -103,23 +101,6 @@ def Cinv.df' (i : Cinv f c z) : ℂ × ℂ →L[ℂ] ℂ := i.de'.comp i.df
 /-- `dh` (in charts) -/
 def Cinv.dh (i : Cinv f c z) : ℂ × ℂ →L[ℂ] ℂ × ℂ := dc.prod i.df'
 
-lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := by
-  apply HasMFDerivAt.comp (I' := I) (c, i.z')
-  · rw [i.zz]
-    exact (MAnalyticAt.extChartAt (mem_extChartAt_source _ _)).mdifferentiableAt.hasMFDerivAt
-  · simp only [Cinv.df]
-    have fd := i.fa.mdifferentiableAt
-    rw [← i.zz] at fd
-    apply MDifferentiableAt.hasMFDerivAt_comp2 fd
-    · apply hasMFDerivAt_fst
-    · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _ _ _)
-      exact (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _ _)).mdifferentiableAt.hasMFDerivAt
-    · rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
-    · rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
-
-lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
-  refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst
-
 -- dh is invertible
 --   dh (u,v) = (a,b)
 --   (u, (de' ∘ dfc)u + (de' ∘ dfz ∘ de)v) = (a,b)
@@ -128,7 +109,6 @@ lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
 --   v = (de' ∘ dfz ∘ de)⁻¹ (b - (de' ∘ dfc)a)
 --   v = (de⁻¹  ∘ dfz⁻¹ ∘ de'⁻¹) (b - (de' ∘ dfc)a)
 /-- The chart derivative at `z` -/
-@[nolint unusedArguments]
 def Cinv.dei (_ : Cinv f c z) :
     TangentSpace I z →L[ℂ] ℂ := mfderiv I I (extChartAt I z) z
 /-- The inverse chart derivative at `z` -/
@@ -140,28 +120,52 @@ def Cinv.dfi' (i : Cinv f c z) : ℂ →L[ℂ] ℂ := (i.dei.comp i.dfzi).comp i
 def Cinv.dhi (i : Cinv f c z) :
     ℂ × ℂ →L[ℂ] ℂ × ℂ := dc.prod (i.dfi'.comp (dz - (i.de'.comp i.dfc).comp dc))
 
+variable [cms : AnalyticManifold I S]
+
 lemma Cinv.dei_de (i : Cinv f c z) : ∀ t, i.dei (i.de t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp
-    (extChartAt_mderiv_right_inverse' (mem_extChartAt_source I z)) t
+    (extChartAt_mderiv_right_inverse' (mem_extChartAt_source (I := I) z)) t
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
 
+variable [cmt : AnalyticManifold I T]
+
+lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := by
+  apply HasMFDerivAt.comp (I' := I) (c, i.z')
+  · rw [i.zz]
+    exact (MAnalyticAt.extChartAt (mem_extChartAt_source _)).mdifferentiableAt.hasMFDerivAt
+  · simp only [Cinv.df]
+    have fd := i.fa.mdifferentiableAt
+    rw [← i.zz] at fd
+    apply MDifferentiableAt.hasMFDerivAt_comp2 fd
+    · apply hasMFDerivAt_fst
+    · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _)
+      exact (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _)).mdifferentiableAt.hasMFDerivAt
+    · rw [i.zz]; exact i.fa.along_fst.mdifferentiableAt.hasMFDerivAt
+    · rw [i.zz]; exact i.fa.along_snd.mdifferentiableAt.hasMFDerivAt
+
+lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
+  refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst
+
+omit cms in
 lemma Cinv.dei_de' (i : Cinv f c z) : ∀ t, i.dei' (i.de' t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse
-    (mem_extChartAt_source I (f c z))) t
+    (mem_extChartAt_source (f c z))) t
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
 
+omit cmt in
 lemma Cinv.de_dei (i : Cinv f c z) : ∀ t, i.de (i.dei t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse
-    (mem_extChartAt_source I z)) t
+    (mem_extChartAt_source z)) t
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
 
+omit cms in
 lemma Cinv.de_dei' (i : Cinv f c z) : ∀ t, i.de' (i.dei' t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse'
-    (mem_extChartAt_source I (f c z))) t
+    (mem_extChartAt_source (I := I) (f c z))) t
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
 
 lemma Cinv.dhi_dh (i : Cinv f c z) : ∀ t, i.dhi (i.dh t) = t := by
@@ -197,7 +201,7 @@ theorem Cinv.inv_at (i : Cinv f c z) :
   have a := ContDiffAt.localInverse_apply_image i.ha.contDiffAt i.has_dhe le_top
   have e : ContDiffAt.localInverse i.ha.contDiffAt i.has_dhe le_top = i.he.symm := rfl
   rw [e] at a; clear e
-  simp only [Cinv.z', Cinv.h, Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)] at a
+  simp only [Cinv.z', Cinv.h, Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _)] at a
   rw [a]
 
 /-- Our inverse function! -/
@@ -210,7 +214,7 @@ theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g
       ((extChartAt II (c, z)).source ∩ extChartAt II (c, z) ⁻¹' i.he.source : Set (ℂ × S)) = t
   have o : IsOpen t := by
     rw [← ht]
-    exact (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
+    exact (continuousOn_extChartAt _).isOpen_inter_preimage (isOpen_extChartAt_source _)
       i.he.open_source
   have m : (c, z) ∈ t := by
     simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and, ← ht]
@@ -241,12 +245,12 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       : Set (ℂ × T)) = t
   have o : IsOpen t := by
     rw [← ht]
-    exact (continuousOn_extChartAt _ _).isOpen_inter_preimage (isOpen_extChartAt_source _ _)
+    exact (continuousOn_extChartAt _).isOpen_inter_preimage (isOpen_extChartAt_source _)
       i.he.open_target
   have m' : (c, extChartAt I (f c z) (f c z)) ∈ i.he.toPartialEquiv.target := by
     have m := ContDiffAt.image_mem_toPartialHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
     have e : i.h (c, i.z') = (c, extChartAt I (f c z) (f c z)) := by
-      simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
+      simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _)]
     rw [e] at m; exact m
   have m : (c, f c z) ∈ t := by
     simp only [m', mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and, ← ht,
@@ -255,20 +259,20 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   have fm : ∀ᶠ x : ℂ × T in 𝓝 (c, f c z),
       f x.1 ((extChartAt I z).symm (i.he.symm (x.1, extChartAt I (f c z) x.2)).2) ∈
         (extChartAt I (f c z)).source := by
-    refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' I ?_)
+    refine ContinuousAt.eventually_mem ?_ (extChartAt_source_mem_nhds' ?_)
     · apply i.fa.continuousAt.comp₂_of_eq continuousAt_fst
       · refine ContinuousAt.comp ?_ ?_
-        · simp only [i.inv_at]; exact continuousAt_extChartAt_symm I _
+        · simp only [i.inv_at]; exact continuousAt_extChartAt_symm _
         · apply continuousAt_snd.comp
           · refine (PartialHomeomorph.continuousAt i.he.symm ?_).comp ?_
             · simp only [m', (he i).symm_source]
             · apply continuousAt_fst.prod
-              apply (continuousAt_extChartAt I _).comp_of_eq
+              apply (continuousAt_extChartAt _).comp_of_eq
               · exact continuousAt_snd
               · rfl
-      · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _),
+      · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _),
           PartialEquiv.invFun_as_coe]
-    · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
+    · simp only [i.inv_at, PartialEquiv.left_inv _ (mem_extChartAt_source _)]
       apply mem_extChartAt_source
   refine fm.mp (Filter.eventually_of_mem (o.mem_nhds m) ?_)
   intro x m mf
@@ -290,20 +294,22 @@ theorem Cinv.he_symm_mAnalytic (i : Cinv f c z) : MAnalyticAt II II i.he.symm (c
     ContDiffAt.to_localInverse i.ha.contDiffAt i.has_dhe le_top
   have e : i.h (c, i.z') = (c, i.fz') := by
     simp only [Cinv.h, Cinv.fz', Cinv.f']
-    simp only [Cinv.z', (extChartAt I z).left_inv (mem_extChartAt_source _ _)]
+    simp only [Cinv.z', (extChartAt I z).left_inv (mem_extChartAt_source _)]
   rw [e] at d; exact (contDiffAt_iff_analytic_at2 le_top).mp d
 
 /-- Our inverse `g` is analytic -/
 theorem Cinv.ga (i : Cinv f c z) : MAnalyticAt II I (uncurry i.g) (c, f c z) := by
-  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq
+  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq
   · refine mAnalyticAt_snd.comp (i.he_symm_mAnalytic.comp_of_eq ?_ ?_)
     · apply mAnalyticAt_fst.prod
       refine (MAnalyticAt.extChartAt ?_).comp mAnalyticAt_snd
-      exact mem_extChartAt_source _ _
+      exact mem_extChartAt_source _
     · rfl
   · exact i.inv_at
 
 end ComplexInverseFun
+
+variable [AnalyticManifold I S] [AnalyticManifold I T]
 
 /-- The 1D inverse function theorem for complex manifolds (parameterized version):
     If `f : ℂ → S → T` is analytic with nonzero derivative (w.r.t. the second

@@ -655,7 +655,7 @@ theorem unevenLog_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s 
   by_cases n0 : n = 0
   · simp only [n0, CharP.cast_eq_zero, inv_zero, pow_zero, one_smul, zero_mul, ge_iff_le, le_maxLog]
   have np : n ≥ 1 := Nat.one_le_of_lt (Nat.pos_of_ne_zero n0)
-  rw [inv_mul_le_iff (Nat.cast_pos.mpr (Nat.pos_of_ne_zero n0) : 0 < (n : ℝ))]
+  rw [inv_mul_le_iff₀ (Nat.cast_pos.mpr (Nat.pos_of_ne_zero n0) : 0 < (n : ℝ))]
   apply maxLog_le; trans (0 : ℝ); norm_num; bound
   simp only [norm_smul, abs_of_pos u.r1p, norm_pow, Real.norm_eq_abs]
   trans r1 ^ n * (c * a ^ n); bound
@@ -686,7 +686,7 @@ theorem unevenLog_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1)
   rw [unevenSeries_norm, ht] at us
   clear z1s
   -- Prove the desired bound
-  rw [unevenLog, inv_mul_le_iff (lt_of_lt_of_le mp (Nat.cast_le.mpr mn))]
+  rw [unevenLog, inv_mul_le_iff₀ (lt_of_lt_of_le mp (Nat.cast_le.mpr mn))]
   apply maxLog_le; trans (0 : ℝ); norm_num; bound
   have nb : c.log / (d - e) ≤ n := le_trans (le_trans (by bound) mb.le) (Nat.cast_le.mpr mn)
   calc ‖r1 ^ n • unevenTerm u z1 n‖
@@ -734,7 +734,7 @@ theorem unevenSeries_strong_bound [CompleteSpace E] [SecondCountableTopology E]
   refine H.mp ((Filter.eventually_gt_atTop 0).mp (.of_forall ?_))
   intro n np h z zs; specialize h z zs
   rw [unevenSeries_norm]
-  rw [unevenLog, inv_mul_le_iff (Nat.cast_pos.mpr np : 0 < (n : ℝ))] at h
+  rw [unevenLog, inv_mul_le_iff₀ (Nat.cast_pos.mpr np : 0 < (n : ℝ))] at h
   simp only [norm_smul, abs_of_pos u.r1p, norm_pow, Real.norm_eq_abs] at h
   have a := le_of_maxLog_le h
   rw [Real.exp_nat_mul, Real.exp_log (div_pos u.r1p sp), div_eq_mul_inv, mul_pow] at a

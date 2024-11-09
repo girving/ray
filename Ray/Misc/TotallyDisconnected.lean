@@ -28,7 +28,7 @@ theorem Set.Nonempty.right_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
 
 theorem Set.Nonempty.continuousOn_invCoe {X : Type} {s : Set X} (ne : s.Nonempty)
     [TopologicalSpace X] : ContinuousOn ne.invCoe s := by
-  rw [embedding_subtype_val.continuousOn_iff]; apply continuousOn_id.congr; intro x m
+  rw [IsEmbedding.subtypeVal.continuousOn_iff]; apply continuousOn_id.congr; intro x m
   simp only [Function.comp, ne.right_invCoe _ m, id]
 
 /-- `IsTotallyDisconnected` is the same as `TotallyDisconnectedSpace` on the subtype -/
@@ -51,7 +51,7 @@ theorem isTotallyDisconnected_iff_totally_disconnected_subtype {X : Type} [Topol
           rw [← yx, ← zy]; exact zt
       rw [e]; exact q.image _
     · simp only [not_nonempty_iff_eq_empty] at ne; rw [ne]; exact isTotallyDisconnected_empty
-  · intro h; refine ⟨?_⟩; apply embedding_subtype_val.isTotallyDisconnected
+  · intro h; refine ⟨?_⟩; apply IsEmbedding.subtypeVal.isTotallyDisconnected
     rw [Subtype.coe_image_univ]; exact h
 
 /-- `Ioo` on the reals is not countable if it is nonempty -/

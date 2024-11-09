@@ -21,18 +21,18 @@ noncomputable section
 namespace OneDimension
 
 /-- Abbreviation for `𝓘(ℂ,ℂ) = modelWithCornersSelf ℂ ℂ` -/
-notation "I" => modelWithCornersSelf ℂ ℂ
+abbrev I := modelWithCornersSelf ℂ ℂ
 
 /-- Abbreviation for `𝓘(ℂ,ℂ).prod 𝓘(ℂ,ℂ)` -/
-notation "II" => ModelWithCorners.prod I I
+abbrev II := I.prod I
 
 end OneDimension
 
 open OneDimension
 
-variable {S : Type} [TopologicalSpace S] [cs : ChartedSpace ℂ S] [AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ct : ChartedSpace ℂ T] [AnalyticManifold I T]
-variable {U : Type} [TopologicalSpace U] [cu : ChartedSpace ℂ U] [AnalyticManifold I U]
+variable {S : Type} [TopologicalSpace S] [cs : ChartedSpace ℂ S]
+variable {T : Type} [TopologicalSpace T] [ct : ChartedSpace ℂ T]
+variable {U : Type} [TopologicalSpace U] [cu : ChartedSpace ℂ U]
 
 /-- 1D tangent spaces are nontrivial -/
 instance one_dimension_tangentSpace_nontrivial (z : S) : Nontrivial (TangentSpace I z) := by
@@ -193,6 +193,41 @@ theorem mderivEquiv_apply {z : S} {w : T} {f : TangentSpace I z →L[ℂ] Tangen
 theorem mderivEquiv_eq {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w) (f0 : f ≠ 0) :
     ↑(mderivEquiv f f0) = f := by apply ContinuousLinearMap.ext; intro x; rfl
 
+/-- Identity derivatives are nonzero -/
+theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
+  have d : MDifferentiableAt I I (fun z ↦ z) z := mdifferentiableAt_id
+  simp only [mfderiv, d, if_true, writtenInExtChartAt, Function.comp,
+    ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
+  have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
+    apply ((isOpen_extChartAt_target z).eventually_mem (mem_extChartAt_target z)).mp
+    refine .of_forall fun w m ↦ ?_
+    simp only [id, PartialEquiv.right_inv _ m]
+  simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
+    ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply, Function.comp_def]
+  use 1, one_ne_zero
+
+/-- A critical point is where the derivative of `f` vanishes -/
+def Critical (f : S → T) (z : S) :=
+  mfderiv I I f z = 0
+
+/-- A precritical point is an iterated preimage of a critical point -/
+def Precritical (f : S → S) (z : S) :=
+  ∃ n, Critical f (f^[n] z)
+
+/-- Critical points of iterations are precritical points -/
+theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : MAnalytic I I f) (c : Critical f^[n] z) :
+    Precritical f z := by
+  induction' n with n h
+  · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
+      ContinuousLinearMap.norm_id] at c
+    norm_num at c
+  · rw [Function.iterate_succ', Critical,
+      mfderiv_comp z (fa _).mdifferentiableAt (fa.iter _ _).mdifferentiableAt,
+      mderiv_comp_eq_zero_iff] at c
+    cases' c with c c; use n, c; exact h c
+
+variable [AnalyticManifold I S] [AnalyticManifold I T] [AnalyticManifold I U]
+
 /-- Chart derivatives are nonzero -/
 theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source) :
     mfderiv I I (extChartAt I z) w ≠ 0 := by
@@ -215,25 +250,12 @@ theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt
 
 /-- Chart derivatives are nonzero -/
 theorem extChartAt_mderiv_ne_zero (z : S) : mfderiv I I (extChartAt I z) z ≠ 0 :=
-  extChartAt_mderiv_ne_zero' (mem_extChartAt_source I z)
+  extChartAt_mderiv_ne_zero' (mem_extChartAt_source z)
 
 /-- Chart derivatives are nonzero -/
 theorem extChartAt_symm_mderiv_ne_zero (z : S) :
     mfderiv I I (extChartAt I z).symm (extChartAt I z z) ≠ 0 :=
-  extChartAt_symm_mderiv_ne_zero' (mem_extChartAt_target I z)
-
-/-- Identity derivatives are nonzero -/
-theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
-  have d : MDifferentiableAt I I (fun z ↦ z) z := mdifferentiableAt_id I
-  simp only [mfderiv, d, if_true, writtenInExtChartAt, Function.comp,
-    ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
-  have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
-    apply ((isOpen_extChartAt_target I z).eventually_mem (mem_extChartAt_target I z)).mp
-    refine .of_forall fun w m ↦ ?_
-    simp only [id, PartialEquiv.right_inv _ m]
-  simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
-    ContinuousLinearMap.zero_apply, ContinuousLinearMap.id_apply, Function.comp_def]
-  use 1, one_ne_zero
+  extChartAt_symm_mderiv_ne_zero' (mem_extChartAt_target z)
 
 /-- Nonzeroness of `mfderiv` reduces to nonzeroness of `deriv` -/
 theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
@@ -258,26 +280,6 @@ theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
 theorem mfderiv_ne_zero_iff_deriv_ne_zero {f : ℂ → ℂ} {z : ℂ} :
     mfderiv I I f z ≠ 0 ↔ deriv f z ≠ 0 := by rw [not_iff_not, mfderiv_eq_zero_iff_deriv_eq_zero]
 
-/-- A critical point is where the derivative of `f` vanishes -/
-def Critical (f : S → T) (z : S) :=
-  mfderiv I I f z = 0
-
-/-- A precritical point is an iterated preimage of a critical point -/
-def Precritical (f : S → S) (z : S) :=
-  ∃ n, Critical f (f^[n] z)
-
-/-- Critical points of iterations are precritical points -/
-theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : MAnalytic I I f) (c : Critical f^[n] z) :
-    Precritical f z := by
-  induction' n with n h
-  · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
-      ContinuousLinearMap.norm_id] at c
-    norm_num at c
-  · rw [Function.iterate_succ', Critical,
-      mfderiv_comp z (fa _).mdifferentiableAt (fa.iter _ _).mdifferentiableAt,
-      mderiv_comp_eq_zero_iff] at c
-    cases' c with c c; use n, c; exact h c
-
 /-!
 ## Facts about `mfderiv` related to continuity and analyticity
 
@@ -295,22 +297,22 @@ theorem MAnalyticAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : MAnalyticAt II I (uncurry f) (c, z)) :
     AnalyticAt ℂ (uncurry (inChart f c z)) (c, _root_.extChartAt I z z) := by
   apply MAnalyticAt.analyticAt II I
-  apply (MAnalyticAt.extChartAt (mem_extChartAt_source I (f c z))).comp_of_eq
+  apply (MAnalyticAt.extChartAt (mem_extChartAt_source (f c z))).comp_of_eq
   apply fa.comp₂_of_eq mAnalyticAt_fst
-  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target I z)).comp_of_eq mAnalyticAt_snd
-  repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source I z)]
+  apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq mAnalyticAt_snd
+  repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source z)]
 
 /-- `inChart` preserves critical points locally -/
 theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : MAnalyticAt II I (uncurry f) (c, z)) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z),
       mfderiv I I (f p.1) p.2 = 0 ↔ deriv (inChart f c z p.1) (extChartAt I z p.2) = 0 := by
-  apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source I (f c z)).mem_nhds
-    (mem_extChartAt_source I (f c z)))).mp
-  apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source _ _)).mp
+  apply (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source (f c z)).mem_nhds
+    (mem_extChartAt_source (I := I) (f c z)))).mp
+  apply ((isOpen_extChartAt_source (c, z)).eventually_mem (mem_extChartAt_source (I := II) _)).mp
   refine fa.eventually.mp (.of_forall ?_); intro ⟨e, w⟩ fa m fm
-  simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-    mem_prod, mem_univ, true_and] at m
+  simp only [extChartAt_prod, PartialEquiv.prod_source, extChartAt_eq_refl,
+    PartialEquiv.refl_source, mem_prod, mem_univ, true_and] at m
   simp only [uncurry] at fm
   have m' := PartialEquiv.map_source _ m
   simp only [← mfderiv_eq_zero_iff_deriv_eq_zero]
@@ -344,7 +346,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
         (fun p : ℂ × ℂ ↦ deriv (g p.1) p.2) ∘ fun p : ℂ × S ↦ (p.1, extChartAt I z p.2) := rfl
       rw [e]
       exact fa.inChart.deriv2.continuousAt.comp_of_eq
-        (continuousAt_fst.prod ((continuousAt_extChartAt I z).comp_of_eq continuousAt_snd rfl))
+        (continuousAt_fst.prod ((continuousAt_extChartAt z).comp_of_eq continuousAt_snd rfl))
         rfl
     · contrapose f0; simp only [not_not, Function.comp] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
   refine g0.mp (g0n.mp (.of_forall fun w g0 e ↦ ?_))
@@ -381,14 +383,14 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
   rw [mAnalytic_iff_of_boundaryless]; use fc; intro p; apply osgood_at'
   have fm : ∀ᶠ q in 𝓝 (extChartAt II p p),
       f ((extChartAt II p).symm q) ∈ (extChartAt I (f p)).source := by
-    refine (fc.continuousAt.comp (continuousAt_extChartAt_symm II p)).eventually_mem
-        ((isOpen_extChartAt_source I (f p)).mem_nhds ?_)
-    simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _ _)]
+    refine (fc.continuousAt.comp (continuousAt_extChartAt_symm p)).eventually_mem
+        ((isOpen_extChartAt_source (f p)).mem_nhds ?_)
+    simp only [Function.comp, (extChartAt II p).left_inv (mem_extChartAt_source _)]
     apply mem_extChartAt_source
-  apply ((isOpen_extChartAt_target II p).eventually_mem (mem_extChartAt_target II p)).mp
+  apply ((isOpen_extChartAt_target p).eventually_mem (mem_extChartAt_target p)).mp
   refine fm.mp (.of_forall fun q fm m ↦ ⟨?_, ?_, ?_⟩)
-  · exact (continuousAt_extChartAt' I fm).comp_of_eq
-        (fc.continuousAt.comp (continuousAt_extChartAt_symm'' _ m)) rfl
+  · exact (continuousAt_extChartAt' fm).comp_of_eq
+        (fc.continuousAt.comp (continuousAt_extChartAt_symm'' m)) rfl
   · apply MAnalyticAt.analyticAt I I
     refine (MAnalyticAt.extChartAt fm).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m

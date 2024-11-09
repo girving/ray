@@ -69,7 +69,7 @@ theorem tendsto_inv_iff_tendsto {A B : Type} [NontriviallyNormedField B]
 theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
     ∀ᶠ y in 𝓝 x, f y ∈ s :=
-  (eventually_mem_nhds.2 (fc m)).mono fun _x hx ↦ mem_preimage.1 (mem_of_mem_nhds hx)
+  (eventually_mem_nhds_iff.2 (fc m)).mono fun _x hx ↦ mem_preimage.1 (mem_of_mem_nhds hx)
 
 /-- The reverse direction of `IsClosed.Icc_subset_of_forall_mem_nhdsWithin` -/
 theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}

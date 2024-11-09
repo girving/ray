@@ -19,6 +19,7 @@ open Classical
 open Complex (abs)
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
+open OneDimension
 open Set
 open scoped Topology OnePoint
 noncomputable section
@@ -346,7 +347,7 @@ theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
 theorem prod_nhds_eq {x : X} {z : ℂ} :
     𝓝 (x, (z : 𝕊)) = Filter.map (fun p : X × ℂ ↦ (p.1, ↑p.2)) (𝓝 (x, z)) := by
   refine le_antisymm ?_ (continuousAt_fst.prod (continuous_coe.continuousAt.comp continuousAt_snd))
-  apply IsOpenMap.nhds_le; exact IsOpenMap.id.prod isOpenMap_coe
+  apply IsOpenMap.nhds_le; exact IsOpenMap.id.prodMap isOpenMap_coe
 
 theorem mem_inf_of_mem_atInf {s : Set ℂ} (f : s ∈ @atInf ℂ _) :
     (fun z : ℂ ↦ (z : 𝕊)) '' s ∪ {∞} ∈ 𝓝 (∞ : 𝕊) := by
@@ -492,7 +493,7 @@ theorem mAnalyticAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
   apply Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
   · apply (inv_tendsto_atInf.eventually fa).mp
     apply (inv_tendsto_atInf.eventually (fi.eventually
-      ((isOpen_extChartAt_source I y).eventually_mem (mem_extChartAt_source I y)))).mp
+      ((isOpen_extChartAt_source y).eventually_mem (mem_extChartAt_source (I := I) y)))).mp
     apply eventually_nhdsWithin_of_forall; intro z z0 m fa
     simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at z0
     have e : (fun z ↦ extChartAt I y (if z = 0 then y else f z⁻¹)) =ᶠ[𝓝 z]
@@ -503,7 +504,7 @@ theorem mAnalyticAt_fill_inf [AnalyticManifold I T] {f : ℂ → T} {y : T}
     apply AnalyticAt.differentiableAt; apply MAnalyticAt.analyticAt I I
     refine (MAnalyticAt.extChartAt ?_).comp ?_; exact m
     exact fa.comp (mAnalyticAt_id.inv z0)
-  · refine (continuousAt_extChartAt' I ?_).comp ?_
+  · refine (continuousAt_extChartAt' ?_).comp ?_
     · simp only [eq_self_iff_true, if_pos, mem_extChartAt_source]
     · simp only [← continuousWithinAt_compl_self, ContinuousWithinAt]
       apply tendsto_nhdsWithin_congr (f := fun z ↦ f z⁻¹)

@@ -31,7 +31,7 @@ lean_exe primes {
   root := `Ray.Experimental.Primes
 }
 
-target png.o pkg : FilePath := do
+target png.o pkg : System.FilePath := do
   let o := pkg.buildDir / "Ray/Render/png.o"
   let src ← inputTextFile <| pkg.dir / "Ray/Render/png.cc"
   let args := #["-I", (←getLeanIncludeDir).toString, "-I/opt/homebrew/include"]

@@ -11,32 +11,6 @@ noncomputable section
 
 variable {A M : Type} [TopologicalSpace A] [TopologicalSpace M] [ChartedSpace A M]
 
-/-- Charted space are T1.
-    Making this an instance seems to cause infinite instance resolution loops. -/
-theorem ChartedSpace.t1Space [T1Space A] : T1Space M where
-  t1 := by
-    intro x; rw [←compl_compl ({x} : Set M)]; apply IsOpen.isClosed_compl
-    rw [isOpen_iff_mem_nhds]; intro y m; simp only [mem_compl_singleton_iff] at m
-    simp only [mem_nhds_iff, subset_compl_singleton_iff]
-    by_cases xm : x ∈ (chartAt A y).source
-    · set t := (chartAt A y).source \ {x}
-      have e : t = (chartAt A y).source ∩ chartAt A y ⁻¹'
-          ((chartAt A y).target \ {chartAt A y x}) := by
-        apply Set.ext; intro z
-        simp only [mem_diff, mem_singleton_iff, mem_inter_iff, mem_preimage]; constructor
-        intro ⟨zm, zx⟩; use zm, PartialEquiv.map_source _ zm, (PartialEquiv.injOn _).ne zm xm zx
-        intro ⟨zm, _, zx⟩; use zm, ((PartialEquiv.injOn _).ne_iff zm xm).mp zx
-      refine ⟨t, ?_, ?_, ?_⟩
-      · simp only [mem_diff, mem_singleton_iff, not_true_eq_false, and_false, not_false_eq_true, t]
-      · rw [e]
-        apply (chartAt A y).continuousOn.isOpen_inter_preimage (_root_.chartAt _ _).open_source
-        exact IsOpen.sdiff (_root_.chartAt _ _).open_target isClosed_singleton
-      · rw [e]
-        simp only [preimage_diff, mem_inter_iff, mem_chart_source, mem_diff, mem_preimage,
-          PartialHomeomorph.map_source, mem_singleton_iff, true_and]
-        exact (PartialEquiv.injOn _).ne (mem_chart_source A y) xm m
-    · use (chartAt A y).source, xm, (chartAt A y).open_source, mem_chart_source A y
-
 /-- Charted spaces are regular if `A` is regular and locally compact and `M` is `T2`.
     This is a weird set of assumptions, but I don't know how to prove T2 naturally. -/
 theorem ChartedSpace.regularSpace [T2Space M] [LocallyCompactSpace A] : RegularSpace M := by

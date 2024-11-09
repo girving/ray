@@ -173,7 +173,7 @@ theorem mAnalyticAt_fst [I.Boundaryless] [J.Boundaryless] {x : M × N} :
   rw [mAnalyticAt_iff]
   use continuousAt_fst
   refine (analyticAt_fst.congr ?_).analyticWithinAt
-  filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
+  filter_upwards [((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target _))]
   intro y m
   rw [extChartAt_prod] at m
   simp only [PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_target, mem_prod] at m
@@ -186,7 +186,7 @@ theorem mAnalyticAt_snd [I.Boundaryless] [J.Boundaryless] {x : M × N} :
   rw [mAnalyticAt_iff]
   use continuousAt_snd
   refine (analyticAt_snd.congr ?_).analyticWithinAt
-  filter_upwards [((isOpen_extChartAt_target _ x).eventually_mem (mem_extChartAt_target _ _))]
+  filter_upwards [((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target _))]
   intro y m
   rw [extChartAt_prod] at m
   simp only [PartialHomeomorph.prod_toPartialEquiv, PartialEquiv.prod_target, mem_prod] at m
@@ -214,7 +214,7 @@ lemma MAnalyticAt.extChartAt [CompleteSpace E] [cm : AnalyticManifold I M]
     {x y : M} (ys : y ∈ (extChartAt I x).source) :
     MAnalyticAt I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y := by
   rw [mAnalyticAt_iff]
-  use continuousAt_extChartAt' I ys
+  use continuousAt_extChartAt' ys
   simp only [Function.comp, mfld_simps]
   have a : (chartAt A x).symm ≫ₕ chartAt A y ∈ analyticGroupoid I := by
     apply StructureGroupoid.compatible_of_mem_maximalAtlas
@@ -251,7 +251,7 @@ theorem MAnalyticAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : Ana
     {x : M} {y : E} (ys : y ∈ (_root_.extChartAt I x).target) :
     MAnalyticAt (modelWithCornersSelf 𝕜 E) I (_root_.extChartAt I x).symm y := by
   rw [mAnalyticAt_iff]
-  use continuousAt_extChartAt_symm'' I ys
+  use continuousAt_extChartAt_symm'' ys
   simp only [Function.comp, mfld_simps]
   set y' := (chartAt A x).symm (I.symm y)
   have a : (chartAt A x).symm ≫ₕ chartAt A ((chartAt A x).symm (I.symm y)) ∈
@@ -302,10 +302,10 @@ theorem MAnalyticAt.congr [CompleteSpace F] {f g : M → N} {x : M} (fa : MAnaly
   apply fa.2.congr_of_eventuallyEq
   · rw [e.self_of_nhds]
     refine Filter.EventuallyEq.fun_comp ?_ (_root_.extChartAt J (g x))
-    have t := (continuousAt_extChartAt_symm I x).tendsto
-    rw [PartialEquiv.left_inv _ (mem_extChartAt_source I x)] at t
+    have t := (continuousAt_extChartAt_symm (I := I) x).tendsto
+    rw [PartialEquiv.left_inv _ (mem_extChartAt_source x)] at t
     exact (e.comp_tendsto (t.mono_left nhdsWithin_le_nhds)).symm
-  · simp only [e.self_of_nhds, Function.comp, PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
+  · simp only [e.self_of_nhds, Function.comp, PartialEquiv.left_inv _ (mem_extChartAt_source _)]
 
 /-- `MAnalyticAt` for `x ↦ (f x, g x)` -/
 theorem MAnalyticAt.prod {f : O → M} {g : O → N} {x : O}
@@ -345,7 +345,7 @@ theorem MAnalyticAt.comp {f : N → M} {g : O → N} {x : O}
   use fh.1.comp gh.1
   have e : _root_.extChartAt J (g x) (g x) = (_root_.extChartAt J (g x) ∘ g ∘
       (_root_.extChartAt K x).symm) (_root_.extChartAt K x x) := by
-    simp only [Function.comp_apply, PartialEquiv.left_inv _ (mem_extChartAt_source _ x)]
+    simp only [Function.comp_apply, PartialEquiv.left_inv _ (mem_extChartAt_source x)]
   rw [e] at fh
   clear e
   refine (fh.2.comp gh.2 ?_).congr_of_eventuallyEq ?_ ?_
@@ -356,10 +356,10 @@ theorem MAnalyticAt.comp {f : N → M} {g : O → N} {x : O}
         (_root_.extChartAt J (g x)).source := by
       apply ContinuousAt.eventually_mem
       · apply ContinuousAt.comp
-        · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]; exact gh.1
-        · exact continuousAt_extChartAt_symm K x
-      · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _ _)]
-        exact extChartAt_source_mem_nhds _ _
+        · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _)]; exact gh.1
+        · exact continuousAt_extChartAt_symm x
+      · rw [PartialEquiv.left_inv _ (mem_extChartAt_source _)]
+        exact extChartAt_source_mem_nhds _
     refine m.mp (.of_forall fun y m _ ↦ ?_)
     simp only [PartialEquiv.left_inv _ m]
   · simp only [mfld_simps]
@@ -398,8 +398,8 @@ variable (I J)
 theorem analyticAt_iff_mAnalyticAt [I.Boundaryless] [ChartedSpace A E] [AnalyticManifold I E]
     [ChartedSpace B F] [AnalyticManifold J F] [ExtChartEqRefl I] [ExtChartEqRefl J]
     {f : E → F} {x : E} : AnalyticAt 𝕜 f x ↔ MAnalyticAt I J f x := by
-  simp only [mAnalyticAt_iff_of_boundaryless, extChartAt_eq_refl, PartialEquiv.refl_coe, PartialEquiv.refl_symm,
-    Function.id_comp, Function.comp_id, id_eq, iff_and_self]
+  simp only [mAnalyticAt_iff_of_boundaryless, extChartAt_eq_refl, PartialEquiv.refl_coe,
+    PartialEquiv.refl_symm, Function.id_comp, Function.comp_id, id_eq, iff_and_self]
   exact AnalyticAt.continuousAt
 
 end Iff
@@ -504,18 +504,16 @@ theorem MAnalytic.iter {f : M → M} (fa : MAnalytic I I f) (n : ℕ) : MAnalyti
   induction' n with n h; simp only [Function.iterate_zero]; exact mAnalytic_id
   simp only [Function.iterate_succ']; exact fa.comp h
 
-variable [CompleteSpace E] [CompleteSpace F]
-
 /-- If we're analytic at a point, we're locally analytic.
 This is true even with boundary, but for now we prove only the `Boundaryless` case. -/
-theorem MAnalyticAt.eventually [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M]
-    [AnalyticManifold J N] {f : M → N} {x : M} (fa : MAnalyticAt I J f x) :
+theorem MAnalyticAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace E] [CompleteSpace F]
+    [AnalyticManifold I M] [AnalyticManifold J N] {f : M → N} {x : M} (fa : MAnalyticAt I J f x) :
     ∀ᶠ y in 𝓝 x, MAnalyticAt I J f y := by
   have ea := (mAnalyticAt_iff_of_boundaryless.mp fa).2.eventually_analyticAt
   simp only [Function.comp, ← extChartAt_map_nhds', Filter.eventually_map] at ea
-  filter_upwards [ea, (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source J (f x)).mem_nhds
-    (mem_extChartAt_source J (f x)))).eventually_nhds,
-    (isOpen_extChartAt_source I x).eventually_mem (mem_extChartAt_source I x)]
+  filter_upwards [ea, (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source (f x)).mem_nhds
+    (mem_extChartAt_source (I := J) (f x)))).eventually_nhds,
+    (isOpen_extChartAt_source x).eventually_mem (mem_extChartAt_source (I := I) x)]
   intro y a fm m
   have h := a.mAnalyticAt (modelWithCornersSelf 𝕜 E) (modelWithCornersSelf 𝕜 F)
   clear a
@@ -523,15 +521,18 @@ theorem MAnalyticAt.eventually [I.Boundaryless] [J.Boundaryless] [AnalyticManifo
       (h.comp (MAnalyticAt.extChartAt m)) ?_
   · apply h'.congr
     clear h h'
-    apply ((isOpen_extChartAt_source I x).eventually_mem m).mp
+    apply ((isOpen_extChartAt_source x).eventually_mem m).mp
     refine fm.mp (.of_forall fun z mf m ↦ ?_)
     simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ mf, Function.comp_def]
   · simp only [Function.comp, PartialEquiv.left_inv _ m]
 
 /-- The domain of analyticity is open -/
-theorem isOpen_mAnalyticAt [I.Boundaryless] [J.Boundaryless] [AnalyticManifold I M]
-    [AnalyticManifold J N] {f : M → N} : IsOpen {x | MAnalyticAt I J f x} := by
+theorem isOpen_mAnalyticAt [I.Boundaryless] [J.Boundaryless] [CompleteSpace E] [CompleteSpace F]
+    [AnalyticManifold I M] [AnalyticManifold J N] {f : M → N} :
+    IsOpen {x | MAnalyticAt I J f x} := by
   rw [isOpen_iff_eventually]; intro x fa; exact fa.eventually
+
+variable [CompleteSpace E] [CompleteSpace F]
 
 /-- MAnalytic functions have continuous tangent maps.
     Obviously more is true and the tangent map is analytic, but I don't need that yet -/

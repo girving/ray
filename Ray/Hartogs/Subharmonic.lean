@@ -439,7 +439,7 @@ theorem uniform_harmonic_lim [SecondCountableTopology E] {f : ℕ → ℂ → E}
       simp_rw [average_eq] at m ⊢
       have se : itau =ᵐ[volume] Icc 0 (2 * π) := Ioc_ae_eq_Icc
       simp only [MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
-        setIntegral_congr_set_ae se, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
+        setIntegral_congr_set se, ge_iff_le, gt_iff_lt, zero_lt_two, mul_nonneg_iff_of_pos_left,
         not_le] at m ⊢
       generalize hv : (volume itau).toReal = v; simp_rw [hv] at m ⊢; clear hv
       have cc : Icc 0 (2 * π) ⊆ circleMap c r ⁻¹' s := by
@@ -613,20 +613,23 @@ theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
 /-- Fourier sums extend -/
 theorem fourierExtend {f : C(Real.Angle, ℂ)} (rp : r > 0)
     (s : f ∈ Submodule.span ℂ (Set.range (@fourier (2 * π)))) : Extendable f c r := by
-  apply Submodule.span_induction (p := fun f ↦ Extendable f c r) s
-  · intro g gs; simp only [Set.mem_range] at gs; rcases gs with ⟨n, ng⟩; rw [← ng]
+  apply Submodule.span_induction (p := fun f _ ↦ Extendable f c r) (hx := s)
+  · intro g gs
+    simp only [Set.mem_range] at gs
+    rcases gs with ⟨n, ng⟩
+    rw [← ng]
     exact fourierExtend' rp _
   · use fun _ ↦ 0
     exact
       { gh := HarmonicOn.const _
         b := by simp only [ContinuousMap.coe_zero, Pi.zero_apply, forall_const] }
-  · intro x y xe ye; rcases xe with ⟨x', xh, xb⟩; rcases ye with ⟨y', yh, yb⟩
+  · intro x y _ _ ⟨x',xh,xb⟩ ⟨y',yh,yb⟩
     use fun z ↦ x' z + y' z
     exact
       { gh := xh.add yh
         b := by
           simp only [xb, yb, ContinuousMap.coe_add, Pi.add_apply, eq_self_iff_true, forall_const] }
-  · intro a x xe; rcases xe with ⟨x', xh, xb⟩
+  · intro a x _ ⟨x', xh, xb⟩
     use fun z ↦ a * x' z
     exact
       { gh := xh.const_mul _
@@ -1038,10 +1041,9 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   calc d
     _ = e * (ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹) := by rw [rde]
     _ = e * ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ := by rw [mul_assoc]
-    _ ≤ (∫⁻ v in closedBall z r1, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ :=
-      (ENNReal.mul_right_mono fn)
+    _ ≤ (∫⁻ v in closedBall z r1, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ := (mul_right_mono fn)
     _ ≤ (∫⁻ v in closedBall w r2, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ :=
-      (ENNReal.mul_right_mono (lintegral_mono_set (s12 w ws)))
+      (mul_right_mono (lintegral_mono_set (s12 w ws)))
     _ = ENNReal.ofReal (π * r2 ^ 2)⁻¹ * ∫⁻ v in closedBall w r2, f n v := by rw [mul_comm]
     _ ≤ f n w := (fs n).supmean w r2 r2p (r2s w ws)
 

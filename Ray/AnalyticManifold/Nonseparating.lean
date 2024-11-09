@@ -57,12 +57,11 @@ theorem Nonseparating.complexManifold {t : Set S}
       generalize hv : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' u = v
       have vo : IsOpen v := by
         rw [← hv]
-        exact (continuousOn_extChartAt_symm I z).isOpen_inter_preimage
-          (isOpen_extChartAt_target I z) uo
+        exact (continuousOn_extChartAt_symm z).isOpen_inter_preimage (isOpen_extChartAt_target z) uo
       have vn : v.Nonempty := by
         use extChartAt I z z
         simp only [mem_inter_iff, mem_extChartAt_target, true_and, mem_preimage,
-          PartialEquiv.left_inv _ (mem_extChartAt_source I z), m, ← hv]
+          PartialEquiv.left_inv _ (mem_extChartAt_source z), m, ← hv]
       rcases dense_iff_inter_open.mp (h z).dense v vo vn with ⟨y, m⟩
       use(extChartAt I z).symm y
       simp only [mem_inter_iff, mem_preimage, mem_compl_iff, not_and, ← hv] at m
@@ -71,12 +70,12 @@ theorem Nonseparating.complexManifold {t : Set S}
     loc := by
       intro z u zt un
       have m : extChartAt I z z ∈ (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t := by
-        simp only [mem_inter_iff, mem_extChartAt_target I z, true_and, mem_preimage,
-          PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt]
+        simp only [mem_inter_iff, mem_extChartAt_target z, true_and, mem_preimage,
+          PartialEquiv.left_inv _ (mem_extChartAt_source z), zt]
       have n : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' u ∈ 𝓝 (extChartAt I z z) := by
         apply Filter.inter_mem
-        exact (isOpen_extChartAt_target I z).mem_nhds (mem_extChartAt_target I z)
-        exact extChartAt_preimage_mem_nhds _ un
+        exact (isOpen_extChartAt_target z).mem_nhds (mem_extChartAt_target z)
+        exact extChartAt_preimage_mem_nhds un
       rcases (h z).loc _ _ m n with ⟨c, cs, cn, cp⟩
       have e : (extChartAt I z).source ∩ extChartAt I z ⁻¹' c = (extChartAt I z).symm '' c := by
         apply Set.ext; intro x; simp only [mem_inter_iff, mem_preimage, mem_image]; constructor
@@ -93,11 +92,12 @@ theorem Nonseparating.complexManifold {t : Set S}
         exact xc
       · rw [e]; convert Filter.image_mem_map cn
         have ee : ⇑(extChartAt I z).symm = (extChartAt' I z).symm := rfl
-        rw [ee, (extChartAt' I z).symm.map_nhdsWithin_eq (mem_extChartAt_target I z), ← ee]
+        rw [ee, (extChartAt' I z).symm.map_nhdsWithin_eq (mem_extChartAt_target z), ← ee]
         simp only [extChartAt', PartialHomeomorph.symm_source,
-          PartialEquiv.left_inv _ (mem_extChartAt_source I z), compl_inter, inter_union_distrib_left,
+          PartialEquiv.left_inv _ (mem_extChartAt_source z), compl_inter, inter_union_distrib_left,
           inter_compl_self, empty_union, image_inter]
-        apply nhdsWithin_eq_nhdsWithin (mem_extChartAt_source I z) (isOpen_extChartAt_source I z)
+        apply nhdsWithin_eq_nhdsWithin (mem_extChartAt_source z)
+          (isOpen_extChartAt_source (I := I) z)
         apply Set.ext; intro x
         simp only [mem_inter_iff, mem_compl_iff, mem_image, mem_preimage]; constructor
         · intro ⟨xt, xz⟩; refine ⟨⟨extChartAt I z x, ?_⟩, xz⟩
@@ -105,7 +105,7 @@ theorem Nonseparating.complexManifold {t : Set S}
             and_self_iff, eq_self_iff_true]
         · intro ⟨⟨y, ⟨⟨yz, yt⟩, yx⟩⟩, _⟩
           simp only [← yx, yt, PartialEquiv.map_target _ yz, not_false_iff, true_and]
-      · rw [e]; apply cp.image; apply (continuousOn_extChartAt_symm I z).mono
+      · rw [e]; apply cp.image; apply (continuousOn_extChartAt_symm z).mono
         exact _root_.trans cs (_root_.trans diff_subset inter_subset_left) }
 
 /-- A sufficient condition on `t` for `s \ t` to be preconnected, for `s` open and preconnected.

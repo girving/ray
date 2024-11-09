@@ -26,6 +26,7 @@ open Function (uncurry)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
 open Real (exp log)
 open RiemannSphere
+open OneDimension
 open Set
 open scoped OnePoint RiemannSphere Topology
 noncomputable section

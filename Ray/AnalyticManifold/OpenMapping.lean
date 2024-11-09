@@ -187,12 +187,12 @@ theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAna
   simp only [Filter.not_frequently, not_not, ← extChartAt_map_nhds' I z,
     Filter.eventually_map] at c ⊢
   apply c.mp
-  apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-  apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
+  apply ((isOpen_extChartAt_source z).eventually_mem (mem_extChartAt_source (I := I) z)).mp
+  apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds (I := I) (f z))).mp
   refine .of_forall fun w fm m fn ↦ ?_
   simp only at fm m fn
-  rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at fn
-  exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _ _)).mp fn
+  rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source z)] at fn
+  exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _)).mp fn
 
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
@@ -214,12 +214,13 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S →
     --   𝓝 (f z) ≤ map f (𝓝 z)                             -- Congruence
     simp only [← extChartAt_map_nhds' I z, Filter.map_map] at h
     replace h := @Filter.map_mono _ _ (extChartAt I (f z)).symm _ _ h
-    simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at h
+    simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source z)] at h
     simp only [extChartAt_symm_map_nhds' I (f z), Filter.map_map, Function.comp_def] at h
     have e : (fun w ↦ (extChartAt I (f z)).symm
         (extChartAt I (f z) (f ((extChartAt I z).symm (extChartAt I z w))))) =ᶠ[𝓝 z] f := by
-      apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
-      apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
+      apply ((isOpen_extChartAt_source z).eventually_mem (mem_extChartAt_source (I := I) z)).mp
+      apply (n.mAnalyticAt.continuousAt.eventually_mem
+        (extChartAt_source_mem_nhds (I := I) (f z))).mp
       refine .of_forall fun w fm m ↦ ?_
       simp only [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm]
     rw [Filter.map_congr e] at h; exact h
@@ -246,14 +247,15 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f :
   simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map, Filter.prod_map_id_map_eq,
     Function.comp] at h
   replace h := @Filter.map_mono _ _ (fun p : ℂ × ℂ ↦ (p.1, (extChartAt I (f c z)).symm p.2)) _ _ h
-  simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source I z)] at h
+  simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source z)] at h
   have pe := Filter.prod_map_id_map_eq (f := 𝓝 c) (g := 𝓝 (extChartAt I (f c z) (f c z)))
     (m := fun x ↦ (extChartAt I (f c z)).symm x)
   rw [extChartAt_symm_map_nhds', ←nhds_prod_eq] at pe
   refine _root_.trans (le_of_eq pe) (_root_.trans h (le_of_eq ?_)); clear h pe
   rw [←nhds_prod_eq, Filter.map_map]; apply Filter.map_congr
-  apply ((isOpen_extChartAt_source II (c, z)).eventually_mem (mem_extChartAt_source II (c, z))).mp
-  apply (fa.continuousAt.eventually_mem (extChartAt_source_mem_nhds I (f c z))).mp
+  apply ((isOpen_extChartAt_source (c, z)).eventually_mem
+    (mem_extChartAt_source (I := II) (c, z))).mp
+  apply (fa.continuousAt.eventually_mem (extChartAt_source_mem_nhds (I := I) (f c z))).mp
   refine .of_forall fun ⟨e, w⟩ fm m ↦ ?_
   simp only [Function.comp, uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
   simp only [Function.comp, PartialEquiv.left_inv _ m.2, PartialEquiv.left_inv _ fm]

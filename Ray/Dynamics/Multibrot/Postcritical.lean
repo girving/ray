@@ -58,7 +58,7 @@ lemma log_ratio_mono : MonotoneOn (fun x ↦ log (x-1) / log x) (Ici 2) := by
     refine div_nonneg ?_ (by positivity)
     simp only [sub_nonneg, mul_comm]
     apply mul_le_mul
-    · exact inv_le_inv_of_le (by linarith) (by linarith)
+    · exact inv_anti₀ (by linarith) (by linarith)
     · exact Real.log_le_log (by linarith) (by linarith)
     · exact Real.log_nonneg (by linarith)
     · exact inv_nonneg.mpr (by linarith)
@@ -88,7 +88,7 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
       _ ≥ 0.791 := by norm_num
   have ll0 : 0 ≤ log (x-1) / log x := by positivity
   have ll1 : log (x-1) / log x ≤ 1 :=
-    div_le_one_of_le (Real.log_le_log (by linarith) (by linarith)) (by positivity)
+    div_le_one_of_le₀ (Real.log_le_log (by linarith) (by linarith)) (by positivity)
   calc log (log w)
     _ ≥ log (log ((x-1)*x)) := log_log_mono (by nlinarith) zw
     _ = log (log x + log (x-1)) := by rw [mul_comm, Real.log_mul (by positivity) (by linarith)]

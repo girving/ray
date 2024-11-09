@@ -114,7 +114,7 @@ lemma le_potential (c4 : abs c ≤ 4) (z4 : abs z ≤ 4) : 0.216 ≤ (superF 2).
     refine le_trans ?_ (Real.rpow_le_rpow (by norm_num) pw (by positivity))
     rw [Real.le_rpow_inv_iff_of_pos (by norm_num) (by norm_num) (by positivity), Real.rpow_natCast]
     refine le_trans (pow_le_pow_of_le_one (by norm_num) (by norm_num)
-      (pow_le_pow_right (by norm_num) (Nat.le_add_left 1 n))) ?_
+      (pow_le_pow_right₀ (by norm_num) (Nat.le_add_left 1 n))) ?_
     norm_num
   · rw [s.potential_eq_one (not_exists.mp m)]
     norm_num

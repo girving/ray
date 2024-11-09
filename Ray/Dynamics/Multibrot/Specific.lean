@@ -20,7 +20,7 @@ lemma exp_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num)
 /-- `exp (-a) < b` in terms `norm_num` can handle `-/
 lemma exp_neg_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : 0 < b := by norm_num)
     (h0 : b⁻¹ < 2.7182818283 ^ a := by norm_num) : exp (-a) < b := by
-  rw [Real.exp_neg, inv_lt, ←Real.exp_one_pow a]
+  rw [Real.exp_neg, inv_lt_comm₀, ←Real.exp_one_pow a]
   · exact _root_.trans h0 (pow_lt_pow_left Real.exp_one_gt_d9 (by norm_num) a0)
   · exact Real.exp_pos _
   · exact b0
@@ -59,14 +59,14 @@ lemma exp_div_lt {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠
 lemma exp_neg_div_lt {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠ 0 := by norm_num)
     (c0 : 0 < c := by norm_num) (h0 : c⁻¹ ^ b < 2.7182818283 ^ a := by norm_num) :
     exp (-(a / b : ℝ)) < c := by
-  rw [Real.exp_neg, inv_lt (Real.exp_pos _) c0]
+  rw [Real.exp_neg, inv_lt_comm₀ (Real.exp_pos _) c0]
   exact lt_exp_div a0 b0 (inv_pos.mpr c0) h0
 
 /-- `c < exp (-(a/b))` in terms `norm_num` can handle `-/
 lemma lt_exp_neg_div {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠ 0 := by norm_num)
     (c0 : 0 < c := by norm_num) (h0 : 2.7182818286 ^ a < c⁻¹ ^ b := by norm_num) :
     c < exp (-(a / b : ℝ)) := by
-  rw [Real.exp_neg, lt_inv c0 (Real.exp_pos _)]
+  rw [Real.exp_neg, lt_inv_comm₀ c0 (Real.exp_pos _)]
   exact exp_div_lt a0 b0 (inv_pos.mpr c0) h0
 
 -- Specific values of `exp`
@@ -93,10 +93,10 @@ lemma log_4_lt : log 4 < 1.387 := by
 /-- `-log (1 - 1/x) < 0.41` if `3 ≤ x` -/
 lemma neg_log_one_sub_lt {x : ℝ} (x3 : 3 ≤ x) : -log (1 - 1/x) < 0.41 := by
   have le : 2/3 ≤ 1 - 1 / x := by
-    rw [le_tsub_iff_le_tsub (by norm_num), one_div, inv_le (by positivity)]
+    rw [le_tsub_iff_le_tsub (by norm_num), one_div, inv_le_comm₀ (by positivity)]
     · exact le_trans (by norm_num) x3
     · norm_num
-    · rw [one_div, inv_le_one_iff]; right; exact le_trans (by norm_num) x3
+    · rw [one_div, inv_le_one_iff₀]; right; exact le_trans (by norm_num) x3
   rw [neg_lt, Real.lt_log_iff_exp_lt (lt_of_lt_of_le (by norm_num) le)]
   refine lt_of_lt_of_le ?_ le
   norm_num; exact exp_neg_div_lt

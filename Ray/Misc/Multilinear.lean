@@ -123,13 +123,13 @@ theorem smul_cmmap_add [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [N
   intro d z i u v
   by_cases i0 : i = 0
   · rw [i0]
-    have uv := x.map_add (fun _ ↦ z 0) 0 u v
+    have uv := x.map_update_add (fun _ ↦ z 0) 0 u v
     simp only [update_0_0 z _] at uv
     simp only [Function.update_same, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
       ne_eq, uv, add_smul, smulCmmapFn, update_0_succ]
   · simp only [smul_add, ne_eq, update_nz_0 d z i0, MultilinearMap.toFun_eq_coe,
-      ContinuousMultilinearMap.coe_coe, update_nz_succ d z _ i0, MultilinearMap.map_add, smul_add,
-      smulCmmapFn]
+      ContinuousMultilinearMap.coe_coe, update_nz_succ d z _ i0, MultilinearMap.map_update_add,
+      smul_add, smulCmmapFn]
 
 /-- `smulCmmapFn` commutes with scalars -/
 theorem smul_cmmap_smul [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [NormedAddCommGroup B]
@@ -142,11 +142,11 @@ theorem smul_cmmap_smul [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [
   rw [smulCmmapFn]
   by_cases i0 : i = 0
   · rw [i0]
-    have su := x.map_smul (fun _ ↦ z 0) 0 s u
+    have su := x.map_update_smul (fun _ ↦ z 0) 0 s u
     rw [update_0_0 z _, update_0_0 z _] at su
     simp only [Function.update_same, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
       su, smul_eq_mul, ne_eq, update_0_succ d z _ _, smulCmmapFn, ←smul_assoc]
-  · have su := xs.map_smul (fun j ↦ z j.succ) (i.pred i0) s u
+  · have su := xs.map_update_smul (fun j ↦ z j.succ) (i.pred i0) s u
     simp only [ne_eq, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
       update_nz_0 d z i0, update_nz_succ d z _ i0, su, smul_comm _ s, smulCmmapFn]
 
@@ -163,8 +163,8 @@ def smulCmmap (𝕜 A B : Type) [NontriviallyNormedField 𝕜] [AddCommMonoid A]
     (xs : ContinuousMultilinearMap 𝕜 (fun _ : Fin n ↦ A) B) :
     ContinuousMultilinearMap 𝕜 (fun _ : Fin (n + 1) ↦ A) B where
   toFun := smulCmmapFn x xs
-  map_add' := smul_cmmap_add x xs _
-  map_smul' := smul_cmmap_smul x xs _
+  map_update_add' := smul_cmmap_add x xs _
+  map_update_smul' := smul_cmmap_smul x xs _
   cont := smul_cmmap_cont x xs
 
 theorem smulCmmap_apply [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [NormedAddCommGroup B]
@@ -250,7 +250,7 @@ def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype
   toFun f := f x
   map_add' := by simp
   map_smul' := by simp
-  cont := by simp [ContinuousMultilinearMap.continuous_eval_const]
+  cont := by simp [continuous_eval_const]
 
 /-- Prove `A x = 0` by `x = 0` for a continuous linear map `A` -/
 lemma ContinuousLinearMap.apply_eq_zero_of_eq_zero {𝕜 X Y : Type} [NormedField 𝕜]

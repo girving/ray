@@ -114,8 +114,8 @@ lemma f_error_nonneg {d : ℕ} [Fact (2 ≤ d)] {z : ℂ} (z3 : 3 ≤ abs z) : 0
     rw [le_div_iff₀ (by positivity), neg_one_mul, neg_le]
     trans 2
     · refine le_trans (neg_log_one_sub_le_linear (c := 2) (by positivity) (by norm_num) ?_) ?_
-      · exact le_trans (inv_le_inv_of_le (by positivity) z3) (by norm_num)
-      · simp only [zero_lt_two, mul_le_iff_le_one_right]; apply inv_le_one; linarith
+      · exact le_trans (inv_anti₀ (by positivity) z3) (by norm_num)
+      · simp only [zero_lt_two, mul_le_iff_le_one_right]; apply inv_le_one_of_one_le₀; linarith
     · exact le_trans (by norm_num) (mul_le_mul (two_le_cast_d d) l1 zero_le_one (by positivity))
   · linarith [f_error_inner_nonneg d z3]
 
@@ -136,7 +136,7 @@ lemma f_error_le_generic (d : ℕ) [Fact (2 ≤ d)] (b l s t c g : ℝ) {z : ℂ
   have inner_le : -log (1 - 1 / abs z) ≤ s / abs z := by
     rw [one_div, div_eq_mul_inv]
     apply neg_log_one_sub_le_linear (by positivity) s1
-    exact le_trans (inv_le_inv_of_le (by positivity) bz) bs
+    exact le_trans (inv_anti₀ (by positivity) bz) bs
   have dm : 2 * log (abs z) ≤ d * log (abs z) := by bound
   have div_le : -log (1 - 1 / abs z) / (d * log (abs z)) ≤ t := by
     have sz : s / abs z ≤ s / b := div_le_div_of_nonneg_left (by positivity) (by positivity) bz
@@ -235,7 +235,7 @@ lemma iter_error_sum_weak (d : ℕ) [Fact (2 ≤ d)] {b s : ℝ} {c : ℂ} (b3 :
   have t0 : 0 ≤ t := by rw [←ht]; positivity
   apply le_trans (Finset.sum_le_sum (fun k _ ↦ fb k))
   simp only [mul_comm _ t, ←Finset.mul_sum, ←inv_pow] at fb ⊢
-  exact mul_le_mul_of_nonneg_left (partial_geometric_bound _ (by positivity) (inv_lt_one b1)) t0
+  exact mul_le_mul_of_nonneg_left (partial_geometric_bound _ (by positivity) (inv_lt_one_of_one_lt₀ b1)) t0
 
 /-- `iter_error` converges -/
 lemma iter_error_summable (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs z)
@@ -259,7 +259,7 @@ lemma iter_error_weak (d : ℕ) [Fact (2 ≤ d)] {b s : ℝ} {c : ℂ} (b3 : 3 �
   have z3 : 3 ≤ abs z := by linarith
   have l0 : 0 < log (abs z) := lt_of_lt_of_le (by norm_num) (le_log_abs_z z3)
   have b1 : 1 < b - 1 := by linarith
-  have b0 : 0 ≤ 1 - (b - 1)⁻¹ := sub_nonneg.mpr (inv_le_one b1.le)
+  have b0 : 0 ≤ 1 - (b - 1)⁻¹ := sub_nonneg.mpr (inv_le_one_of_one_le₀ b1.le)
   refine tsum_le_of_sum_le' ?_ ?_
   · positivity
   · intro N; exact iter_error_sum_weak d b3 s0 bs bz cz
@@ -322,7 +322,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
     · exact le_trans (mul_le_mul_of_nonneg_left bz b0'.le) fz'
     · simp only [div_eq_mul_inv, mul_inv, ←mul_assoc _ (abs z)⁻¹, mul_assoc s1 _ (abs z)⁻¹]
       simp only [←mul_inv, mul_assoc s1]
-      refine mul_le_mul_of_nonneg_left (inv_le_inv_of_le (by positivity) ?_) s1p
+      refine mul_le_mul_of_nonneg_left (inv_anti₀ (by positivity) ?_) s1p
       exact mul_le_mul fz' (Real.log_le_log (by positivity) zfz) (by positivity)
         (le_trans b0.le bfz)
   have e2 : iter_error d c (f' d c (f' d c z)) ≤
@@ -332,7 +332,7 @@ lemma iter_error_le (i : ℝ) {b s0 s1 s2 : ℝ} {c : ℂ} (b3 : 3 ≤ b)
     · simp only [div_eq_mul_inv, mul_assoc s2]
       refine mul_le_mul_of_nonneg_left ?_ s2p
       simp only [←mul_inv, ←mul_assoc]
-      refine inv_le_inv_of_le (by positivity) ?_
+      refine inv_anti₀ (by positivity) ?_
       refine mul_le_mul ?_ (Real.log_le_log z0 zffz) (by positivity) (by positivity)
       rw [mul_assoc]
       exact mul_le_mul_of_nonneg_left ffz (by positivity)
@@ -372,7 +372,7 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ abs
     (bs1 := fun {_} bz ↦ f_error_le_of_z6 d (le_trans b6 bz))
     (bs2 := fun {_} bz ↦ f_error_le_of_z33 d (le_trans b33 bz))
     b11 (le_trans (by norm_num) b33) (by positivity) ?_ ?_ z3 cz
-  · exact sub_pos.mpr (inv_lt_one (by linarith))
+  · exact sub_pos.mpr (inv_lt_one_of_one_lt₀ (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
     exact le_trans (add_le_add (add_le_add_left
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)
@@ -409,7 +409,7 @@ lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ abs
     (bs1 := fun {_} bz ↦ f_error_le_of_z12 d (le_trans b6 bz))
     (bs2 := fun {_} bz ↦ f_error_le_of_z140 d (le_trans b33 bz))
     (le_trans (by norm_num) b11) (le_trans (by norm_num) b33) (by positivity) ?_ ?_ z4 cz
-  · exact sub_pos.mpr (inv_lt_one (by linarith))
+  · exact sub_pos.mpr (inv_lt_one_of_one_lt₀ (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
     exact le_trans (add_le_add (add_le_add_left
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)

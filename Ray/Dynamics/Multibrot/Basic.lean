@@ -29,6 +29,7 @@ open Function (uncurry)
 open Metric (ball closedBall mem_ball_self mem_ball mem_closedBall)
 open Real (exp log)
 open RiemannSphere
+open OneDimension
 open Set
 open scoped OnePoint RiemannSphere Topology
 noncomputable section
@@ -112,7 +113,7 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
   · intro e ec z h; simp only [Complex.dist_eq] at ec
     have zz : abs z ≤ abs (z ^ d) := by
       rw [Complex.abs.map_pow]
-      refine le_self_pow ?_ (d_ne_zero _)
+      refine le_self_pow₀ ?_ (d_ne_zero _)
       exact le_trans (le_add_of_nonneg_left (add_nonneg (le_max_right _ _) (Complex.abs.nonneg _)))
         h.le
     calc abs (f' d e z)
@@ -213,7 +214,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     trans abs c * (max 16 (abs c / 2))⁻¹ ^ d; bound
     rw [inv_pow, mul_inv_le_iff₀]; swap; bound
     rw [one_div_mul_eq_div]; rw [le_div_iff₀, mul_comm]; swap; norm_num
-    refine le_trans ?_ (pow_le_pow_right (le_max_of_le_left (by norm_num)) (two_le_d d))
+    refine le_trans ?_ (pow_le_pow_right₀ (le_max_of_le_left (by norm_num)) (two_le_d d))
     by_cases cb : abs c / 2 ≤ 16
     rw [max_eq_left cb, pow_two]; linarith
     rw [max_eq_right (not_le.mp cb).le, pow_two]; nlinarith
@@ -225,7 +226,7 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
       _ = 7 / 8 := by norm_num
   have zb : ∀ {z}, z ∈ t → abs z ≤ 1 / 8 := by
     intro z m; rw [← ht] at m; refine le_trans (le_of_lt m) ?_
-    rw [one_div]; exact inv_le_inv_of_le (by norm_num) (le_trans (by norm_num) (le_max_left _ _))
+    rw [one_div]; exact inv_anti₀ (by norm_num) (le_trans (by norm_num) (le_max_left _ _))
   exact
     { d2 := two_le_d d
       fa0 := (s.fla c).along_snd
@@ -520,7 +521,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < abs c) : abs (bottcher' d c) ≤ 3 *
   -- Facts about c and f
   have ct : c⁻¹ ∈ {z : ℂ | abs z < (max 16 (abs c / 2))⁻¹} := by
     simp only [mem_setOf, map_inv₀]
-    apply inv_lt_inv_of_lt; bound; refine max_lt lo (half_lt_self (lt_trans (by norm_num) lo))
+    apply inv_strictAnti₀; bound; refine max_lt lo (half_lt_self (lt_trans (by norm_num) lo))
   have mem : c ∉ multibrot d := multibrot_two_lt (lt_trans (by norm_num) lo)
   have nz : ∀ n, (f d c)^[n] c ≠ 0 := by
     intro n; contrapose mem; simp only [not_not] at mem ⊢; exact multibrot_of_zero mem
@@ -737,7 +738,7 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   have az0 : abs z ≠ 0 := (lt_trans (one_div_pos.mpr rp) zr).ne'
   have z0 : z ≠ 0 := Complex.abs.ne_zero_iff.mp az0
   have zir : abs (z⁻¹) < r := by
-    simp only [one_div, map_inv₀] at zr ⊢; exact inv_lt_of_inv_lt rp zr
+    simp only [one_div, map_inv₀] at zr ⊢; exact inv_lt_of_inv_lt₀ rp zr
   specialize @h z⁻¹ zir
   simp only [map_inv₀, inv_inv, ← Complex.abs.map_mul, sub_mul, inv_mul_cancel₀ z0,
     mul_comm z _] at h

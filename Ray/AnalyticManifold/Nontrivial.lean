@@ -141,7 +141,9 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
       simp only [← hn', PNat.mk_coe, ← Units.eq_iff, Units.val_pow_eq_pow_val, Units.val_mk0, e,
         Units.val_one, and_self]
   apply Set.Countable.mono e; clear e; apply Countable.image; apply Set.Finite.countable
-  rw [Set.finite_def]; exact ⟨_root_.rootsOfUnity.fintype ℂ n'⟩
+  rw [Set.finite_def]
+  refine ⟨@_root_.rootsOfUnity.fintype ℂ _ ?_ _ _⟩
+  simpa only [neZero_iff, ← hn', ne_eq]
 
 /-- Given continuous `p : X → ℂ` on preconnected `X`, `p` is const if `f ∘ p` is const -/
 theorem NontrivialAnalyticOn.const (n : NontrivialAnalyticOn f s) {p : X → ℂ} {t : Set X}
@@ -196,26 +198,26 @@ theorem MAnalyticAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {
   simp only [not_not] at fg
   cases' fa.eventually_eq_or_eventually_ne ga with e e
   · left; clear fa ga
-    replace e := (continuousAt_extChartAt I z).eventually e
+    replace e := (continuousAt_extChartAt z).eventually e
     replace e := Filter.EventuallyEq.fun_comp e (_root_.extChartAt I (f z)).symm
     apply e.congr; simp only [Function.comp_def]; clear e
-    apply (fc.eventually_mem (extChartAt_source_mem_nhds I (f z))).mp
-    apply (gc.eventually_mem (extChartAt_source_mem_nhds I (g z))).mp
+    apply (fc.eventually_mem (extChartAt_source_mem_nhds (I := I) (f z))).mp
+    apply (gc.eventually_mem (extChartAt_source_mem_nhds (I := I) (g z))).mp
     refine eventually_nhds_iff.mpr ⟨(_root_.extChartAt I z).source,
-      fun x m gm fm ↦ ?_, isOpen_extChartAt_source _ _, mem_extChartAt_source I z⟩
+      fun x m gm fm ↦ ?_, isOpen_extChartAt_source _, mem_extChartAt_source z⟩
     simp only at fm gm; rw [← fg] at gm
     simp only [← fg, PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm,
       PartialEquiv.left_inv _ gm]
   · right; clear fa ga
     simp only [eventually_nhdsWithin_iff, Set.mem_compl_singleton_iff] at e ⊢
-    replace e := (continuousAt_extChartAt I z).eventually e
-    apply (fc.eventually_mem ((extChartAt_source_mem_nhds I (f z)))).mp
-    apply (gc.eventually_mem ((extChartAt_source_mem_nhds I (g z)))).mp
-    apply ((isOpen_extChartAt_source I z).eventually_mem (mem_extChartAt_source I z)).mp
+    replace e := (continuousAt_extChartAt z).eventually e
+    apply (fc.eventually_mem ((extChartAt_source_mem_nhds (I := I) (f z)))).mp
+    apply (gc.eventually_mem ((extChartAt_source_mem_nhds (I := I) (g z)))).mp
+    apply ((isOpen_extChartAt_source z).eventually_mem (mem_extChartAt_source (I := I) z)).mp
     refine e.mp (.of_forall ?_); clear e
     intro x h xm gm fm xz; rw [← fg] at gm
     simp only [← fg, PartialEquiv.left_inv _ xm] at h
-    specialize h ((PartialEquiv.injOn _).ne xm (mem_extChartAt_source _ _) xz)
+    specialize h ((PartialEquiv.injOn _).ne xm (mem_extChartAt_source _) xz)
     rwa [← (PartialEquiv.injOn _).ne_iff fm gm]
 
 /-- Locally constant functions are constant on preconnected sets -/
@@ -296,7 +298,7 @@ theorem nontrivialMAnalyticAt_of_mfderiv_ne_zero [AnalyticManifold I S] [Analyti
     NontrivialMAnalyticAt f z := by
   refine ⟨fa, ?_⟩; contrapose d; simp only [Filter.not_frequently, not_not] at d ⊢
   generalize ha : f z = a; rw [ha] at d; apply HasMFDerivAt.mfderiv
-  exact (hasMFDerivAt_const I I a _).congr_of_eventuallyEq d
+  exact (hasMFDerivAt_const a _).congr_of_eventuallyEq d
 
 /-- If `f` and `g` are nontrivial, `f ∘ g` is nontrivial -/
 theorem NontrivialMAnalyticAt.comp [T2Space U] {f : T → U} {g : S → T} {z : S}
@@ -327,10 +329,10 @@ theorem nontrivialMAnalyticAt_id [AnalyticManifold I S] (z : S) :
   generalize hu : (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t = u
   have uo : IsOpen u := by
     rw [← hu]
-    exact (continuousOn_extChartAt_symm I z).isOpen_inter_preimage (isOpen_extChartAt_target _ _) ot
+    exact (continuousOn_extChartAt_symm z).isOpen_inter_preimage (isOpen_extChartAt_target _) ot
   have zu : extChartAt I z z ∈ u := by
     simp only [mem_inter_iff, mem_extChartAt_target, true_and, mem_preimage,
-      PartialEquiv.left_inv _ (mem_extChartAt_source I z), zt, ← hu]
+      PartialEquiv.left_inv _ (mem_extChartAt_source z), zt, ← hu]
   rcases Metric.isOpen_iff.mp uo _ zu with ⟨r, rp, ru⟩
   generalize ha : extChartAt I z z + r / 2 = a
   have au : a ∈ u := by
@@ -339,7 +341,7 @@ theorem nontrivialMAnalyticAt_id [AnalyticManifold I S] (z : S) :
   use (extChartAt I z).symm a; simp only [mem_inter_iff, mem_preimage] at au
   rw [← hu] at au
   use ts au.2
-  rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source I z)]
+  rw [← (PartialEquiv.injOn _).ne_iff ((extChartAt I z).map_target au.1) (mem_extChartAt_source z)]
   rw [PartialEquiv.right_inv _ au.1, ← ha]
   simp only [Ne, add_right_eq_self, div_eq_zero_iff, Complex.ofReal_eq_zero,
     one_ne_zero, or_false, rp.ne', not_false_iff]; norm_num
@@ -420,11 +422,12 @@ theorem MAnalyticOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space 
       simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq,
         ← ht] at h ⊢
       refine
-        h.mp (((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp ?_)
-      apply ((fa _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
-          (mem_extChartAt_source K (f x)))).mp
-      apply ((ga _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _ _).mem_nhds
-          (mem_extChartAt_source K (g x)))).mp
+        h.mp (((isOpen_extChartAt_source x).eventually_mem
+        (mem_extChartAt_source (I := J) x)).mp ?_)
+      apply ((fa _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _).mem_nhds
+          (mem_extChartAt_source (I := K) (f x)))).mp
+      apply ((ga _ xs).continuousAt.eventually_mem ((isOpen_extChartAt_source _).mem_nhds
+          (mem_extChartAt_source (I := K) (g x)))).mp
       refine .of_forall fun y gm fm m e ↦ ?_
       rw [← hd, Pi.zero_apply, sub_eq_zero, (extChartAt J x).left_inv m, ex] at e
       rw [ex] at fm; exact (extChartAt K (g x)).injOn fm gm e
@@ -432,13 +435,13 @@ theorem MAnalyticOn.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space 
       rw [← hz]
       have xt' : ∃ᶠ y in 𝓝 x, (extChartAt J x).symm (extChartAt J x y) ∈ t := by
         apply xt.mp
-        apply ((isOpen_extChartAt_source J x).eventually_mem (mem_extChartAt_source J x)).mp
+        apply ((isOpen_extChartAt_source x).eventually_mem (mem_extChartAt_source (I := J) x)).mp
         refine .of_forall fun y m e ↦ ?_; rw [(extChartAt J x).left_inv m]; exact e
       apply (Filter.Tendsto.frequently (p := fun y ↦ (extChartAt J x).symm y ∈ t)
-          (continuousAt_extChartAt J x) xt').mp
-      apply ((isOpen_extChartAt_target J x).eventually_mem (mem_extChartAt_target J x)).mp
+          (continuousAt_extChartAt x) xt').mp
+      apply ((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target x)).mp
       refine .of_forall fun y m e ↦ ?_; simp only [← ht] at e
-      apply ((continuousAt_extChartAt_symm'' J m).eventually e).mp
+      apply ((continuousAt_extChartAt_symm'' m).eventually e).mp
       refine .of_forall fun z e ↦ ?_; simp only at e
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
     have da : AnalyticAt ℂ d z := by

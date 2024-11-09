@@ -324,7 +324,7 @@ theorem term_converges (s : SuperNear f d t) :
   trans 4 * abs (g f d (f^[n] z) - 1) * abs (1 / (d ^ (n + 1) : ℕ) : ℂ)
   · apply pow_small; · exact le_trans (s.gs (s.mapsTo n zt)) (by norm_num)
     · simp only [one_div, map_inv₀, Complex.abs_pow, Complex.abs_natCast, Nat.cast_pow]
-      apply inv_le_one
+      apply inv_le_one_of_one_le₀
       have hd : 1 ≤ (d : ℝ) := le_trans (by norm_num) s.dr2
       exact one_le_pow₀ hd
   · have gs : abs (g f d (f^[n] z) - 1) ≤ 1 / 4 := s.gs (s.mapsTo n zt)
