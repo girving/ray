@@ -3,7 +3,7 @@ import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
-import Ray.AnalyticManifold.Nontrivial
+import Ray.Manifold.Nontrivial
 import Ray.Misc.TotallyDisconnected
 
 /-!
@@ -33,7 +33,7 @@ open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall m
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set
-open scoped Real Topology Manifold
+open scoped ContDiff Real Topology Manifold
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -46,18 +46,22 @@ theorem nontrivial_local_of_global {f : ℂ → ℂ} {z : ℂ} {e r : ℝ}
     (fa : AnalyticOnNhd ℂ f (closedBall z r))
     (rp : 0 < r) (ep : 0 < e) (ef : ∀ w, w ∈ sphere z r → e ≤ ‖f w - f z‖) :
     NontrivialMAnalyticAt f z := by
-  have fh : MAnalyticOn I I f (closedBall z r) := fun _ m ↦ (fa _ m).mAnalyticAt I I
-  have zs : z ∈ closedBall z r := mem_closedBall_self rp.le
+  replace fa : ∃ t, r < t ∧ AnalyticOnNhd ℂ f (ball z t) :=
+    exists_ball_superset fa (isOpen_analyticAt ℂ f)
+  obtain ⟨t, rt, fa⟩ := fa
+  have fh : ∀ x ∈ ball z t, ContMDiffAt I I ω f x := fun _ m ↦ (fa _ m).mAnalyticAt I I
+  have zs : z ∈ ball z t := mem_ball_self (by linarith)
   use fh _ zs
   contrapose ef
   simp only [Filter.not_frequently, not_not] at ef
   simp only [not_forall, not_le]
   have zrs : z + r ∈ sphere z r := by
-    simp only [mem_sphere, Complex.dist_eq, add_sub_cancel_left, Complex.abs_ofReal, abs_of_pos rp]
+    simp only [mem_sphere, Complex.dist_eq, add_sub_cancel_left, Complex.norm_real, abs_of_pos rp,
+      Real.norm_eq_abs]
   use z + r, zrs
-  simp only [fh.const_of_locally_const' zs (convex_closedBall z r).isPreconnected ef (z + r)
-      (Metric.sphere_subset_closedBall zrs),
-    sub_self, norm_zero, ep]
+  have lc := ContMDiffOn.const_of_locally_const (fun _ m ↦ (fh _ m).contMDiffWithinAt) zs
+      isOpen_ball (convex_ball z t).isPreconnected ef (z + r) (Metric.sphere_subset_ball rt zrs)
+  simp only [lc, sub_self, norm_zero, ep]
 
 /-- The effective parameterized open mapping theorem for analytic `f : ℂ → ℂ → ℂ`.
     We lose more effectiveness than is optimal, since our goal is ineffective versions. -/
@@ -67,15 +71,14 @@ theorem AnalyticOnNhd.ball_subset_image_closedBall_param {f : ℂ → ℂ → �
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
     refine fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono ?_) rp ep (ef d m)).nonconst
-    simp only [← closedBall_prod_same, mem_prod_eq, setOf_mem_eq, (iff_true _).mpr m,
-      true_and, subset_refl]
+    simp only [mem_prod_eq, setOf_mem_eq, (iff_true _).mpr m, true_and, subset_refl]
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
     intro d du; refine DiffContOnCl.ball_subset_image_closedBall ?_ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
     rw [e]; apply DifferentiableOn.diffContOnCl; apply AnalyticOnNhd.differentiableOn
     refine fa.comp (analyticOnNhd_const.prod analyticOnNhd_id) ?_
     intro w wr; simp only [closure_ball _ rp.ne'] at wr
-    simp only [← closedBall_prod_same, mem_prod_eq, du, wr, true_and, du]
+    simp only [mem_prod_eq, wr, true_and, du]
   rcases Metric.continuousAt_iff.mp
       (fa (c, z) (mk_mem_prod (mem_of_mem_nhds un) (mem_closedBall_self rp.le))).continuousAt
       (e / 4) (by linarith) with
@@ -84,7 +87,7 @@ theorem AnalyticOnNhd.ball_subset_image_closedBall_param {f : ℂ → ℂ → �
   refine ⟨u ∩ ball c s, Filter.inter_mem un (Metric.ball_mem_nhds c (by linarith)), ?_⟩
   use ball (f c z) (e / 4), Metric.ball_mem_nhds _ (by linarith)
   intro ⟨d, w⟩ m
-  simp only [mem_inter_iff, mem_prod_eq, mem_image, @mem_ball _ _ c, lt_min_iff] at m op ⊢
+  simp only [mem_inter_iff, mem_prod_eq, mem_image, @mem_ball _ _ c] at m op ⊢
   have wm : w ∈ ball (f d z) (e / 2) := by
     simp only [mem_ball] at m ⊢
     specialize @sh ⟨d, z⟩; simp only [Prod.dist_eq, dist_self, Function.uncurry] at sh
@@ -97,11 +100,11 @@ theorem AnalyticOnNhd.ball_subset_image_closedBall_param {f : ℂ → ℂ → �
   specialize op d m.1.1 wm
   rcases (mem_image _ _ _).mp op with ⟨y, yr, yw⟩
   use⟨d, y⟩
-  simp only [mem_prod_eq, Prod.ext_iff, yw, and_true, eq_self_iff_true, true_and, yr, m.1.1]
+  simp only [yw, and_true, yr, m.1.1]
 
 /-- A trivial lemma used repeatedly below -/
-theorem abs_sub_self_lt {z : ℂ} {r : ℝ} (rp : 0 < r) : abs (z - z) < r := by
-  simp [sub_self, Complex.abs.map_zero, rp]
+theorem norm_sub_self_lt {z : ℂ} {r : ℝ} (rp : 0 < r) : ‖z - z‖ < r := by
+  simp [sub_self, norm_zero, rp]
 
 /-- The parameterized open mapping theorem for analytic `f : ℂ → ℂ → ℂ`:
     `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods if `f` is nontrivial. -/
@@ -115,15 +118,15 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
   have ss : s ⊆ s' := by rw [← hs]; apply inter_subset_left
   replace sn : s ∈ 𝓝 (c, z) := by rw [← hs]; exact Filter.inter_mem sn fa.eventually_analyticAt
   replace fa : AnalyticOnNhd ℂ (uncurry f) s := by rw [← hs]; apply inter_subset_right
-  refine Filter.mem_of_superset ?_ (image_subset _ ss)
+  refine Filter.mem_of_superset ?_ (image_mono ss)
   clear ss hs s'
   rcases Metric.mem_nhds_iff.mp sn with ⟨e, ep, es⟩
   -- Find a radius within s where f c is nontrivial
   have er : ∃ r, 0 < r ∧ closedBall (c, z) r ⊆ s ∧ f c z ∉ f c '' sphere z r := by
     have h := n.eventually_ne; contrapose h
-    simp only [not_exists, Filter.not_frequently, not_not, not_and, not_exists] at h
-    simp only [Filter.not_eventually, _root_.not_imp, not_not, Filter.eventually_iff,
-      Metric.mem_nhds_iff, not_exists, not_subset, mem_setOf, not_and]
+    simp only [not_exists, not_not, not_and, not_exists] at h
+    simp only [_root_.not_imp, not_not, Filter.eventually_iff, Metric.mem_nhds_iff, not_exists,
+      not_subset, mem_setOf, not_and]
     intro r rp; specialize h (min (e/2) (r/2)) ?_ ?_
     · bound
     · exact _root_.trans (Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_left _ _)
@@ -154,21 +157,21 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
       (e / 4) (by linarith) with
     ⟨t, tp, ft⟩
   have ef : ∀ d, d ∈ ball c (min t r) → ∀ w, w ∈ sphere z r → e / 2 ≤ ‖f d w - f d z‖ := by
-    intro d dt w wr; simp only [Complex.norm_eq_abs]
+    intro d dt w wr
     simp only [Complex.dist_eq, Prod.forall, mem_closedBall, Prod.dist_eq, max_le_iff, max_lt_iff,
       Function.uncurry, and_imp] at ft
     simp only [mem_ball, Complex.dist_eq, lt_min_iff] at dt
-    have a1 : abs (f d w - f c w) ≤ e / 4 :=
-      (ft d w dt.2.le (le_of_eq wr) c w (abs_sub_self_lt rp).le (le_of_eq wr) dt.1
-        (abs_sub_self_lt tp)).le
-    have a2 : abs (f c z - f d z) ≤ e / 4 := by
-      refine (ft c z (abs_sub_self_lt rp).le (abs_sub_self_lt rp).le d z
-          dt.2.le (abs_sub_self_lt rp).le ?_ (abs_sub_self_lt tp)).le
-      rw [← neg_sub, Complex.abs.map_neg]; exact dt.1
-    calc abs (f d w - f d z)
-      _ = abs (f c w - f c z + (f d w - f c w) + (f c z - f d z)) := by ring_nf
-      _ ≥ abs (f c w - f c z + (f d w - f c w)) - abs (f c z - f d z) := by bound
-      _ ≥ abs (f c w - f c z) - abs (f d w - f c w) - abs (f c z - f d z) := by bound
+    have a1 : ‖f d w - f c w‖ ≤ e / 4 :=
+      (ft d w dt.2.le (le_of_eq wr) c w (norm_sub_self_lt rp).le (le_of_eq wr) dt.1
+        (norm_sub_self_lt tp)).le
+    have a2 : ‖f c z - f d z‖ ≤ e / 4 := by
+      refine (ft c z (norm_sub_self_lt rp).le (norm_sub_self_lt rp).le d z
+          dt.2.le (norm_sub_self_lt rp).le ?_ (norm_sub_self_lt tp)).le
+      rw [← neg_sub, norm_neg]; exact dt.1
+    calc ‖f d w - f d z‖
+      _ = ‖f c w - f c z + (f d w - f c w) + (f c z - f d z)‖ := by ring_nf
+      _ ≥ ‖f c w - f c z + (f d w - f c w)‖ - ‖f c z - f d z‖ := by bound
+      _ ≥ ‖f c w - f c z‖ - ‖f d w - f c w‖ - ‖f c z - f d z‖ := by bound
       _ ≥ e - e / 4 - e / 4 := by rw [← he] at a1 a2 ⊢; exact sub_le_sub (sub_le_sub (xm wr) a1) a2
       _ = e / 2 := by ring
   -- Apply the partially effective parameterized open mapping theorem
@@ -176,7 +179,7 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
     refine _root_.trans ?_ rs; rw [← closedBall_prod_same]; apply prod_mono_left
     exact _root_.trans (Metric.ball_subset_ball (min_le_right _ _)) Metric.ball_subset_closedBall
   exact Filter.mem_of_superset ((fa.mono ss).ball_subset_image_closedBall_param rp (half_pos ep)
-    (Metric.ball_mem_nhds _ (by bound)) ef) (image_subset _ ss)
+    (Metric.ball_mem_nhds _ (by bound)) ef) (image_mono ss)
 
 /-- If `f : S → T` is nontrivial, it is nontrivial when written in charts -/
 theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAnalyticAt f z) :
@@ -197,7 +200,7 @@ theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAna
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
     `AnalyticAt.eventually_constant_or_nhds_le_map_nhds`. -/
-theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [AnalyticManifold I T] {f : S → T} {z : S}
+theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [IsManifold I ω T] {f : S → T} {z : S}
     (n : NontrivialMAnalyticAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
   refine le_antisymm ?_ n.mAnalyticAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
@@ -232,11 +235,11 @@ theorem Filter.prod_map_id_map_eq {A B C : Type} {f : Filter A} {g : Filter B} {
 
 /-- The local open mapping theorem, parameterized manifold version: if `f : ℂ → S → T` is
     nontrivial, then `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods. -/
-theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f : ℂ → S → T}
+theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [IsManifold I ω T] {f : ℂ → S → T}
     {c : ℂ} {z : S} (n : NontrivialMAnalyticAt (f c) z)
-    (fa : MAnalyticAt II I (uncurry f) (c, z)) :
+    (fa : ContMDiffAt II I ω (uncurry f) (c, z)) :
     𝓝 (c, f c z) = Filter.map (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
-  refine le_antisymm ?_ (continuousAt_fst.prod fa.continuousAt)
+  refine le_antisymm ?_ (continuousAt_fst.prodMk fa.continuousAt)
   generalize hg : (fun e x ↦ extChartAt I (f c z) (f e ((extChartAt I z).symm x))) = g
   have ga : AnalyticAt ℂ (uncurry g) (c, extChartAt I z z) := by
     rw [← hg]; exact (mAnalyticAt_iff_of_boundaryless.mp fa).2
@@ -244,8 +247,8 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f :
   have h := gn.nhds_le_map_nhds_param' ga
   -- We follow the 𝓝 ≤ 𝓝 argument of nontrivial_mAnalytic_at.nhds_le_map_nhds
   -- above, but a bit more complicated due to the parameterization.
-  simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map, Filter.prod_map_id_map_eq,
-    Function.comp] at h
+  simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map,
+    Filter.prod_map_id_map_eq] at h
   replace h := @Filter.map_mono _ _ (fun p : ℂ × ℂ ↦ (p.1, (extChartAt I (f c z)).symm p.2)) _ _ h
   simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source z)] at h
   have pe := Filter.prod_map_id_map_eq (f := 𝓝 c) (g := 𝓝 (extChartAt I (f c z) (f c z)))
@@ -257,5 +260,5 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [AnalyticManifold I T] {f :
     (mem_extChartAt_source (I := II) (c, z))).mp
   apply (fa.continuousAt.eventually_mem (extChartAt_source_mem_nhds (I := I) (f c z))).mp
   refine .of_forall fun ⟨e, w⟩ fm m ↦ ?_
-  simp only [Function.comp, uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
+  simp only [uncurry, extChartAt_prod, PartialEquiv.prod_source, mem_prod_eq] at fm m
   simp only [Function.comp, PartialEquiv.left_inv _ m.2, PartialEquiv.left_inv _ fm]

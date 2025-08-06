@@ -1,3 +1,4 @@
+import Mathlib.Analysis.Normed.Ring.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
@@ -106,16 +107,16 @@ theorem symmDiff_union (A B : Finset ℕ) : A ∆ B = A \ B ∪ B \ A := by
   rw [symmDiff_def, Finset.sup_eq_union]
 
 theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → ℂ) :
-    dist (A.sum f) (B.sum f) ≤ (A ∆ B).sum (fun n ↦ abs (f n)) := by
+    dist (A.sum f) (B.sum f) ≤ (A ∆ B).sum (fun n ↦ ‖f n‖) := by
   rw [finset_sum_partition A B f, finset_sum_partition B A f, Finset.inter_comm B A]
   rw [dist_add_right ((A \ B).sum f) ((B \ A).sum f) ((A ∩ B).sum f)]
   rw [Complex.dist_eq]
-  trans (A \ B).sum (fun n ↦ abs (f n)) + (B \ A).sum (fun n ↦ abs (f n))
+  trans (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖)
   · have ha := finset_complex_abs_sum_le (A \ B) f
     have hb := finset_complex_abs_sum_le (B \ A) f
-    calc abs ((A \ B).sum f - (B \ A).sum f)
-      _ ≤ abs ((A \ B).sum f) + abs ((B \ A).sum f) := by bound
-      _ ≤ (A \ B).sum (fun n ↦ abs (f n)) + (B \ A).sum (fun n ↦ abs (f n)) := by bound
+    calc ‖(A \ B).sum f - (B \ A).sum f‖
+      _ ≤ ‖(A \ B).sum f‖ + ‖(B \ A).sum f‖ := by bound
+      _ ≤ (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖) := by bound
   · apply le_of_eq
     rw [←Finset.sum_union (sdiff_sdiff_disjoint A B), symmDiff_union]
 
@@ -134,34 +135,31 @@ theorem symmDiff_late {A B : Finset ℕ} {m : ℕ} (ha : A ≥ Finset.range m) (
     exact b.2 h
 
 /-- `a - z` has similar absolute value to `a` for small `z` -/
-theorem sub_near (a z : ℂ) : |abs (a - z) - abs a| ≤ abs z := by
+theorem sub_near (a z : ℂ) : |‖a - z‖ - ‖a‖| ≤ ‖z‖ := by
   rw [abs_le]; constructor
   · simp only [neg_le_sub_iff_le_add]
-    calc abs (a - z) + abs z
-      _ ≥ |abs a - abs z| + abs z := by bound
-      _ ≥ abs a - abs z + abs z := by bound
-      _ = abs a := by simp only [sub_add_cancel]
+    exact norm_le_norm_sub_add a z
   · calc
-      abs (a - z) - abs a ≤ abs a + abs z - abs a := by bound
-      _ = abs z := by simp only [add_sub_cancel_left]
+      ‖a - z‖ - ‖a‖ ≤ ‖a‖ + ‖z‖ - ‖a‖ := by bound
+      _ = ‖z‖ := by simp only [add_sub_cancel_left]
 
-theorem add_near (a z : ℂ) : |abs (a + z) - abs a| ≤ abs z := by
+theorem add_near (a z : ℂ) : |‖a + z‖ - ‖a‖| ≤ ‖z‖ := by
   have h := sub_near a (-z)
-  simp only [sub_neg_eq_add, map_neg_eq_map] at h
+  simp only [sub_neg_eq_add, norm_neg] at h
   assumption
 
-theorem mem_slitPlane_of_near_one {z : ℂ} : abs (z - 1) < 1 → z ∈ slitPlane := by
+theorem mem_slitPlane_of_near_one {z : ℂ} : ‖z - 1‖ < 1 → z ∈ slitPlane := by
   intro h; apply Or.inl
   have hr : (1 - z).re < 1 := by
     calc
       (1 - z).re ≤ |(1 - z).re| := le_abs_self (1 - z).re
-      _ ≤ abs (1 - z) := (Complex.abs_re_le_abs _)
-      _ = abs (z - 1) := by rw [←Complex.abs.map_neg (1 - z)]; simp only [neg_sub]
+      _ ≤ ‖1 - z‖ := Complex.abs_re_le_norm _
+      _ = ‖z - 1‖ := by rw [←norm_neg (1 - z)]; simp only [neg_sub]
       _ < 1 := h
   simp only [Complex.sub_re, Complex.one_re, sub_lt_self_iff] at hr
   assumption
 
-theorem near_one_avoids_zero {z : ℂ} : abs (z - 1) < 1 → z ≠ 0 := by
+theorem near_one_avoids_zero {z : ℂ} : ‖z - 1‖ < 1 → z ≠ 0 := by
   intro h; exact Complex.slitPlane_ne_zero (mem_slitPlane_of_near_one h)
 
 theorem derivWithin.cid {z : ℂ} {s : Set ℂ} (o : IsOpen s) (zs : z ∈ s) :
@@ -176,11 +174,11 @@ theorem derivWithin.clog {f : ℂ → ℂ} {z : ℂ} {s : Set ℂ} (o : IsOpen s
   have u := o.uniqueDiffWithinAt (𝕜 := ℂ) zs
   rw [HasDerivWithinAt.derivWithin h u]
 
-theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
-    abs (log (1 + z)) ≤ 1/(1 - r) * abs z := by
+theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : ‖z‖ < r) :
+    ‖log (1 + z)‖ ≤ 1/(1 - r) * ‖z‖ := by
   by_cases rp : r ≤ 0
-  · have a0 : abs z < 0 := lt_of_lt_of_le h rp
-    have a0' : abs z ≥ 0 := by bound
+  · have a0 : ‖z‖ < 0 := lt_of_lt_of_le h rp
+    have a0' : ‖z‖ ≥ 0 := by bound
     exfalso
     linarith [a0, a0']
   · simp only [not_le] at rp
@@ -193,27 +191,27 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : abs z < r) :
         intro w ws
         apply mem_slitPlane_of_near_one
         simp only [Metric.mem_ball, Complex.dist_eq, ← hs] at ws
-        calc abs (w - 1) < r := by assumption
+        calc ‖w - 1‖ < r := by assumption
           _ < 1 := r1
-      have sa : ∀ w : ℂ, w ∈ s → abs w ≥ 1 - r := by
+      have sa : ∀ w : ℂ, w ∈ s → ‖w‖ ≥ 1 - r := by
         intro w ws
         simp only [Metric.mem_ball, Complex.dist_eq, ← hs] at ws
-        calc abs w = abs (1 + (w - 1)) := by ring_nf
-          _ ≥ abs (1 : ℂ) - abs (w - 1) := by bound
-          _ ≥ abs (1 : ℂ) - r := by bound
-          _ = 1 - r := by rw [Complex.abs.map_one]
+        calc ‖w‖ = ‖1 + (w - 1)‖ := by ring_nf
+          _ ≥ ‖(1 : ℂ)‖ - ‖w - 1‖ := by bound
+          _ ≥ ‖(1 : ℂ)‖ - r := by bound
+          _ = 1 - r := by rw [norm_one]
       refine Convex.norm_image_sub_le_of_norm_derivWithin_le ?_ ?_ ?_ s1 s1z
       · exact DifferentiableOn.clog differentiableOn_id sp
       · intro w ws
         rw [derivWithin.clog o ws, derivWithin.cid o ws]
-        simp only [one_div, norm_inv, Complex.norm_eq_abs]
+        simp only [one_div, norm_inv]
         rw [inv_le_comm₀]
         have aw := sa w ws; simp at aw; field_simp; assumption
         have aw := sa w ws; linarith; norm_num; assumption
         exact differentiableWithinAt_id
         exact sp w ws
       · rw [← hs]; exact convex_ball _ _
-    simp only [Complex.log_one, sub_zero, Complex.norm_eq_abs, one_div, add_sub_cancel_left] at L
+    simp only [Complex.log_one, sub_zero, one_div, add_sub_cancel_left] at L
     simpa only [one_div, ge_iff_le]
 
 theorem le_of_forall_small_le_add {a b t : ℝ} (tp : 0 < t) (h : ∀ e, 0 < e → e < t → a ≤ b + e) :
@@ -238,7 +236,7 @@ theorem one_over_one_sub_le {x : ℝ} : 0 ≤ x → x ≤ 1/2 → 1/(1 - x) ≤ 
     _ = 1 := by ring
 
 theorem Metric.continuous_near {f : ℂ → ℂ} {z : ℂ} {r : ℝ} (fc : ContinuousAt f z) (rp : 0 < r)
-    : ∀ e, 0 < e → ∃ s, 0 < s ∧ s ≤ r ∧ ∀ {w} , abs (w - z) < s → abs (f w - f z) < e := by
+    : ∀ e, 0 < e → ∃ s, 0 < s ∧ s ≤ r ∧ ∀ {w} , ‖w - z‖ < s → ‖f w - f z‖ < e := by
   intro e ep
   rcases Metric.continuousAt_iff.mp fc e ep with ⟨s,sp,sc⟩
   simp_rw [ Complex.dist_eq ] at sc
@@ -251,56 +249,53 @@ theorem Metric.continuous_near {f : ℂ → ℂ} {z : ℂ} {r : ℝ} (fc : Conti
   trans r; assumption; assumption
 
 theorem slightly_smaller {z : ℂ} (nz : z ≠ 0) {r : ℝ} (rp : 0 < r) :
-    ∃ w, abs (w - z) < r ∧ abs w < abs z := by
-  by_cases rz : abs z < r
+    ∃ w, ‖w - z‖ < r ∧ ‖w‖ < ‖z‖ := by
+  by_cases rz : ‖z‖ < r
   · use 0
-    simp only [zero_sub, map_neg_eq_map, rz, map_zero, AbsoluteValue.pos_iff, ne_eq, nz,
-      not_false_eq_true, and_self]
+    simp only [zero_sub, norm_neg, rz, norm_zero, norm_pos_iff, ne_eq, nz, not_false_eq_true,
+      and_self]
   simp only [not_lt] at rz
-  have azp : 0 < abs z := Complex.abs.pos nz
-  generalize ha : 1 - r/2/abs z = a
+  have azp : 0 < ‖z‖ := norm_pos_iff.mpr nz
+  generalize ha : 1 - r/2/‖z‖ = a
   have a0 : 0 ≤ a := by rw [←ha, sub_nonneg, div_le_one azp]; exact _root_.trans (by bound) rz
   have a1 : a < 1 := by rw [←ha, sub_lt_self_iff]; positivity
   generalize hw : ↑a * z = w
   use w; constructor
-  · rw [←hw,←ha]
+  · rw [ ←hw, ← ha]
     simp only [Complex.ofReal_sub, Complex.ofReal_one, Complex.ofReal_div]
     rw [mul_sub_right_distrib]
-    simp only [one_mul, sub_sub_cancel_left, AbsoluteValue.map_neg, AbsoluteValue.map_mul, map_div₀,
-      Complex.abs_ofReal, Complex.abs_two, Complex.abs_abs, abs_of_pos rp, div_mul (r/2),
-      div_mul_cancel₀ _ azp.ne', div_one, abs_two, div_self azp.ne']
-    bound
-  · simp only [←hw, AbsoluteValue.map_mul, Complex.abs_ofReal, abs_of_nonneg a0]
-    calc a * abs z < 1 * abs z := mul_lt_mul_of_pos_right a1 azp
-      _ = abs z := by ring
+    simp only [one_mul, Complex.ofReal_ofNat, sub_sub_cancel_left, norm_neg, Complex.norm_mul,
+      Complex.norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos rp, Complex.norm_ofNat,
+      div_mul (r / 2), div_one, half_lt_self_iff, div_self azp.ne', abs_norm, rp]
+  · simp only [← hw, Complex.norm_mul, Complex.norm_real, Real.norm_of_nonneg a0]
+    exact mul_lt_of_lt_one_left azp a1
 
 /-- There are smaller values nearby any z ≠ 0 -/
-theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, abs w < abs z := by
+theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, ‖w‖ < ‖z‖ := by
   simp only [Filter.Frequently, Metric.eventually_nhds_iff, not_exists, not_forall, not_not,
     Complex.dist_eq, not_and]
   intro r rp; rcases slightly_smaller z0 rp with ⟨w, b, lt⟩; use w, b, lt
 
 theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0) (cp : c > 0)
-    (zr : abs z ≤ r) (fc : ContinuousAt f z) (h : ∀ z : ℂ, abs z < r → abs (f z) ≤ c * abs z) :
-    abs (f z) ≤ c * abs z := by
+    (zr : ‖z‖ ≤ r) (fc : ContinuousAt f z) (h : ∀ z : ℂ, ‖z‖ < r → ‖f z‖ ≤ c * ‖z‖) :
+    ‖f z‖ ≤ c * ‖z‖ := by
   by_cases nz : z = 0; · refine h z ?_; rw [nz]; simpa
   apply le_of_forall_small_le_add zero_lt_one
   intro e ep _
   rcases Metric.continuous_near fc rp e ep with ⟨s,sp,_,sc⟩
   rcases slightly_smaller nz sp with ⟨w,wz,awz⟩
-  have wr : abs w < r := lt_of_lt_of_le awz zr
-  calc abs (f z) = abs (f w - (f w - f z)) := by ring_nf
-    _ ≤ abs (f w) + abs (f w - f z) := by bound
-    _ ≤ c * abs w + e := by bound [h w wr, sc wz]
-    _ ≤ c * abs z + e := by bound
+  have wr : ‖w‖ < r := lt_of_lt_of_le awz zr
+  calc ‖f z‖ = ‖f w - (f w - f z)‖ := by ring_nf
+    _ ≤ ‖f w‖ + ‖f w - f z‖ := by bound
+    _ ≤ c * ‖w‖ + e := by bound [h w wr, sc wz]
+    _ ≤ c * ‖z‖ + e := by bound
 
-theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : abs z ≤ r) :
-    abs (log (1 + z)) ≤ 1/(1 - r) * abs z := by
+theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : ‖z‖ ≤ r) :
+    ‖log (1 + z)‖ ≤ 1/(1 - r) * ‖z‖ := by
   by_cases r0 : r ≤ 0
-  · have z0 := le_antisymm (le_trans zr r0) (Complex.abs.nonneg _)
-    simp only [map_eq_zero] at z0
-    simp only [z0, add_zero, Complex.log_one, map_zero, r0, sub_zero, ne_eq, one_ne_zero,
-      not_false_eq_true, div_self, mul_zero, le_refl]
+  · have z0 := le_antisymm (le_trans zr r0) (norm_nonneg z)
+    simp only [norm_eq_zero] at z0
+    simp only [z0, add_zero, Complex.log_one, norm_zero, one_div, mul_zero, le_refl]
   simp only [not_le] at r0
   have fc : ContinuousAt (fun z ↦ log (1 + z)) z := by
     apply ContinuousAt.clog; apply ContinuousAt.add; exact continuousAt_const; exact continuousAt_id
@@ -310,37 +305,37 @@ theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : abs z ≤ r) :
   intro w wr
   exact @weak_log1p_small w r (by bound) wr
 
-theorem log1p_small {z : ℂ} (zs : abs z ≤ 1/2) : abs (log (1 + z)) ≤ 2 * abs z :=
+theorem log1p_small {z : ℂ} (zs : ‖z‖ ≤ 1/2) : ‖log (1 + z)‖ ≤ 2 * ‖z‖ :=
   le_trans (log1p_small' (by norm_num) zs) (le_of_eq (by norm_num))
 
 /-- `log (1+x)` is small for small `x` -/
 theorem Real.log1p_small' {x r : ℝ} (r1 : r < 1) (xr : |x| ≤ r) :
     |Real.log (1 + x)| ≤ 1 / (1-r) * |x| := by
   set z := (x : ℂ)
-  have zx : abs z = |x| := Complex.abs_ofReal _
+  have zx : ‖z‖ = |x| := by simp only [Complex.norm_real, norm_eq_abs, z]
   simp only [← Complex.log_ofReal_re, ← zx] at xr ⊢
-  refine _root_.trans (_root_.trans (Complex.abs_re_le_abs _) ?_) (_root_.log1p_small' r1 xr)
-  simp only [Complex.ofReal_add, Complex.ofReal_one, le_refl]
+  refine _root_.trans (_root_.trans (Complex.abs_re_le_norm _) ?_) (_root_.log1p_small' r1 xr)
+  simp only [Complex.ofReal_add, Complex.ofReal_one, le_refl, z]
 
 /-- `log (1+x)` is small for small `x` -/
 theorem Real.log1p_small {x : ℝ} (xr : |x| ≤ 1/2) : |Real.log (1 + x)| ≤ 2 * |x| :=
   le_trans (Real.log1p_small' (by norm_num) xr) (le_of_eq (by norm_num))
 
 /-- `log z` is small for `z ≈ 1` -/
-theorem log_small {z : ℂ} (zs : abs (z - 1) ≤ 1 / 2) : abs (log z) ≤ 2 * abs (z - 1) := by
+theorem log_small {z : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) : ‖log z‖ ≤ 2 * ‖z - 1‖ := by
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
   rw [wz]; refine log1p_small ?_; rw [← zw]; assumption
 
-theorem weak_exp_small {z : ℂ} (h : abs z < 1) : abs (exp z - 1) ≤ 2 * abs z := by
+theorem weak_exp_small {z : ℂ} (h : ‖z‖ < 1) : ‖exp z - 1‖ ≤ 2 * ‖z‖ := by
   have hr : 0 ≤ (1 : ℝ) := by norm_num
   have L := Complex.locally_lipschitz_exp hr (by bound) 0 z
-    (by simpa only [sub_zero, Complex.norm_eq_abs])
-  simp only [Complex.exp_zero, Complex.norm_eq_abs, norm_one, mul_one, sub_zero] at L
+    (by simpa only [sub_zero])
+  simp only [Complex.exp_zero, norm_one, mul_one, sub_zero] at L
   have t : 1 + 1 = (2 : ℝ) := by norm_num
   rw [t] at L; assumption
 
 /-- `exp z ≈ 1` for `z ≈ 0` -/
-theorem exp_small {z : ℂ} (zs : abs z ≤ 1) : abs (exp z - 1) ≤ 2 * abs z := by
+theorem exp_small {z : ℂ} (zs : ‖z‖ ≤ 1) : ‖exp z - 1‖ ≤ 2 * ‖z‖ := by
   have rp : (1 : ℝ) > 0 := by norm_num
   have cp : (2 : ℝ) > 0 := by norm_num
   have fc : ContinuousAt (fun z ↦ exp z - 1) z := by
@@ -349,38 +344,38 @@ theorem exp_small {z : ℂ} (zs : abs z ≤ 1) : abs (exp z - 1) ≤ 2 * abs z :
   apply weak_to_strong_small rp cp zs fc
   intro w wr; exact weak_exp_small wr
 
-theorem pow1p_small {z w : ℂ} (zs : abs z ≤ 1/2) (ws : abs w ≤ 1) :
-    abs ((1 + z) ^ w - 1) ≤ 4 * abs z * abs w := by
+theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
+    ‖(1 + z) ^ w - 1‖ ≤ 4 * ‖z‖ * ‖w‖ := by
   have z1 : 1 + z ≠ 0 := by
-    rw [←Complex.abs.ne_zero_iff]; apply ne_of_gt
-    calc abs (1 + z) ≥ abs (1 : ℂ) - abs z := by bound
-      _ ≥ abs (1 : ℂ) - 1/2 := by bound
+    rw [← norm_pos_iff]
+    calc ‖1 + z‖ ≥ ‖(1 : ℂ)‖ - ‖z‖ := by bound
+      _ ≥ ‖(1 : ℂ)‖ - 1/2 := by bound
       _ > 0 := by norm_num
   rw [Complex.cpow_def_of_ne_zero z1]
   have ls := log1p_small zs
-  have eas : abs (log (1 + z) * w) ≤ 1 := by
-    rw [Complex.abs.map_mul]
-    calc abs (log (1 + z)) * abs w ≤ 2 * abs z * abs w := by bound
+  have eas : ‖log (1 + z) * w‖ ≤ 1 := by
+    rw [Complex.norm_mul]
+    calc ‖log (1 + z)‖ * ‖w‖ ≤ 2 * ‖z‖ * ‖w‖ := by bound
       _ ≤ 2 * (1/2) * 1 := by bound
       _ = 1 := by norm_num
   have es := exp_small eas
-  rw [Complex.abs.map_mul, ←mul_assoc] at es
-  trans 2 * abs (log (1 + z)) * abs w
+  rw [Complex.norm_mul, ←mul_assoc] at es
+  trans 2 * ‖log (1 + z)‖ * ‖w‖
   exact es
-  calc 2 * abs (log (1 + z)) * abs w ≤ 2 * (2 * abs z) * abs w := by bound
-    _ = 4 * abs z * abs w := by ring
+  calc 2 * ‖log (1 + z)‖ * ‖w‖ ≤ 2 * (2 * ‖z‖) * ‖w‖ := by bound
+    _ = 4 * ‖z‖ * ‖w‖ := by ring
 
 /-- `abs (z^w - 1) ≤ 2 * abs ((z-1)w)` for `z ≈ 1`, `w` small -/
-theorem pow_small {z w : ℂ} (zs : abs (z - 1) ≤ 1 / 2) (ws : abs w ≤ 1) :
-    abs (z ^ w - 1) ≤ 4 * abs (z - 1) * abs w := by
+theorem pow_small {z w : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) (ws : ‖w‖ ≤ 1) :
+    ‖z ^ w - 1‖ ≤ 4 * ‖z - 1‖ * ‖w‖ := by
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
   rw [wz]; refine pow1p_small ?_ ws; rw [← zw]; assumption
 
 /-- `a + b ≠ 0` from `abs b < abs a` -/
-theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : abs b < abs a) : a + b ≠ 0 := by
+theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : ‖b‖ < ‖a‖) : a + b ≠ 0 := by
   have e : a + b = a - -b := by abel
   rw [e, sub_ne_zero]; contrapose h; simp only [not_not] at h
-  simp only [h, not_lt, AbsoluteValue.map_neg, le_refl]
+  simp only [h, not_lt, norm_neg, le_refl]
 
 /-- `e < 3` -/
 theorem Real.exp_one_lt_3 : Real.exp 1 < 3 :=
@@ -393,11 +388,11 @@ theorem log_add (a b : ℝ) (a0 : 0 < a) (ab0 : 0 < a + b) :
 
 /-- `log (abs (a + b)) = log (abs a) + log (abs (1 + b/a))` -/
 theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
-    Real.log (abs (a + b)) = Real.log (abs a) + Real.log (abs (1 + b/a)) := by
+    Real.log (‖a + b‖) = Real.log (‖a‖) + Real.log (‖1 + b/a‖) := by
   have d0 : 1 + b/a ≠ 0 := by field_simp [a0, ab0]
-  have a0' : abs a ≠ 0 := Complex.abs.ne_zero a0
-  have d0' : abs (1 + b / a) ≠ 0 := Complex.abs.ne_zero d0
-  rw [←Real.log_mul a0' d0', ←Complex.abs.map_mul, left_distrib, mul_one, mul_div_cancel₀ _ a0]
+  have a0' : ‖a‖ ≠ 0 := norm_ne_zero_iff.mpr a0
+  have d0' : ‖1 + b / a‖ ≠ 0 := norm_ne_zero_iff.mpr d0
+  rw [←Real.log_mul a0' d0', ← Complex.norm_mul, left_distrib, mul_one, mul_div_cancel₀ _ a0]
 
 /-- `e^(1/4) ≤ 4/3` -/
 theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by
@@ -407,17 +402,17 @@ theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by
 
 /-- Bound `abs (product - 1)` in terms of `abs (sum)` -/
 theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
-    (le : s.sum (fun n ↦ abs (f n - 1)) ≤ c) (c1 : c ≤ 1/2) : abs (s.prod f - 1) ≤ 4 * c := by
+    (le : s.sum (fun n ↦ ‖f n - 1‖) ≤ c) (c1 : c ≤ 1/2) : ‖s.prod f - 1‖ ≤ 4 * c := by
   set g := fun n ↦ Complex.log (f n)
-  have b : ∀ n, n ∈ s → abs (f n - 1) ≤ c := by
+  have b : ∀ n, n ∈ s → ‖f n - 1‖ ≤ c := by
     intro n m; refine _root_.trans ?_ le
-    exact Finset.single_le_sum (f := fun n ↦ abs (f n - 1)) (fun _ _ ↦ Complex.abs.nonneg _) m
+    exact Finset.single_le_sum (f := fun n ↦ ‖f n - 1‖) (fun _ _ ↦ norm_nonneg _) m
   have f0 : ∀ n, n ∈ s → f n ≠ 0 := by
     intro n m; specialize b n m; contrapose b; simp only [not_not] at b
     simp only [b, not_le]; norm_num; linarith
-  have sg : abs (s.sum g) ≤ 2 * c := by
-    refine _root_.trans (Complex.abs.sum_le _ _) ?_
-    refine _root_.trans (Finset.sum_le_sum (fun n m ↦ log_small (_root_.trans (b n m) c1))) ?_
+  have sg : ‖s.sum g‖ ≤ 2 * c := by
+    refine le_trans (norm_sum_le _ _) ?_
+    refine le_trans (Finset.sum_le_sum (fun n m ↦ log_small (le_trans (b n m) c1))) ?_
     rw [← Finset.mul_sum]; bound
   have e : s.prod f = Complex.exp (s.sum g) := by
     rw [Complex.exp_sum]; apply Finset.prod_congr rfl

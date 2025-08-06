@@ -21,7 +21,7 @@ We define convergence of infinite products, and show that uniform limits of prod
 analytic functions are analytic.
 -/
 
-open Complex (abs exp log)
+open Complex (exp log)
 open Filter (atTop)
 open Metric (ball closedBall sphere)
 open scoped Classical Real NNReal ENNReal Topology
@@ -55,16 +55,16 @@ theorem HasProdOn.tprodOn_eq {f : ℕ → ℂ → ℂ} {g : ℂ → ℂ} {s : Se
     care, and get nonzero results. -/
 theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : ℝ} (o : IsOpen s)
     (c12 : c ≤ 1 / 2) (a0 : a ≥ 0) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
-    (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a ^ n) :
+    (hf : ∀ n z, z ∈ s → ‖f n z - 1‖ ≤ c * a ^ n) :
     ∃ g : ℂ → ℂ, HasProdOn f g s ∧ AnalyticOnNhd ℂ g s ∧ ∀ z, z ∈ s → g z ≠ 0 := by
   set fl := fun n z ↦ log (f n z)
-  have near1 : ∀ n z, z ∈ s → abs (f n z - 1) ≤ 1 / 2 := by
+  have near1 : ∀ n z, z ∈ s → ‖f n z - 1‖ ≤ 1 / 2 := by
     intro n z zs
-    calc abs (f n z - 1)
+    calc ‖f n z - 1‖
       _ ≤ c * a ^ n := hf n z zs
       _ ≤ (1 / 2 : ℝ) * (1:ℝ) ^ n := by bound
       _ = 1 / 2 := by norm_num
-  have near1' : ∀ n z, z ∈ s → abs (f n z - 1) < 1 := fun n z zs ↦
+  have near1' : ∀ n z, z ∈ s → ‖f n z - 1‖ < 1 := fun n z zs ↦
     lt_of_le_of_lt (near1 n z zs) (by linarith)
   have expfl : ∀ n z, z ∈ s → exp (fl n z) = f n z := by
     intro n z zs; refine Complex.exp_log ?_
@@ -73,11 +73,11 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
     (h n).log (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
     --fun n ↦ log_analytic_near_one o (h n) (near1' n)
   set c2 := 2 * c
-  have hfl : ∀ n z, z ∈ s → abs (fl n z) ≤ c2 * a ^ n := by
+  have hfl : ∀ n z, z ∈ s → ‖fl n z‖ ≤ c2 * a ^ n := by
     intro n z zs
-    calc abs (fl n z)
-      _ = abs (log (f n z)) := rfl
-      _ ≤ 2 * abs (f n z - 1) := (log_small (near1 n z zs))
+    calc ‖fl n z‖
+      _ = ‖log (f n z)‖ := rfl
+      _ ≤ 2 * ‖f n z - 1‖ := (log_small (near1 n z zs))
       _ ≤ 2 * (c * a ^ n) := by linarith [hf n z zs]
       _ = 2 * c * a ^ n := by ring
       _ = c2 * a ^ n := rfl
@@ -99,7 +99,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
 /-- Same as above, but converge to `tprodOn` -/
 theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
     (c12 : c ≤ 1 / 2) (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
-    (hf : ∀ n z, z ∈ s → abs (f n z - 1) ≤ c * a ^ n) :
+    (hf : ∀ n z, z ∈ s → ‖f n z - 1‖ ≤ c * a ^ n) :
     ProdExistsOn f s ∧ AnalyticOnNhd ℂ (tprodOn f) s ∧ ∀ z, z ∈ s → tprodOn f z ≠ 0 := by
   rcases fast_products_converge o c12 a0 a1 h hf with ⟨g, gp, ga, g0⟩
   refine ⟨?_, ?_, ?_⟩

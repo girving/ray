@@ -39,7 +39,7 @@ def HasUniformSum (f : ℕ → ℂ → ℂ) (g : ℂ → ℂ) (s : Set ℂ) :=
 
 /-- Uniform vanishing means late sums are uniformly small -/
 def UniformVanishing (f : ℕ → ℂ → ℂ) (s : Set ℂ) :=
-  ∀ e : ℝ, e > 0 → ∃ n : ℕ, ∀ (N : Finset ℕ) (z), Late N n → z ∈ s → (N.sum fun n ↦ abs (f n z)) < e
+  ∀ e : ℝ, e > 0 → ∃ n : ℕ, ∀ (N : Finset ℕ) (z), Late N n → z ∈ s → (N.sum fun n ↦ ‖f n z‖) < e
 
 /-- Uniformly vanishing series are summable -/
 theorem uniformVanishing_to_summable {f : ℕ → ℂ → ℂ} {s : Set ℂ} {z : ℂ} (zs : z ∈ s)
@@ -61,7 +61,7 @@ theorem uniformVanishing_to_uniform_cauchy_series {f : ℕ → ℂ → ℂ} {s :
   use Finset.range m
   intro A HA B HB z zs
   calc dist (A.sum fun n ↦ f n z) (B.sum fun n ↦ f n z)
-    _ ≤ (A ∆ B).sum fun n ↦ abs (f n z) := symmDiff_bound _ _ _
+    _ ≤ (A ∆ B).sum fun n ↦ ‖f n z‖ := symmDiff_bound _ _ _
     _ < e := hm (A ∆ B) z (symmDiff_late HA HB) zs
 
 /-- If a series is uniformly vanishing, it tends to its limit uniformly -/
@@ -91,10 +91,10 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → ℂ} {s : 
     _ ≤ e / 4 + dist (A.sum fun n ↦ f n z) (N.sum fun n ↦ f n z) := by linarith
     _ = e / 4 + dist ((N.sum fun n ↦ f n z) + (M \ N).sum fun n ↦ f n z)
         (N.sum fun n ↦ f n z) := by rw [Finset.sum_union Finset.disjoint_sdiff]
-    _ = e / 4 + abs (((N.sum fun n ↦ f n z) + (M \ N).sum fun n ↦ f n z) -
-        N.sum fun n ↦ f n z) := by rw [Complex.dist_eq]
-    _ = e / 4 + abs ((M \ N).sum fun n ↦ f n z) := by ring_nf
-    _ ≤ e / 4 + (M \ N).sum fun n ↦ abs (f n z) := by
+    _ = e / 4 + ‖((N.sum fun n ↦ f n z) + (M \ N).sum fun n ↦ f n z) -
+        N.sum fun n ↦ f n z‖ := by rw [Complex.dist_eq]
+    _ = e / 4 + ‖(M \ N).sum fun n ↦ f n z‖ := by ring_nf
+    _ ≤ e / 4 + (M \ N).sum fun n ↦ ‖f n z‖ := by
       linarith [finset_complex_abs_sum_le (M \ N) fun n ↦ f n z]
     _ ≤ e / 4 + e / 4 := by linarith [hm (M \ N) z (sdiff_late M Nm) zs]
     _ = e / 2 := by ring
@@ -102,22 +102,21 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → ℂ} {s : 
 
 /-- Geometric bounds with c ≤ 0 are degenerate -/
 theorem CNonpos.degenerate {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (c0 : c ≤ 0) (a0 : 0 ≤ a)
-    (hf : ∀ n z, z ∈ s → abs (f n z) ≤ c * a ^ n) : ∀ n z, z ∈ s → f n z = 0 := by
+    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : ∀ n z, z ∈ s → f n z = 0 := by
   intro n z zs; specialize hf n z zs
   have ca : c * a ^ n ≤ 0 := mul_nonpos_iff.mpr (Or.inr ⟨c0, by bound⟩)
-  exact Complex.abs.eq_zero.mp (le_antisymm (le_trans hf ca) (Complex.abs.nonneg _))
+  exact norm_eq_zero.mp (le_antisymm (le_trans hf ca) (norm_nonneg _))
 
 /-- Uniformly exponentially converging series converge uniformly -/
 theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (a0 : 0 ≤ a)
-    (a1 : a < 1) (hf : ∀ n z, z ∈ s → abs (f n z) ≤ c * a ^ n) : HasUniformSum f (tsumOn f) s := by
+    (a1 : a < 1) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : HasUniformSum f (tsumOn f) s := by
   by_cases c0 : c ≤ 0
   · have fz := CNonpos.degenerate c0 a0 hf; simp only at fz
     rw [HasUniformSum, Metric.tendstoUniformlyOn_iff]
     intro e ep; refine .of_forall ?_; intro n z zs
     rw [tsumOn]
     simp_rw [fz _ z zs]
-    simp only [tsum_zero, Finset.sum_const_zero, dist_zero_left, Complex.norm_eq_abs,
-      AbsoluteValue.map_zero]
+    simp only [tsum_zero, Finset.sum_const_zero, dist_zero_left, norm_zero]
     assumption
   · simp only [not_le] at c0
     apply uniformVanishing_to_tendsto_uniformly_on
@@ -127,7 +126,7 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
     rcases exists_pow_lt_of_lt_one tp a1 with ⟨n, nt⟩
     use n; intro N z NL zs
     have a1p : 1 - (a : ℝ) > 0 := by linarith
-    calc (N.sum fun n ↦ abs (f n z))
+    calc (N.sum fun n ↦ ‖f n z‖)
       _ ≤ N.sum fun n ↦ c * a ^ n := Finset.sum_le_sum fun n _ ↦ hf n z zs
       _ = c * N.sum fun n ↦ a ^ n := (Finset.mul_sum _ _ _).symm
       _ ≤ c * (a ^ n * (1 - a)⁻¹) := by bound [late_geometric_bound NL a0 a1]
@@ -141,10 +140,10 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
 
 /-- Exponentially converging series converge -/
 theorem fast_series_converge_at {f : ℕ → ℂ} {c a : ℝ} (a0 : 0 ≤ a) (a1 : a < 1)
-    (hf : ∀ n, abs (f n) ≤ c * a ^ n) : Summable f := by
+    (hf : ∀ n, ‖f n‖ ≤ c * a ^ n) : Summable f := by
   set s : Set ℂ := {0}
   set g : ℕ → ℂ → ℂ := fun n _ ↦ f n
-  have hg : ∀ n z, z ∈ s → abs (g n z) ≤ c * a ^ n := fun n z _ ↦ hf n
+  have hg : ∀ n z, z ∈ s → ‖g n z‖ ≤ c * a ^ n := fun n z _ ↦ hf n
   have u := fast_series_converge_uniformly_on a0 a1 hg
   simp at u
   rw [HasUniformSum] at u
@@ -153,10 +152,10 @@ theorem fast_series_converge_at {f : ℕ → ℂ} {c a : ℝ} (a0 : 0 ≤ a) (a1
 
 /-- Analytic series that converge exponentially converge to analytic functions -/
 theorem fast_series_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s) (a0 : 0 ≤ a)
-    (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s) (hf : ∀ n z, z ∈ s → abs (f n z) ≤ c * a ^ n) :
+    (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
     ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g s ∧ HasSumOn f g s := by
   use tsumOn f; constructor
-  · exact uniform_analytic_lim o (fun N ↦ N.analyticOnNhd_sum fun _ _ ↦ h _)
+  · exact uniform_analytic_lim o (fun N ↦ N.analyticOnNhd_fun_sum fun _ _ ↦ h _)
       (fast_series_converge_uniformly_on a0 a1 hf)
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)
 

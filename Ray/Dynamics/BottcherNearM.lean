@@ -1,9 +1,9 @@
 import Mathlib.Topology.AlexandrovDiscrete
 import Ray.Dynamics.BottcherNear
-import Ray.AnalyticManifold.AnalyticManifold
-import Ray.AnalyticManifold.Inverse
-import Ray.AnalyticManifold.Nontrivial
-import Ray.AnalyticManifold.OneDimension
+import Ray.Manifold.Analytic
+import Ray.Manifold.Inverse
+import Ray.Manifold.Nontrivial
+import Ray.Manifold.OneDimension
 import Ray.Misc.Topology
 
 /-!
@@ -28,7 +28,7 @@ open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ba
 open Nat (iterate)
 open OneDimension
 open Set
-open scoped NNReal Topology
+open scoped ContDiff NNReal Topology
 noncomputable section
 
 -- All information for a monic superattracting fixed point at the origin
@@ -55,15 +55,14 @@ def fl {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] (f : ℂ → S → S
 
 /-- `f c` has a monic superattracting fixpoint at `a`, for all `c` -/
 structure Super {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S]
-    [AnalyticManifold I S]
-    (f : ℂ → S → S) (d : ℕ) (a : S) : Prop where
+    [IsManifold I ω S] (f : ℂ → S → S) (d : ℕ) (a : S) : Prop where
   d2 : 2 ≤ d
-  fa : MAnalytic ((modelWithCornersSelf ℂ ℂ).prod I) I (uncurry f)
+  fa : ContMDiff II I ω (uncurry f)
   f0 : ∀ c, f c a = a
   fd : ∀ c, orderAt (fl f a c) 0 = d
   fc : ∀ c, leadingCoeff (fl f a c) 0 = 1
 
-variable [CompactSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
+variable [CompactSpace S] [ChartedSpace ℂ S] [IsManifold I ω S]
 
 -- `d` facts
 theorem Super.dp (s : Super f d a) : 0 < d := lt_trans (by norm_num) s.d2
@@ -85,15 +84,15 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 /-- `fl` is analytic -/
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [analyticAt_iff_mAnalyticAt II I]
-  refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp ?_
-  refine (MAnalyticAt.extChartAt ?_).comp ?_
+  refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp _ ?_
+  refine (ContMDiffAt.extChartAt ?_).comp _ ?_
   · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
       ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
       PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm, ModelWithCorners.toPartialEquiv_coe_symm,
       ModelWithCorners.left_inv, PartialHomeomorph.left_inv, mem_chart_source, PartialEquiv.trans_source,
       ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
-  · refine (s.fa _).comp₂ mAnalyticAt_fst ?_
-    refine (MAnalyticAt.extChartAt_symm ?_).comp ?_
+  · refine (s.fa _).comp₂ contMDiffAt_fst ?_
+    refine (ContMDiffAt.extChartAt_symm ?_).comp _ ?_
     · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
         ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
         PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
@@ -103,9 +102,10 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
 
 /-- `(f c)^[k]` is analytic -/
 theorem Super.mAnalyticAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T]
-    [ChartedSpace ℂ T] {g : ℂ × T → ℂ} {h : ℂ × T → S} {p : ℂ × T} {n : ℕ}
-    (ga : MAnalyticAt II I g p) (ha : MAnalyticAt II I h p) :
-    MAnalyticAt II I (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
+    [ChartedSpace ℂ T] [IsManifold I ω T]
+    {g : ℂ × T → ℂ} {h : ℂ × T → S} {p : ℂ × T} {n : ℕ}
+    (ga : ContMDiffAt II I ω g p) (ha : ContMDiffAt II I ω h p) :
+    ContMDiffAt II I ω (fun p : ℂ × T ↦ (f (g p))^[n] (h p)) p := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact ha
   simp_rw [Function.iterate_succ']; exact (s.fa _).comp₂ ga h
 
@@ -114,31 +114,31 @@ theorem Super.continuous_iter (s : Super f d a) {T : Type} [TopologicalSpace T] 
     {h : T → S} {n : ℕ} (gc : Continuous g) (hc : Continuous h) :
     Continuous fun x ↦ (f (g x))^[n] (h x) := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
-  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp (gc.prod_mk h)
+  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp (gc.prodMk h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuousOn_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {t : Set T} {n : ℕ} (gc : ContinuousOn g t) (hc : ContinuousOn h t) :
     ContinuousOn (fun x ↦ (f (g x))^[n] (h x)) t := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
-  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp_continuousOn (gc.prod h)
+  simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp_continuousOn (gc.prodMk h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
 theorem Super.continuousAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {x : T} {n : ℕ} (gc : ContinuousAt g x) (hc : ContinuousAt h x) :
     ContinuousAt (fun x ↦ (f (g x))^[n] (h x)) x := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
-  simp_rw [Function.iterate_succ']; exact (s.fa _).continuousAt.comp (gc.prod h)
+  simp_rw [Function.iterate_succ']; exact (s.fa _).continuousAt.comp (gc.prodMk h)
 
 /-- `(f c)^[k]` is analytic -/
 theorem Super.mAnalytic_iter (s : Super f d a) {k : ℕ} :
-    MAnalytic II I fun p : ℂ × S ↦ (f p.1)^[k] p.2 := fun _ ↦
-  s.mAnalyticAt_iter mAnalyticAt_fst mAnalyticAt_snd
+    ContMDiff II I ω (fun p : ℂ × S ↦ (f p.1)^[k] p.2) := fun _ ↦
+  s.mAnalyticAt_iter contMDiffAt_fst contMDiffAt_snd
 
 /-- `(c,z) ↦ (c, (f c)^[k] z)` is analytic -/
 theorem Super.mAnalytic_prod_iter (s : Super f d a) (n : ℕ) :
-    MAnalytic II II fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2) := by
-  intro p; apply mAnalyticAt_fst.prod; apply s.mAnalytic_iter
+    ContMDiff II II ω (fun p : ℂ × S ↦ (p.1, (f p.1)^[n] p.2)) := by
+  intro p; apply contMDiffAt_fst.prodMk; apply s.mAnalytic_iter
 
 /-- `fl c 0 = 0` -/
 theorem Super.fl0 (s : Super f d a) {c : ℂ} : s.fl c 0 = 0 := by
@@ -153,19 +153,18 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   generalize hg : _root_.fl f a c = g; rw [hg] at p
   have g0 : g 0 = 0 := by rw [← hg]; exact s.fl0
   apply HasFDerivAt.fderiv
-  simp only [hasFDerivAt_iff_isLittleO_nhds_zero, ContinuousLinearMap.zero_apply, sub_zero,
-    zero_add, g0]
+  simp only [hasFDerivAt_iff_isLittleO_nhds_zero, sub_zero, zero_add, g0]
   have od : (fun z : ℂ ↦ z ^ d) =o[𝓝 0] (fun z ↦ z) := by
     rw [Asymptotics.isLittleO_iff]; intro e ep
     apply ((@Metric.isOpen_ball ℂ _ 0 (min 1 e)).eventually_mem (mem_ball_self (by bound))).mp
     refine .of_forall fun z b ↦ ?_
-    simp only at b; rw [mem_ball_zero_iff, Complex.norm_eq_abs, lt_min_iff] at b
-    simp only [Complex.norm_eq_abs, Complex.abs.map_pow]
+    simp only at b; rw [mem_ball_zero_iff, lt_min_iff] at b
+    simp only [norm_pow]
     rw [← Nat.sub_add_cancel s.d2, pow_add, pow_two]
-    calc abs z ^ (d - 2) * (abs z * abs z)
-      _ ≤ (1:ℝ) ^ (d - 2) * (abs z * abs z) := by bound
-      _ = abs z * abs z := by simp only [one_pow, one_mul]
-      _ ≤ e * abs z := by bound
+    calc ‖z‖ ^ (d - 2) * (‖z‖ * ‖z‖)
+      _ ≤ (1:ℝ) ^ (d - 2) * (‖z‖ * ‖z‖) := by bound
+      _ = ‖z‖ * ‖z‖ := by simp only [one_pow, one_mul]
+      _ ≤ e * ‖z‖ := by bound
   have p' := (p.trans od).add od
   simp only [sub_add_cancel] at p'
   refine p'.congr_left ?_
@@ -195,7 +194,7 @@ theorem Super.f_nontrivial (s : Super f d a) (c : ℂ) : NontrivialMAnalyticAt (
     · simp only [s.fl0, uncurry] at e; exact e
     · simp only [Super.fl, s.fd, uncurry]; exact s.d0
   contrapose n
-  simp only [Filter.not_frequently, not_not, Super.fl, fl, Function.comp_def, sub_eq_zero] at n ⊢
+  simp only [Filter.not_frequently, not_not, Super.fl, fl] at n ⊢
   have gc : ContinuousAt (fun x ↦ (extChartAt I a).symm (x + extChartAt I a a)) 0 := by
     refine (continuousAt_extChartAt_symm a).comp_of_eq ?_ (by simp only [zero_add])
     exact continuousAt_id.add continuousAt_const
@@ -208,7 +207,7 @@ theorem Super.stays_in_chart (s : Super f d a) (c : ℂ) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, a), f p.1 p.2 ∈ (extChartAt I a).source := by
   apply ContinuousAt.eventually_mem_nhd
   exact (s.fa.continuous.comp continuous_id).continuousAt
-  simp only [s.f0, Function.comp_id, Function.uncurry_apply_pair, extChartAt_source_mem_nhds a]
+  simp only [s.f0, extChartAt_source_mem_nhds a]
 
 /-- There is a open set around the attractor in `ext_chart I a` where things are nice -/
 theorem Super.fr_prop (s : Super f d a) (c : ℂ) :
@@ -295,7 +294,7 @@ theorem Super.superNearC (s : Super f d a) : SuperNearC s.fl d univ s.near' :=
 
 theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
   apply (continuousOn_extChartAt _).isOpen_inter_preimage (isOpen_extChartAt_source _)
-  exact IsOpen.preimage (continuous_fst.prod_mk (continuous_snd.sub continuous_const))
+  exact IsOpen.preimage (continuous_fst.prodMk (continuous_snd.sub continuous_const))
     s.superNearC.o
 
 /-- `(c,a)` is near -/
@@ -323,23 +322,18 @@ theorem Super.mem_near_to_near' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.ne
 theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) :
     (c, f c z) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
-    mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and,
-    Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq,
-    sub_self] at m ⊢
+    extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and, Set.mem_preimage,
+    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq] at m ⊢
   rcases mem_iUnion.mp (s.near_subset' m.2) with ⟨b, mb⟩
   simp only [mem_ball_iff_norm, Prod.norm_def, max_lt_iff, Prod.fst_sub, Prod.snd_sub,
     sub_zero] at mb
   constructor
   · apply s.fr_stays b (c, z)
-    simp only [m.1, Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod,
-      Set.mem_inter_iff, mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-      Set.mem_univ, true_and, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
-      Set.mem_setOf_eq, sub_self]
-    simp only [m.1, mb.1, mb.2, Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod,
-      Set.mem_inter_iff, mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source,
-      Set.mem_univ, true_and, Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id,
-      Set.mem_setOf_eq, sub_self, mem_ball_iff_norm, Prod.norm_def, max_lt_iff, Prod.fst_sub,
-      Prod.snd_sub, sub_zero]
+    simp only [m.1, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, extChartAt_eq_refl,
+      PartialEquiv.refl_source, Set.mem_univ, true_and]
+    simp only [mb.1, mb.2, extChartAt_prod, extChartAt_eq_refl, true_and, PartialEquiv.prod_coe,
+      PartialEquiv.refl_coe, id, mem_ball_iff_norm, Prod.norm_def, max_lt_iff, Prod.fst_sub,
+      Prod.snd_sub]
   · have h := (s.superNearC.s (Set.mem_univ c)).ft m.2
     simp only [Super.fl, _root_.fl, Function.comp_def, sub_add_cancel,
       PartialEquiv.left_inv _ m.1] at h
@@ -395,7 +389,7 @@ def Super.basin (s : Super f d a) : Set (ℂ × S) :=
 
 theorem Super.isOpen_preimage (s : Super f d a) (n : ℕ) :
     IsOpen {p : ℂ × S | (p.1, (f p.1)^[n] p.2) ∈ s.near} :=
-  IsOpen.preimage (continuous_fst.prod_mk (s.continuous_iter continuous_fst continuous_snd))
+  IsOpen.preimage (continuous_fst.prodMk (s.continuous_iter continuous_fst continuous_snd))
     s.isOpen_near
 
 /-- `s.basin` is open -/
@@ -427,8 +421,8 @@ theorem Super.basin_iff_attracts (s : Super f d a) : (c, z) ∈ s.basin ↔ Attr
 def Super.fp (_ : Super f d a) : ℂ × S → ℂ × S := fun p : ℂ × S ↦ (p.1, f p.1 p.2)
 
 /-- `s.fp` is analytic -/
-theorem Super.fpa (s : Super f d a) : MAnalytic II II s.fp := fun _ ↦
-  mAnalyticAt_fst.prod (s.fa _)
+theorem Super.fpa (s : Super f d a) : ContMDiff II II ω s.fp := fun _ ↦
+  contMDiffAt_fst.prodMk (s.fa _)
 
 theorem Super.fp1 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).1 = p.1 := by
   induction' n with n h
@@ -438,8 +432,7 @@ theorem Super.fp1 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).1 = 
 theorem Super.fp2 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).2 = (f p.1)^[n] p.2 := by
   induction' n with n h
   · simp only [Function.iterate_zero_apply]
-  · have c := s.fp1 n p; simp only [Super.fp] at c
-    simp only [Function.iterate_succ_apply', c, h, fp]
+  · simp only [Function.iterate_succ_apply', s.fp1 n p, h, fp]
 
 /-- `bottcherNear` on the manifold -/
 def Super.bottcherNear (s : Super f d a) (c : ℂ) (z : S) : ℂ :=
@@ -451,7 +444,7 @@ def Super.bottcherNearp (s : Super f d a) : ℂ × S → ℂ :=
 
 /-- `s.bottcherNear` is analytic -/
 theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
-    MAnalyticOn II I (uncurry s.bottcherNear) s.near := by
+    ContMDiffOn II I ω (uncurry s.bottcherNear) s.near := by
   intro p m
   have e : uncurry s.bottcherNear =
       (fun p : ℂ × ℂ ↦ _root_.bottcherNear (s.fl p.1) d p.2) ∘ fun p : ℂ × S ↦
@@ -459,13 +452,17 @@ theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
     rfl
   rw [e]; clear e
   have h1 := (bottcherNear_analytic s.superNearC _ (s.mem_near_to_near' m)).mAnalyticAt II I
-  have h2 : MAnalyticAt II II (fun p : ℂ × S ↦
+  have h2 : ContMDiffAt II II ω (fun p : ℂ × S ↦
       (p.1, extChartAt I a p.2 - extChartAt I a a)) p := by
-    apply mAnalyticAt_fst.prod; apply MAnalyticAt.sub
-    exact (MAnalyticAt.extChartAt (s.near_subset_chart m)).comp mAnalyticAt_snd
-    exact mAnalyticAt_const
-  refine h1.comp_of_eq h2 ?_
-  simp only [sub_self]
+    apply contMDiffAt_fst.prodMk; apply ContMDiffAt.sub
+    exact (ContMDiffAt.extChartAt (s.near_subset_chart m)).comp _ contMDiffAt_snd
+    exact contMDiffAt_const
+  exact (h1.comp_of_eq h2 rfl).contMDiffWithinAt
+
+/-- `s.bottcherNear` is analytic -/
+theorem Super.bottcherNear_mAnalytic' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :
+    ContMDiffAt II I ω (uncurry s.bottcherNear) p :=
+  s.bottcherNear_mAnalytic.contMDiffAt (s.isOpen_near.mem_nhds m)
 
 /-- `s.bottcherNear` after some iterations of `f` -/
 def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fun c z ↦
@@ -473,9 +470,12 @@ def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fu
 
 theorem Super.bottcherNearIter_mAnalytic (s : Super f d a) {n : ℕ}
     (r : (c, (f c)^[n] z) ∈ s.near) :
-    MAnalyticAt II I (uncurry (s.bottcherNearIter n)) (c, z) := by
-  refine (s.bottcherNear_mAnalytic _ ?_).comp₂ mAnalyticAt_fst (s.mAnalytic_iter _)
-  exact r
+    ContMDiffAt II I ω (uncurry (s.bottcherNearIter n)) (c, z) := by
+  -- For this reason this doesn't infer unless we give tons of type hints
+  apply ContMDiffAt.comp (g := uncurry (s.bottcherNear)) (f := fun p ↦ (p.1, (f p.1)^[n] p.2))
+    (x := (c, z)) (I := II) (I' := II) (I'' := I)
+  · exact s.bottcherNear_mAnalytic' r
+  · exact contMDiffAt_fst.prodMk (s.mAnalytic_iter _)
 
 /-- `s.bottcherNear` satisfies the defining equation -/
 theorem Super.bottcherNear_eqn (s : Super f d a) (m : (c, z) ∈ s.near) :
@@ -501,8 +501,8 @@ theorem Super.bottcherNearp_eqn (s : Super f d a) {p : ℂ × S} (m : p ∈ s.ne
 
 /-- `abs (s.bottcherNear c z) < 1` -/
 theorem Super.bottcherNear_lt_one (s : Super f d a) (m : (c, z) ∈ s.near) :
-    abs (s.bottcherNear c z) < 1 := by
-  simp only [Super.bottcherNear, mem_setOf]
+    ‖s.bottcherNear c z‖ < 1 := by
+  simp only [Super.bottcherNear]
   exact _root_.bottcherNear_lt_one (s.superNearC.s (Set.mem_univ c)) (s.mem_near_to_near' m)
 
 /-- `s.bottcherNear = 0` only at `a` -/
@@ -529,17 +529,17 @@ theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     rw [u, mfderiv_sub, mfderiv_const, sub_zero]
-    exact extChartAt_mderiv_ne_zero a
-    exact (MAnalyticAt.extChartAt (mem_extChartAt_source a)).mdifferentiableAt
-    apply mdifferentiableAt_const
+    · exact extChartAt_mderiv_ne_zero a
+    · exact (ContMDiffAt.extChartAt (mem_extChartAt_source a)).mdifferentiableAt le_top
+    · apply mdifferentiableAt_const
 
 /-- `s.bottcherNear` is invertible near any `(c,a)` -/
 theorem Super.bottcherNear_has_inv (s : Super f d a) (c : ℂ) :
     ∃ bi : ℂ → ℂ → S,
-      MAnalyticAt II I (uncurry bi) (c, 0) ∧
+      ContMDiffAt II I ω (uncurry bi) (c, 0) ∧
         (∀ᶠ p : ℂ × S in 𝓝 (c, a), bi p.1 (s.bottcherNear p.1 p.2) = p.2) ∧
           ∀ᶠ p : ℂ × ℂ in 𝓝 (c, 0), s.bottcherNear p.1 (bi p.1 p.2) = p.2 := by
-  have h := complex_inverse_fun (s.bottcherNear_mAnalytic _ (s.mem_near c))
+  have h := complex_inverse_fun (s.bottcherNear_mAnalytic' (s.mem_near c))
       (s.bottcherNear_mfderiv_ne_zero c)
   simp only [s.bottcherNear_a] at h; exact h
 
@@ -548,7 +548,7 @@ theorem Super.bottcherNear_has_inv (s : Super f d a) (c : ℂ) :
 theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, a), Critical (f p.1) p.2 ↔ p.2 = a := by
   have t : ContinuousAt (fun p : ℂ × S ↦ (p.1, extChartAt I a p.2 - extChartAt I a a)) (c, a) := by
-    refine continuousAt_fst.prod (ContinuousAt.sub ?_ continuousAt_const)
+    refine continuousAt_fst.prodMk (ContinuousAt.sub ?_ continuousAt_const)
     exact (continuousAt_extChartAt a).comp_of_eq continuousAt_snd rfl
   simp only [ContinuousAt, sub_self] at t
   apply (inChart_critical (s.fa (c, a))).mp
@@ -571,11 +571,13 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     rw [← hg]; simp only [Function.comp_def, s.f0]
   rw [_root_.fl, hg']; clear hg'; rw [Iff.comm]
   have dg : DifferentiableAt ℂ g (extChartAt I a z) := by
-    rw [← hg]; apply AnalyticAt.differentiableAt; apply MAnalyticAt.analyticAt I I
+    rw [← hg]
+    apply AnalyticAt.differentiableAt
+    apply ContMDiffAt.analyticAt I I
     simp only [s.f0]
-    apply (MAnalyticAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
-    exact MAnalyticAt.extChartAt_symm (PartialEquiv.map_source _ zm)
-    simp only [PartialEquiv.left_inv _ zm, s.f0]; exact ezm
+    apply (ContMDiffAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
+    exact ContMDiffAt.extChartAt_symm (PartialEquiv.map_source _ zm)
+    simp only [PartialEquiv.left_inv _ zm]; exact ezm
   have d0 : ∀ z, DifferentiableAt ℂ (fun z ↦ z - extChartAt I a a) z := fun z ↦
     differentiableAt_id.sub (differentiableAt_const _)
   have d1 : DifferentiableAt ℂ (g ∘ fun z : ℂ ↦ z + extChartAt I a a)
@@ -584,8 +586,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     exact differentiableAt_id.add (differentiableAt_const _)
   simp only [deriv_comp _ (d0 _) d1, deriv_sub_const, deriv_id'', one_mul]
   rw [deriv_comp _ _ _]
-  · simp only [deriv_add_const, deriv_sub_const, deriv_id'', mul_one, sub_add_cancel,
-      Function.comp_def]
+  · simp only [deriv_add_const, deriv_id'', mul_one, sub_add_cancel]
   · simp only [sub_add_cancel, dg]
   · exact differentiableAt_id.add (differentiableAt_const _)
 
@@ -604,7 +605,7 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
 theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
     ∀ᶠ n in atTop, mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0 :=
   (s.basin_attracts m).eventually
-    (mfderiv_ne_zero_eventually (s.bottcherNear_mAnalytic _ (s.mem_near c)).along_snd
+    (mfderiv_ne_zero_eventually (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c))
 
 /-- `s.bottcherNearIter` is noncritical given noncriticality of the two parts -/
@@ -627,6 +628,6 @@ theorem Super.bottcherNearIter_nontrivial_a [T2Space S] (s : Super f d a) :
   haveI b : NontrivialMAnalyticAt (s.bottcherNear c) ((f c)^[n] a) := by
     simp only [s.iter_a]
     exact nontrivialMAnalyticAt_of_mfderiv_ne_zero
-      (s.bottcherNear_mAnalytic _ (s.mem_near c)).along_snd
+      (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c)
   b.comp s.iter_nontrivial_a

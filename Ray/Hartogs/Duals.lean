@@ -17,7 +17,7 @@ such that `‖x‖ = ⨆ n, ‖duals n x‖`.
 -/
 
 open Classical
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere)
@@ -44,8 +44,7 @@ def dualVector (x : E) : E →L[ℂ] ℂ :=
 theorem dualVector_apply (x : F) : dualVector x x = ‖x‖ :=
   (choose_spec (exists_dual_vector'' ℂ x)).2
 
-theorem dualVector_le (x y : F) : abs (dualVector x y) ≤ ‖y‖ := by
-  rw [← Complex.norm_eq_abs]
+theorem dualVector_le (x y : F) : ‖dualVector x y‖ ≤ ‖y‖ := by
   calc ‖dualVector x y‖
     _ ≤ ‖dualVector x‖ * ‖y‖ := (dualVector x).le_opNorm y
     _ ≤ 1 * ‖y‖ := by bound
@@ -62,8 +61,7 @@ theorem LipschitzWith.is_const {g : ℝ → ℝ} (g0 : LipschitzWith 0 g) : ∀ 
 theorem duals_bddAbove {g : ℝ → ℝ} (gm : Monotone g) (x : E) :
     BddAbove (range fun n ↦ g ‖duals n x‖) := by
   rw [bddAbove_def]; use g ‖x‖
-  simp only [Complex.norm_eq_abs, Set.mem_range, forall_exists_index,
-    forall_apply_eq_imp_iff']
+  simp only [Set.mem_range, forall_exists_index]
   intro _ _ h; rw [←h]; apply gm; apply dualVector_le
 
 /-- One-sided Lipschitz bounds on the reals -/
@@ -88,11 +86,11 @@ theorem norm_eq_duals_supr' {g : ℝ → ℝ} {k : NNReal} (gm : Monotone g) (gk
     have hn : duals n = dualVector y := by rw [← hy, duals]
     have h := le_ciSup (duals_bddAbove gm x) n
     generalize hs : ⨆ n, g ‖duals n x‖ = s
-    simp_rw [hs, hn] at h; clear hs hn hy; simp only [Complex.norm_eq_abs] at h
-    have gk' : LipschitzWith k fun x ↦ g (abs (dualVector y x)) := by
+    simp_rw [hs, hn] at h; clear hs hn hy
+    have gk' : LipschitzWith k fun x ↦ g ‖dualVector y x‖ := by
       have k11 : (k : ℝ≥0) = k * 1 * 1 := by norm_num
       rw [k11]
-      simp_rw [←Complex.norm_eq_abs]; apply (gk.comp lipschitzWith_one_norm).comp
+      apply (gk.comp lipschitzWith_one_norm).comp
       exact (dualVector y).lipschitz.weaken (dualVector_nnnorm y)
     calc g ‖x‖
       _ ≤ g ‖y‖ + k * 1 * dist x y := (gk.comp lipschitzWith_one_norm).le x y
@@ -100,21 +98,21 @@ theorem norm_eq_duals_supr' {g : ℝ → ℝ} {k : NNReal} (gm : Monotone g) (gk
       _ = g ‖y‖ + k / k * e / 2 := by ring
       _ ≤ g ‖y‖ + 1 * e / 2 := by bound
       _ = g ‖y‖ + e / 2 := by simp only [one_mul]
-      _ = g (abs (dualVector y y)) + e / 2 := by
-        simp only [dualVector_apply, Complex.abs_ofReal, abs_norm]
-      _ ≤ g (abs (dualVector y x)) + k * dist y x + e / 2 := by bound [gk'.le]
+      _ = g ‖dualVector y y‖ + e / 2 := by
+        simp only [dualVector_apply, Complex.norm_real, norm_norm]
+      _ ≤ g ‖dualVector y x‖ + k * dist y x + e / 2 := by bound [gk'.le]
       _ ≤ s + k * dist y x + e / 2 := by linarith
       _ = s + k * dist x y + e / 2 := by rw [dist_comm]
       _ ≤ s + k * (e / 2 / k) + e / 2 := by bound
       _ = s + k / k * e / 2 + e / 2 := by ring_nf
       _ ≤ s + 1 * e / 2 + e / 2 := by bound
       _ = s + e := by ring_nf
-  · apply ciSup_le; intro n; apply gm; simp only [Complex.norm_eq_abs]; apply dualVector_le
+  · apply ciSup_le; intro n; apply gm; apply dualVector_le
 
 /-- Norms are suprs over `duals` -/
 theorem norm_eq_duals_iSup (x : E) : ‖x‖ = ⨆ n, ‖duals n x‖ := by
   have h := norm_eq_duals_supr' (@monotone_id ℝ _) LipschitzWith.id x
-  simpa only [Complex.norm_eq_abs] using h
+  simpa only using h
 
 /-- Norms are suprs over `duals` (`maxLog` version) -/
 theorem maxLog_norm_eq_duals_iSup (b : ℝ) (x : E) : maxLog b ‖x‖ = ⨆ n, maxLog b ‖duals n x‖ :=

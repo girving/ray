@@ -1,4 +1,3 @@
-import Mathlib.Analysis.SpecialFunctions.Integrals
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
@@ -19,6 +18,7 @@ open Complex (abs arg exp I)
 open LinearMap (toMatrix_apply)
 open MeasureTheory
 open Metric (ball closedBall sphere)
+open Module (Basis)
 open Real (cos sin)
 open Set
 open scoped Real
@@ -49,7 +49,7 @@ lemma realCircleMap.fderiv {c : ℂ} {x : ℝ × ℝ} :
     HasFDerivAt (fun x ↦ realCircleMap c x) (rcmDeriv x) x := by
   simp_rw [realCircleMap]
   apply_rules [hasFDerivAt_const, hasFDerivAt_fst, hasFDerivAt_snd, HasFDerivAt.cos,
-    HasFDerivAt.sin, HasFDerivAt.add, HasFDerivAt.mul, HasFDerivAt.prod]
+    HasFDerivAt.sin, HasFDerivAt.add, HasFDerivAt.mul, HasFDerivAt.prodMk]
 
 /-- The Jacobian matrix of `realCircleMap` -/
 def rcmMatrix (x : ℝ × ℝ) :=
@@ -120,8 +120,7 @@ def square (r0 r1 : ℝ) : Set (ℝ × ℝ) :=
   Ioc r0 r1 ×ˢ Ioc 0 (2 * π)
 
 theorem square.rp {r0 r1 : ℝ} {x : ℝ × ℝ} (r0p : 0 ≤ r0) : x ∈ square r0 r1 → 0 < x.1 := by
-  simp only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left,
-    mem_prod, mem_Ioc, and_imp]
+  simp only [square, mem_prod, mem_Ioc, and_imp]
   intro h _ _ _; linarith
 
 theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
@@ -150,18 +149,17 @@ theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     constructor
     · intro gp; rcases gp with ⟨⟨s, t⟩, ss, tz⟩
       simp only at tz
-      simp only [square, prod_mk_mem_set_prod_eq, mem_Ioc] at ss
+      simp only [square, prodMk_mem_set_prod_eq, mem_Ioc] at ss
       rw [← tz]
       have s0 : 0 < s := by linarith
       simp only [circleMap, add_comm c, annulus_oc, mem_diff, Metric.mem_closedBall,
-        dist_add_self_left, norm_mul, Complex.norm_eq_abs, Complex.abs_ofReal,
-        Complex.abs_exp_ofReal_mul_I, mul_one, not_le, abs_of_pos s0, ss.1, true_and]
+        dist_add_self_left, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+        Complex.norm_exp_ofReal_mul_I, mul_one, not_le, abs_of_pos s0, ss.1, true_and]
     · intro zr
-      simp only [mem_diff, Metric.mem_closedBall, mem_singleton_iff, annulus_oc,
-        not_le] at zr
+      simp only [mem_diff, Metric.mem_closedBall, annulus_oc, not_le] at zr
       rw [dist_comm] at zr
       have zz : z ∈ sphere c (dist c z) := by
-        simp only [Complex.dist_eq, mem_sphere_iff_norm, Complex.norm_eq_abs, Complex.abs.map_sub]
+        simp only [Complex.dist_eq, mem_sphere_iff_norm, norm_sub_rev]
       rcases circleMap_Ioc zz with ⟨t, ts, tz⟩
       use (dist c z, t)
       simpa only [square, gt_iff_lt, not_lt, ge_iff_le, zero_lt_two, mul_pos_iff_of_pos_left,
@@ -208,11 +206,11 @@ theorem rcm_inj {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) : InjOn (realCircleMap 
   intro x xs y ys e; simp [square] at xs ys
   simp_rw [realCircleMap_eq_circleMap, Equiv.apply_eq_iff_eq] at e
   simp_rw [circleMap] at e; simp at e
-  have re : abs (↑x.1 * exp (x.2 * I)) = abs (↑y.1 * exp (y.2 * I)) := by rw [e]
+  have re : ‖↑x.1 * exp (x.2 * I)‖ = ‖↑y.1 * exp (y.2 * I)‖ := by rw [e]
   have x0 : 0 < x.1 := by linarith
   have y0 : 0 < y.1 := by linarith
-  simp only [map_mul, Complex.abs_ofReal, abs_of_pos x0, Complex.abs_exp_ofReal_mul_I, mul_one,
-    abs_of_pos y0] at re
+  simp only [norm_mul, Complex.norm_real, abs_of_pos x0, Complex.norm_exp_ofReal_mul_I, mul_one,
+    abs_of_pos y0, Real.norm_eq_abs] at re
   have ae : arg (↑x.1 * exp (x.2 * I)) = arg (↑y.1 * exp (y.2 * I)) := by rw [e]
   simp [Complex.arg_real_mul _ x0, Complex.arg_real_mul _ y0] at ae
   rcases arg_exp_of_im x.2 with ⟨nx, hx⟩
@@ -238,19 +236,13 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
     Complex.measurableEquivRealProd.symm (Complex.equivRealProd z) = z := by
   simp only [Complex.equivRealProd_apply]
   rw [Complex.measurableEquivRealProd, Homeomorph.toMeasurableEquiv_symm_coe]
-  simp only [ContinuousLinearEquiv.symm_toHomeomorph, ContinuousLinearEquiv.coe_toHomeomorph]
+  simp only [ContinuousLinearEquiv.coe_symm_toHomeomorph]
   apply Complex.ext; · simp only [Complex.equivRealProdCLM_symm_apply_re]
   · simp only [Complex.equivRealProdCLM_symm_apply_im]
 
 /-- `circleMap` is continuous on `ℝ × ℝ` -/
 theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
   continuity
-
-/-- If `x.toReal = y` is positive, then `x = ofReal y` -/
-theorem invert_toReal {x : ENNReal} {y : ℝ} (yp : y > 0) : x.toReal = y → x = ENNReal.ofReal y := by
-  intro h; rw [← h]; refine (ENNReal.ofReal_toReal ?_).symm
-  contrapose yp; simp only [ne_eq, not_not] at yp; simp only [yp, ENNReal.top_toReal] at h
-  simp only [← h, lt_self_iff_false, not_false_eq_true]
 
 /-- Integration over a complex annulus using polar coordinates -/
 theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -286,8 +278,8 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
       simp only [Icc_prod_Icc, mem_Icc, Prod.le_def] at xs
       have x0 : 0 ≤ x.1 := by linarith
       simp only [circleMap, annulus_cc, mem_diff, Metric.mem_closedBall, dist_self_add_left,
-        norm_mul, Complex.norm_eq_abs, Complex.abs_ofReal, abs_of_nonneg x0,
-        Complex.abs_exp_ofReal_mul_I, mul_one, xs.2.1, Metric.mem_ball, not_lt, xs.1.1, and_self]
+        norm_mul, Complex.norm_real, abs_of_nonneg x0, Real.norm_eq_abs,
+        Complex.norm_exp_ofReal_mul_I, mul_one, xs.2.1, Metric.mem_ball, not_lt, xs.1.1, and_self]
   exact fi.mono_set (prod_mono Ioc_subset_Icc_self Ioc_subset_Icc_self)
 
 /-- Integration over a complex ball using polar coordinates -/
@@ -303,19 +295,19 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
   · rfl
 
 /-- The volume of the complex closed ball is `π r^2` -/
-theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : r ≥ 0) :
-    (volume (closedBall c r)).toReal = π * r ^ 2 := by
+theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
+    volume.real (closedBall c r) = π * r ^ 2 := by
   have c : ContinuousOn (fun _ : ℂ ↦ (1 : ℝ)) (closedBall c r) := continuousOn_const
   have f := fubini_ball c; clear c
-  simp only [ENNReal.toReal_ofReal Real.two_pi_pos.le, ←
-    intervalIntegral.integral_of_le rp, integral_const, Measure.restrict_apply, MeasurableSet.univ,
-    univ_inter, Algebra.id.smul_eq_mul, mul_one, Real.volume_Ioc, tsub_zero,
-    intervalIntegral.integral_mul_const, integral_id, zero_pow, Ne,
-    Nat.one_ne_zero, not_false_iff] at f
-  ring_nf at f ⊢; exact f
+  simp only [integral_const, MeasurableSet.univ, measureReal_restrict_apply, univ_inter,
+    smul_eq_mul, mul_one, Real.volume_real_Ioc, sub_zero, max_eq_left Real.two_pi_pos.le, ←
+    intervalIntegral.integral_of_le rp, intervalIntegral.integral_mul_const, integral_id, Ne,
+    OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow] at f
+  ring_nf at f ⊢
+  exact f
 
 /-- `closedBall` with positive radius has positive, nonzero volume -/
-theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (closedBall c r) :=
+theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) :=
   { measurable := measurableSet_closedBall
     finite := by
       simp only [Complex.volume_closedBall]
@@ -323,7 +315,7 @@ theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (clo
       · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
       · exact ENNReal.coe_lt_top
     pos := by
-      simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
+      simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedAdd.mul_pos,
         ENNReal.coe_pos, NNReal.pi_pos, and_true]
       apply ENNReal.pow_pos
       bound }
@@ -332,8 +324,8 @@ theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : r > 0) : NiceVolume (clo
 theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet (closedBall c r) := by
   apply LocalVolume.closure_interior
   · intro x r rp
-    simp only [Complex.volume_ball, gt_iff_lt, CanonicallyOrderedCommSemiring.mul_pos,
-      ENNReal.coe_pos, NNReal.pi_pos, and_true]
+    simp only [Complex.volume_ball, gt_iff_lt, CanonicallyOrderedAdd.mul_pos, ENNReal.coe_pos,
+      NNReal.pi_pos, and_true]
     apply ENNReal.pow_pos
     bound
   · have rz := rp.ne'

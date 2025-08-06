@@ -1,4 +1,5 @@
 import Interval.Misc.Array
+import Ray.Misc.Array
 import Ray.Render.Color
 import Ray.Render.Grid
 
@@ -70,31 +71,36 @@ def push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) : ByteArra
   let c := f o
   push_colors f (n-1) (o+1) ((((d.push c.r).push c.g).push c.b).push c.a)
 
+lemma push_colors_succ {f : ℕ → Color UInt8} {n o : ℕ} {d : ByteArray} :
+    push_colors f (n+1) o d =
+      let c := f o
+      push_colors f n (o+1) ((((d.push c.r).push c.g).push c.b).push c.a) := by
+  rw [push_colors]
+  simp only [Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right]
+
 /-- `push_colors` has the right size -/
 @[simp] lemma size_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) :
     (push_colors f n o d).size = d.size + n * 4 := by
   induction' n with n h generalizing d o
-  · simp only [Nat.zero_eq, push_colors, ↓reduceIte, zero_mul, add_zero]
+  · simp only [push_colors, ↓reduceIte, zero_mul, add_zero]
   · rw [push_colors]
-    simp only [Nat.succ_eq_add_one, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-      add_tsub_cancel_right, h, ByteArray.size_push]
+    simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right, h,
+      ByteArray.size_push]
     omega
 
+open Fin.NatCast in
 /-- `push_colors` fills in the right values, `get!` version -/
-lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k : ℕ)
+lemma getElem!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k : ℕ)
     (lt : k < d.size + n * 4) :
-    (push_colors f n o d).get! k = (if k < d.size then d.get! k else
-      (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
+    (push_colors f n o d)[k]! = (if k < d.size then d[k]! else
+      (f (o + (k - d.size) / 4))[Fin.ofNat (n := 4) (k - d.size)]) := by
   induction' n with n h generalizing d o
-  · simp only [Nat.zero_eq, zero_mul, add_zero] at lt
-    simp only [Nat.zero_eq, push_colors, ↓reduceIte, lt, ↓reduceIte]
-  · simp only [ByteArray.getElem_eq_get!, ByteArray.getElemNat_eq_get!] at h ⊢
-    rw [push_colors]
-    simp only [Nat.succ_ne_zero, ↓reduceIte, Nat.succ_sub_succ_eq_sub, tsub_zero, dite_eq_ite]
-    simp only [Nat.succ_eq_add_one, add_one_mul, ← add_assoc] at lt
+  · simp only [zero_mul, add_zero] at lt
+    simp only [push_colors, ↓reduceIte, lt, getElem!_pos]
+  · simp only [push_colors_succ] at h ⊢
     rw [h]
-    · simp only [ByteArray.size_push, dite_eq_ite, ByteArray.get!_push, add_assoc]
-      norm_num
+    · simp only [ByteArray.size_push, add_assoc, Nat.reduceAdd, ByteArray.getElem!_push,
+        Fin.ofNat_eq_cast]
       by_cases e0 : k = d.size;     · simp [e0]
       by_cases e1 : k = d.size + 1; · simp [e1]
       by_cases e2 : k = d.size + 2; · simp [e2]
@@ -109,8 +115,7 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
       · have ge : d.size + 4 ≤ k := by omega
         have e0 : o + (1 + (k - (d.size + 4)) / 4) = o + (k - d.size) / 4 := by omega
         have e1 : k - d.size = k - (d.size + 4) + 4 := by omega
-        simp only [not_lt.mpr ge, ↓reduceIte, Nat.succ_eq_add_one, e0, e1, lt0, Nat.cast_add,
-          Fin.natCast_self, add_zero]
+        simp only [not_lt.mpr ge, ↓reduceIte, e0, e1, lt0, Nat.cast_add, Fin.natCast_self, add_zero]
     · simp only [ByteArray.size_push]
       omega
 
@@ -118,9 +123,11 @@ lemma get!_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray) (k 
 lemma get_push_colors (f : ℕ → Color UInt8) (n o : ℕ) (d : ByteArray)
     (k : Fin (push_colors f n o d).size) :
     (push_colors f n o d)[k] = (if h : k < d.size then d[k]'h else
-      (f (o + (k - d.size) / 4))[((k - d.size : ℕ) : Fin 4)]) := by
-  simp only [Fin.getElem_fin, ByteArray.getElemNat_eq_get!, dite_eq_ite]
-  apply get!_push_colors; convert k.prop; simp only [size_push_colors]
+      (f (o + (k - d.size) / 4))[Fin.ofNat (n := 4) (k - d.size)]) := by
+  simp only [Fin.getElem_fin, ByteArray.getElem_eq_getElem!', dite_eq_ite]
+  apply getElem!_push_colors
+  convert k.prop
+  simp only [size_push_colors]
 
 /-!
 ### Build packed color arrays in parallel
@@ -135,7 +142,7 @@ lemma n1_lt_n {n chunk : ℕ} (h : ¬n ≤ max 1 chunk) : n - n / 2 < n := by
 /-- Build a color array out of a function, parallelizing down to chunks of size `≤ chunk` -/
 def parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) : ByteArray :=
   if n ≤ max 1 chunk then
-    push_colors f n o (.mkEmpty n)
+    push_colors f n o (.emptyWithCapacity n)
   else
     let n0 := n / 2
     let t0 := Task.spawn (fun _ ↦ parallel_colors' f n0 o chunk)
@@ -159,18 +166,20 @@ def parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) : ByteArray :=
   · simp only [h, if_false, Task.spawn, ByteArray.size_append, i _ (n0_lt_n h), i _ (n1_lt_n h)]
     omega
 
+open Fin.NatCast in
+open Fin.CommRing in
 /-- `parallel_colors'` fills in the right values, `get!` version -/
 lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ) (lt : k < n * 4) :
-    (parallel_colors' f n o chunk).get! k = (f (o + k/4))[(k : Fin 4)] := by
+    (parallel_colors' f n o chunk)[k]! = (f (o + k/4))[Fin.ofNat (n := 4) k] := by
   have four : ((4 : ℕ) : Fin 4) = 0 := by decide
   induction' n using Nat.strong_induction_on with n i generalizing o k
   rw [parallel_colors']
   by_cases h : n ≤ max 1 chunk
   · simp only [h, if_true, Task.spawn]
-    rw [get!_push_colors]
+    rw [getElem!_push_colors]
     · simp only [ByteArray.size_mkEmpty, not_lt_zero', ↓reduceIte, tsub_zero]
     · simpa only [ByteArray.size_mkEmpty, zero_add]
-  · simp only [h, if_false, Task.spawn, ByteArray.get!_append, size_parallel_colors']
+  · simp only [h, if_false, Task.spawn, ByteArray.getElem!_append, size_parallel_colors']
     simp only [le_max_iff, not_or, not_le] at h
     by_cases c : k < n/2 * 4
     · simp only [c, ↓reduceIte]
@@ -178,7 +187,9 @@ lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ
     · simp only [c, ↓reduceIte]
       rw [i]
       · have ke : o + n / 2 + (k - n / 2 * 4) / 4 = o + k / 4 := by omega
-        rw [Nat.cast_sub (by omega), Nat.cast_mul, four, mul_zero, sub_zero, ke]
+        simp only [Fin.ofNat_eq_cast, ke]
+        apply congr_arg₂ _ ?_ rfl
+        rw [Nat.cast_sub (by omega), Nat.cast_mul, four, mul_zero, sub_zero]
       · omega
       · omega
 
@@ -189,7 +200,7 @@ lemma get!_parallel_colors' (f : ℕ → Color UInt8) (n o chunk : ℕ) (k : ℕ
 
 /-- `parallel_colors` fills in the right values, `get!` version -/
 lemma get!_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) (k : ℕ) (lt : k < n * 4) :
-    (parallel_colors f n chunk).get! k = (f (k/4))[(k : Fin 4)] := by
+    (parallel_colors f n chunk)[k]! = (f (k/4))[Fin.ofNat (n := 4) k] := by
   simp only [parallel_colors, zero_add, get!_parallel_colors' f n 0 chunk k lt]
 
 /-!
@@ -199,18 +210,20 @@ lemma get!_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) (k : ℕ) (
 /-- Build an image in parallel -/
 @[irreducible] def ofFn (w h chunk : ℕ) (f : ℕ → ℕ → Color UInt8) : Image :=
   ⟨parallel_colors (fun i ↦ f (i % w) (h - 1 - i / w)) (h * w) chunk, w, h, by
-    simp only [size_parallel_colors, zero_add]⟩
+    simp only [size_parallel_colors]⟩
 
 @[simp] lemma width_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ) :
     (ofFn w h chunk f).width = w := by rw [ofFn]
 @[simp] lemma height_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ) :
     (ofFn w h chunk f).height = h := by rw [ofFn]
 
+open Fin.NatCast in
+open Fin.CommRing in
 @[simp] lemma get_ofFn (f : ℕ → ℕ → Color UInt8) (w h chunk : ℕ)
     (x : Fin (ofFn w h chunk f).width) (y : Fin (ofFn w h chunk f).height) :
     (ofFn w h chunk f).get x y = f x y := by
   rw [get]
-  simp only [ByteArray.getElemNat_eq_get!]
+  simp only [ByteArray.getElem_eq_getElem!']
   have xw := x.prop
   have yh := y.prop
   simp only [width_ofFn, height_ofFn, Color.ext_iff] at xw yh ⊢
@@ -227,8 +240,7 @@ lemma get!_parallel_colors (f : ℕ → Color UInt8) (n chunk : ℕ) (k : ℕ) (
     simp only
     rw [get!_parallel_colors]
     · simp [base, add_comm _ (x : ℕ), Nat.add_mul_div_right _ _ w0, Nat.div_eq_of_lt xw,
-        Nat.sub_sub_self yh', Nat.mod_eq_of_lt xw, m0, add_comm (_ * 4),
-        Nat.add_mul_div_right _ _ f0]
+      Nat.sub_sub_self yh', Nat.mod_eq_of_lt xw, add_comm (_ * 4), Nat.add_mul_div_right _ _ f0]
     · have le := base_le xw yh
       omega }
 

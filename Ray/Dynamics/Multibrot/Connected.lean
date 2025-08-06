@@ -37,11 +37,11 @@ theorem isPathConnected_potential_levelset (p : ℝ) (p0 : 0 ≤ p) (p1 : p < 1)
     IsPathConnected (potential d ⁻¹' {p}) := by
   have e : potential d ⁻¹' {p} = ray d '' sphere 0 p := by
     apply Set.ext; intro c
-    simp only [mem_preimage, mem_singleton_iff, ← abs_bottcher, mem_image, mem_sphere,
+    simp only [mem_preimage, mem_singleton_iff, ← norm_bottcher, mem_image, mem_sphere,
       Complex.dist_eq, sub_zero]
     constructor
     · intro h; use bottcher d c; use h; rw [ray_bottcher]
-      rw [← potential_lt_one, ← abs_bottcher, h]; exact p1
+      rw [← potential_lt_one, ← norm_bottcher, h]; exact p1
     · intro ⟨e, ep, ec⟩; rw [← ec, bottcher_ray]; exact ep
       simp only [mem_ball, Complex.dist_eq, sub_zero, ep, p1]
   rw [e]; apply (isPathConnected_sphere p0).image_of_continuousOn
@@ -55,7 +55,7 @@ theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected 
   have e : (multibrotExt d)ᶜ = ⋂ p : Ico 0 (1 : ℝ), potential d ⁻¹' Ici p := by
     apply Set.ext; intro z
     simp only [mem_compl_iff, ← potential_lt_one, mem_iInter, mem_preimage, not_lt, mem_Ici]
-    constructor; intro p1 ⟨q, m⟩; simp only [Subtype.coe_mk, mem_Ico] at m ⊢; linarith
+    constructor; intro p1 ⟨q, m⟩; simp only [mem_Ico] at m ⊢; linarith
     intro h; contrapose h; simp only [not_le, not_forall] at h ⊢
     rcases exists_between h with ⟨y, py, y1⟩
     exact ⟨⟨y, ⟨le_trans potential_nonneg py.le, y1⟩⟩, py⟩
@@ -63,9 +63,9 @@ theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected 
   · exact Zero.instNonempty
   · intro ⟨a, a0, a1⟩ ⟨b, b0, b1⟩
     refine ⟨⟨max a b, mem_Ico.mpr ⟨le_max_of_le_left a0, max_lt a1 b1⟩⟩, ?_, ?_⟩
-    · intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.1
-    · intro z h; simp only [mem_preimage, mem_Ici, Subtype.coe_mk, max_le_iff] at h ⊢; exact h.2
-  · intro ⟨p, m⟩; simp only [Subtype.coe_mk]
+    · intro z h; simp only [mem_preimage, mem_Ici, max_le_iff] at h ⊢; exact h.1
+    · intro z h; simp only [mem_preimage, mem_Ici, max_le_iff] at h ⊢; exact h.2
+  · intro ⟨p, m⟩; simp only
     refine IsConnected.isPreconnected (IsPathConnected.isConnected ?_)
     apply IsPathConnected.of_frontier
     · rw [frontier_Ici]; exact isPathConnected_potential_levelset _ m.1 m.2
@@ -78,34 +78,33 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
   have e : _root_.multibrot d = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d)ᶜ := by
     apply Set.ext; intro z; simp only [mem_image, mem_compl_iff]; constructor
     intro m; use z
-    simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and,
-      eq_self_iff_true]
+    simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and]
     intro ⟨w, m, wz⟩; induction w using OnePoint.rec
     · contrapose m; clear m; simp only [not_not, multibrotExt_inf]
     · simp only [multibrotExt_coe, not_not, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply (isConnected_compl_multibrotExt d).image
   refine continuousOn_toComplex.mono ?_; intro z m
   contrapose m; simp only [mem_compl_iff, mem_singleton_iff, not_not] at m
-  simp only [m, not_mem_compl_iff, multibrotExt_inf]
+  simp only [m, notMem_compl_iff, multibrotExt_inf]
 
 /-- `multibrot d)ᶜ` is connected -/
 theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_root_.multibrot d)ᶜ := by
   have dc : IsConnected (multibrotExt d \ {∞}) := by
     refine ⟨⟨(((3 : ℝ) : ℂ) : 𝕊),?_⟩,?_⟩
     constructor
-    · simp only [multibrotExt_coe, mem_compl_iff]; apply multibrot_two_lt
-      rw [Complex.abs_ofReal, abs_of_pos]; norm_num; norm_num
+    · simp only [multibrotExt_coe]; apply multibrot_two_lt
+      rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos]; norm_num; norm_num
     · simp only [mem_singleton_iff, coe_ne_inf, not_false_iff]
     · exact (isPathConnected_multibrotExt d).isConnected.isPreconnected.open_diff_singleton
         isOpen_multibrotExt _
   have e : (_root_.multibrot d)ᶜ = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d \ {∞}) := by
     apply Set.ext; intro z; simp only [mem_compl_iff, mem_image]; constructor
     · intro m; use z
-      simp only [multibrotExt_coe, m, true_and, toComplex_coe, not_false_iff, true_and,
-        mem_diff, eq_self_iff_true, and_true, mem_singleton_iff, coe_ne_inf]
+      simp only [multibrotExt_coe, m, toComplex_coe, not_false_iff, mem_diff, and_true,
+        mem_singleton_iff, coe_ne_inf]
     · intro ⟨w, ⟨m, wi⟩, wz⟩; induction w using OnePoint.rec
       · contrapose wi; clear wi; simp only [mem_singleton_iff, not_not]
-      · simp only [multibrotExt_coe, toComplex_coe, mem_diff] at m wz; rwa [← wz]
+      · simp only [multibrotExt_coe, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply dc.image
   refine continuousOn_toComplex.mono ?_; intro z ⟨_, i⟩
   simp only [mem_singleton_iff, mem_compl_iff] at i ⊢; exact i

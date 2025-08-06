@@ -13,7 +13,7 @@ def slow_prime (n : ℕ) : Bool :=
   1 < n && slow_prime_loop n n.sqrt
 
 def count_range (lo hi : ℕ) : ℕ :=
-  (hi - lo).fold (fun n t ↦ t + if slow_prime (lo + n) then 1 else 0) 0
+  (hi - lo).fold (fun n _ t ↦ t + if slow_prime (lo + n) then 1 else 0) 0
 
 -- set_option trace.compiler.ir.result true in
 def count (n : ℕ) (chunk : ℕ) : ℕ :=
@@ -36,4 +36,3 @@ def main : IO Unit := do
   let t ← countIO n 1000000
   IO.println ("π(n) = " ++ repr t)
   --IO.println ("π(n) = " ++ repr (count n 1000))
-

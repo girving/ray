@@ -64,14 +64,14 @@ lemma log_ratio_mono : MonotoneOn (fun x ↦ log (x-1) / log x) (Ici 2) := by
     · exact inv_nonneg.mpr (by linarith)
 
 /-- One iterate increases `log (log (abs z))` by `Ω(1)` for large `z` -/
-lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
-    log (log (abs z)) + 0.548 ≤ log (log (abs (f' d c z))) := by
-  have zw : (abs z - 1)^1 * abs z ≤ abs (f' d c z) := by
+lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    log (log ‖z‖) + 0.548 ≤ log (log ‖f' d c z‖) := by
+  have zw : (‖z‖ - 1)^1 * ‖z‖ ≤ ‖f' d c z‖ := by
     refine iter_large (d := d) (n := 1) ?_ ?_ ?_ cz
     · linarith
     · exact le_refl _
-  generalize abs (f' d c z) = w at zw
-  generalize abs z = x at zw cz z4
+  generalize ‖f' d c z‖ = w at zw
+  generalize ‖z‖ = x at zw cz z4
   clear z c cz
   simp only [pow_one] at zw
   have lx1 : 1 < log (x-1) :=
@@ -84,7 +84,7 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
           · simp only [mem_Ici]; norm_num
           · simp only [mem_Ici]; linarith
       _ = log 3 / log 4 := by norm_num
-      _ ≥ 1.098 / 1.387 := div_le_div (by positivity) lt_log_3.le (by positivity) log_4_lt.le
+      _ ≥ 1.098 / 1.387 := div_le_div₀ (by positivity) lt_log_3.le (by positivity) log_4_lt.le
       _ ≥ 0.791 := by norm_num
   have ll0 : 0 ≤ log (x-1) / log x := by positivity
   have ll1 : log (x-1) / log x ≤ 1 :=
@@ -98,11 +98,11 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ abs z) (cz : abs c ≤ abs z) :
     _ ≥ log (log x) + 0.548 := by bound
 
 /-- For large `c`, large `z`'s are postcritical -/
-theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ abs c) (cz : abs c ≤ abs z) :
+theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     Postcritical (superF d) c z := by
   -- Record a variety of inequalities
   have d0 : 0 < d := d_pos d
-  have lcz : log (log (abs c)) ≤ log (log (abs z)) := log_log_mono (by linarith) cz
+  have lcz : log (log ‖c‖) ≤ log (log ‖z‖) := log_log_mono (by linarith) cz
   -- Reduce to s.potential c (f' d c z) < s.potential c ↑c
   simp only [Postcritical, multibrot_p]
   set s := superF d
@@ -113,8 +113,8 @@ theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ abs c) (cz : abs c ≤ abs z)
   generalize hw : f' d c z = w
   have e : f d c z = w := by rw [f, lift_coe', hw]
   simp only [f_0, e]; clear e
-  have zw : abs z ≤ abs w := by rw [←hw]; exact le_self_iter d (by linarith) cz 1
-  have cw : abs c ≤ abs w := le_trans cz zw
+  have zw : ‖z‖ ≤ ‖w‖ := by rw [←hw]; exact le_self_iter d (by linarith) cz 1
+  have cw : ‖c‖ ≤ ‖w‖ := le_trans cz zw
   -- Move to log (-log _) space
   have pc1 : s.potential c c < 1 := potential_lt_one_of_two_lt (by linarith) (le_refl _)
   have pw1 : s.potential c w < 1 := potential_lt_one_of_two_lt (by linarith) (by linarith)
@@ -125,12 +125,12 @@ theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ abs c) (cz : abs c ≤ abs z)
   refine lt_of_le_of_lt (sub_le_iff_le_add.mp (abs_le.mp
     (log_neg_log_potential_approx d (by linarith) (le_refl _))).2) ?_
   -- Settle our inequality
-  have lzw : log (log (abs z)) + 0.548 ≤ log (log (abs w)) := by
+  have lzw : log (log ‖z‖) + 0.548 ≤ log (log ‖w‖) := by
     rw [←hw]; exact log_log_iter (by linarith) cz
-  have ie : ∀ z : ℂ, 4 ≤ abs z → abs c ≤ abs z → iter_error d c z ≤ 0.15 := by
+  have ie : ∀ z : ℂ, 4 ≤ ‖z‖ → ‖c‖ ≤ ‖z‖ → iter_error d c z ≤ 0.15 := by
     intro z z4 cz
     refine le_trans (iter_error_le_of_z4 d z4 cz) ?_
-    calc 0.8095 / (abs z * log (abs z))
+    calc 0.8095 / (‖z‖ * log ‖z‖)
       _ ≤ 0.8095 / (4 * log 4) := by bound
       _ ≤ 0.8095 / (4 * 1.386) := by bound [lt_log_4]
       _ ≤ 0.15 := by norm_num

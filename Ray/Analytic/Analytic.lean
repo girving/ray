@@ -51,8 +51,7 @@ theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f
   · rcases fp with ⟨p, fp⟩; rw [fp.orderAt_unique]; rw [← fp.coeff_zero 1] at f0
     rw [FormalMultilinearSeries.order_eq_zero_iff']; right
     contrapose f0; simp only [not_not] at f0
-    simp only [f0, ContinuousMultilinearMap.zero_apply, Ne, eq_self_iff_true, not_true,
-      not_false_iff]
+    simp only [f0, ContinuousMultilinearMap.zero_apply, Ne, not_true, not_false_iff]
   · simp [orderAt, fp]
 
 /-- `orderAt = 0` means either `f = 0` or `f c ≠ 0` -/
@@ -135,8 +134,7 @@ lemma FormalMultilinearSeries.unshift_coeff_zero (p : FormalMultilinearSeries �
 lemma FormalMultilinearSeries.unshift_coeff_succ (p : FormalMultilinearSeries 𝕜 𝕜 E) (c : E)
     (n : ℕ) : (p.unshift' c).coeff (n + 1) = p.coeff n := by
   simp only [FormalMultilinearSeries.coeff, FormalMultilinearSeries.unshift',
-    FormalMultilinearSeries.unshift, ContinuousLinearMap.compFormalMultilinearSeries_apply,
-    LinearIsometryEquiv.norm_map]
+    FormalMultilinearSeries.unshift, ContinuousLinearMap.compFormalMultilinearSeries_apply]
   simp [ContinuousLinearMap.smulRightL, Finset.univ, Fintype.elems, Fin.init]
 
 /-- The power series of `(z - c)^n • f z` -/
@@ -147,7 +145,7 @@ lemma FormalMultilinearSeries.unshiftIter_coeff (p : FormalMultilinearSeries �
     (i : ℕ) : (p.unshiftIter n).coeff i = if i < n then 0 else p.coeff (i - n) := by
   revert i; induction' n with n h
   · simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_zero, id_eq, not_lt_zero',
-      tsub_zero, if_false, eq_self_iff_true, forall_const, Nat.zero_eq]
+    tsub_zero, if_false, forall_const]
   · simp_rw [FormalMultilinearSeries.unshiftIter] at h
     simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_succ', Function.comp]
     generalize hq : (fun p : FormalMultilinearSeries 𝕜 𝕜 E ↦ p.unshift' 0)^[n] p = q
@@ -190,7 +188,7 @@ lemma FormalMultilinearSeries.unshift_radius' (p : FormalMultilinearSeries 𝕜 
     convert le_iSup _ h'; rfl
 
 /-- The power series of `(z - c) • f z` is the unshifted power series -/
-theorem HasFPowerSeriesOnBall.unshift {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E} {c : 𝕜}
+theorem HasFPowerSeriesOnBall.unshift' {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E} {c : 𝕜}
     {r : ENNReal} (fp : HasFPowerSeriesOnBall f p c r) :
     HasFPowerSeriesOnBall (fun z ↦ (z - c) • f z) (p.unshift' 0) c r :=
   { r_le := le_trans fp.r_le (ge_of_eq p.unshift_radius')
@@ -209,12 +207,12 @@ theorem HasFPowerSeriesOnBall.unshift {f : 𝕜 → E} {p : FormalMultilinearSer
 theorem HasFPowerSeriesAt.unshift {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E} {c : 𝕜}
     (fp : HasFPowerSeriesAt f p c) :
     HasFPowerSeriesAt (fun z ↦ (z - c) • f z) (p.unshift' 0) c := by
-  rcases fp with ⟨r, fa⟩; use r; exact fa.unshift
+  rcases fp with ⟨r, fa⟩; use r; exact fa.unshift'
 
 theorem HasFPowerSeriesAt.unshiftIter {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E} {c : 𝕜}
     {n : ℕ} (fp : HasFPowerSeriesAt f p c) :
     HasFPowerSeriesAt (fun z ↦ (z - c) ^ n • f z) (p.unshiftIter n) c := by
-  induction' n with n h; · simp only [Nat.zero_eq, pow_zero, one_smul]; exact fp
+  induction' n with n h; · simp only [pow_zero, one_smul]; exact fp
   · simp only [pow_succ', ← smul_smul, FormalMultilinearSeries.unshiftIter, Function.iterate_succ',
       Function.comp]
     exact h.unshift
@@ -245,9 +243,8 @@ theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : Analyt
   rw [Nat.find_eq_iff]; constructor
   · have s := Nat.find_spec pe
     simp only [← p.coeff_eq_zero, Ne] at s
-    simp only [p.unshiftIter_coeff, ←FormalMultilinearSeries.coeff_eq_zero, s, Ne,
-      add_lt_iff_neg_left, not_lt_zero', add_tsub_cancel_left, if_false, not_false_iff, true_and,
-      not_not]
+    simp only [p.unshiftIter_coeff, ← FormalMultilinearSeries.coeff_eq_zero, s, Ne,
+      add_lt_iff_neg_left, not_lt_zero', add_tsub_cancel_left, if_false, not_false_iff]
   · intro m mp; simp [← FormalMultilinearSeries.coeff_eq_zero, p.unshiftIter_coeff]; intro mn
     generalize ha : m - n = a; have hm : m = n + a := by rw [← ha, add_comm, Nat.sub_add_cancel mn]
     simp only [hm, add_lt_add_iff_left, Nat.lt_find_iff, not_not] at mp
@@ -259,29 +256,21 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
     leadingCoeff (fun z ↦ (z - c) ^ n • f z) c = leadingCoeff f c := by
   simp [leadingCoeff, fa.monomial_mul_orderAt fnz n]; generalize orderAt f c = a
   induction' n with n h
-  · simp only [zero_add, pow_zero, one_smul, Nat.zero_eq]
+  · simp only [zero_add, pow_zero, one_smul]
   · simp [pow_succ', ← smul_smul, Nat.succ_add]
     generalize hg : (fun z ↦ (z - c) ^ n • f z) = g
     have hg' : ∀ z, (z - c) ^ n • f z = g z := by
-      rw [←hg]; simp only [eq_self_iff_true, forall_const]
+      rw [←hg]; simp only [forall_const]
     simp_rw [hg'] at h ⊢
     have e : (Function.swap dslope c fun z ↦ (z - c) • g z) = g := by
-      simp only [Function.swap, dslope_sub_smul, Function.update_eq_self_iff, sub_self]
-      rw [deriv_smul]
-      simp only [sub_self, zero_smul, deriv_sub, differentiableAt_id', differentiableAt_const,
-        deriv_id'', deriv_const', sub_zero, one_smul, zero_add]
+      simp only [Function.swap, dslope_sub_smul, Function.update_eq_self_iff]
+      rw [deriv_fun_smul]
+      simp only [sub_self, zero_smul, deriv_fun_sub, differentiableAt_fun_id,
+        differentiableAt_const, deriv_id'', deriv_const', sub_zero, one_smul, zero_add]
       exact differentiableAt_id.sub (differentiableAt_const _)
       rw [←hg]
       exact ((differentiableAt_id.sub (differentiableAt_const _)).pow _).smul fa.differentiableAt
     rw [e, h]
-
-/-- `deriv` is analytic -/
-theorem AnalyticAt.deriv {f : 𝕜 → 𝕜} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) [CompleteSpace 𝕜] :
-    AnalyticAt 𝕜 (fun x ↦ deriv f x) c := by
-  simp only [← fderiv_deriv]
-  have a1 : ∀ g, AnalyticAt 𝕜 (fun g : 𝕜 →L[𝕜] 𝕜 ↦ ContinuousLinearMap.apply 𝕜 𝕜 1 g) g := fun g ↦
-    ContinuousLinearMap.analyticAt _ _
-  refine (a1 _).comp fa.fderiv
 
 /-- `deriv` in the second variable is analytic -/
 theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E × 𝕜}
@@ -294,16 +283,16 @@ theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E 
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
     rw [e]; rw [fderiv_comp]
     have pd : _root_.fderiv 𝕜 (fun y : 𝕜 ↦ (x, y)) y = ContinuousLinearMap.inr 𝕜 E 𝕜 := by
-      apply HasFDerivAt.fderiv; apply hasFDerivAt_prod_mk_right
+      apply HasFDerivAt.fderiv; apply hasFDerivAt_prodMk_right
     rw [pd, ContinuousLinearMap.comp_apply, ContinuousLinearMap.inr_apply,
       ContinuousLinearMap.apply_apply]
     · exact fa.differentiableAt
-    · exact (differentiableAt_const _).prod differentiableAt_id
+    · exact (differentiableAt_const _).prodMk differentiableAt_id
   rw [analyticAt_congr e]
   exact (p.analyticAt _).comp fa.fderiv
 
 /-- Scaling commutes with power series -/
-theorem HasFPowerSeriesAt.const_smul {f : 𝕜 → E} {c a : 𝕜} {p : FormalMultilinearSeries 𝕜 𝕜 E}
+theorem HasFPowerSeriesAt.const_fun_smul {f : 𝕜 → E} {c a : 𝕜} {p : FormalMultilinearSeries 𝕜 𝕜 E}
     (fp : HasFPowerSeriesAt f p c) : HasFPowerSeriesAt (fun z ↦ a • f z) (fun n ↦ a • p n) c := by
   rw [hasFPowerSeriesAt_iff] at fp ⊢; refine fp.mp (.of_forall fun z h ↦ ?_)
   simp only [FormalMultilinearSeries.coeff, ContinuousMultilinearMap.smul_apply, smul_comm _ a]
@@ -326,7 +315,8 @@ theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
   · rcases fa with ⟨p, fp⟩
     have e : ∀ n, a • p n ≠ 0 ↔ p n ≠ 0 := fun n ↦ by
       simp only [a0, Ne, smul_eq_zero, false_or]
-    simp only [fp.orderAt_unique, fp.const_smul.orderAt_unique, FormalMultilinearSeries.order, e]
+    simp only [fp.orderAt_unique, fp.const_fun_smul.orderAt_unique,
+      FormalMultilinearSeries.order, e]
   · have ga := fa; rw [← analyticAt_iff_const_smul a0] at ga
     simp only [orderAt, fa, ga]; rw [dif_neg, dif_neg]
     exact not_false; exact not_false
@@ -354,8 +344,8 @@ theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :
     simp only [Function.iterate_succ_apply', h, hg]
     funext x; simp only [Function.swap]
     by_cases cx : x = c
-    simp only [cx, dslope_same, Pi.smul_apply, Pi.smul_def, deriv_const_smul']
-    simp only [dslope_of_ne _ cx, Pi.smul_apply, slope, vsub_eq_sub, ← smul_sub, smul_comm _ a]
+    · simp only [cx, dslope_same, Pi.smul_apply, Pi.smul_def, deriv_fun_const_smul']
+    · simp only [dslope_of_ne _ cx, Pi.smul_apply, slope, vsub_eq_sub, ← smul_sub, smul_comm _ a]
   simp only [e, Pi.smul_apply]
 
 /-- `leadingCoeff` is nonzero for nonzero order -/

@@ -40,4 +40,4 @@ target png.o pkg : System.FilePath := do
 extern_lib libray pkg := do
   let name := nameToStaticLib "ray"
   let png ← fetch <| pkg.target ``png.o
-  buildStaticLib (pkg.nativeLibDir / name) #[png]
+  buildStaticLib (pkg.staticLibDir / name) #[png]

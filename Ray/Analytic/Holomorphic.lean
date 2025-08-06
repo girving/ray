@@ -41,27 +41,28 @@ theorem differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : Set 
       rcases Metric.isOpen_iff.mp o (z0, z1) zs with ⟨r, rp, rs⟩
       have d0 : DifferentiableOn ℂ (fun z0 ↦ f (z0, z1)) (ball z0 r) := by
         apply DifferentiableOn.comp d
-        exact DifferentiableOn.prod differentiableOn_id (differentiableOn_const _)
+        exact DifferentiableOn.prodMk differentiableOn_id (differentiableOn_const _)
         intro z0 z0s; apply rs; simp at z0s ⊢; assumption
       exact (analyticOn_iff_differentiableOn isOpen_ball).mpr d0 z0 (Metric.mem_ball_self rp)
     · intro z0 z1 zs
       rcases Metric.isOpen_iff.mp o (z0, z1) zs with ⟨r, rp, rs⟩
       have d1 : DifferentiableOn ℂ (fun z1 ↦ f (z0, z1)) (ball z1 r) := by
         apply DifferentiableOn.comp d
-        exact DifferentiableOn.prod (differentiableOn_const _) differentiableOn_id
+        exact DifferentiableOn.prodMk (differentiableOn_const _) differentiableOn_id
         intro z1 z1s; apply rs; simp at z1s ⊢; assumption
       exact (analyticOn_iff_differentiableOn isOpen_ball).mpr d1 z1 (Metric.mem_ball_self rp)
   · exact fun a ↦ a.differentiableOn
 
 /-- `f : ℂ × ℂ → E` is `ContDiffAt` iff it is analytic -/
 theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ × ℂ} [NormedAddCommGroup E]
-    [NormedSpace ℂ E] [CompleteSpace E] {n : ℕ∞} (n1 : 1 ≤ n) :
+    [NormedSpace ℂ E] [CompleteSpace E] {n : WithTop ℕ∞} (n1 : 1 ≤ n) :
     ContDiffAt ℂ n f x ↔ AnalyticAt ℂ f x := by
   constructor
-  · intro d; rcases d.contDiffOn n1 with ⟨u, un, d⟩
+  · intro d
+    rcases d.contDiffOn (m := 1) (by simpa) (by simp) with ⟨u, un, d⟩
     rcases mem_nhds_iff.mp un with ⟨v, uv, vo, vx⟩
     refine (differentiable_iff_analytic2 vo).mp ?_ _ vx
-    exact (d.mono uv).differentiableOn (by norm_num)
+    exact (d.mono uv).differentiableOn (le_refl _)
   · intro a; exact a.contDiffAt.of_le le_top
 
 /-- The principle branch of sqrt -/

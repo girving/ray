@@ -1,6 +1,7 @@
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Cardinality
 import Mathlib.SetTheory.Cardinal.Basic
+import Mathlib.Topology.Connected.TotallyDisconnected
 import Mathlib.Topology.MetricSpace.Basic
 
 /-!
@@ -9,7 +10,7 @@ import Mathlib.Topology.MetricSpace.Basic
 
 open Classical
 open Function (uncurry)
-open Metric (ball closedBall mem_ball mem_closedBall isOpen_ball isClosed_ball mem_ball_self)
+open Metric (ball closedBall mem_ball mem_closedBall isOpen_ball isClosed_closedBall mem_ball_self)
 open Set
 open scoped Topology
 noncomputable section
@@ -20,7 +21,7 @@ def Set.Nonempty.invCoe {X : Type} {s : Set X} (ne : s.Nonempty) : X → s := fu
 
 theorem Set.Nonempty.left_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
     ∀ x : s, ne.invCoe x = x := by
-  intro ⟨x, m⟩; simp only [Set.Nonempty.invCoe, Subtype.coe_mk, m, dif_pos]
+  intro ⟨x, m⟩; simp only [Set.Nonempty.invCoe, m, dif_pos]
 
 theorem Set.Nonempty.right_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
     ∀ x, x ∈ s → ↑(ne.invCoe x) = x := by
@@ -28,7 +29,9 @@ theorem Set.Nonempty.right_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
 
 theorem Set.Nonempty.continuousOn_invCoe {X : Type} {s : Set X} (ne : s.Nonempty)
     [TopologicalSpace X] : ContinuousOn ne.invCoe s := by
-  rw [IsEmbedding.subtypeVal.continuousOn_iff]; apply continuousOn_id.congr; intro x m
+  rw [Topology.IsEmbedding.subtypeVal.continuousOn_iff]
+  apply continuousOn_id.congr
+  intro x m
   simp only [Function.comp, ne.right_invCoe _ m, id]
 
 /-- `IsTotallyDisconnected` is the same as `TotallyDisconnectedSpace` on the subtype -/
@@ -44,14 +47,16 @@ theorem isTotallyDisconnected_iff_totally_disconnected_subtype {X : Type} [Topol
       have e : t = (fun x : s ↦ x.val) '' t' := by
         apply Set.ext; intro x; simp only [mem_image]; constructor
         · intro xt; use ⟨x, ts xt⟩; refine ⟨⟨x,xt,?_⟩,?_⟩
-          simp only [Subtype.ext_iff, Subtype.coe_mk, ne.right_invCoe _ (ts xt)]
+          simp only [Subtype.ext_iff, ne.right_invCoe _ (ts xt)]
           rw [Subtype.coe_mk]
         · intro ⟨⟨y, ys⟩, ⟨z, zt, zy⟩, yx⟩
-          simp only [Subtype.coe_mk, Subtype.ext_iff, ne.right_invCoe _ (ts zt)] at yx zy
+          simp only [Subtype.ext_iff, ne.right_invCoe _ (ts zt)] at yx zy
           rw [← yx, ← zy]; exact zt
       rw [e]; exact q.image _
     · simp only [not_nonempty_iff_eq_empty] at ne; rw [ne]; exact isTotallyDisconnected_empty
-  · intro h; refine ⟨?_⟩; apply IsEmbedding.subtypeVal.isTotallyDisconnected
+  · intro h
+    refine ⟨?_⟩
+    apply Topology.IsEmbedding.subtypeVal.isTotallyDisconnected
     rw [Subtype.coe_image_univ]; exact h
 
 /-- `Ioo` on the reals is not countable if it is nonempty -/
@@ -66,7 +71,9 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
     have e : R = range (uncurry (dist (α := X))) := by
       apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry, ← hR]
     rw [e]; exact countable_range _
-  refine ⟨?_⟩; apply isTotallyDisconnected_of_isClopen_set; intro x y xy
+  refine @TotallySeparatedSpace.totallyDisconnectedSpace _ _ ?_
+  rw [totallySeparatedSpace_iff_exists_isClopen]
+  intro x y xy
   rw [← dist_pos] at xy
   have h : ¬Ioo 0 (dist x y) ⊆ R := by by_contra h; exact not_countable_Ioo xy (rc.mono h)
   simp only [not_subset, mem_Ioo] at h; rcases h with ⟨r, ⟨rp, rxy⟩, rr⟩
@@ -74,8 +81,9 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
     apply Set.ext; intro z; simp only [mem_ball, mem_closedBall]
     simp only [mem_setOf, not_exists, ← hR] at rr; simp only [Ne.le_iff_lt (rr z x)]
   refine ⟨ball x r, ⟨?_, isOpen_ball⟩, ?_⟩
-  rw [e]; exact isClosed_ball; use mem_ball_self rp
-  simp only [mem_ball, not_lt]; rw [dist_comm]; exact rxy.le
+  rw [e]; exact isClosed_closedBall; use mem_ball_self rp
+  simp only [mem_compl_iff, mem_ball, dist_comm, not_lt]
+  exact rxy.le
 
 /-- Countable sets are totally disconnected -/
 theorem IsCountable.isTotallyDisconnected {X : Type} [MetricSpace X] {s : Set X} (h : s.Countable) :

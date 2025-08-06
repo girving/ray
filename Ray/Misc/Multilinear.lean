@@ -59,9 +59,9 @@ theorem fstCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [No
     have e : z = (fun _ ↦ ((z 0).1, (z 0).2)) := by apply funext; intro i; rw [Fin.eq_zero i]
     rw [e]
     rw [fstCmmap_apply]; simp; exact norm_fst_le (z 0)
-  · have lo := (fstCmmap 𝕜 A B).unit_le_opNorm (fun _ ↦ (1, 1)) ?_
+  · have lo := (fstCmmap 𝕜 A B).unit_le_opNorm (m := fun _ ↦ (1, 1)) ?_
     rw [fstCmmap_apply, norm_one] at lo; assumption
-    rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one, max_eq_right]
+    rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one]
     repeat norm_num
 
 theorem sndCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [NormedRing B]
@@ -72,9 +72,9 @@ theorem sndCmmap_norm [NormedRing A] [NormedAlgebra 𝕜 A] [NormOneClass A] [No
     have e : z = (fun _ ↦ ((z 0).1, (z 0).2)) := by apply funext; intro i; rw [Fin.eq_zero i]
     rw [e]
     rw [sndCmmap_apply]; simp; exact norm_snd_le (z 0)
-  · have lo := (sndCmmap 𝕜 A B).unit_le_opNorm (fun _ ↦ (1, 1)) ?_
+  · have lo := (sndCmmap 𝕜 A B).unit_le_opNorm (m := fun _ ↦ (1, 1)) ?_
     rw [sndCmmap_apply, norm_one] at lo; assumption
-    rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one, max_eq_right]
+    rw [pi_norm_le_iff_of_nonneg]; intro i; simp only [Prod.norm_def, norm_one]
     repeat norm_num
 
 -- Lemmas for `smulCmmap`
@@ -82,7 +82,7 @@ theorem update_0_0 (z : Fin (n + 1) → A) (x : A) :
     Function.update (fun _ : Fin 1 ↦ z 0) 0 x = (fun _ : Fin 1 ↦ x) := by
   apply funext; intro i
   have i0 : i = 0 := by simp only [eq_iff_true_of_subsingleton]
-  rw [i0]; simp only [Function.update_same]
+  rw [i0]; simp only [Function.update_self]
 
 theorem update_0_succ (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) (x : A) (i : Fin n) :
     @Function.update _ _ d f 0 x i.succ = f i.succ := by
@@ -91,7 +91,7 @@ theorem update_0_succ (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) (x
   intro h; exfalso; exact i0 h
 
 theorem update_nz_0 (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) {x : A} {i : Fin (n + 1)}
-    (i0 : i ≠ 0) : @Function.update _ _ d f i x 0 = f 0 := by rw [Function.update_noteq i0.symm]
+    (i0 : i ≠ 0) : @Function.update _ _ d f i x 0 = f 0 := by rw [Function.update_of_ne i0.symm]
 
 theorem update_nz_succ (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) (x : A)
     {i : Fin (n + 1)} (i0 : i ≠ 0) :
@@ -100,9 +100,9 @@ theorem update_nz_succ (d : DecidableEq (Fin (n + 1))) (f : Fin (n + 1) → A) (
   apply funext; intro k
   by_cases ki : k.succ = i
   · have ki' : k = i.pred i0 := by simp_rw [← ki, Fin.pred_succ]
-    rw [ki, ki']; rw [Function.update_same]; rw [Function.update_same]
-  · rw [Function.update_noteq ki]
-    rw [Function.update_noteq _]
+    rw [ki, ki']; rw [Function.update_self]; rw [Function.update_self]
+  · rw [Function.update_of_ne ki]
+    rw [Function.update_of_ne _]
     by_contra h
     simp only [h, Fin.succ_pred, not_true_eq_false] at ki
 
@@ -125,11 +125,11 @@ theorem smul_cmmap_add [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [N
   · rw [i0]
     have uv := x.map_update_add (fun _ ↦ z 0) 0 u v
     simp only [update_0_0 z _] at uv
-    simp only [Function.update_same, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
-      ne_eq, uv, add_smul, smulCmmapFn, update_0_succ]
-  · simp only [smul_add, ne_eq, update_nz_0 d z i0, MultilinearMap.toFun_eq_coe,
-      ContinuousMultilinearMap.coe_coe, update_nz_succ d z _ i0, MultilinearMap.map_update_add,
-      smul_add, smulCmmapFn]
+    simp only [Function.update_self, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
+      uv, add_smul, smulCmmapFn, update_0_succ]
+  · simp only [smul_add, update_nz_0 d z i0, MultilinearMap.toFun_eq_coe,
+    ContinuousMultilinearMap.coe_coe, update_nz_succ d z _ i0, MultilinearMap.map_update_add,
+    smul_add, smulCmmapFn]
 
 /-- `smulCmmapFn` commutes with scalars -/
 theorem smul_cmmap_smul [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [NormedAddCommGroup B]
@@ -144,11 +144,11 @@ theorem smul_cmmap_smul [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [
   · rw [i0]
     have su := x.map_update_smul (fun _ ↦ z 0) 0 s u
     rw [update_0_0 z _, update_0_0 z _] at su
-    simp only [Function.update_same, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
-      su, smul_eq_mul, ne_eq, update_0_succ d z _ _, smulCmmapFn, ←smul_assoc]
+    simp only [Function.update_self, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
+      su, smul_eq_mul, update_0_succ d z _ _, smulCmmapFn, ← smul_assoc]
   · have su := xs.map_update_smul (fun j ↦ z j.succ) (i.pred i0) s u
-    simp only [ne_eq, MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe,
-      update_nz_0 d z i0, update_nz_succ d z _ i0, su, smul_comm _ s, smulCmmapFn]
+    simp only [MultilinearMap.toFun_eq_coe, ContinuousMultilinearMap.coe_coe, update_nz_0 d z i0,
+      update_nz_succ d z _ i0, su, smul_comm _ s, smulCmmapFn]
 
 /-- `smulCmmapFn` is continuous -/
 theorem smul_cmmap_cont [AddCommMonoid A] [Module 𝕜 A] [TopologicalSpace A] [NormedAddCommGroup B]
@@ -207,7 +207,7 @@ theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMulCommCla
     (termCmmap 𝕜 n k x fun _ ↦ (a, b)) = a ^ min k n • b ^ (n - k) • x := by
   induction' n with n h
   · simp only [termCmmap, ContinuousMultilinearMap.constOfIsEmpty_apply, min_zero, pow_zero,
-      zero_tsub, one_smul, Nat.zero_eq]
+    zero_tsub, one_smul]
   · rw [termCmmap, smulCmmap_apply, h]
     by_cases nk : n < k
     · simp [nk]
@@ -237,8 +237,8 @@ theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCo
 def conjCLM : ℂ →L[ℝ] ℂ where
   toFun z := conj z
   map_add' := by simp only [map_add, forall_const]
-  map_smul' := by simp only [Complex.real_smul, map_mul, RingHom.id_apply, mul_eq_mul_right_iff,
-    map_eq_zero, Complex.conj_ofReal, implies_true]
+  map_smul' := by simp only [Complex.real_smul, map_mul, RingHom.id_apply, Complex.conj_ofReal,
+    implies_true]
 
 theorem conjCLM_apply (z : ℂ) : conjCLM z = conj z := rfl
 

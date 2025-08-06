@@ -15,13 +15,13 @@ noncomputable section
 lemma exp_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num)
     (h0 : 2.7182818286 ^ a < b := by norm_num) : exp a < b := by
   rw [←Real.exp_one_pow a]
-  exact _root_.trans (pow_lt_pow_left Real.exp_one_lt_d9 (Real.exp_nonneg _) a0) h0
+  exact _root_.trans (pow_lt_pow_left₀ Real.exp_one_lt_d9 (Real.exp_nonneg _) a0) h0
 
 /-- `exp (-a) < b` in terms `norm_num` can handle `-/
 lemma exp_neg_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : 0 < b := by norm_num)
     (h0 : b⁻¹ < 2.7182818283 ^ a := by norm_num) : exp (-a) < b := by
   rw [Real.exp_neg, inv_lt_comm₀, ←Real.exp_one_pow a]
-  · exact _root_.trans h0 (pow_lt_pow_left Real.exp_one_gt_d9 (by norm_num) a0)
+  · exact _root_.trans h0 (pow_lt_pow_left₀ Real.exp_one_gt_d9 (by norm_num) a0)
   · exact Real.exp_pos _
   · exact b0
 
@@ -29,7 +29,7 @@ lemma exp_neg_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : 0
 lemma lt_exp_ofNat {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num)
     (h0 : b < 2.7182818283 ^ a := by norm_num) : b < exp a := by
   rw [←Real.exp_one_pow a]
-  exact _root_.trans h0 (pow_lt_pow_left Real.exp_one_gt_d9 (by norm_num) a0)
+  exact _root_.trans h0 (pow_lt_pow_left₀ Real.exp_one_gt_d9 (by norm_num) a0)
 
 /-- `c < exp (a/b)` in terms `norm_num` can handle `-/
 lemma lt_exp_div {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠ 0 := by norm_num)
@@ -38,7 +38,7 @@ lemma lt_exp_div {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠
   have e : exp (a/b : ℝ) = exp 1 ^ (a / b : ℝ) := by rw [Real.exp_one_rpow]
   rw [e, div_eq_mul_inv, Real.rpow_mul (Real.exp_nonneg _), Real.lt_rpow_inv_iff_of_pos,
     Real.rpow_natCast, Real.rpow_natCast]
-  · exact _root_.trans h0 (pow_lt_pow_left Real.exp_one_gt_d9 (by norm_num) a0)
+  · exact _root_.trans h0 (pow_lt_pow_left₀ Real.exp_one_gt_d9 (by norm_num) a0)
   · exact c0.le
   · apply Real.rpow_nonneg (Real.exp_nonneg _)
   · simp only [Nat.cast_pos, Nat.pos_iff_ne_zero]; exact b0
@@ -50,7 +50,7 @@ lemma exp_div_lt {a b : ℕ} {c : ℝ} (a0 : a ≠ 0 := by norm_num) (b0 : b ≠
   have e : exp (a/b : ℝ) = exp 1 ^ (a / b : ℝ) := by rw [Real.exp_one_rpow]
   rw [e, div_eq_mul_inv, Real.rpow_mul (Real.exp_nonneg _), Real.rpow_inv_lt_iff_of_pos,
     Real.rpow_natCast, Real.rpow_natCast]
-  · exact _root_.trans (pow_lt_pow_left Real.exp_one_lt_d9 (Real.exp_nonneg _) a0) h0
+  · exact _root_.trans (pow_lt_pow_left₀ Real.exp_one_lt_d9 (Real.exp_nonneg _) a0) h0
   · apply Real.rpow_nonneg (Real.exp_nonneg _)
   · exact c0.le
   · simp only [Nat.cast_pos, Nat.pos_iff_ne_zero]; exact b0

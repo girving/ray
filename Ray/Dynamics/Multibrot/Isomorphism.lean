@@ -64,7 +64,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   have t2ne : t2.Nonempty := by
     refine ⟨⟨x, y⟩, xy, bxy, ?_, ?_⟩
     · simp only [mem_setOf, ← hb, le_refl, u]
-    · simp only [mem_setOf, ← hb, ← abs_bottcher, bxy, le_refl, u]
+    · simp only [mem_setOf, ← hb, ← norm_bottcher, bxy, le_refl, u]
   clear x xm y ym bxy xy hb
   have ue : u ⊆ multibrotExt d := by intro c m; rw [← potential_lt_one]; exact lt_of_le_of_lt m b1
   have t01 : t1 ⊆ t0 := inter_subset_right
@@ -92,7 +92,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   have pb : p ≤ b := by rw [← xp]; exact m1.2.1
   have xm : x ∈ multibrotExt d := ue m1.2.1
   have ym : y ∈ multibrotExt d := ue m1.2.2
-  have yp : potential d y = p := by rw [← abs_bottcher, ← m1.1, abs_bottcher, xp]
+  have yp : potential d y = p := by rw [← norm_bottcher, ← m1.1, norm_bottcher, xp]
   have p0i : p = 0 → x = ∞ ∧ y = ∞ := by intro p0; rw [p0, potential_eq_zero] at xp yp; use xp, yp
   -- Split into three cases to find a contradiction
   by_cases xy : x ≠ y
@@ -101,16 +101,16 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
       contrapose xy; simp only [not_not] at xy ⊢; rcases p0i xy with ⟨xi, yi⟩; rw [xi, yi]
     have f : ∃ᶠ q : ℂ × ℂ in Filter.map
         (fun q : 𝕊 × 𝕊 ↦ (bottcher d q.1, bottcher d q.2)) (𝓝 (x, y)),
-        q.1 = q.2 ∧ abs q.1 < p := by
+        q.1 = q.2 ∧ ‖q.1‖ < p := by
       rw [nhds_prod_eq, ← Filter.prod_map_map_eq, ← (bottcherNontrivial xm).nhds_eq_map_nhds, ←
         (bottcherNontrivial ym).nhds_eq_map_nhds, m1.1, ← nhds_prod_eq]
-      apply (continuous_id.prod_mk continuous_id).continuousAt.frequently
-      simp only [eq_self_iff_true, true_and, ← yp, ← abs_bottcher]; apply frequently_smaller
-      rw [← Complex.abs.ne_zero_iff, abs_bottcher, yp]; exact p0
+      apply (continuous_id.prodMk continuous_id).continuousAt.frequently
+      simp only [true_and, ← yp, ← norm_bottcher]; apply frequently_smaller
+      rw [← norm_ne_zero_iff, norm_bottcher, yp]; exact p0
     simp only [Filter.frequently_map] at f
     rcases(f.and_eventually (Ne.eventually_ne xy)).exists with ⟨⟨v, w⟩, ⟨bvw, pv⟩, vw⟩
-    simp only [not_lt, abs_bottcher] at vw bvw pv ⊢
-    have pw : potential d w < p := by rwa [← abs_bottcher, ← bvw, abs_bottcher]
+    simp only [norm_bottcher] at vw bvw pv ⊢
+    have pw : potential d w < p := by rwa [← norm_bottcher, ← bvw, norm_bottcher]
     have m : (v, w) ∈ t2 := ⟨vw, bvw, le_trans pv.le pb, le_trans pw.le pb⟩
     contrapose pv; clear pv; simp only [not_lt]; exact min ⟨v, w⟩ (subset_closure m)
   -- x = y, so we're at a singular point
@@ -125,17 +125,17 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     -- so we can find a smaller potential value
     rcases not_local_inj_of_mfderiv_zero (bottcherMAnalytic d _ xm) db with ⟨r, ra, rx, e⟩
     simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff] at e
-    rw [← xp, ← abs_bottcher, Complex.abs.ne_zero_iff] at p0
+    rw [← xp, ← norm_bottcher, norm_ne_zero_iff] at p0
     have h := frequently_smaller p0
     rw [(bottcherNontrivial xm).nhds_eq_map_nhds, Filter.frequently_map] at h
     have m : ∃ᶠ z in 𝓝 x, potential d z < p ∧ (z, r z) ∈ t2 := by
       refine h.mp (e.mp (.of_forall fun z e lt ↦ ?_))
       have zx : z ≠ x := by
         contrapose lt; simp only [not_not, not_lt] at lt ⊢; simp only [lt, le_refl]
-      rw [abs_bottcher, abs_bottcher, xp] at lt
+      rw [norm_bottcher, norm_bottcher, xp] at lt
       rcases e zx with ⟨rz, e⟩
       refine ⟨lt, rz.symm, e.symm, le_trans lt.le pb, ?_⟩
-      rw [← abs_bottcher, ← e, abs_bottcher] at lt; exact le_trans lt.le pb
+      rw [← norm_bottcher, ← e, norm_bottcher] at lt; exact le_trans lt.le pb
     rcases m.exists with ⟨y, yp, m⟩
     linarith [min _ (subset_closure m)]
   · -- Case 1: x = ∞, which we know is nonsingular
@@ -147,16 +147,17 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
 -/
 
 lemma ray_exists (d : ℕ) [Fact (2 ≤ d)] :
-    ∃ g, MAnalyticOn I I g (bottcher d '' multibrotExt d) ∧
+    ∃ g, ContMDiffOnNhd I I g (bottcher d '' multibrotExt d) ∧
       ∀ z : 𝕊, z ∈ multibrotExt d → g (bottcher d z) = z :=
-  global_complex_inverse_fun_open' (bottcherMAnalytic d) bottcher_inj isOpen_multibrotExt
+  global_complex_inverse_fun_open' (bottcherMAnalytic d).contMDiffOn bottcher_inj
+    isOpen_multibrotExt
 
 /-- The inverse to `bottcher d`, defining external rays throughout the exterior -/
 def ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → 𝕊 :=
   Classical.choose (ray_exists d)
 
 /-- `ray d` is analytic on `ball 0 1` -/
-theorem rayMAnalytic (d : ℕ) [Fact (2 ≤ d)] : MAnalyticOn I I (ray d) (ball 0 1) := by
+theorem rayMAnalytic (d : ℕ) [Fact (2 ≤ d)] : ContMDiffOnNhd I I (ray d) (ball 0 1) := by
   rw [← bottcher_surj d]; exact (Classical.choose_spec (ray_exists d)).1
 
 /-- `ray d` is the left inverse to `bottcher d` -/

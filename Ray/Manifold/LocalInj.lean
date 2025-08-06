@@ -1,6 +1,6 @@
-import Ray.AnalyticManifold.Inverse
-import Ray.AnalyticManifold.Nontrivial
-import Ray.AnalyticManifold.OpenMapping
+import Ray.Manifold.Inverse
+import Ray.Manifold.Nontrivial
+import Ray.Manifold.OpenMapping
 
 /-!
 ## Nonzero derivative analytic functions are locally injective
@@ -14,15 +14,15 @@ open Filter (Tendsto)
 open Function (uncurry)
 open OneDimension
 open Set
-open scoped Topology
+open scoped ContDiff Topology
 noncomputable section
 
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : AnalyticManifold I T]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : IsManifold I ω S]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : IsManifold I ω T]
 
 /-- Nonzero derivative analytic functions are locally injective -/
-theorem MAnalyticAt.local_inj {f : S → T} {z : S}
-    (fa : MAnalyticAt I I f z) (nc : mfderiv I I f z ≠ 0) :
+theorem ContMDiffAt.local_inj {f : S → T} {z : S}
+    (fa : ContMDiffAt I I ω f z) (nc : mfderiv I I f z ≠ 0) :
     ∀ᶠ p : S × S in 𝓝 (z, z), f p.1 = f p.2 → p.1 = p.2 := by
   rcases complex_inverse_fun' fa nc with ⟨g, ga, gf, fg⟩
   have n : NontrivialMAnalyticAt g (f z) := by
@@ -36,8 +36,8 @@ theorem MAnalyticAt.local_inj {f : S → T} {z : S}
 
 /-- Nonzero derivative analytic functions are locally injective, parameterized version.
     Specifically, we show local injectivity of `(c,z) ↦ (c, f c z)`. -/
-theorem MAnalyticAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : MAnalyticAt II I (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
+theorem ContMDiffAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
+    (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : (ℂ × S) × ℂ × S in 𝓝 ((c, z), (c, z)),
       p.1.1 = p.2.1 → f p.1.1 p.1.2 = f p.2.1 p.2.2 → p.1 = p.2 := by
   rcases complex_inverse_fun fa nc with ⟨g, ga, gf, fg⟩
@@ -46,7 +46,7 @@ theorem MAnalyticAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
     rw [e] at fa
     refine (NontrivialMAnalyticAt.anti ?_ fa.along_snd ga.along_snd).2
     refine (nontrivialMAnalyticAt_id _).congr ?_
-    refine ((continuousAt_const.prod continuousAt_id).eventually fg).mp (.of_forall ?_)
+    refine ((continuousAt_const.prodMk continuousAt_id).eventually fg).mp (.of_forall ?_)
     exact fun _ e ↦ e.symm
   have o := n.nhds_eq_map_nhds_param ga; rw [gf.self_of_nhds] at o; simp only at o
   rw [nhds_prod_eq, o]; simp only [Filter.prod_map_map_eq, Filter.eventually_map]
@@ -55,13 +55,13 @@ theorem MAnalyticAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
 
 /-- Nonzero derivative analytic functions are locally injective, parameterized version.
     Specifically, we show local injectivity of `(c,z) ↦ (c, f c z)`. -/
-theorem MAnalyticAt.local_inj' {f : ℂ → S → T} {c : ℂ} {z : S}
-    (fa : MAnalyticAt II I (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
+theorem ContMDiffAt.local_inj' {f : ℂ → S → T} {c : ℂ} {z : S}
+    (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : ℂ × S × S in 𝓝 (c, z, z), f p.1 p.2.1 = f p.1 p.2.2 → p.2.1 = p.2.2 := by
   set g : ℂ × S × S → (ℂ × S) × ℂ × S := fun p ↦ ((p.1, p.2.1), (p.1, p.2.2))
   have t : Tendsto g (𝓝 (c, z, z)) (𝓝 ((c, z), (c, z))) := by
-    apply Continuous.continuousAt; apply Continuous.prod_mk
-    · exact continuous_fst.prod_mk (continuous_fst.comp continuous_snd)
-    · exact continuous_fst.prod_mk (continuous_snd.comp continuous_snd)
+    apply Continuous.continuousAt; apply Continuous.prodMk
+    · exact continuous_fst.prodMk (continuous_fst.comp continuous_snd)
+    · exact continuous_fst.prodMk (continuous_snd.comp continuous_snd)
   refine (t.eventually (fa.local_inj'' nc)).mp (.of_forall ?_)
   intro ⟨e, x, y⟩ inj fe; exact (Prod.ext_iff.mp (inj rfl fe)).2

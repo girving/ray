@@ -1,4 +1,4 @@
-import Ray.AnalyticManifold.OpenMapping
+import Ray.Manifold.OpenMapping
 import Ray.Dynamics.Potential
 
 /-!
@@ -18,15 +18,14 @@ This file has definitions and continuity results only, which are then used by `G
 `Ray.lean`, and `Bottcher.lean` to construct the analytic continuations.
 -/
 
-open Complex (abs)
 open Function (uncurry)
 open OneDimension
 open Set
-open scoped Topology
+open scoped ContDiff Topology
 noncomputable section
 
 -- All information for a monic superattracting fixed point at the origin
-variable {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
+variable {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S] [IsManifold I ω S]
 variable {f : ℂ → S → S}
 variable {c : ℂ}
 variable {a z z0 z1 : S}
@@ -44,7 +43,7 @@ def Super.p (s : Super f d a) (c : ℂ) : ℝ :=
 
 /-- `s.ps c` is nonempty (since it contains 1) -/
 theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
-  ⟨1, by simp only [Super.ps, mem_setOf, eq_self_iff_true, true_or]⟩
+  ⟨1, by simp only [Super.ps, mem_setOf, true_or]⟩
 
 /-- `s.ps c` is compact -/
 theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] : IsCompact (s.ps c) := by
@@ -89,7 +88,7 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] [T2Space S
   intro c p h; contrapose h
   simp only [not_lt, Filter.not_eventually] at h ⊢
   -- Add a bit of slack
-  apply le_of_forall_lt'
+  apply le_of_forall_gt
   intro q' pq'
   rcases exists_between pq' with ⟨q, pq, qq⟩; refine lt_of_le_of_lt ?_ qq; clear qq pq' q'
   by_cases q1 : 1 ≤ q; exact _root_.trans s.p_le_one q1
@@ -128,7 +127,7 @@ theorem Postscritical.mono (p : Postcritical s c z1) (z01 : s.potential c z0 ≤
 /-- Postcritical points are not precritical, since iteration decreases potential (except for `a`) -/
 theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential c z ≠ 0) :
     ¬Precritical (f c) z := by
-  contrapose p; simp only [Postcritical, not_not, not_forall, not_lt] at p ⊢
+  contrapose p; simp only [Postcritical, not_not, not_lt] at p ⊢
   rcases p with ⟨n, p⟩; trans s.potential c ((f c)^[n] z)
   · refine csInf_le s.bddBelow_ps (Or.inr ⟨?_, (f c)^[n] z, rfl, p⟩)
     simp only [s.potential_eqn_iter]; exact pow_ne_zero _ p0
@@ -209,7 +208,7 @@ theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z)
   contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
   rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
   have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
-    (continuousAt_const.prod (s.continuousAt_iter continuousAt_const
+    (continuousAt_const.prodMk (s.continuousAt_iter continuousAt_const
       continuousAt_id)).eventually_mem (s.isOpen_near.mem_nhds r)
   refine (h.and er).mp (.of_forall ?_); intro x ⟨e, m⟩
   simp only [Super.bottcherNearIter] at e
@@ -226,7 +225,7 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space
     (nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.bottcherNearIter_mAnalytic near).along_snd
         (s.bottcherNearIter_mfderiv_ne_zero (nc _ (le_refl _))
           (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
-  have e : ∃ᶠ x : ℂ in 𝓝 (f z), abs x < abs (f z) := by
+  have e : ∃ᶠ x : ℂ in 𝓝 (f z), ‖x‖ < ‖f z‖ := by
     apply frequently_smaller; contrapose m; simp only [not_not] at m ⊢
     replace m := (s.bottcherNear_eq_zero near).mp m
     rw [s.preimage_eq] at m; exact m
@@ -236,5 +235,5 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space
   refine .of_forall fun w m lt ↦ ?_
   simp only at m lt; rw [mem_setOf, mem_setOf] at m; simp only at m
   simp only [s.potential_eq m, s.potential_eq near, Super.potential']
-  exact Real.rpow_lt_rpow (Complex.abs.nonneg _) lt
+  exact Real.rpow_lt_rpow (norm_nonneg _) lt
     (inv_pos.mpr (pow_pos (Nat.cast_pos.mpr s.dp) _))

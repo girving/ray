@@ -5,9 +5,6 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
-import Mathlib.MeasureTheory.Integral.IntervalIntegral
-import Mathlib.Order.BoundedOrder
-import Mathlib.Order.Filter.AtTopBot
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
@@ -20,7 +17,7 @@ import Ray.Misc.Topology
 We show that uniformly convergence sequences of analytic functions have analytic limits.
 -/
 
-open Complex (abs I)
+open Complex (I)
 open Filter (atTop)
 open MeasureTheory.MeasureSpace (volume)
 open Metric (ball closedBall sphere)
@@ -85,34 +82,31 @@ theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm
 
 theorem cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : ℂ} {n : ℕ} (rp : r > 0)
-    (h : ∀ w ∈ closedBall c r, abs (f w) ≤ d) :
-    abs (cauchyPowerSeries f c r n fun _ ↦ w) ≤ abs w ^ n * r⁻¹ ^ n * d := by
-  set wr := abs w ^ n * r⁻¹ ^ n * d
-  rw [cauchyPowerSeries_apply f c r n w, smul_eq_mul, Complex.abs.map_mul]
+    (h : ∀ w ∈ closedBall c r, ‖f w‖ ≤ d) :
+    ‖cauchyPowerSeries f c r n fun _ ↦ w‖ ≤ ‖w‖ ^ n * r⁻¹ ^ n * d := by
+  set wr := ‖w‖ ^ n * r⁻¹ ^ n * d
+  rw [cauchyPowerSeries_apply f c r n w, smul_eq_mul, norm_mul]
   generalize hg : (fun z ↦ (w / (z - c)) ^ n • (z - c)⁻¹ • f z) = g
   have gs : ∀ z ∈ sphere c r, ‖g z‖ ≤ wr * r⁻¹ := by
-    intro z; simp only [mem_sphere_iff_norm, Complex.norm_eq_abs]; intro zr
-    simp only [← hg, zr, div_pow, Algebra.id.smul_eq_mul, AbsoluteValue.map_mul, map_div₀,
-      Complex.abs_pow, map_inv₀]
+    intro z; simp only [mem_sphere_iff_norm]; intro zr
+    simp only [← hg, zr, div_pow, Algebra.id.smul_eq_mul, norm_mul, norm_div, norm_pow, norm_inv]
     have zb : z ∈ closedBall c r := by
-      simp only [Metric.mem_closedBall, dist_le_coe, ← NNReal.coe_le_coe, coe_nndist,
-        Complex.dist_eq, zr, le_refl]
+      simp only [Metric.mem_closedBall, Complex.dist_eq, zr, le_refl]
     have zs := h z zb
-    calc abs w ^ n / ↑r ^ n * (r⁻¹ * abs (f z))
-      _ = abs w ^ n * (r⁻¹ ^ n : ℝ≥0) * (r⁻¹ * abs (f z)) := by
+    calc ‖w‖ ^ n / ↑r ^ n * (r⁻¹ * ‖f z‖)
+      _ = ‖w‖ ^ n * (r⁻¹ ^ n : ℝ≥0) * (r⁻¹ * ‖f z‖) := by
         rw [div_eq_mul_inv, ← inv_pow, NNReal.coe_pow, NNReal.coe_inv]
-      _ ≤ abs w ^ n * r⁻¹ ^ n * (r⁻¹ * d) := by bound
-      _ = abs w ^ n * r⁻¹ ^ n * d * r⁻¹ := by ring
+      _ ≤ ‖w‖ ^ n * r⁻¹ ^ n * (r⁻¹ * d) := by bound
+      _ = ‖w‖ ^ n * r⁻¹ ^ n * d * r⁻¹ := by ring
       _ = wr * r⁻¹ := rfl
   have cn := circleIntegral.norm_integral_le_of_norm_le_const (NNReal.coe_nonneg r) gs
-  rw [Complex.norm_eq_abs] at cn
-  simp only [mul_inv_rev, Complex.inv_I, AbsoluteValue.map_neg, AbsoluteValue.map_mul,
-    Complex.abs_I, map_inv₀, Complex.abs_ofReal, Complex.abs_two, one_mul, div_pow,
-    Algebra.id.smul_eq_mul] at hg cn ⊢
-  have p3 : |π| = π := abs_eq_self.mpr (by bound)
-  calc |π|⁻¹ * 2⁻¹ * abs (circleIntegral g c ↑r)
-    _ ≤ |π|⁻¹ * 2⁻¹ * (2 * π * r * (wr * r⁻¹)) := by bound
-    _ = π * |π|⁻¹ * (r * r⁻¹) * wr := by ring
+  simp only [mul_inv_rev, Complex.inv_I, norm_neg, norm_mul,
+    Complex.norm_I, norm_inv, Complex.norm_real, Complex.norm_two, one_mul, div_pow,
+    Algebra.id.smul_eq_mul, Real.norm_eq_abs] at hg cn ⊢
+  have p3 : ‖π‖ = π := abs_of_nonneg (by bound)
+  calc ‖π‖⁻¹ * 2⁻¹ * ‖circleIntegral g c ↑r‖
+    _ ≤ ‖π‖⁻¹ * 2⁻¹ * (2 * π * r * (wr * r⁻¹)) := by bound
+    _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
     _ = wr := by field_simp
@@ -176,9 +170,9 @@ theorem cauchy_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : �
 
 theorem cauchy_dist {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
     (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r))
-    (h : ∀ z, z ∈ closedBall c r → abs (f z - g z) ≤ d) :
+    (h : ∀ z, z ∈ closedBall c r → ‖f z - g z‖ ≤ d) :
     dist (cauchyPowerSeries f c r n fun _ ↦ w) (cauchyPowerSeries g c r n fun _ ↦ w) ≤
-      abs w ^ n * r⁻¹ ^ n * d := by
+      ‖w‖ ^ n * r⁻¹ ^ n * d := by
   rw [Complex.dist_eq, cauchy_sub n w rp cf cg]
   refine cauchy_bound rp ?_; intro z zr; simp at h zr; refine h z zr
 
@@ -210,7 +204,7 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
         hasSum := ?_ }
   intro y yb
   have yr := yb; simp at yr
-  set a := abs y / r
+  set a := ‖y‖ / r
   have a0 : a ≥ 0 := by bound
   have a1 : a < 1 := (div_lt_one (NNReal.coe_pos.mpr rp)).mpr yr
   have a1p : 1 - a > 0 := by bound
@@ -235,14 +229,14 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
     apply dist_sum_sum_le M (fun k : ℕ ↦ p k fun _ ↦ y) fun k : ℕ ↦ pr n k fun _ ↦ y
     trans M.sum fun k ↦ a ^ k * d
     · apply Finset.sum_le_sum; intro k _
-      have hak : a ^ k = abs y ^ k * r⁻¹ ^ k := by
-        calc (abs y / r) ^ k
-          _ = (abs y * r⁻¹) ^ k := by rw [div_eq_mul_inv, NNReal.coe_inv]
-          _ = abs y ^ k * r⁻¹ ^ k := mul_pow _ _ _
+      have hak : a ^ k = ‖y‖ ^ k * r⁻¹ ^ k := by
+        calc (‖y‖ / r) ^ k
+          _ = (‖y‖ * r⁻¹) ^ k := by rw [div_eq_mul_inv, NNReal.coe_inv]
+          _ = ‖y‖ ^ k * r⁻¹ ^ k := mul_pow _ _ _
       rw [hak]
       generalize hd' : d.toNNReal = d'
       have dd : (d' : ℝ) = d := by rw [← hd']; exact Real.coe_toNNReal d dp.le
-      have hcb : ∀ z, z ∈ closedBall c r → abs (g z - f n z) ≤ d' := by
+      have hcb : ∀ z, z ∈ closedBall c r → ‖g z - f n z‖ ≤ d' := by
         intro z zb; exact _root_.trans (hn z (cb zb)).le (le_of_eq dd.symm)
       exact _root_.trans (cauchy_dist k y rp cg (cf n) hcb)
         (mul_le_mul_of_nonneg_left (le_of_eq dd) (by bound))

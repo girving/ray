@@ -28,7 +28,7 @@ lemma AnalyticWithinAt.congr_set {f : E → F} {s t : Set E} {x : E} (hf : Analy
     hasSum := by
       intro y m n
       apply hp.hasSum
-      simp only [mem_insert_iff, add_right_eq_self, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal,
+      simp only [mem_insert_iff, add_eq_left, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal,
         dist_zero_right] at m n ⊢
       rcases m with m | m
       · exact .inl m

@@ -119,7 +119,7 @@ lemma Interval.mem_approx_iter_sqrt {a : ℝ} {x : Interval} {n : ℕ} (ax : a �
   exact mem_approx_iter_sqrt ax
 
 /-- `potential_small` covers all small values -/
-lemma Box.approx_potential_small {c' z' : ℂ} (c4 : abs c' ≤ 4) (z4 : abs z' ≤ 4) :
+lemma Box.approx_potential_small {c' z' : ℂ} (c4 : ‖c'‖ ≤ 4) (z4 : ‖z'‖ ≤ 4) :
     (superF 2).potential c' z' ∈ approx potential_small := by
   have ss : Icc 0.216 1 ⊆ approx potential_small := by
     rw [potential_small]
@@ -131,7 +131,7 @@ lemma Box.approx_potential_small {c' z' : ℂ} (c4 : abs c' ≤ 4) (z4 : abs z' 
   · apply Super.potential_le_one
 
 /-- `potential_large` covers all large values -/
-lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z') (z6 : 6 ≤ abs z')
+lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : ‖c'‖ ≤ ‖z'‖) (z6 : 6 ≤ ‖z'‖)
     (zm : z' ∈ approx z) : (superF 2).potential c' z' ∈ approx (potential_large z) := by
   rw [potential_large]
   apply Interval.approx_grow (potential_approx 2 (le_trans (by norm_num) z6) cz)
@@ -139,14 +139,13 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
     rw [Ne, Interval.hi_eq_nan] at n
     refine le_trans (potential_error_le_of_z6 _ z6 cz) ?_
     apply Interval.le_hi n
-    rw [div_eq_mul_inv, ←Real.rpow_neg (Complex.abs.nonneg _), Real.rpow_def_of_pos (by linarith)]
-    have e : Real.log (Complex.abs z') * -1.927 = Real.log (Complex.abs z' ^ 2) * -0.9635 := by
+    rw [div_eq_mul_inv, ←Real.rpow_neg (by positivity), Real.rpow_def_of_pos (by linarith)]
+    have e : Real.log (‖z'‖) * -1.927 = Real.log (‖z'‖ ^ 2) * -0.9635 := by
       rw [Real.log_pow, Nat.cast_two, mul_comm (2:ℝ), mul_assoc]; norm_num
     rw [e]
     approx
-  · have e : 1 / Complex.abs z' = Real.exp (-(Real.log (Complex.abs z' ^ 2) / 2)) := by
-      simp only [one_div, Real.log_pow, Nat.cast_ofNat, neg_mul, Real.rpow_neg zero_le_two,
-        Real.rpow_one, ←mul_assoc, mul_comm _ (2:ℝ)⁻¹]
+  · have e : 1 / ‖z'‖ = Real.exp (-(Real.log (‖z'‖ ^ 2) / 2)) := by
+      simp only [one_div, Real.log_pow, Nat.cast_ofNat]
       rw [mul_div_cancel_left₀ _ two_ne_zero, Real.exp_neg, Real.exp_log (by linarith)]
     rw [e]
     approx
@@ -166,7 +165,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
   induction ie
   · generalize hzs : (normSq i.z) = zs
     by_cases bad : zs = nan ∨ (16 : Floating).val < zs.hi.val ∨ (16 : Floating).val < cs.val
-    · simp only [Floating.val_lt_val, bad, ↓reduceIte, Interval.approx_nan, mem_univ]
+    · simp only [bad, ↓reduceIte, Interval.approx_nan, mem_univ]
     · simp only [bad, ↓reduceIte]
       simp only [not_or, not_lt, ←hzs] at bad
       rcases bad with ⟨zsn, z4, c4⟩
@@ -182,7 +181,7 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
         rw [←hw', ←hi]
         exact mem_approx_iterate cm zm _
   · generalize hj : iterate c i.z ((r.mul r true).max (cs.max 36)) 1000 = j
-    simp only [hj]
+    simp only
     generalize hje : j.exit = je
     induction je
     · simp only [Interval.approx_nan, mem_univ]
@@ -197,16 +196,16 @@ lemma Box.approx_potential_large {c' z' : ℂ} {z : Box} (cz : abs c' ≤ abs z'
       simp only [hj, ← Function.iterate_add_apply, add_comm _ i.n, hn, hw'] at jl
       simp only [ne_eq, Floating.max_eq_nan, not_or] at jrn
       rw [Floating.val_max jrn.1 (Floating.max_ne_nan.mpr jrn.2),
-        Floating.val_max jrn.2.1 jrn.2.2, max_lt_iff, max_lt_iff, Floating.val_ofNat,
-        Nat.cast_eq_ofNat] at jl
+        Floating.val_max jrn.2.1 jrn.2.2, max_lt_iff, max_lt_iff, Floating.val_ofNat] at jl
       apply approx_potential_large
       · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.1.le) ?_)
         · simp only [← hcs, Interval.hi_eq_nan] at csn ⊢; exact abs_le_sqrt_normSq cm csn
-        · simp only [apply_nonneg, Real.sqrt_sq, le_refl]
+        · simp only [norm_nonneg, Real.sqrt_sq, le_refl]
       · refine le_trans ?_ (le_trans (Real.sqrt_le_sqrt jl.2.2.le) ?_)
         · have e : (36 : ℝ) = 6 ^ 2 := by norm_num
+          simp only [Nat.cast_ofNat]
           rw [e, Real.sqrt_sq (by norm_num)]
-        · simp only [apply_nonneg, Real.sqrt_sq, le_refl]
+        · simp only [norm_nonneg, Real.sqrt_sq, le_refl]
       · rw [←hw', ←hn, add_comm _ j.n, Function.iterate_add_apply, ←hj]
         exact mem_approx_iterate cm izm _
     · simp only [Interval.approx_nan, mem_univ]
@@ -252,6 +251,8 @@ def zs := i.z.normSq.hi
 #eval Box.potential c c n r
 -/
 end debug
+
+#exit  -- DO NOT SUBMIT: Remove once we fix that compiler bug
 
 private def good (x y : ℚ) (n : ℕ) : Bool :=
   let c : Box := .ofRat (x,y)

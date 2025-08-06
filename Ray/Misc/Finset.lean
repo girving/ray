@@ -1,14 +1,11 @@
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Complex.Abs
+import Mathlib.Data.Complex.Norm
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
-import Mathlib.Order.Filter.AtTopBot
 
 /-!
 ## `Finset ℕ` machinery for use in sums and products
 -/
 
-open Complex (abs)
 open Filter (atTop)
 open Stream' (cons)
 open scoped Topology Stream
@@ -73,11 +70,12 @@ theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
 
 /-- Triangle inequality for finset sums of complex numbers -/
 theorem finset_complex_abs_sum_le (N : Finset ℕ) (f : ℕ → ℂ) :
-    abs (N.sum fun n ↦ f n) ≤ N.sum fun n ↦ abs (f n) := by
+    ‖N.sum fun n ↦ f n‖ ≤ N.sum fun n ↦ ‖f n‖ := by
   induction' N using Finset.induction with n N Nn h; · simp
   · rw [Finset.sum_insert Nn]
     rw [Finset.sum_insert Nn]
-    trans abs (f n) + abs (N.sum fun n ↦ f n); · exact Complex.abs.add_le _ _
+    trans ‖f n‖ + ‖N.sum fun n ↦ f n‖
+    · apply norm_add_le
     · apply add_le_add_left; assumption
 
 theorem subset_union_sdiff (A B : Finset ℕ) : B ⊆ A ∪ B \ A := by

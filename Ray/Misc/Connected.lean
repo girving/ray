@@ -36,8 +36,8 @@ theorem isClosed_closed_inter {s u v : Set X} (sc : IsClosed s) (vo : IsOpen v) 
   have sus : closure (s ∩ u) ⊆ s := by
     nth_rw 2 [← sc.closure_eq]; apply closure_mono; apply inter_subset_left
   have xs := sus h.1
-  have m := not_or.mpr ⟨h.2 xs, not_mem_of_mem_compl (closure_inter_subset_compl vo d h.1)⟩
-  rw [← mem_union _ _ _] at m; exact not_mem_subset suv m xs
+  have m := not_or.mpr ⟨h.2 xs, notMem_of_mem_compl (closure_inter_subset_compl vo d h.1)⟩
+  rw [← mem_union _ _ _] at m; exact notMem_subset suv m xs
 
 /-- In a `NormalSpace`, `s` is preconnected iff for any two disjoint open sets that cover it,
     `s` is contained in one of them.  This is an open version of
@@ -76,7 +76,7 @@ theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I]
     by_contra h; simp only [not_exists, Set.not_subset] at h
     suffices n : (⋂ a, s a \ (u ∪ v)).Nonempty by
       rcases n with ⟨x, n⟩; simp only [mem_iInter, mem_diff, forall_and, forall_const] at n
-      rw [← mem_iInter] at n; simp only [suv n.1, not_true, imp_false] at n; exact n.2
+      rw [← mem_iInter] at n; simp only [suv n.1, not_true] at n; exact n.2
     apply IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed
     intro a b; rcases d a b with ⟨c, ac, bc⟩
     use c, diff_subset_diff_left ac, diff_subset_diff_left bc
@@ -106,11 +106,11 @@ theorem IsPreconnected.limits_atTop [CompactSpace X] [T4Space X] {P : Type} [Sem
     intro a; rw [← hs]; exact isClosed_closure.isCompact
   have e : {x | MapClusterPt x atTop r} = ⋂ a, s a := by
     ext x
-    simp only [mem_setOf, mem_iInter, mapClusterPt_iff, mem_closure_iff_nhds, Set.Nonempty,
-      @forall_comm P, ← hs]
+    simp only [mem_setOf, mem_iInter, mapClusterPt_iff_frequently, mem_closure_iff_nhds,
+      Set.Nonempty, @forall_comm P, ← hs]
     apply forall_congr'; intro t
-    simp only [@forall_comm P, mem_inter_iff, mem_image, mem_Ici, @and_comm (_ ∈ t),
-      exists_exists_and_eq_and, Filter.frequently_atTop, exists_prop]
+    simp only [mem_inter_iff, mem_image, mem_Ici, @and_comm (_ ∈ t), exists_exists_and_eq_and,
+      Filter.frequently_atTop]
   rw [e]; exact IsPreconnected.directed_iInter d p c
 
 /-- The limit points of a ray `atBot` are preconnected (the other direction of the ray in
@@ -141,27 +141,27 @@ theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {
   have p : ∀ t, IsPreconnected (s t) := by
     intro ⟨t, m⟩; rw [← hs]; refine (isPreconnected_Ioc.image _ (rc.mono ?_)).closure
     simp only [mem_Ioc] at m
-    simp only [Subtype.coe_mk, Ioc_subset_Ioc_iff m.1, m.2, le_refl, true_and]
+    simp only [Ioc_subset_Ioc_iff m.1, m.2, le_refl, true_and]
   have c : ∀ t, IsCompact (s t) := by intro t; rw [← hs]; exact isClosed_closure.isCompact
   have e : {x | MapClusterPt x (𝓝[Ioc a b] a) r} = ⋂ t, s t := by
     apply Set.ext; intro x
-    simp only [mem_setOf, mem_iInter, mapClusterPt_iff, mem_closure_iff_nhds, Set.Nonempty,
-      @forall_comm _ (Set X), ← hs]
+    simp only [mem_setOf, mem_iInter, mapClusterPt_iff_frequently, mem_closure_iff_nhds,
+      Set.Nonempty, @forall_comm _ (Set X), ← hs]
     apply forall_congr'; intro u
-    simp only [@forall_comm _ (u ∈ 𝓝 x)]; apply forall_congr'; intro _
-    simp only [mem_inter_iff, Filter.frequently_iff, nhdsWithin_Ioc_eq_nhdsWithin_Ioi ab]
+    simp only [Filter.frequently_iff, @forall_comm _ (u ∈ 𝓝 x)]; apply forall_congr'; intro _
+    simp only [mem_inter_iff, nhdsWithin_Ioc_eq_nhdsGT ab]
     constructor
     · intro h ⟨t, m⟩
       have tm : Ioc a t ∈ 𝓝[Ioi a] a := by
-        apply Ioc_mem_nhdsWithin_Ioi
+        apply Ioc_mem_nhdsGT_of_mem
         simp only [mem_Ioc] at m; simp only [mem_Ico]; use le_refl _, m.1
       rcases h tm with ⟨v, vm, vu⟩; exact ⟨r v, vu, mem_image_of_mem _ vm⟩
     · intro h v vm
-      rcases mem_nhdsWithin_Ioi_iff_exists_Ioc_subset.mp vm with ⟨w, wa, wv⟩
+      rcases mem_nhdsGT_iff_exists_Ioc_subset.mp vm with ⟨w, wa, wv⟩
       simp only [mem_Ioi] at wa
       have m : min w b ∈ Ioc a b := by simp only [mem_Ioc]; use lt_min wa ab, min_le_right _ _
       rcases h ⟨_, m⟩ with ⟨x, xu, rx⟩
-      simp only [Subtype.coe_mk, mem_image, mem_Ioc, le_min_iff] at rx
+      simp only [mem_image, mem_Ioc, le_min_iff] at rx
       rcases rx with ⟨c, ⟨ac, cw, _⟩, cx⟩
       use c, wv (mem_Ioc.mpr ⟨ac, cw⟩); rwa [cx]
   rw [e]; exact IsPreconnected.directed_iInter d p c
@@ -172,10 +172,9 @@ theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s) (ne
   generalize hu : (fun x : s ↦ (x : X)) ⁻¹' t = u
   have uo : IsOpen u := by
     rw [← subset_interior_iff_isOpen]; intro ⟨x, m⟩ h
-    simp only [mem_preimage, Subtype.coe_mk, ← hu] at h
+    simp only [mem_preimage, ← hu] at h
     have n := op ⟨m, h⟩
-    simp only [mem_interior_iff_mem_nhds, preimage_coe_mem_nhds_subtype, Subtype.coe_mk,
-      ← hu] at n ⊢
+    simp only [mem_interior_iff_mem_nhds, preimage_coe_mem_nhds_subtype, ← hu] at n ⊢
     exact nhdsWithin_le_nhds n
   have uc : IsClosed u := by
     rw [← closure_eq_iff_isClosed]; refine subset_antisymm ?_ subset_closure
@@ -197,7 +196,7 @@ theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] 
     IsPathConnected (f '' s) := by
   have uc : IsPathConnected (univ : Set s) := by
     convert sc.preimage_coe (subset_refl _); apply Set.ext; intro x
-    simp only [mem_univ, true_iff, mem_preimage, Subtype.mem]
+    simp only [mem_univ, mem_preimage, Subtype.mem]
   have e : f '' s = s.restrict f '' univ := by
     apply Set.ext; intro y; constructor
     intro ⟨x, m, e⟩; use⟨x, m⟩, mem_univ _, e
@@ -220,7 +219,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
     (pc : IsPathConnected (f ⁻¹' frontier s)) (fc : Continuous f) (sc : IsClosed s) :
     IsPathConnected (f ⁻¹' s) := by
   have pc' := pc; rcases pc' with ⟨b, fb, j⟩; use b
-  simp only [mem_preimage, mem_singleton_iff] at fb j ⊢
+  simp only [mem_preimage] at fb j ⊢
   have bs : f b ∈ s := sc.frontier_subset fb
   use bs; intro x fx
   have p := PathConnectedSpace.somePath x b
@@ -249,10 +248,11 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
   have ft : f (p ⟨t, m⟩) ∈ frontier s := by
     simp only [frontier, mem_diff, sc.closure_eq]; constructor
     · convert lo t (le_refl _)
-      simp only [ge_iff_le, zero_le_one, not_true, gt_iff_lt, mem_Icc, Path.extend_extends _ m]
+      simp only [Path.extend_extends _ m]
     · have e : p ⟨t, m⟩ = p.extend t := by
-        simp only [Path.extend, IccExtend_apply, min_eq_right m.2, max_eq_right m.1]
-      rw [e]; clear e; simp only [← @mem_preimage _ _ (f.comp p.extend), ← ht]
+        simp only [Path.extend, IccExtend, ContinuousMap.coe_mk, Function.comp_apply, projIcc,
+          min_eq_right m.2, max_eq_right m.1]
+      rw [e]; clear e; simp only [← ht]
       by_contra h
       rw [ht] at h
       have o : IsOpen (f ∘ p.extend ⁻¹' interior s) :=
@@ -276,6 +276,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
   refine ⟨⟨⟨q,qc⟩,?_,?_⟩,?_⟩
   · simp only [← hq]; simp only [Icc.coe_zero, min_eq_left m.1, p.extend_zero]
   · simp only [← hq]
-    simp only [Icc.coe_one, min_eq_right m.2, Path.extend, IccExtend_apply, max_eq_right m.1]
-  · intro ⟨a, n⟩; simp only [mem_preimage, Path.coe_mk_mk, ← hq, Subtype.coe_mk]
+    simp only [Path.extend, Icc.coe_one, min_eq_right m.2, ContinuousMap.coe_mk, IccExtend_apply,
+      max_eq_right m.1]
+  · intro ⟨a, n⟩; simp only [mem_preimage, Path.coe_mk_mk, ← hq]
     exact lo _ (min_le_right _ _)

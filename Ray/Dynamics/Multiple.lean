@@ -1,6 +1,6 @@
 import Mathlib.RingTheory.RootsOfUnity.Complex
-import Ray.AnalyticManifold.Inverse
-import Ray.AnalyticManifold.LocalInj
+import Ray.Manifold.Inverse
+import Ray.Manifold.LocalInj
 import Ray.Dynamics.BottcherNear
 
 /-!
@@ -27,11 +27,11 @@ open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ba
 open Nat (iterate)
 open OneDimension
 open Set
-open scoped NNReal Topology Real
+open scoped ContDiff NNReal Topology Real
 noncomputable section
 
-variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [AnalyticManifold I S]
-variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [AnalyticManifold I T]
+variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [IsManifold I ω S]
+variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [IsManifold I ω T]
 
 /-- There are nontrivial `d`th roots of unity if `2 ≤ d` -/
 theorem exist_root_of_unity {d : ℕ} (d2 : 2 ≤ d) : ∃ a : ℂ, a ≠ 1 ∧ a ^ d = 1 := by
@@ -40,7 +40,7 @@ theorem exist_root_of_unity {d : ℕ} (d2 : 2 ≤ d) : ∃ a : ℂ, a ≠ 1 ∧ 
     rw [← Fintype.one_lt_card_iff_nontrivial, Complex.card_rootsOfUnity]
     simp only [PNat.mk_coe, n]; exact lt_of_lt_of_le (by norm_num) d2
   rcases two with ⟨⟨a, am⟩, ⟨b, bm⟩, ab⟩
-  simp only [Ne, Subtype.mk_eq_mk, mem_rootsOfUnity, PNat.mk_coe] at am bm ab
+  simp only [Ne, Subtype.mk_eq_mk, mem_rootsOfUnity] at am bm ab
   by_cases a1 : a = 1
   · use b; rw [a1] at ab; constructor
     · simp only [ne_eq, Units.val_eq_one, Ne.symm ab, not_false_eq_true]
@@ -69,12 +69,12 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
     simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false] at d0
     rw [bottcherNear_zero] at d0; exact d0
-    rw [bottcherNear_zero]; exact ia.mdifferentiableAt
+    rw [bottcherNear_zero]; exact ia.mdifferentiableAt le_top
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
   refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
-  · apply MAnalyticAt.analyticAt I I
-    refine ia.comp_of_eq (mAnalyticAt_const.mul (ba.mAnalyticAt I I)) ?_
-    simp only [bottcherNear_zero, s.f0, MulZeroClass.mul_zero]
+  · apply ContMDiffAt.analyticAt I I
+    refine ia.comp_of_eq (contMDiffAt_const.mul (ba.mAnalyticAt I I)) ?_
+    simp only [bottcherNear_zero, MulZeroClass.mul_zero]
   · simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0]
   · simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff]
     have t0 : ContinuousAt (fun z ↦ a * bottcherNear f d z) 0 :=
@@ -88,8 +88,8 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
       repeat' simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0, s.t0, Function.comp_def]
     have m1 : ∀ᶠ z in 𝓝 0, z ∈ t := s.o.eventually_mem s.t0
     simp only [ContinuousAt, bottcherNear_zero, MulZeroClass.mul_zero, i0, s.f0] at t0 t1 t2
-    have tp := t0.prod_mk ba.continuousAt
-    simp only [← nhds_prod_eq, ContinuousAt, bottcherNear_zero] at tp
+    have tp := t0.prodMk ba.continuousAt
+    simp only [← nhds_prod_eq, bottcherNear_zero] at tp
     apply (tp.eventually inj).mp
     refine ib.mp (bi.mp ((t1.eventually ib).mp
       ((t0.eventually bi).mp ((t2.eventually ib).mp (m0.mp (m1.mp ?_))))))
@@ -110,7 +110,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     (f0 : f 0 = 0) :
     ∃ g : ℂ → ℂ, AnalyticAt ℂ g 0 ∧ g 0 = 0 ∧ ∀ᶠ z in 𝓝[{0}ᶜ] 0, g z ≠ z ∧ f (g z) = f z := by
   by_cases o0 : orderAt f 0 = 0
-  · simp only [orderAt_eq_zero_iff fa, f0, Ne, eq_self_iff_true, not_true, or_false] at o0
+  · simp only [orderAt_eq_zero_iff fa, f0, Ne, not_true, or_false] at o0
     use fun z ↦ -z, analyticAt_id.neg, neg_zero; rw [eventually_nhdsWithin_iff]
     have e0 : ∀ᶠ z in 𝓝 0, f (-z) = 0 := by
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
@@ -129,7 +129,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     { d2
       fa0 := analyticAt_const.mul fa
       fd := by rw [orderAt_const_smul (inv_ne_zero a0)]
-      fc := by rw [leadingCoeff_const_smul]; simp only [smul_eq_mul, inv_mul_cancel₀ a0] }
+      fc := by rw [leadingCoeff_const_smul]; simp only [smul_eq_mul, inv_mul_cancel₀ a0, a] }
   rcases s.not_local_inj with ⟨h, ha, h0, e⟩
   use h, ha, h0; refine e.mp (.of_forall ?_)
   intro z ⟨h0, hz⟩; use h0
@@ -147,10 +147,10 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
       (AnalyticAt.comp (by simp only [zero_add, fa]) (analyticAt_id.add analyticAt_const))
       analyticAt_const
   have df' : HasDerivAt f' (0 * 1) 0 := by
-    refine HasDerivAt.sub_const ?_ _
+    refine HasDerivAt.sub_const _ ?_
     have e : (fun z ↦ f (z + c)) = f ∘ fun z ↦ z + c := rfl
     rw [e]; apply HasDerivAt.comp; simp only [zero_add, df]
-    exact HasDerivAt.add_const (hasDerivAt_id _) _
+    exact HasDerivAt.add_const _ (hasDerivAt_id _)
   simp only [MulZeroClass.zero_mul] at df'
   have f0' : (fun z ↦ f (z + c) - f c) 0 = 0 := by simp only [zero_add, sub_self]
   rcases not_local_inj_of_deriv_zero' fa' df' f0' with ⟨g, ga, e, h⟩; clear fa df fa' df'
@@ -170,29 +170,33 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
 /-- If `f' z = 0`, then every value near `f z` is achieved at least twice (manifold version).
     We operationalize this statement via a nontrivial function `g : S → T` s.t. `f (g w) = f w`
     near `z`. -/
-theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : MAnalyticAt I I f c)
+theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I I ω f c)
     (df : mfderiv I I f c = 0) :
-    ∃ g : S → S, MAnalyticAt I I g c ∧ g c = c ∧ ∀ᶠ z in 𝓝[{c}ᶜ] c, g z ≠ z ∧ f (g z) = f z := by
+    ∃ g : S → S, ContMDiffAt I I ω g c ∧ g c = c ∧ ∀ᶠ z in 𝓝[{c}ᶜ] c, g z ≠ z ∧ f (g z) = f z := by
   generalize hg : (fun z ↦ extChartAt I (f c) (f ((extChartAt I c).symm z))) = g
   have dg : mfderiv I I g (extChartAt I c c) = 0 := by
     have fd : MDifferentiableAt I I f ((extChartAt I c).symm (extChartAt I c c)) := by
-      rw [PartialEquiv.left_inv]; exact fa.mdifferentiableAt; apply mem_extChartAt_source
-    rw [← hg, ←Function.comp_def, mfderiv_comp _ (MAnalyticAt.extChartAt _).mdifferentiableAt _,
-      ←Function.comp_def, mfderiv_comp _ fd (MAnalyticAt.extChartAt_symm _).mdifferentiableAt,
+      rw [PartialEquiv.left_inv]
+      exact fa.mdifferentiableAt le_top
+      apply mem_extChartAt_source
+    rw [← hg, ←Function.comp_def, ← Function.comp_def,
+      mfderiv_comp _ ((ContMDiffAt.extChartAt _).mdifferentiableAt le_top) _,
+      mfderiv_comp _ fd ((ContMDiffAt.extChartAt_symm _).mdifferentiableAt le_top),
       PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
-    apply mem_extChartAt_source; apply mem_extChartAt_target; rw [PartialEquiv.left_inv]
-    apply mem_extChartAt_source; apply mem_extChartAt_source
-    exact MDifferentiableAt.comp _ fd
-      (MAnalyticAt.extChartAt_symm (mem_extChartAt_target _)).mdifferentiableAt
+    · apply mem_extChartAt_source
+    · apply mem_extChartAt_target
+    · simp
+    · exact MDifferentiableAt.comp _ fd
+        ((ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).mdifferentiableAt le_top)
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
   refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
-  · apply (MAnalyticAt.extChartAt_symm (mem_extChartAt_target c)).comp_of_eq
+  · apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).comp_of_eq
     apply (ha.mAnalyticAt I I).comp_of_eq
-      (MAnalyticAt.extChartAt (mem_extChartAt_source c)) rfl
+      (ContMDiffAt.extChartAt (mem_extChartAt_source c)) rfl
     exact h0
   · simp only [h0, PartialEquiv.left_inv _ (mem_extChartAt_source c)]
   · rw [eventually_nhdsWithin_iff] at e ⊢
@@ -227,7 +231,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : MAnalyticAt I 
 
 /-- Injectivity on an open set implies nonzero derivative (manifold version) -/
 theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s) {c : S}
-    (m : c ∈ s) (fa : MAnalyticAt I I f c) : mfderiv I I f c ≠ 0 := by
+    (m : c ∈ s) (fa : ContMDiffAt I I ω f c) : mfderiv I I f c ≠ 0 := by
   contrapose inj; simp only [not_not, InjOn, not_forall] at inj ⊢
   rcases not_local_inj_of_mfderiv_zero fa inj with ⟨g, ga, gc, fg⟩
   have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=

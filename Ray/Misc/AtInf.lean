@@ -30,7 +30,7 @@ theorem atInf_basis {X : Type} [Norm X] :
 instance atInf_neBot : (@atInf ℂ _).NeBot := by
   rw [atInf_basis.neBot_iff]; intro r; simp only [true_imp_iff]
   rcases exists_nat_gt r with ⟨w,h⟩; refine ⟨w,?_⟩
-  simp only [Complex.norm_eq_abs, mem_setOf_eq, Complex.abs_natCast]; exact h
+  simpa only [mem_setOf_eq, Complex.norm_natCast]
 
 /-- Characterization of `→ atInf` convergence -/
 theorem tendsto_atInf {X Y : Type} [Norm Y] {f : X → Y} {l : Filter X} :
@@ -53,7 +53,7 @@ theorem tendsto_atInf_iff_norm_tendsto_atTop {X Y : Type} [Norm Y] {f : Filter X
 /-- Characterization of `s ∈ atInf` -/
 theorem mem_atInf_iff {X : Type} [Norm X] {s : Set X} :
     s ∈ @atInf X _ ↔ ∃ r, {x | ‖x‖ > r} ⊆ s := by
-  simp only [Filter.hasBasis_iff.mp atInf_basis s, exists_true_left, true_and]
+  simp only [Filter.hasBasis_iff.mp atInf_basis s, true_and]
 
 /-- Eventually `atInf` the norm is as large as desired -/
 theorem eventually_atInf {X : Type} [Norm X] (r : ℝ) : ∀ᶠ x : X in atInf, ‖x‖ > r := by
@@ -90,7 +90,7 @@ theorem atInf_le_cocompact {X : Type} [NormedAddCommGroup X] : @atInf X _ ≤ Fi
     forall_apply_eq_imp_iff₂] at rh
   rw [mem_atInf_iff]; use r
   intro x m; apply ts; contrapose m
-  simp only [mem_compl_iff, not_not_mem] at m
+  simp only [mem_compl_iff, not_notMem] at m
   simp only [mem_setOf_eq, not_lt]
   exact rh _ m
 

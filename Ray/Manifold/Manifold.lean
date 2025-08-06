@@ -2,11 +2,10 @@ import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
-import Mathlib.Geometry.Manifold.SmoothManifoldWithCorners
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
-## `SmoothManifoldWithCorners` lemmas
+## Manifold lemmas
 -/
 
 open ChartedSpace (chartAt)
@@ -25,6 +24,15 @@ variable {A M : Type} [TopologicalSpace A] [TopologicalSpace M]
 variable {B N : Type} [TopologicalSpace B] [TopologicalSpace N]
 variable {C O : Type} [TopologicalSpace C] [TopologicalSpace O]
 variable {D P : Type} [TopologicalSpace D] [TopologicalSpace P]
+
+/-- Version of `ModelWithCorners.prod_apply` with `x ∈ H × H'` rather than `ModelProd H H'`.  This
+comes up because other simplification doesn't stay in `ModelProd`. -/
+@[simp]
+lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
+    [TopologicalSpace H'] (I' : ModelWithCorners 𝕜 E' H') (x : H × H') :
+    (I.prod I') x = (I x.1, I' x.2) :=
+  ModelWithCorners.prod_apply _ _ _
 
 section ReflChart
 
@@ -120,8 +128,8 @@ theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
     {df : TangentSpace I x →L[𝕜] TangentSpace J (f x)} (fh : HasMFDerivAt I J f x df)
     {dg : TangentSpace I x →L[𝕜] TangentSpace K (g x)} (gh : HasMFDerivAt I K g x dg) :
     HasMFDerivAt I (J.prod K) (fun y ↦ (f y, g y)) x (df.prod dg) := by
-  simp only [HasMFDerivAt, ModelWithCorners.range_eq_univ, hasFDerivWithinAt_univ] at fh gh ⊢
-  use fh.1.prod gh.1; exact fh.2.prod gh.2
+  simp only [HasMFDerivAt] at fh gh ⊢
+  use fh.1.prodMk gh.1; exact fh.2.prodMk gh.2
 
 /-- `TangentSpace` commutes with products -/
 theorem tangentSpace_prod (x : M) (y : N) :
@@ -184,19 +192,18 @@ theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {
     (fh1 : HasMFDerivAt K L (fun y ↦ f (g x) y) (h x) df1) :
     HasMFDerivAt I L (fun y ↦ f (g y) (h y)) x (df0.comp dg + df1.comp dh) := by
   have fh := (fd.hasMFDerivAt_uncurry fh0 fh1).comp x (gh.prod hh)
-  simp only [ContinuousLinearMap.add_comp, ContinuousLinearMap.comp_assoc,
-    ContinuousLinearMap.fst_comp_prod, ContinuousLinearMap.snd_comp_prod] at fh
+  simp only [ContinuousLinearMap.add_comp, ContinuousLinearMap.comp_assoc] at fh
   exact fh
 
 /-- More general version of `hasMFDerivAt_iff_hasDerivAt`.
     The mathlib version doesn't handle product spaces. -/
 theorem hasMFDerivAt_iff_hasFDerivAt' {I : ModelWithCorners 𝕜 E A} [I.Boundaryless]
-    [ChartedSpace A E] [SmoothManifoldWithCorners I E] [ExtChartEqRefl I]
-    {J : ModelWithCorners 𝕜 F B} [J.Boundaryless] [ChartedSpace B F] [SmoothManifoldWithCorners J F]
+    [ChartedSpace A E] [IsManifold I ⊤ E] [ExtChartEqRefl I]
+    {J : ModelWithCorners 𝕜 F B} [J.Boundaryless] [ChartedSpace B F] [IsManifold J ⊤ F]
     [ExtChartEqRefl J] {f : E → F} {x : E} {f' : E →L[𝕜] F} :
     HasMFDerivAt I J f x f' ↔ HasFDerivAt f f' x := by
   simp only [HasMFDerivAt, ModelWithCorners.range_eq_univ, hasFDerivWithinAt_univ,
-    writtenInExtChartAt, extChartAt_eq_refl, Function.comp, PartialEquiv.refl_coe,
+    writtenInExtChartAt, extChartAt_eq_refl, Function.comp_def, PartialEquiv.refl_coe,
     PartialEquiv.refl_symm, id]
   exact ⟨fun x ↦ x.2, fun d ↦ ⟨d.continuousAt, d⟩⟩
 
@@ -206,8 +213,7 @@ theorem mfderiv_comp' {f : M → N} (x : M) {g : N → O} (hg : MDifferentiableA
     mfderiv I K (fun x ↦ g (f x)) x = (mfderiv J K g (f x)).comp (mfderiv I J f x) :=
   mfderiv_comp _ hg hf
 
-variable [SmoothManifoldWithCorners I M] [SmoothManifoldWithCorners J N]
-variable [SmoothManifoldWithCorners K O] [SmoothManifoldWithCorners L P]
+variable [IsManifold I ⊤ M] [IsManifold J ⊤ N] [IsManifold K ⊤ O] [IsManifold L ⊤ P]
 
 /-- Chart derivatives are invertible (left inverse) -/
 theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}

@@ -12,7 +12,6 @@ over the extended reals.  `log (f z)` is subharmonic if `f z` is analytic, but `
 `f`.  `maxLog b (f z)` is similarly subharmonic, but stays finite.
 -/
 
-open Complex (abs)
 open scoped Real
 open Set
 noncomputable section
@@ -49,7 +48,7 @@ theorem le_of_maxLog_le {b x y : ℝ} (m : maxLog b x ≤ y) : x ≤ y.exp := by
 /-- `maxLog` is increasing -/
 theorem monotone_maxLog (b : ℝ) : Monotone fun x ↦ maxLog b x := by
   simp_rw [maxLog]; intro x y xy
-  simp only [ge_iff_le]; rw [Real.log_le_log_iff max_exp_pos max_exp_pos]
+  simp only; rw [Real.log_le_log_iff max_exp_pos max_exp_pos]
   apply max_le_max (le_refl _) xy
 
 /-- `maxLog` is continuous -/

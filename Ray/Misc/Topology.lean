@@ -9,6 +9,7 @@ import Mathlib.Topology.Semicontinuous
 ## Various topology lemmas
 -/
 
+open Classical
 open Metric (ball closedBall sphere mem_sphere mem_ball)
 open Filter
 open OrderDual (ofDual toDual)
@@ -50,12 +51,12 @@ theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddC
 /-- `{b | (a,b) ∈ s}` is open if `s` is open -/
 theorem IsOpen.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B] {s : Set (A × B)}
     (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} :=
-  o.preimage (Continuous.Prod.mk a)
+  o.preimage (Continuous.prodMk_right a)
 
 /-- `{b | (a,b) ∈ s}` is closed if `s` is closed -/
 theorem IsClosed.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {s : Set (A × B)} (c : IsClosed s) (a : A) : IsClosed {b | (a, b) ∈ s} :=
-  c.preimage (Continuous.Prod.mk a)
+  c.preimage (Continuous.prodMk_right a)
 
 /-- Tendsto commutes with ⁻¹ away from zero -/
 theorem tendsto_inv_iff_tendsto {A B : Type} [NontriviallyNormedField B]
@@ -80,22 +81,21 @@ theorem IsClosed.Icc_subset_of_forall_mem_nhds_within' {X : Type}
   have rev : Icc (toDual b) (toDual a) ⊆ s' := by
     apply IsClosed.Icc_subset_of_forall_mem_nhdsWithin
     · have e : s' ∩ Icc (toDual b) (toDual a) = ofDual ⁻¹' (s ∩ Icc a b) := by
-        apply Set.ext; intro x; simp only [Set.dual_Icc, Set.preimage_inter, ← hs']
+        apply Set.ext; intro x; simp only [Set.Icc_toDual, Set.preimage_inter, ← hs']
       rw [e]; exact IsClosed.preimage continuous_ofDual sc
     · simp only [Set.mem_preimage, OrderDual.ofDual_toDual, sb, ← hs']
     · intro x m
-      simp only [Set.mem_preimage, Set.mem_inter_iff, Set.mem_Ico, OrderDual.toDual_le,
-        OrderDual.lt_toDual] at m
+      simp only [Set.mem_inter_iff, Set.mem_Ico, OrderDual.toDual_le, OrderDual.lt_toDual] at m
       simp only [mem_nhdsWithin_iff_eventually, eventually_nhds_iff, Set.mem_inter_iff,
         Set.mem_Ioc, ← hs'] at so m ⊢
       rcases so (ofDual x) ⟨m.1, m.2.2, m.2.1⟩ with ⟨n, h, o, nx⟩
       use ofDual ⁻¹' n
       refine ⟨?_, o.preimage continuous_ofDual, mem_preimage.mpr nx⟩
       intro y m xy; simp only [Set.mem_Ioi] at xy; simp only [Set.mem_preimage]
-      simp only [Set.mem_Iio, Set.mem_preimage, OrderDual.ofDual_lt_ofDual] at h
+      simp only [Set.mem_Iio] at h
       exact h _ m xy
   intro x m; simp only [Set.mem_Icc] at m; specialize @rev (toDual x)
-  simp only [Set.dual_Icc, Set.mem_preimage, Set.mem_Icc, and_imp, OrderDual.ofDual_toDual,
+  simp only [Set.Icc_toDual, Set.mem_preimage, Set.mem_Icc, and_imp, OrderDual.ofDual_toDual,
     ← hs'] at rev
   exact rev m.1 m.2
 
@@ -176,7 +176,7 @@ theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace 
     {f : A → B} {g : A → C} {a : Filter A} {b : B} {c : C}
     (fa : MapClusterPt b a f) (ga : Tendsto g a (𝓝 c)) :
     MapClusterPt (b, c) a fun x ↦ (f x, g x) := by
-  rw [mapClusterPt_iff] at fa ⊢; intro s n
+  rw [mapClusterPt_iff_frequently] at fa ⊢; intro s n
   rcases mem_nhds_prod_iff.mp n with ⟨u, un, v, vn, sub⟩
   apply (fa _ un).mp
   apply (Filter.tendsto_iff_forall_eventually_mem.mp ga v vn).mp
@@ -213,3 +213,24 @@ lemma eventuallyEq_inter {X : Type} [TopologicalSpace X] {s t u : Set X} {x : X}
     (· ∈ t ∩ s) =ᶠ[𝓝 x] (· ∈ u ∩ s) ↔ (· ∈ t) =ᶠ[𝓝[s] x] (· ∈ u) := by
   rw [Filter.EventuallyEq, eventuallyEq_nhdsWithin_iff]
   simp only [mem_inter_iff, eq_iff_iff, and_congr_left_iff]
+
+/-- Given a closed ball in an open set, we can expand the ball to a larger open ball -/
+lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X} {x : X} {r : ℝ}
+    (sub : closedBall x r ⊆ s) (o : IsOpen s) : ∃ t, r < t ∧ ball x t ⊆ s := by
+  by_cases n : closedBall x (r + 1) \ s = ∅
+  · simp only [diff_eq_empty] at n
+    exact ⟨r + 1, by linarith, subset_trans Metric.ball_subset_closedBall n⟩
+  simp only [← nonempty_iff_ne_empty] at n
+  have c : IsCompact (closedBall x (r + 1) \ s) := (isCompact_closedBall x (r + 1)).diff o
+  have d : Continuous fun y ↦ dist x y := continuous_const.dist continuous_id
+  obtain ⟨y, ⟨yr, ys⟩, h⟩ := c.exists_isMinOn n d.continuousOn
+  refine ⟨dist x y, ?_, ?_⟩
+  · contrapose ys
+    simp only [not_lt, Decidable.not_not] at ys ⊢
+    apply sub
+    simpa only [Metric.mem_closedBall, dist_comm]
+  · intro z m
+    by_contra zs
+    simp only [isMinOn_iff, mem_diff, Metric.mem_closedBall, dist_comm, and_imp, mem_ball] at h m yr
+    specialize h z (le_trans m.le yr) zs
+    linarith

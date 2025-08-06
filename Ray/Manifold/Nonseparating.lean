@@ -1,6 +1,6 @@
 -- Sets that don't separate open sets when they are removed
 import Ray.Analytic.Holomorphic
-import Ray.AnalyticManifold.OneDimension
+import Ray.Manifold.OneDimension
 
 /-!
 ## Sets that don't separate open sets when they are removed
@@ -33,12 +33,12 @@ theorem Nonseparating.univ_prod [LocallyConnectedSpace X] {t : Set Y} (n : Nonse
     Nonseparating ((univ : Set X) ×ˢ t) := by
   have e : ((univ : Set X) ×ˢ t)ᶜ = univ ×ˢ tᶜ := by
     apply Set.ext; intro ⟨a, x⟩; rw [mem_compl_iff]
-    simp only [prod_mk_mem_set_prod_eq, mem_univ, mem_compl_iff, true_and]
+    simp only [prodMk_mem_set_prod_eq, mem_univ, mem_compl_iff, true_and]
   constructor; · rw [e]; exact dense_univ.prod n.dense
   · intro ⟨a, x⟩ u m un; simp only [mem_prod_eq, mem_univ, true_and] at m
     rcases mem_nhds_prod_iff.mp un with ⟨u0, n0, u1, n1, uu⟩
     rcases n.loc x u1 m n1 with ⟨c1, cs1, cn1, cp1⟩
-    rcases locallyConnectedSpace_iff_open_connected_subsets.mp (by infer_instance) a u0 n0 with
+    rcases locallyConnectedSpace_iff_subsets_isOpen_isConnected.mp (by infer_instance) a u0 n0 with
       ⟨c0, cs0, co0, cm0, cc0⟩
     use c0 ×ˢ c1; refine ⟨?_, ?_, ?_⟩
     · intro ⟨b, y⟩ m'; simp only [mem_prod_eq, mem_diff, mem_univ, true_and] at m' ⊢
@@ -66,7 +66,7 @@ theorem Nonseparating.complexManifold {t : Set S}
       use(extChartAt I z).symm y
       simp only [mem_inter_iff, mem_preimage, mem_compl_iff, not_and, ← hv] at m
       rcases m with ⟨⟨ym, yu⟩, yt⟩
-      simp only [mem_inter_iff, ym, yu, true_and, mem_compl_iff]; exact yt ym
+      simp only [mem_inter_iff, yu, true_and, mem_compl_iff]; exact yt ym
     loc := by
       intro z u zt un
       have m : extChartAt I z z ∈ (extChartAt I z).target ∩ (extChartAt I z).symm ⁻¹' t := by
@@ -95,14 +95,14 @@ theorem Nonseparating.complexManifold {t : Set S}
         rw [ee, (extChartAt' I z).symm.map_nhdsWithin_eq (mem_extChartAt_target z), ← ee]
         simp only [extChartAt', PartialHomeomorph.symm_source,
           PartialEquiv.left_inv _ (mem_extChartAt_source z), compl_inter, inter_union_distrib_left,
-          inter_compl_self, empty_union, image_inter]
+          inter_compl_self, empty_union]
         apply nhdsWithin_eq_nhdsWithin (mem_extChartAt_source z)
           (isOpen_extChartAt_source (I := I) z)
         apply Set.ext; intro x
         simp only [mem_inter_iff, mem_compl_iff, mem_image, mem_preimage]; constructor
         · intro ⟨xt, xz⟩; refine ⟨⟨extChartAt I z x, ?_⟩, xz⟩
           simp only [PartialEquiv.left_inv _ xz, xt, PartialEquiv.map_source _ xz, not_false_iff,
-            and_self_iff, eq_self_iff_true]
+            and_self_iff]
         · intro ⟨⟨y, ⟨⟨yz, yt⟩, yx⟩⟩, _⟩
           simp only [← yx, yt, PartialEquiv.map_target _ yz, not_false_iff, true_and]
       · rw [e]; apply cp.image; apply (continuousOn_extChartAt_symm z).mono
@@ -183,13 +183,14 @@ theorem IsPreconnected.ball_diff_center {a : ℂ} {r : ℝ} : IsPreconnected (ba
     simp only [mem_diff, mem_ball, Complex.dist_eq, mem_singleton_iff, mem_image, Prod.exists,
       mem_prod_eq, mem_Ioo, mem_univ, and_true]
     constructor
-    · intro ⟨zr, za⟩; use abs (z - a), Complex.arg (z - a)
-      simp only [AbsoluteValue.pos_iff, Ne, Complex.abs_mul_exp_arg_mul_I,
-        add_sub_cancel, eq_self_iff_true, sub_eq_zero, za, zr, not_false_iff, and_true]
+    · intro ⟨zr, za⟩
+      use ‖z - a‖, Complex.arg (z - a)
+      simp only [norm_pos_iff, Ne, Complex.norm_mul_exp_arg_mul_I, add_sub_cancel, sub_eq_zero, za,
+        zr, not_false_iff, and_true]
     · intro ⟨s, t, ⟨s0, sr⟩, e⟩
-      simp only [← e, add_sub_cancel_left, Complex.abs.map_mul, Complex.abs_ofReal, abs_of_pos s0,
-        Complex.abs_exp_ofReal_mul_I, mul_one, sr, true_and, add_right_eq_self, mul_eq_zero,
-        Complex.exp_ne_zero, or_false, Complex.ofReal_eq_zero]
+      simp only [← e, add_sub_cancel_left, norm_mul, Complex.norm_real, abs_of_pos s0,
+        Complex.norm_exp_ofReal_mul_I, mul_one, sr, true_and, add_eq_left, mul_eq_zero,
+        Complex.exp_ne_zero, or_false, Complex.ofReal_eq_zero, Real.norm_eq_abs]
       exact s0.ne'
   rw [e]; apply IsPreconnected.image; exact isPreconnected_Ioo.prod isPreconnected_univ
   apply Continuous.continuousOn; continuity
@@ -203,12 +204,11 @@ theorem Complex.nonseparating_singleton (a : ℂ) : Nonseparating ({a} : Set ℂ
       simp only [not_not] at za; rw [za] at m; clear za z
       rcases Metric.isOpen_iff.mp uo a m with ⟨r, rp, rs⟩
       use a + r / 2
-      simp only [mem_inter_iff, mem_compl_iff, mem_singleton_iff, add_right_eq_self,
-        div_eq_zero_iff, Complex.ofReal_eq_zero, one_ne_zero, or_false,
-        rp.ne', not_false_iff, and_true, false_or, two_ne_zero]
+      simp only [mem_inter_iff, mem_compl_iff, mem_singleton_iff, add_eq_left, div_eq_zero_iff,
+        Complex.ofReal_eq_zero, or_false, rp.ne', not_false_iff, and_true, two_ne_zero]
       apply rs
-      simp only [mem_ball, dist_self_add_left, Complex.norm_eq_abs, map_div₀, Complex.abs_ofReal,
-        Complex.abs_two, abs_of_pos rp, half_lt_self rp]
+      simp only [mem_ball, dist_self_add_left, norm_div, Complex.norm_real, Real.norm_eq_abs,
+        Complex.norm_two, abs_of_pos rp, half_lt_self rp]
     loc := by
       intro z u m n; simp only [mem_singleton_iff] at m; simp only [m] at n ⊢; clear m z
       rcases Metric.mem_nhds_iff.mp n with ⟨r, rp, rs⟩
@@ -221,10 +221,10 @@ theorem AnalyticManifold.nonseparating_singleton (a : S) : Nonseparating ({a} : 
   by_cases az : a ∈ (extChartAt I z).source
   · convert Complex.nonseparating_singleton (extChartAt I z a)
     simp only [eq_singleton_iff_unique_mem, mem_inter_iff, PartialEquiv.map_source _ az, true_and,
-      mem_preimage, mem_singleton_iff, PartialEquiv.left_inv _ az, eq_self_iff_true]
+      mem_preimage, mem_singleton_iff, PartialEquiv.left_inv _ az]
     intro x ⟨m, e⟩; simp only [← e, PartialEquiv.right_inv _ m]
   · convert Nonseparating.empty
-    simp only [eq_empty_iff_forall_not_mem, mem_inter_iff, mem_preimage, mem_singleton_iff, not_and]
+    simp only [eq_empty_iff_forall_notMem, mem_inter_iff, mem_preimage, mem_singleton_iff, not_and]
     intro x m; contrapose az; simp only [not_not] at az ⊢; rw [← az]
     exact PartialEquiv.map_target _ m
 

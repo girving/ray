@@ -53,7 +53,7 @@ structure Base (p : (E → α) → E → Prop) (s : Set E) (f : E → α) : Prop
 /-- There is a ball around each `x ∈ closure s` with an associated defined `g` -/
 lemma Base.ball (b : Base p s f) (x : closure s) :
     ∃ g r, 0 < r ∧ (∀ z, z ∈ ball (x : E) r → p g z) ∧ g =ᶠ[𝓝ˢ (s ∩ ball (x : E) r)] f := by
-  rcases x with ⟨x, m⟩; simp only [Subtype.coe_mk]
+  rcases x with ⟨x, m⟩; simp only
   rcases b.point m with ⟨g, pg, e⟩
   rcases Metric.eventually_nhds_iff_ball.mp pg with ⟨r, rp, pg⟩
   rcases Filter.frequently_iff.mp e (Metric.ball_mem_nhds _ rp) with ⟨y, yb, ys, e⟩
@@ -111,7 +111,7 @@ def Base.y (b : Base p s f) (m : z ∈ b.t) : closure s :=
   choose (mem_iUnion.mp m)
 
 lemma Base.yt (b : Base p s f) (m : z ∈ b.t) : z ∈ Metric.ball (b.y m : E) (b.r (b.y m)) := by
-  simp only [Base.t, Base.y, mem_iUnion₂, mem_iUnion] at m ⊢; exact choose_spec (choose_spec m)
+  simp only [Base.t, Base.y, mem_iUnion] at m ⊢; exact choose_spec (choose_spec m)
 
 lemma Base.ot (b : Base p s f) : IsOpen b.t :=
   isOpen_iUnion fun _ ↦ isOpen_iUnion fun _ ↦ isOpen_ball
@@ -123,7 +123,7 @@ theorem Base.cover (b : Base p s f) : closure s ⊆ b.t :=
 theorem Convex.inter_ball (c : Convex ℝ s) (x0 x1 : closure s) {r0 r1 : ℝ} (r0p : 0 < r0)
     (r1p : 0 < r1) (ne : ∃ z, z ∈ ball (x0 : E) r0 ∩ ball (x1 : E) r1) :
     ∃ w, w ∈ s ∩ ball (x0 : E) r0 ∩ ball (x1 : E) r1 := by
-  rcases x0 with ⟨x0, m0⟩; rcases x1 with ⟨x1, m1⟩; simp only [Subtype.coe_mk]
+  rcases x0 with ⟨x0, m0⟩; rcases x1 with ⟨x1, m1⟩; simp only
   have x01 : ‖x1 - x0‖ < r0 + r1 := by
     rcases ne with ⟨z, m0, m1⟩; simp only [mem_ball, dist_eq_norm] at m0 m1
     calc ‖x1 - x0‖
@@ -188,5 +188,3 @@ theorem Base.up (b : Base p s f) : ∀ᶠ z in 𝓝ˢ (closure s), p b.u z := by
   apply Filter.eventually_of_mem (b.ot.mem_nhdsSet.mpr b.cover)
   intro x m; refine b.congr (b.gp (b.y m) (b.yt m)) ?_
   exact ((b.ug _).eventuallyEq_of_mem ((b.ot.inter isOpen_ball).mem_nhds ⟨m, b.yt m⟩)).symm
-
-end Continuation
