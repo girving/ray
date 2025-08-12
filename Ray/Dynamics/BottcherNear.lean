@@ -114,7 +114,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     apply DifferentiableOn.div (fa.mono diff_subset).differentiableOn
     exact (Differentiable.pow differentiable_id _).differentiableOn
     intro z zs; exact pow_ne_zero _ (Set.mem_diff_singleton.mp zs).2
-  rw [analyticOn_iff_differentiableOn o]
+  rw [Complex.analyticOnNhd_iff_differentiableOn o]
   by_cases t0 : (0 : ℂ) ∉ t; · rw [Set.diff_singleton_eq_self t0] at ga; exact ga
   simp only [Set.not_notMem] at t0
   have gc : ContinuousAt (g f d) 0 := by
