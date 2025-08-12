@@ -2,6 +2,7 @@ import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Ray.Misc.Complex
 import Ray.Misc.Measure
 import Ray.Misc.Prod
 
@@ -72,46 +73,6 @@ lemma rcmDeriv.det (x : ℝ × ℝ) : (rcmDeriv x).det = x.1 := by
     _ = x.1 := by simp only [Real.cos_sq_add_sin_sq, mul_one]
 
 end realCircleMap
-
-/-- Spheres are empty iff the radius is negative -/
-@[simp]
-theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
-  constructor
-  · intro rp; contrapose rp; simp at rp
-    refine Nonempty.ne_empty ⟨c + r, ?_⟩
-    simpa only [mem_sphere_iff_norm, add_sub_cancel_left, RCLike.norm_ofReal, abs_eq_self]
-  · intro n; contrapose n
-    rw [← not_nonempty_iff_eq_empty] at n
-    simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
-
-/-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
-theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
-    ∃ t, t ∈ Ioc 0 (2 * π) ∧ z = circleMap c r t := by
-  by_cases rp : r < 0
-  · simp only [Metric.sphere_eq_empty.mpr rp, mem_empty_iff_false] at zs
-  simp only [not_lt] at rp
-  rw [←abs_of_nonneg rp, ← range_circleMap, mem_range] at zs
-  rcases zs with ⟨t, ht⟩
-  generalize ha : 2 * π = a
-  have ap : a > 0 := by rw [←ha]; bound
-  generalize hs : t + a - a * ⌈t / a⌉ = s
-  use s; constructor
-  · simp only [mem_Ioc, sub_pos, tsub_le_iff_right, ← hs]
-    constructor
-    · calc a * ⌈t / a⌉
-        _ < a * (t / a + 1) := by bound
-        _ = a / a * t + a := by ring
-        _ = t + a := by field_simp [ap.ne']
-    · calc a + a * ⌈t / a⌉
-        _ ≥ a + a * (t / a) := by bound
-        _ = a / a * t + a := by ring
-        _ = t + a := by field_simp [ap.ne']
-  · simp only [←ht, circleMap, Complex.ofReal_sub, Complex.ofReal_add, Complex.ofReal_mul,
-      Complex.ofReal_intCast, add_right_inj, mul_eq_mul_left_iff, Complex.ofReal_eq_zero, ← hs]
-    rw [mul_sub_right_distrib, right_distrib, Complex.exp_sub, Complex.exp_add]
-    rw [mul_comm _ (⌈_⌉:ℂ), mul_assoc, Complex.exp_int_mul, ← ha]
-    simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
-      one_zpow, div_one, true_or]
 
 section FubiniHelper
 

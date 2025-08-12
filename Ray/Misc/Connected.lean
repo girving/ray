@@ -280,3 +280,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
       max_eq_right m.1]
   · intro ⟨a, n⟩; simp only [mem_preimage, Path.coe_mk_mk, ← hq]
     exact lo _ (min_le_right _ _)
+
+theorem IsPathConnected.of_frontier' {X : Type} [TopologicalSpace X] [PathConnectedSpace X]
+    {s : Set X} (pc : IsPathConnected (frontier s)) (sc : IsClosed s) : IsPathConnected s :=
+  IsPathConnected.of_frontier pc continuous_id sc

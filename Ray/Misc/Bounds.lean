@@ -418,3 +418,16 @@ theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
     rw [Complex.exp_sum]; apply Finset.prod_congr rfl
     intro n m; rw [Complex.exp_log (f0 n m)]
   rw [e]; exact _root_.trans (exp_small (by linarith)) (by linarith)
+
+/-- If `z, w` are close, then `0 < (z⁻¹ * w).re` -/
+lemma re_mul_inv_pos_of_close {z w : ℂ} (wz : ‖w - z‖ < ‖z‖) : 0 < (z⁻¹ * w).re := by
+  have z0 : z ≠ 0 := norm_ne_zero_iff.mp (lt_of_le_of_lt (by bound) wz).ne'
+  have h : ‖z⁻¹ * w - 1‖ < 1 := by
+    nth_rw 1 [← inv_mul_cancel₀ z0]
+    simp only [← mul_sub, norm_mul, norm_inv]
+    simp only [← div_eq_inv_mul]
+    bound [norm_pos_iff.mpr z0]
+  generalize z⁻¹ * w = x at h
+  rw [norm_sub_rev] at h
+  simpa only [Complex.sub_re, Complex.one_re, sub_lt_self_iff] using
+    lt_of_le_of_lt (Complex.re_le_norm _) h
