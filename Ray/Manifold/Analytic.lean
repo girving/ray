@@ -36,6 +36,8 @@ variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]
 variable {P : Type} {L : ModelWithCorners 𝕜 H D} [TopologicalSpace P]
 variable [ChartedSpace A M] [ChartedSpace B N] [ChartedSpace C O] [ChartedSpace D P]
 
+-- #28286
+
 /-- Functions are `ContMDiffAt` iff they are continuous and analytic in charts -/
 theorem mAnalyticAt_iff {f : M → N} {x : M} [CompleteSpace F] :
     ContMDiffAt I J ω f x ↔ ContinuousAt f x ∧
