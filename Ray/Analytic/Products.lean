@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Pi.Bounds
@@ -70,7 +71,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
     intro n z zs; refine Complex.exp_log ?_
     exact near_one_avoids_zero (near1' n z zs)
   have hl : ∀ n, AnalyticOnNhd ℂ (fl n) s := fun n ↦
-    (h n).log (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
+    (h n).clog (fun z m ↦ mem_slitPlane_of_near_one (near1' n z m))
     --fun n ↦ log_analytic_near_one o (h n) (near1' n)
   set c2 := 2 * c
   have hfl : ∀ n z, z ∈ s → ‖fl n z‖ ≤ c2 * a ^ n := by
@@ -93,7 +94,7 @@ theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : �
         N.prod fun n ↦ f n z := by
       apply funext; intro N; simp; rw [Complex.exp_sum]; simp_rw [expfl _ z zs]
     rw [expsum0] at comp; rw [← hg]; assumption
-  · rw [← hg]; exact fun z zs ↦ AnalyticAt.exp.comp (gla z zs)
+  · rw [← hg]; exact fun z zs ↦ analyticAt_cexp.comp (gla z zs)
   · simp only [Complex.exp_ne_zero, Ne, not_false_iff, imp_true_iff, ← hg]
 
 /-- Same as above, but converge to `tprodOn` -/

@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Tactic.Bound
 import Interval.Misc.Int
 import Ray.Analytic.Analytic
@@ -295,7 +296,7 @@ theorem AnalyticOnNhd.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa
       generalize hg : (fun z ↦ (h z).re) = g
       have ha : AnalyticAt ℂ h c := by
         rw [← hh]
-        apply (analyticAt_const.mul (fa c (interior_subset cs))).log
+        apply (analyticAt_const.mul (fa c (interior_subset cs))).clog
         field_simp [norm_ne_zero_iff.mp anz]
       rcases Metric.isOpen_iff.mp (isOpen_analyticAt ℂ h) c ha with ⟨r0, r0p, r0a⟩
       rcases Metric.continuousAt_iff.mp fac (‖f c‖ - b.exp) (sub_pos.mpr bf) with
@@ -586,7 +587,7 @@ theorem toCircle_smul {T : ℝ} (n : ℕ) (x : AddCircle T) : (n • x).toCircle
 theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
   have mh : ∀ n : ℕ, HarmonicOn (fun z ↦ ((↑r)⁻¹ * (z - c)) ^ n) (closedBall c r) := by
     intro n; apply AnalyticOnNhd.harmonicOn; refine AnalyticOnNhd.mono ?_ (Set.subset_univ _)
-    rw [analyticOn_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
+    rw [Complex.analyticOnNhd_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
     apply Differentiable.pow; apply Differentiable.mul (differentiable_const _)
     apply Differentiable.sub differentiable_id (differentiable_const _)
   induction' n using Int.induction_overlap with n n

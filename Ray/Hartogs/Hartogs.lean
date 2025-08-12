@@ -588,7 +588,7 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
   have pa := (p.hasFPowerSeriesOnBall_changeOrigin n (lt_of_lt_of_le hp.r_pos hp.r_le)).analyticAt
   set g := fun w1 ↦ ((0 : ℂ), w1 - z1)
   have ga : AnalyticOnNhd ℂ g univ := by
-    rw [analyticOn_univ_iff_differentiable]
+    rw [Complex.analyticOnNhd_univ_iff_differentiable]
     exact (differentiable_const _).prodMk (differentiable_id.sub (differentiable_const _))
   have g0 : 0 = g z1 := by aesop
   rw [g0] at pa
@@ -706,9 +706,9 @@ theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
   refine SubharmonicOn.constMul ?_ (by bound)
   apply AnalyticOnNhd.maxLog_norm_subharmonicOn _ (-1)
-  rw [analyticOn_iff_differentiableOn Metric.isOpen_ball]
+  rw [Complex.analyticOnNhd_iff_differentiableOn Metric.isOpen_ball]
   apply DifferentiableOn.const_smul
-  rw [← analyticOn_iff_differentiableOn Metric.isOpen_ball]
+  rw [← Complex.analyticOnNhd_iff_differentiableOn Metric.isOpen_ball]
   apply unevenTerm.analytic u
 
 /-- The nonuniform bound holds uniformly -/
