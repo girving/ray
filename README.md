@@ -49,6 +49,11 @@ generally, which means detours along the way. The main results are
   Each Multibrot set $M_d$ and its complement $\mathbb{S} - M_d$
   are corrected, including the Mandelbrot set $M = M_2$.
 
+## Rendering
+
+https://github.com/girving/ray-render has verified rendering code for the Mandelbrot set, based on the
+verified interval arithmetic in https://github.com/girving/interval.
+
 ## References
 
 1. [Adrien Douady, John Hubbard (1984-5). Exploring the Mandelbrot set.  The Orsay Notes](https://pi.math.cornell.edu/~hubbard/OrsayEnglish.pdf)

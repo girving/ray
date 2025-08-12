@@ -1,5 +1,4 @@
 import Ray.Dynamics.Mandelbrot
-import Ray.Render.Color
 
 /-!
 ## A lower bounds `potential c z` for small `z`

@@ -2,7 +2,6 @@ import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Tactic.Bound
-import Interval.Misc.Int
 import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
 import Ray.Hartogs.Duals
@@ -590,18 +589,20 @@ theorem fourierExtend' (rp : r > 0) (n : ℤ) : Extendable (fourier n) c r := by
     rw [Complex.analyticOnNhd_iff_differentiableOn isOpen_univ]; apply Differentiable.differentiableOn
     apply Differentiable.pow; apply Differentiable.mul (differentiable_const _)
     apply Differentiable.sub differentiable_id (differentiable_const _)
-  induction' n using Int.induction_overlap with n n
-  · exists fun z : ℂ ↦ ((↑r)⁻¹ * (z - c)) ^ n
+  rcases n.eq_nat_or_neg with ⟨k, (e | e)⟩
+  · simp only [e]
+    exists fun z : ℂ ↦ ((↑r)⁻¹ * (z - c)) ^ k
     exact
-      { gh := mh n
+      { gh := mh k
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply
           simp only [natCast_zsmul, toCircle_smul]
           rfl }
-  · exists fun z : ℂ ↦ conj (((↑r)⁻¹ * (z - c)) ^ n)
+  · simp only [e]
+    exists fun z : ℂ ↦ conj (((↑r)⁻¹ * (z - c)) ^ k)
     exact
-      { gh := (mh n).conj
+      { gh := (mh k).conj
         b := by
           intro t; rw [rir rp]
           apply Eq.trans fourier_apply

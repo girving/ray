@@ -12,8 +12,3 @@ import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
 import Ray.Misc.ChartedSpace
-import Ray.Render.Grid
-import Ray.Render.Mandelbrot
-import Ray.Render.Image
-import Ray.Render.Iterate
-import Ray.Render.Potential
