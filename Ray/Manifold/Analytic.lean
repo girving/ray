@@ -70,12 +70,12 @@ theorem mAnalytic_iff_of_boundaryless [I.Boundaryless] [IsManifold I ω M] [IsMa
 
 -- end #28286
 
-/-- ContMDiff functions are continuous (explicit `I`, `J` version) -/
+/- /-- ContMDiff functions are continuous (explicit `I`, `J` version) -/
 theorem ContMDiffAt.continuousAt' (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
     {M N : Type} [TopologicalSpace M] [ChartedSpace A M] [TopologicalSpace N] [ChartedSpace B N]
     [I.Boundaryless] [J.Boundaryless] [CompleteSpace F]
     {f : M → N} {x : M} (h : ContMDiffAt I J ω f x) :
-    ContinuousAt f x := h.continuousAt
+    ContinuousAt f x := h.continuousAt -/
 
 /-- `I.toPartialEquiv = I` in terms of `coe` -/
 lemma ModelWithCorners.coe_coe (I : ModelWithCorners 𝕜 E A) :
