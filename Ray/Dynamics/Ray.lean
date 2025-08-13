@@ -263,7 +263,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     have er : ∀ᶠ y in 𝓝 (c, ↑t * x0), Eqn s n r y := by
       rw [← hr]; apply eqn_near
       exact (s.ray_mAnalytic (pt p1 m)).comp₂_of_eq contMDiffAt_fst
-          (contMDiffAt_const.mul contMDiffAt_snd) (by simp only [xe])
+          (contMDiffAt_const.mul' contMDiffAt_snd) (by simp only [xe])
       rw [xe]; exact e1.self_of_nhds.near
       have xc : ContinuousAt (fun y : ℂ × ℂ ↦ (y.1, x1 / x0 * y.2)) (c, ↑t * x0) :=
         continuousAt_fst.prodMk (continuousAt_const.mul continuousAt_snd)

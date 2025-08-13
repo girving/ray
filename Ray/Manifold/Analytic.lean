@@ -112,6 +112,8 @@ theorem ContMDiffAt.congr [CompleteSpace F] {f g : M → N} {x : M} (fa : ContMD
     (e : f =ᶠ[𝓝 x] g) : ContMDiffAt I J ω g x :=
   ContMDiffAt.congr_of_eventuallyEq fa (id (Filter.EventuallyEq.symm e))
 
+-- begin #28292
+
 /-- `ContMDiffAt.comp` for a function of two arguments -/
 theorem ContMDiffAt.comp₂ [IsManifold I ω M] [IsManifold J ω N] [IsManifold K ω O]
     [IsManifold L ω P] {h : N × M → P} {f : O → N} {g : O → M} {x : O}
@@ -127,6 +129,8 @@ theorem ContMDiffAt.comp₂_of_eq [IsManifold I ω M] [IsManifold J ω N] [IsMan
     ContMDiffAt K L ω (fun x ↦ h (f x, g x)) x := by
   rw [← e] at ha
   exact ha.comp₂ fa ga
+
+-- end #28292
 
 section Iff
 
@@ -186,6 +190,8 @@ theorem ContMDiff.along_snd [CompleteSpace G] [IsManifold I ω M] [IsManifold J 
     ContMDiff J K ω (fun y ↦ f x y) :=
   fun _ ↦ (fa _).along_snd
 
+/-
+
 /-- Addition is analytic -/
 theorem ContMDiffAt.add [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] {f g : O → F} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, F)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, F)) ω g x) :
@@ -198,15 +204,15 @@ theorem ContMDiffAt.add [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] 
 theorem ContMDiffAt.sub [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] {f g : O → F} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, F)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, F)) ω g x) :
     ContMDiffAt K (𝓘(𝕜, F)) ω (fun x ↦ f x - g x) x :=
-  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
+  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga) -/
 
 /-- Multiplication is analytic -/
-theorem ContMDiffAt.mul [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f g : O → 𝕜} {x : O}
+theorem ContMDiffAt.mul' [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f g : O → 𝕜} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω g x) :
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x * g x) x :=
   ((analyticAt_fst.mul analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
 
-/-- Inverse is analytic away from zeros -/
+/- /-- Inverse is analytic away from zeros -/
 theorem ContMDiffAt.inv [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (f0 : f x ≠ 0) :
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ (f x)⁻¹) x :=
@@ -217,6 +223,8 @@ theorem ContMDiffAt.div [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω 
     (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω g x) (g0 : g x ≠ 0) :
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x / g x) x := by
   simp only [div_eq_mul_inv]; exact fa.mul (ga.inv g0)
+
+-/
 
 /-- Powers are analytic -/
 theorem ContMDiffAt.pow [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}

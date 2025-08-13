@@ -2,6 +2,7 @@ import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Data.Complex.Basic
+import Mathlib.Geometry.Manifold.Algebra.LieGroup
 import Mathlib.Topology.Compactification.OnePoint.Basic
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
@@ -510,7 +511,7 @@ theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
     apply AnalyticAt.differentiableAt; apply ContMDiffAt.analyticAt I I
     refine (ContMDiffAt.extChartAt ?_).comp _ ?_; exact m
-    exact fa.comp _ (contMDiffAt_id.inv z0)
+    exact fa.comp _ (contMDiffAt_id.inv₀ z0)
   · refine (continuousAt_extChartAt' ?_).comp ?_
     · simp only [if_pos, mem_extChartAt_source]
     · simp only [← continuousWithinAt_compl_self, ContinuousWithinAt]
