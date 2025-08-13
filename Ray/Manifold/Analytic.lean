@@ -94,10 +94,10 @@ lemma ContMDiffAt.extChartAt [CompleteSpace E] [cm : IsManifold I ⊤ M]
   -- simp only [extChartAt_source] at ys
   -- exact contMDiffAt_extChartAt' ys -/
 
-/-- `I` preserves `𝓝` if it is boundaryless -/
+/- /-- `I` preserves `𝓝` if it is boundaryless -/
 lemma ModelWithCorners.map_nhds_eq_of_boundaryless [I.Boundaryless] {x : A} :
     (𝓝 x).map I = 𝓝 (I x) := by
-  simp only [I.map_nhds_eq, I.range_eq_univ, nhdsWithin_univ]
+  simp only [I.map_nhds_eq, I.range_eq_univ, nhdsWithin_univ] -/
 
 /-- `extChartAt.symm` is analytic if we're boundaryless -/
 theorem ContMDiffAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : IsManifold I ω M]
