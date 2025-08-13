@@ -67,7 +67,7 @@ theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : 
   · intro ⟨c, w⟩ wm
     rcases(mem_image _ _ _).mp wm with ⟨⟨c', z⟩, zm, e⟩
     simp only [Prod.ext_iff] at e; simp only [e.1] at e zm; simp only [← e.2]
-    exact ((i _ zm).ga.congr (Filter.EventuallyEq.symm (ge _ zm))).contMDiffWithinAt
+    exact ((i _ zm).ga.congr_of_eventuallyEq (ge _ zm)).contMDiffWithinAt
   · intro ⟨c, z⟩ m; exact left _ _ m
 
 /-- The global 1D inverse function theorem (compact case): if `f : S → T` is nonsingular and

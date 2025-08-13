@@ -107,10 +107,10 @@ theorem ContMDiffAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : IsM
     exact ⟨h.1, h.2.analyticAt⟩
   exact contMDiffWithinAt_extChartAt_symm_range x ys
 
-/-- `ContMDiffAt` depends only on local values -/
+/- /-- `ContMDiffAt` depends only on local values -/
 theorem ContMDiffAt.congr [CompleteSpace F] {f g : M → N} {x : M} (fa : ContMDiffAt I J ω f x)
     (e : f =ᶠ[𝓝 x] g) : ContMDiffAt I J ω g x :=
-  ContMDiffAt.congr_of_eventuallyEq fa (id (Filter.EventuallyEq.symm e))
+  ContMDiffAt.congr_of_eventuallyEq fa (id (Filter.EventuallyEq.symm e)) -/
 
 -- begin #28292
 
@@ -264,7 +264,7 @@ theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace 
   clear a
   have h' := (ContMDiffAt.extChartAt_symm (PartialEquiv.map_source _ fm.self_of_nhds)).comp_of_eq
       (h.comp _ (ContMDiffAt.extChartAt m)) ?_
-  · apply h'.congr
+  · apply h'.congr_of_eventuallyEq
     clear h h'
     apply ((isOpen_extChartAt_source x).eventually_mem m).mp
     refine fm.mp (.of_forall fun z mf m ↦ ?_)

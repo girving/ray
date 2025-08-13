@@ -382,7 +382,7 @@ theorem NontrivialMAnalyticAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : Co
 /-- Nontriviality depends only locally on `f` -/
 theorem NontrivialMAnalyticAt.congr {f g : S → T} {z : S} (n : NontrivialMAnalyticAt f z)
     (e : f =ᶠ[𝓝 z] g) : NontrivialMAnalyticAt g z := by
-  use n.mAnalyticAt.congr e
+  use n.mAnalyticAt.congr_of_eventuallyEq e.symm
   refine n.nonconst.mp (e.mp (.of_forall fun w ew n ↦ ?_))
   rwa [← ew, ← e.self_of_nhds]
 

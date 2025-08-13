@@ -473,7 +473,7 @@ theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : 
   have e : (fun x : 𝕊 ↦ f x.toComplex) =ᶠ[𝓝 ↑z] fill f y := by
     simp only [OnePoint.nhds_coe_eq, Filter.EventuallyEq, Filter.eventually_map, toComplex_coe,
       fill_coe, Filter.eventually_true]
-  refine ContMDiffAt.congr ?_ e
+  refine ContMDiffAt.congr_of_eventuallyEq ?_ e.symm
   refine fa.comp_of_eq mAnalyticAt_toComplex ?_
   simp only [toComplex_coe]
 

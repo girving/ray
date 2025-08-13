@@ -81,7 +81,7 @@ theorem Eqn.congr {x : ℂ × ℂ} {r0 r1 : ℂ → ℂ → S} (e : Eqn s n r0 x
     (loc : uncurry r0 =ᶠ[𝓝 x] uncurry r1) : Eqn s n r1 x := by
   have s := loc.self_of_nhds; simp only [uncurry] at s
   exact
-    { holo := e.holo.congr loc
+    { holo := e.holo.congr_of_eventuallyEq loc.symm
       near := by simp only [← s, e.near]
       eqn := by simp only [← s, e.eqn] }
 

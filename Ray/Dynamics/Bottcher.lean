@@ -78,8 +78,8 @@ theorem Super.eqOn_bottcher_bottcherPost (s : Super f d a) [OnePreimage s] :
 /-- `s.bottcher` is analytic on `s.post` -/
 theorem Super.bottcher_mAnalyticOn (s : Super f d a) [OnePreimage s] :
     ContMDiffOnNhd II I (uncurry s.bottcher) s.post := by
-  intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr
-  exact s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)
+  intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr_of_eventuallyEq
+  exact (s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)).symm
 
 /-- `s.bottcher` is the left inverse of `s.ray` -/
 theorem Super.bottcher_ray (s : Super f d a) [OnePreimage s] (m : (c, x) ∈ s.ext) :
