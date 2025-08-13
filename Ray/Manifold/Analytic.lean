@@ -162,6 +162,8 @@ theorem ContMDiffAt.analyticAt [CompleteSpace F] (I : ModelWithCorners 𝕜 E A)
     ContMDiffAt I J ω f x → AnalyticAt 𝕜 f x :=
   (analyticAt_iff_mAnalyticAt _ _).mpr
 
+-- begin #28292
+
 /-- Curried analytic functions are analytic in the first coordinate -/
 theorem ContMDiffAt.along_fst [CompleteSpace G] [CompleteSpace H] [IsManifold I ω M]
     [IsManifold K ω O] [IsManifold L ω P]
@@ -189,6 +191,8 @@ theorem ContMDiff.along_snd [CompleteSpace G] [IsManifold I ω M] [IsManifold J 
     (fa : ContMDiff (I.prod J) K ω (uncurry f)) :
     ContMDiff J K ω (fun y ↦ f x y) :=
   fun _ ↦ (fa _).along_snd
+
+-- end #28292
 
 /-
 
