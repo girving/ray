@@ -208,7 +208,7 @@ theorem ContMDiffAt.add [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] 
 theorem ContMDiffAt.sub [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] {f g : O → F} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, F)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, F)) ω g x) :
     ContMDiffAt K (𝓘(𝕜, F)) ω (fun x ↦ f x - g x) x :=
-  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga) -/
+  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
 
 /-- Multiplication is analytic -/
 theorem ContMDiffAt.mul' [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f g : O → 𝕜} {x : O}
@@ -216,7 +216,7 @@ theorem ContMDiffAt.mul' [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x * g x) x :=
   ((analyticAt_fst.mul analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
 
-/- /-- Inverse is analytic away from zeros -/
+/-- Inverse is analytic away from zeros -/
 theorem ContMDiffAt.inv [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (f0 : f x ≠ 0) :
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ (f x)⁻¹) x :=

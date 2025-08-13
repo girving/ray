@@ -1,5 +1,5 @@
 import Mathlib.RingTheory.RootsOfUnity.Complex
-import Mathlib.Geometry.Manifold.Algebra.LieGroup
+import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Manifold.Inverse
 import Ray.Manifold.LocalInj
 import Ray.Dynamics.BottcherNear
@@ -74,7 +74,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
   refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
   · apply ContMDiffAt.analyticAt I I
-    refine ia.comp_of_eq (contMDiffAt_const.mul' (ba.mAnalyticAt I I)) ?_
+    refine ia.comp_of_eq (contMDiffAt_const.mul (ba.mAnalyticAt I I)) ?_
     simp only [bottcherNear_zero, MulZeroClass.mul_zero]
   · simp only [bottcherNear_zero, MulZeroClass.mul_zero, i0]
   · simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff]
