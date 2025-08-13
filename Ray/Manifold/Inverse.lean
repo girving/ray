@@ -133,7 +133,7 @@ variable [cmt : IsManifold I ω T]
 lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := by
   apply HasMFDerivAt.comp (I' := I) (c, i.z')
   · rw [i.zz]
-    exact ((ContMDiffAt.extChartAt (mem_extChartAt_source _)).mdifferentiableAt le_top).hasMFDerivAt
+    exact ((contMDiffAt_extChartAt' (mem_chart_source _ _)).mdifferentiableAt le_top).hasMFDerivAt
   · simp only [Cinv.df]
     have fd := i.fa.mdifferentiableAt le_top
     rw [← i.zz] at fd
@@ -301,8 +301,8 @@ theorem Cinv.ga (i : Cinv f c z) : ContMDiffAt II I ω (uncurry i.g) (c, f c z) 
   apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq
   · refine contMDiffAt_snd.comp _ (i.he_symm_mAnalytic.comp_of_eq ?_ ?_)
     · apply contMDiffAt_fst.prodMk
-      refine (ContMDiffAt.extChartAt ?_).comp _ contMDiffAt_snd
-      exact mem_extChartAt_source _
+      refine (contMDiffAt_extChartAt' ?_).comp _ contMDiffAt_snd
+      exact mem_chart_source _ _
     · rfl
   · exact i.inv_at
 

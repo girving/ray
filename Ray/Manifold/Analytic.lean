@@ -85,12 +85,14 @@ lemma ModelWithCorners.coe_coe (I : ModelWithCorners 𝕜 E A) :
 theorem ModelWithCorners.coe_coe_symm (I : ModelWithCorners 𝕜 E A) :
     ⇑I.toPartialEquiv.symm = (I.symm : E → A) := rfl
 
-/-- `extChartAt` is analytic (boundary or not) -/
+/- /-- `extChartAt` is analytic (boundary or not) -/
 lemma ContMDiffAt.extChartAt [CompleteSpace E] [cm : IsManifold I ⊤ M]
     {x y : M} (ys : y ∈ (extChartAt I x).source) :
     ContMDiffAt I 𝓘(𝕜, E) ω (extChartAt I x) y := by
-  simp only [extChartAt_source] at ys
-  exact contMDiffAt_extChartAt' ys
+  refine contMDiffOn_extChartAt.contMDiffAt ?_
+
+  -- simp only [extChartAt_source] at ys
+  -- exact contMDiffAt_extChartAt' ys -/
 
 /-- `I` preserves `𝓝` if it is boundaryless -/
 lemma ModelWithCorners.map_nhds_eq_of_boundaryless [I.Boundaryless] {x : A} :
@@ -105,7 +107,7 @@ theorem ContMDiffAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : IsM
     simp only [mfld_simps, mAnalyticAt_iff, contMDiffWithinAt_iff, I.range_eq_univ,
       contDiffWithinAt_univ, analyticWithinAt_univ, continuousWithinAt_univ] at h ⊢
     exact ⟨h.1, h.2.analyticAt⟩
-  exact contMDiffWithinAt_extChartAt_symm_range x ys
+  exact contMDiffWithinAt_extChartAt_symm_range x ys 
 
 /- /-- `ContMDiffAt` depends only on local values -/
 theorem ContMDiffAt.congr [CompleteSpace F] {f g : M → N} {x : M} (fa : ContMDiffAt I J ω f x)
@@ -267,7 +269,7 @@ theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace 
   have h := a.mAnalyticAt (modelWithCornersSelf 𝕜 E) (modelWithCornersSelf 𝕜 F)
   clear a
   have h' := (ContMDiffAt.extChartAt_symm (PartialEquiv.map_source _ fm.self_of_nhds)).comp_of_eq
-      (h.comp _ (ContMDiffAt.extChartAt m)) ?_
+      (h.comp _ (contMDiffAt_extChartAt' (extChartAt_source I x ▸ m))) ?_
   · apply h'.congr_of_eventuallyEq
     clear h h'
     apply ((isOpen_extChartAt_source x).eventually_mem m).mp

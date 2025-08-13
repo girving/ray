@@ -510,7 +510,7 @@ theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
       simp only [Ne, id_eq] at w0; simp only [w0, if_false]
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
     apply AnalyticAt.differentiableAt; apply ContMDiffAt.analyticAt I I
-    refine (ContMDiffAt.extChartAt ?_).comp _ ?_; exact m
+    refine (contMDiffAt_extChartAt' (extChartAt_source I y ▸ m)).comp _ ?_
     exact fa.comp _ (contMDiffAt_id.inv₀ z0)
   · refine (continuousAt_extChartAt' ?_).comp ?_
     · simp only [if_pos, mem_extChartAt_source]
