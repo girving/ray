@@ -30,6 +30,7 @@ variable {X : Type} [MeasureSpace X] [MetricSpace X] [BorelSpace X]
 variable {Y : Type} [MeasureSpace Y] [MetricSpace Y] [BorelSpace Y]
 variable {A : Type} [TopologicalSpace A]
 variable {M : Type} [MeasureSpace M]
+variable {μ : Measure M}
 
 /-- Removing a null set isn't significant measure-wise -/
 theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
@@ -318,3 +319,15 @@ theorem aEMeasurable_liminf {f : ℕ → M → ENNReal} {μ : Measure M} (fm : �
 theorem set_lintegral_mono_aEMeasurable {s : Set M} {f g : M → ENNReal}
     (sm : MeasurableSet s) (fg : ∀ x, x ∈ s → f x ≤ g x) : ∫⁻ x in s, f x ≤ ∫⁻ x in s, g x := by
   apply lintegral_mono_ae; rw [ae_restrict_iff' sm]; exact ae_of_all _ fg
+
+lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s := by
+  have tm := NullMeasurableSet.of_null t0
+  have r := MeasureTheory.measure_union_add_inter₀ (μ := μ) s tm
+  have i0 : μ (s ∩ t) = 0 := by
+    rw [← le_zero_iff] at t0 ⊢
+    exact le_trans (MeasureTheory.measure_mono Set.inter_subset_right) t0
+  simpa only [t0, i0, add_zero] using r
+
+lemma measure_union_eq_right {s t : Set M} (s0 : μ s = 0) : μ (s ∪ t) = μ t := by
+  rw [Set.union_comm]
+  exact measure_union_eq_left s0

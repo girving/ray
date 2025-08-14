@@ -25,7 +25,7 @@ open Set
 open scoped Real
 noncomputable section
 
-section realCircleMap
+namespace RealCircleMap
 
 /-- `circleMap` as a map from `ℝ² → ℝ²` -/
 def realCircleMap (c : ℂ) (x : ℝ × ℝ) : ℝ × ℝ :=
@@ -72,9 +72,10 @@ lemma rcmDeriv.det (x : ℝ × ℝ) : (rcmDeriv x).det = x.1 := by
     _ = x.1 * (cos x.2 ^ 2 + sin x.2 ^ 2) := by ring
     _ = x.1 := by simp only [Real.cos_sq_add_sin_sq, mul_one]
 
-end realCircleMap
+end RealCircleMap
 
-section FubiniHelper
+namespace FubiniHelper
+open RealCircleMap
 
 /-- The square that we'll map onto the ball -/
 def square (r0 r1 : ℝ) : Set (ℝ × ℝ) :=
@@ -191,6 +192,8 @@ theorem rcm_inj {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) : InjOn (realCircleMap 
   simp only [Prod.mk.eta] at g; exact g
 
 end FubiniHelper
+open RealCircleMap
+open FubiniHelper
 
 /-- Inverse lemma for fubini_ball -/
 theorem measurable_symm_equiv_inverse {z : ℂ} :
@@ -211,7 +214,7 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
     ∫ z in annulus_oc c r0 r1, f z =
       ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have im := MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod
-  rw [←MeasurePreserving.setIntegral_preimage_emb im
+  rw [← MeasurePreserving.setIntegral_preimage_emb im
     Complex.measurableEquivRealProd.symm.measurableEmbedding f _]
   clear im
   rw [square_eq r0p]
@@ -250,7 +253,7 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
       ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
   rw [MeasureTheory.setIntegral_congr_set center]; clear center
-  rw [←Metric.closedBall_zero, ←annulus_oc]
+  rw [← Metric.closedBall_zero, ← annulus_oc]
   apply fubini_annulus
   · simpa only [annulus_cc, Metric.ball_zero, diff_empty]
   · rfl
@@ -268,18 +271,18 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
   exact f
 
 /-- `closedBall` with positive radius has positive, nonzero volume -/
-theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) :=
-  { measurable := measurableSet_closedBall
-    finite := by
-      simp only [Complex.volume_closedBall]
-      apply ENNReal.mul_lt_top
-      · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
-      · exact ENNReal.coe_lt_top
-    pos := by
-      simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedAdd.mul_pos,
-        ENNReal.coe_pos, NNReal.pi_pos, and_true]
-      apply ENNReal.pow_pos
-      bound }
+theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) where
+  measurable := measurableSet_closedBall
+  finite := by
+    simp only [Complex.volume_closedBall]
+    apply ENNReal.mul_lt_top
+    · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    · exact ENNReal.coe_lt_top
+  pos := by
+    simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedAdd.mul_pos,
+      ENNReal.coe_pos, NNReal.pi_pos, and_true]
+    apply ENNReal.pow_pos
+    bound
 
 /-- `closedBall` with positive radius has positive volume near each point -/
 theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet (closedBall c r) := by
