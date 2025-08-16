@@ -1,5 +1,6 @@
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Analytic.Holomorphic
 import Ray.Manifold.OneDimension
 import Ray.Misc.Connected
@@ -376,7 +377,7 @@ theorem nontrivialMAnalyticAt_pow {d : ℕ} (d0 : d > 0) {z : ℂ} :
 theorem NontrivialMAnalyticAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : ContMDiffAt I I ω f z)
     (d0 : 0 < d) : NontrivialMAnalyticAt (fun z ↦ f z ^ d) z ↔ NontrivialMAnalyticAt f z := by
   refine ⟨?_, (nontrivialMAnalyticAt_pow d0).comp⟩
-  have pa : ContMDiffAt I I ω (fun z ↦ z ^ d) (f z) := ContMDiffAt.pow contMDiffAt_id
+  have pa : ContMDiffAt I I ω (fun z ↦ z ^ d) (f z) := (contMDiff_pow d).contMDiffAt
   intro h; refine (NontrivialMAnalyticAt.anti ?_ pa fa).2; exact h
 
 /-- Nontriviality depends only locally on `f` -/

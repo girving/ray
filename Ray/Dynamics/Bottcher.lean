@@ -176,7 +176,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     intro c z m
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d by
       refine (ContMDiffOnNhd.eq_of_locally_eq ?_ (fun z m ↦
-        (s.bottcher_mAnalyticOn (c, z) m).along_snd.pow) (s.post_slice_connected c).isPreconnected
+        ((contMDiff_pow _).contMDiffAt.comp _ (s.bottcher_mAnalyticOn (c, z) m).along_snd)) (s.post_slice_connected c).isPreconnected
         ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
       intro z m
       exact (s.bottcher_mAnalyticOn _ (s.stays_post m)).along_snd.comp _ (s.fa _).along_snd

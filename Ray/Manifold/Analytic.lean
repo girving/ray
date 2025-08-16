@@ -230,14 +230,14 @@ theorem ContMDiffAt.div [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω 
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x / g x) x := by
   simp only [div_eq_mul_inv]; exact fa.mul (ga.inv g0)
 
--/
-
 /-- Powers are analytic -/
 theorem ContMDiffAt.pow [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}
     (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) {n : ℕ} :
     ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x ^ n) x := by
   have e : (fun x ↦ f x ^ n) = (fun z : 𝕜 ↦ z ^ n) ∘ f := rfl
   rw [e]; exact ((analyticAt_id.pow _).mAnalyticAt _ _).comp _ fa
+
+-/
 
 /-- Complex powers `f x ^ g x` are analytic if `f x` avoids the negative real axis  -/
 theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCorners ℂ E A}

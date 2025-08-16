@@ -1,5 +1,6 @@
 -- Bottcher map throughout a superattracting basis (up to critical points)
 import Mathlib.Topology.ExtendFrom
+import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Dynamics.Postcritical
 import Ray.Dynamics.Potential
 import Ray.Manifold.LocalInj
@@ -374,7 +375,7 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : �
   have pt : Tendsto (fun p : ℂ × ℂ ↦ (p.1, p.2 ^ d ^ n)) (𝓝 (c, x)) (𝓝 (c, x ^ d ^ n)) :=
     continuousAt_fst.prodMk (continuousAt_snd.pow _)
   have ian : ContMDiffAt II I ω (uncurry fun e y : ℂ ↦ i e (y ^ d ^ n)) (c, x) :=
-    ia.comp₂_of_eq contMDiffAt_fst contMDiffAt_snd.pow rfl
+    ia.comp₂_of_eq contMDiffAt_fst ((contMDiff_pow _).contMDiffAt.comp _ contMDiffAt_snd) rfl
   use fun e y ↦ i e (y ^ d ^ n); constructor
   · -- We satisfy eqn near x
     apply eqn_near ian
