@@ -1,4 +1,4 @@
-import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
@@ -13,7 +13,7 @@ open Metric (sphere)
 open Complex (arg log I imCLM slitPlane)
 open ContinuousLinearMap (lsmul)
 open Set
-open scoped Real
+open scoped ContDiff Real
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -70,6 +70,37 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
 /-!
 ### Derivatives mixing `ℝ` and `ℂ`
 -/
+
+/-- `Complex.ofReal` is real analytic -/
+lemma Complex.analyticAt_ofReal {x : ℝ} : AnalyticAt ℝ Complex.ofReal x := by
+  have e : Complex.ofReal = fun x ↦ Complex.ofRealCLM x := by simp
+  rw [e]
+  exact Complex.ofRealCLM.analyticAt x
+
+/-- `Complex.ofReal` is real analytic -/
+lemma AnalyticAt.ofReal {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → ℝ} {x : E}
+    (a : AnalyticAt ℝ f x) : AnalyticAt ℝ (fun x ↦ (f x : ℂ)) x :=
+  Complex.analyticAt_ofReal.comp a
+
+/-- `Complex.ofReal` is real analytic -/
+lemma Complex.contDiffAt_ofReal {x : ℝ} : ContDiffAt ℝ ω Complex.ofReal x :=
+  Complex.analyticAt_ofReal.contDiffAt
+
+/-- `Complex.ofReal` is real analytic -/
+lemma Complex.contDiff_ofReal : ContDiff ℝ ω Complex.ofReal := by
+  rw [contDiff_iff_contDiffAt]
+  intro x
+  apply Complex.contDiffAt_ofReal
+
+/-- Complex `norm` is real analytic -/
+lemma Complex.analyticAt_norm {z : ℂ} (z0 : z ≠ 0) : AnalyticAt ℝ (fun z : ℂ ↦ ‖z‖) z :=
+  (contDiffAt_norm (𝕜 := ℝ) z0).analyticAt
+
+/-- Complex `norm` is real analytic -/
+lemma AnalyticAt.norm {𝕜 E : Type} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+    [NormedSpace 𝕜 ℂ] [NormedSpace ℝ E] {f : E → ℂ} {x : E} (a : AnalyticAt 𝕜 f x) (f0 : f x ≠ 0) :
+    AnalyticAt ℝ (fun x ↦ ‖f x‖) x :=
+  (Complex.analyticAt_norm f0).comp a.restrictScalars
 
 /-- A complex derivative, treated as `ℂ →L[ℝ] → ℂ` -/
 lemma Complex.real_hasFDerivAt {f : ℂ → ℂ} {z : ℂ} {f' : ℂ} (h : HasDerivAt f f' z) :

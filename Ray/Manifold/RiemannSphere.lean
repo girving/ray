@@ -146,7 +146,7 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
       inv_inf, ← atInf_eq_cocompact]
     have e : ∀ᶠ z : ℂ in atInf, ↑z⁻¹ = (↑z : 𝕊)⁻¹ := by
       refine (eventually_atInf 0).mp (.of_forall fun z z0 ↦ ?_)
-      simp only [gt_iff_lt, norm_pos_iff] at z0; rw [inv_coe z0]
+      simp only [norm_pos_iff] at z0; rw [inv_coe z0]
     apply Filter.Tendsto.congr' e
     exact Filter.Tendsto.comp continuous_coe.continuousAt inv_tendsto_atInf'
   · simp only [OnePoint.continuousAt_coe, Function.comp_def, inv_def, inv, coe_eq_zero,

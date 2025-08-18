@@ -17,6 +17,8 @@ open Metric (ball closedBall)
 open Set
 open scoped Topology
 
+variable {α : Type}
+
 /-- `atInf` represents the limit `→ ∞` on a normed commutative group -/
 def atInf {X : Type} [Norm X] : Filter X :=
   ⨅ r : ℝ, Filter.principal {x | r < ‖x‖}
@@ -52,12 +54,33 @@ theorem tendsto_atInf_iff_norm_tendsto_atTop {X Y : Type} [Norm Y] {f : Filter X
 
 /-- Characterization of `s ∈ atInf` -/
 theorem mem_atInf_iff {X : Type} [Norm X] {s : Set X} :
-    s ∈ @atInf X _ ↔ ∃ r, {x | ‖x‖ > r} ⊆ s := by
+    s ∈ @atInf X _ ↔ ∃ r, {x | r < ‖x‖} ⊆ s := by
   simp only [Filter.hasBasis_iff.mp atInf_basis s, true_and]
 
 /-- Eventually `atInf` the norm is as large as desired -/
-theorem eventually_atInf {X : Type} [Norm X] (r : ℝ) : ∀ᶠ x : X in atInf, ‖x‖ > r := by
+theorem eventually_atInf {X : Type} [Norm X] (r : ℝ) : ∀ᶠ x : X in atInf, r < ‖x‖ := by
   rw [Filter.eventually_iff, mem_atInf_iff]; use r
+
+/-- Eventually `atInf` is the same as eventually `𝓝[≠] 0` for `x⁻¹` -/
+theorem eventually_atInf_iff_nhds_zero {𝕜 : Type} [NontriviallyNormedField 𝕜] {p : 𝕜 → Prop} :
+    (∀ᶠ x in atInf, p x) ↔ ∀ᶠ x in 𝓝[≠] 0, p x⁻¹ := by
+  rw [atInf_basis.eventually_iff, Metric.nhdsWithin_basis_ball.eventually_iff]
+  constructor
+  · intro ⟨r,_,h⟩
+    refine ⟨(max r 1)⁻¹, by bound, fun x ⟨m,x0⟩ ↦ ?_⟩
+    refine @h x⁻¹ ?_
+    simp only [Metric.mem_ball, dist_zero_right, mem_compl_iff, mem_singleton_iff, mem_setOf_eq,
+      norm_inv] at m x0 ⊢
+    rw [← lt_inv_comm₀ (by bound) (by simpa)] at m
+    exact lt_of_le_of_lt (le_max_left _ _) m
+  · intro ⟨i,i0,h⟩
+    refine ⟨i⁻¹, trivial, fun x m ↦ ?_⟩
+    refine inv_inv x ▸ @h x⁻¹ ?_
+    simp only [mem_setOf_eq, mem_inter_iff, Metric.mem_ball, dist_zero_right, norm_inv,
+      mem_compl_iff, mem_singleton_iff, inv_eq_zero] at m ⊢
+    have x0 : x ≠ 0 := by have : 0 < ‖x‖ := lt_trans (by bound) m; simpa
+    rw [← inv_lt_comm₀ i0 (by simpa)]
+    exact ⟨m, x0⟩
 
 /-- Convergence `atInf` is the same as convergence at `0` for the reciprocal function -/
 theorem tendsto_atInf_iff_tendsto_nhds_zero {𝕜 X : Type} [NontriviallyNormedField 𝕜] {l : Filter X}
@@ -113,3 +136,17 @@ theorem inv_tendsto_atInf' {𝕜 : Type} [NontriviallyNormedField 𝕜] :
     Tendsto (fun x : 𝕜 ↦ x⁻¹) atInf (𝓝 0) := by
   simp only [tendsto_atInf_iff_tendsto_nhds_zero, inv_inv]
   exact Filter.tendsto_id.mono_left nhdsWithin_le_nhds
+
+/-- We either tend to infinity or have a cluster point -/
+lemma tendsto_atInf_or_mapClusterPt (f : α → ℂ) (l : Filter α) :
+    Tendsto f l atInf ∨ ∃ z, MapClusterPt z l f := by
+  by_cases t : Tendsto f l atInf
+  · exact .inl t
+  · simp only [t, false_or]
+    simp only [tendsto_atInf, not_forall, Filter.not_eventually, not_lt,
+      ← add_mem_closedBall_iff_norm (a := (0 : ℂ)), zero_add] at t
+    obtain ⟨r,t⟩ := t
+    have t := IsCompact.exists_mapClusterPt_of_frequently (isCompact_closedBall _ _) t
+    obtain ⟨z,m,c⟩ := t
+    exact ⟨z,c⟩
+

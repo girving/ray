@@ -22,26 +22,27 @@ noncomputable section
 
 variable {f : Circle → ℂˣ}
 
-/-- `f` winds monotonically around the origin -/
-structure WindMono (f : Circle → ℂˣ) : Prop where
+/-- `f` winds monotonically around the origin, and is differentiable -/
+structure WindDiff (f : Circle → ℂˣ) : Prop where
   fc : Continuous f
-  inj : (fun x ↦ snap (f x)).Injective  -- TODO: Derive from mono?
+  inj : (fun x ↦ snap (f x)).Injective
   diff : Differentiable ℝ (fun t ↦ (f (.exp t)).val)
-  mono : ∀ t, 0 < (deriv (fun t ↦ (f (.exp t)).val) t / (f (.exp t)).val).im
 
-lemma WindMono.wind (i : WindMono f) : Wind f := ⟨i.fc, i.inj⟩
+namespace WindDiff
+
+lemma wind (i : WindDiff f) : Wind f := ⟨i.fc, i.inj⟩
 
 -- Abbreviations for `f`-related functions
-def WindMono.fe (_ : WindMono f) (t : ℝ) : ℂ := (f (.exp t)).val
-def WindMono.dfe (_ : WindMono f) (t : ℝ) : ℂ := deriv (fun t ↦ (f (.exp t)).val) t
-def WindMono.fdfe (_ : WindMono f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ (fun t ↦ (f (.exp t)).val) t
+def fe (_ : WindDiff f) (t : ℝ) : ℂ := (f (.exp t)).val
+def dfe (_ : WindDiff f) (t : ℝ) : ℂ := deriv (fun t ↦ (f (.exp t)).val) t
+def fdfe (_ : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ (fun t ↦ (f (.exp t)).val) t
 
-@[simp] lemma WindMono.deriv_fe (i : WindMono f) {t : ℝ} : deriv i.fe t = i.dfe t := rfl
-lemma WindMono.hasDerivAt_fe (i : WindMono f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
+@[simp] lemma deriv_fe (i : WindDiff f) {t : ℝ} : deriv i.fe t = i.dfe t := rfl
+lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
   i.diff.differentiableAt.hasDerivAt
-lemma WindMono.hasFDerivAt_fe (i : WindMono f) {t : ℝ} : HasFDerivAt i.fe (i.fdfe t) t :=
+lemma hasFDerivAt_fe (i : WindDiff f) {t : ℝ} : HasFDerivAt i.fe (i.fdfe t) t :=
   i.diff.differentiableAt.hasFDerivAt
-@[simp] lemma WindMono.fdfe_one (i : WindMono f) {t : ℝ} : i.fdfe t 1 = i.dfe t := by
+@[simp] lemma fdfe_one (i : WindDiff f) {t : ℝ} : i.fdfe t 1 = i.dfe t := by
   simp only [fdfe, dfe, fderiv_eq_smul_deriv, one_smul]
 
 -- Abbreviation for `fst` and `snd` as continuous linear maps
@@ -52,45 +53,45 @@ private abbrev d2 := ContinuousLinearMap.snd ℝ ℝ ℝ
 private def square : Set (ℝ × ℝ) := Ioc 0 1 ×ˢ Ioc (-π) π
 
 /-- Our map from the square to the disk -/
-def WindMono.gs (i : WindMono f) (x : ℝ × ℝ) : ℝ × ℝ :=
+def gs (i : WindDiff f) (x : ℝ × ℝ) : ℝ × ℝ :=
   (equivRealProdCLM : ℂ →L[ℝ] ℝ × ℝ) (x.1 • i.fe x.2)
 
 /-- The derivative of `i.gs` -/
-def WindMono.dgs (i : WindMono f) (x : ℝ × ℝ) : ℝ × ℝ →L[ℝ] ℝ × ℝ :=
+def dgs (i : WindDiff f) (x : ℝ × ℝ) : ℝ × ℝ →L[ℝ] ℝ × ℝ :=
   (equivRealProdCLM : ℂ →L[ℝ] ℝ × ℝ).comp (x.1 • (i.fdfe x.2).comp d2 + d1.smulRight (i.fe x.2))
 
-lemma WindMono.fderiv (i : WindMono f) {x : ℝ × ℝ} :
+lemma fderiv (i : WindDiff f) {x : ℝ × ℝ} :
     HasFDerivAt i.gs (i.dgs x) x := by
   apply (ContinuousLinearMap.hasFDerivAt _).comp
   exact hasFDerivAt_fst.smul (i.hasFDerivAt_fe.comp _ hasFDerivAt_snd)
 
 /-- The Jacobian matrix of `i.gs` -/
-def WindMono.gsm (i : WindMono f) (x : ℝ × ℝ) :=
+def gsm (i : WindDiff f) (x : ℝ × ℝ) :=
   LinearMap.toMatrix (Basis.finTwoProd ℝ) (Basis.finTwoProd ℝ) (i.dgs x)
-macro "gsm" : tactic => `(tactic| simp [WindMono.gsm, WindMono.dgs, toMatrix_apply])
-lemma WindMono.gsm00 (i : WindMono f) (x : ℝ × ℝ) : i.gsm x 0 0 = (i.fe x.2).re := by gsm
-lemma WindMono.gsm01 (i : WindMono f) (x : ℝ × ℝ) : i.gsm x 0 1 = x.1 * (i.dfe x.2).re := by gsm
-lemma WindMono.gsm10 (i : WindMono f) (x : ℝ × ℝ) : i.gsm x 1 0 = (i.fe x.2).im := by gsm
-lemma WindMono.gsm11 (i : WindMono f) (x : ℝ × ℝ) : i.gsm x 1 1 = x.1 * (i.dfe x.2).im := by gsm
+macro "gsm" : tactic => `(tactic| simp [WindDiff.gsm, WindDiff.dgs, toMatrix_apply])
+lemma gsm00 (i : WindDiff f) (x : ℝ × ℝ) : i.gsm x 0 0 = (i.fe x.2).re := by gsm
+lemma gsm01 (i : WindDiff f) (x : ℝ × ℝ) : i.gsm x 0 1 = x.1 * (i.dfe x.2).re := by gsm
+lemma gsm10 (i : WindDiff f) (x : ℝ × ℝ) : i.gsm x 1 0 = (i.fe x.2).im := by gsm
+lemma gsm11 (i : WindDiff f) (x : ℝ × ℝ) : i.gsm x 1 1 = x.1 * (i.dfe x.2).im := by gsm
 
 /-- The Jacobian determinant of `i.dgs` -/
-lemma WindMono.dgs_det (i : WindMono f) (x : ℝ × ℝ) :
+lemma dgs_det (i : WindDiff f) (x : ℝ × ℝ) :
     (i.dgs x).det = x.1 * inner ℝ (i.fe x.2 * I) (i.dfe x.2) := by
-  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix (Basis.finTwoProd ℝ), ← WindMono.gsm]
+  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix (Basis.finTwoProd ℝ), ← WindDiff.gsm]
   simp [Matrix.det_fin_two, gsm00, gsm01, gsm10, gsm11]
   ring
 
 /-- Factor `i.gs` through `i.wind.g` -/
-lemma WindMono.gs_eq (i : WindMono f) (x : ℝ × ℝ) (x0 : 0 < x.1) :
+lemma gs_eq (i : WindDiff f) (x : ℝ × ℝ) (x0 : 0 < x.1) :
     i.gs x = Complex.measurableEquivRealProd (i.wind.g (x.1 • (Circle.exp x.2).val)) := by
   simp only [gs, Complex.real_smul, ContinuousLinearEquiv.coe_coe, Complex.equivRealProdCLM_apply,
     Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero, Complex.mul_im,
     add_zero, Circle.coe_exp, Wind.g_apply, Complex.norm_mul, Complex.norm_real, Real.norm_eq_abs,
     Complex.norm_exp_ofReal_mul_I, mul_one, Complex.measurableEquivRealProd_apply, abs_of_pos x0,
-    snap_mul_of_pos x0, snap_exp_mul_I, WindMono.fe]
+    snap_mul_of_pos x0, snap_exp_mul_I, WindDiff.fe]
 
 /-- `i.gs` is injective on `square` -/
-lemma WindMono.injOn_gs (i : WindMono f) : InjOn i.gs square := by
+lemma injOn_gs (i : WindDiff f) : InjOn i.gs square := by
   apply InjOn.comp
   · apply Function.Injective.injOn
     simp only [ContinuousLinearEquiv.coe_coe]
@@ -99,7 +100,7 @@ lemma WindMono.injOn_gs (i : WindMono f) : InjOn i.gs square := by
     have pe : ∀ x, x ∈ square → i.wind.g (p x) = x.1 • i.fe x.2 := by
       intro x m
       simp only [square, mem_prod, mem_Ioc] at m
-      simp [p, i.wind.g_apply, snap_mul_of_pos m.1.1, WindMono.fe, abs_of_pos m.1.1]
+      simp [p, i.wind.g_apply, snap_mul_of_pos m.1.1, WindDiff.fe, abs_of_pos m.1.1]
     refine InjOn.congr ?_ pe
     refine (i.wind.g.injective.injOn (s := univ)).comp ?_ (mapsTo_univ _ _)
     intro x xm y ym e
@@ -111,7 +112,7 @@ lemma WindMono.injOn_gs (i : WindMono f) : InjOn i.gs square := by
       Complex.arg_real_mul, ae, xm, ym, ← Prod.ext_iff] using e
   · apply mapsTo_univ
 
-lemma WindMono.disk_eq (i : WindMono f) :
+lemma disk_eq (i : WindDiff f) :
     i.wind.disk = Complex.measurableEquivRealProd.symm '' ({0} ∪ i.gs '' square) := by
   ext w
   constructor
@@ -141,12 +142,12 @@ lemma WindMono.disk_eq (i : WindMono f) :
 
 -- Measurability lemmas
 lemma measurableSet_square : MeasurableSet square := by simp only [square]; measurability
-lemma WindMono.measurableSet_gs_square (i : WindMono f) : MeasurableSet (i.gs '' square) :=
+lemma measurableSet_gs_square (i : WindDiff f) : MeasurableSet (i.gs '' square) :=
   MeasureTheory.measurable_image_of_fderivWithin measurableSet_square
     (fun _ _ ↦ i.fderiv.hasFDerivWithinAt) i.injOn_gs
 
 /-- The area of `i.disk` as a circle integral -/
-theorem WindMono.volume_eq (i : WindMono f) :
+theorem volume_eq (i : WindDiff f) :
     volume.real i.wind.disk = 2⁻¹ * ∫ t in Ioc (-π) π, |inner ℝ (i.fe t * I) (i.dfe t)| := by
   simp only [i.disk_eq, image_union, MeasureTheory.Measure.real, image_singleton,
     measure_union_eq_right, MeasureTheory.NoAtoms.measure_singleton]

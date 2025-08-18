@@ -5,7 +5,7 @@ import Ray.Misc.Connected
 ## Finite and infinite annuli
 -/
 
-open Metric (ball closedBall isOpen_ball)
+open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open scoped Real Topology
 noncomputable section
@@ -83,3 +83,25 @@ lemma isPreconnected_norm_Ioi {r : ℝ} : IsPreconnected (norm_Ioi r) := by
   · simp only [Iio_toDual, mem_image, mem_preimage, mem_Ioi, OrderDual.exists, f,
       OrderDual.ofDual_toDual, forall_exists_index, and_imp, forall_apply_eq_imp_iff₂,
       isPathConnected_norm_Ici.isConnected.isPreconnected, implies_true]
+
+lemma compl_norm_Ioi {r : ℝ} : (norm_Ioi r)ᶜ = closedBall 0 r := by
+  ext z
+  simp [norm_Ioi]
+
+@[simp] lemma frontier_norm_Ioi {r : ℝ} : frontier (norm_Ioi r) = sphere 0 r := by
+  rw [← frontier_compl, compl_norm_Ioi, frontier_closedBall']
+
+@[simp] lemma closure_norm_Ioi {r : ℝ} : closure (norm_Ioi r) = norm_Ici r := by
+  simp only [closure_eq_interior_union_frontier, frontier_norm_Ioi, isOpen_norm_Ioi.interior_eq]
+  ext z
+  simp [norm_Ioi, norm_Ici, eq_comm (b := r), le_iff_lt_or_eq]
+
+@[simp] lemma norm_Ioi_subset_norm_Ioi {r s : ℝ} (sr : s ≤ r) : norm_Ioi r ⊆ norm_Ioi s := by
+  intro z m
+  simp only [mem_setOf_eq, norm_Ioi] at m ⊢
+  order
+
+@[simp] lemma norm_Ici_subset_norm_Ioi {r s : ℝ} (sr : s < r) : norm_Ici r ⊆ norm_Ioi s := by
+  intro z m
+  simp only [norm_Ici, mem_setOf_eq, norm_Ioi] at m ⊢
+  order
