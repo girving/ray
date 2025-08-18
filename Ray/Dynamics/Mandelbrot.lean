@@ -25,8 +25,8 @@ def mandelbrot : Set ℂ :=
 /-- The Mandelbrot set is the `d = 2` Multibrot set -/
 theorem mandelbrot_eq_multibrot : mandelbrot = multibrot 2 := by
   ext c
-  simp only [mandelbrot, mem_setOf_eq, multibrot, f_f'_iter, tendsto_inf_iff_tendsto_atInf,
-    tendsto_atInf_iff_norm_tendsto_atTop]
+  simp only [mandelbrot, mem_setOf_eq, multibrot, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
+    tendsto_cobounded_iff_norm_tendsto_atTop]
   rfl
 
 /-- The Mandelbrot set is connected -/

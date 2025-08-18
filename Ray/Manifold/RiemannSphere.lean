@@ -6,7 +6,7 @@ import Mathlib.Topology.Compactification.OnePoint.Basic
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
 import Ray.Manifold.OneDimension
-import Ray.Misc.AtInf
+import Ray.Misc.Cobounded
 
 /-!
 ## The Riemann sphere
@@ -15,6 +15,7 @@ We give `OnePoint ℂ` the natural analytic manifold structure with two charts,
 namely `coe` and `inv ∘ coe`, giving the Riemann sphere `𝕊`.
 -/
 
+open Bornology (cobounded)
 open Classical
 open Complex (abs)
 open Filter (Tendsto atTop)
@@ -120,13 +121,13 @@ theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
     · simp only [z0, coe_zero, inv_zero', toComplex_inf, toComplex_zero, inv_zero]
     · simp only [z0, inv_coe, Ne, not_false_iff, toComplex_coe]
 
-/-- `coe` tends to `∞` `atInf` -/
-theorem coe_tendsto_inf : Tendsto (fun z : ℂ ↦ (z : 𝕊)) atInf (𝓝 ∞) := by
+/-- `coe` tends to `∞` `cobounded` -/
+theorem coe_tendsto_inf : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded ℂ) (𝓝 ∞) := by
   rw [Filter.tendsto_iff_comap, OnePoint.comap_coe_nhds_infty, Filter.coclosedCompact_eq_cocompact]
-  exact atInf_le_cocompact
+  exact Metric.cobounded_le_cocompact
 
-/-- `coe` tends to `∞` `atInf`, but without touching `∞` -/
-theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) atInf (𝓝[{∞}ᶜ] ∞) := by
+/-- `coe` tends to `∞` `cobounded`, but without touching `∞` -/
+theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded _) (𝓝[{∞}ᶜ] ∞) := by
   have e : {(∞ : 𝕊)}ᶜ = range (fun z : ℂ ↦ (z : 𝕊)) := by
     ext z; induction' z using OnePoint.rec with z
     · simp only [mem_compl_iff, mem_singleton_iff, not_true, mem_range, OnePoint.coe_ne_infty,
@@ -135,25 +136,25 @@ theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) atInf (𝓝[{∞
         mem_range, coe_eq_coe, exists_eq]
   simp only [e, tendsto_nhdsWithin_range, coe_tendsto_inf]
 
-@[simp] lemma map_some_atInf : Filter.map OnePoint.some (atInf (X := ℂ)) = 𝓝[{∞}ᶜ] ∞ := by
-  rw [@OnePoint.nhdsNE_infty_eq, atInf_eq_cocompact, Filter.coclosedCompact_eq_cocompact]
+@[simp] lemma map_some_cobounded : Filter.map OnePoint.some (cobounded ℂ) = 𝓝[{∞}ᶜ] ∞ := by
+  rw [@OnePoint.nhdsNE_infty_eq, Metric.cobounded_eq_cocompact, Filter.coclosedCompact_eq_cocompact]
 
 /-- Inversion is continuous -/
 theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
   rw [← continuousOn_univ]; intro z _; apply ContinuousAt.continuousWithinAt
   induction' z using OnePoint.rec with z
   · simp only [OnePoint.continuousAt_infty', Function.comp_def, Filter.coclosedCompact_eq_cocompact,
-      inv_inf, ← atInf_eq_cocompact]
-    have e : ∀ᶠ z : ℂ in atInf, ↑z⁻¹ = (↑z : 𝕊)⁻¹ := by
-      refine (eventually_atInf 0).mp (.of_forall fun z z0 ↦ ?_)
+      inv_inf, ← Metric.cobounded_eq_cocompact]
+    have e : ∀ᶠ z : ℂ in cobounded ℂ, ↑z⁻¹ = (↑z : 𝕊)⁻¹ := by
+      refine (eventually_cobounded 0).mp (.of_forall fun z z0 ↦ ?_)
       simp only [norm_pos_iff] at z0; rw [inv_coe z0]
     apply Filter.Tendsto.congr' e
-    exact Filter.Tendsto.comp continuous_coe.continuousAt inv_tendsto_atInf'
+    exact Filter.Tendsto.comp continuous_coe.continuousAt inv_tendsto_cobounded'
   · simp only [OnePoint.continuousAt_coe, Function.comp_def, inv_def, inv, coe_eq_zero,
       toComplex_coe]
     by_cases z0 : z = 0
     · simp only [z0, ContinuousAt, OnePoint.nhds_infty_eq, if_true,
-        Filter.coclosedCompact_eq_cocompact, ← atInf_eq_cocompact]
+        Filter.coclosedCompact_eq_cocompact, ← Metric.cobounded_eq_cocompact]
       simp only [← nhdsNE_sup_pure, Filter.tendsto_sup]
       constructor
       · refine Filter.Tendsto.mono_right ?_ le_sup_left
@@ -161,9 +162,9 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
         · intro z m
           rw [mem_compl_singleton_iff] at m
           simp only [m, ite_false]
-        · simp only [map_some_atInf]
+        · simp only [map_some_cobounded]
           apply coe_tendsto_inf'.comp
-          rw [← @tendsto_atInf_iff_tendsto_nhds_zero ℂ ℂ _ _ fun z : ℂ ↦ z]
+          rw [← @tendsto_cobounded_iff_tendsto_nhds_zero ℂ ℂ _ _ fun z : ℂ ↦ z]
           exact Filter.tendsto_id
       · refine Filter.Tendsto.mono_right ?_ le_sup_right
         simp only [Filter.pure_zero, Filter.tendsto_pure, ite_eq_left_iff, Filter.eventually_zero,
@@ -324,13 +325,13 @@ instance : HasGroupoid 𝕊 (contDiffGroupoid ⊤ I) where
 /-- `𝕊` is an analytic manifold -/
 instance : IsManifold I ⊤ 𝕊 where
 
-/-- Composing with `coe` turns convergence `atInf` into convergence to `𝓝 ∞` -/
-theorem tendsto_inf_iff_tendsto_atInf {X : Type} {f : Filter X} {g : X → ℂ} :
-    Tendsto (fun x ↦ (g x : 𝕊)) f (𝓝 ∞) ↔ Tendsto (fun x ↦ g x) f atInf := by
+/-- Composing with `coe` turns convergence `cobounded` into convergence to `𝓝 ∞` -/
+theorem tendsto_inf_iff_tendsto_cobounded {X : Type} {f : Filter X} {g : X → ℂ} :
+    Tendsto (fun x ↦ (g x : 𝕊)) f (𝓝 ∞) ↔ Tendsto (fun x ↦ g x) f (cobounded ℂ) := by
   constructor
   · intro t; simp only [Filter.tendsto_iff_comap] at t ⊢
     rw [←Function.comp_def, ←Filter.comap_comap, OnePoint.comap_coe_nhds_infty,
-      Filter.coclosedCompact_eq_cocompact, ←atInf_eq_cocompact] at t
+      Filter.coclosedCompact_eq_cocompact, ← Metric.cobounded_eq_cocompact] at t
     exact t
   · exact fun h ↦ coe_tendsto_inf.comp h
 
@@ -355,18 +356,18 @@ theorem prod_nhds_eq {x : X} {z : ℂ} :
     (continuousAt_fst.prodMk (continuous_coe.continuousAt.comp continuousAt_snd))
   apply IsOpenMap.nhds_le; exact IsOpenMap.id.prodMap isOpenMap_coe
 
-theorem mem_inf_of_mem_atInf {s : Set ℂ} (f : s ∈ @atInf ℂ _) :
+theorem mem_inf_of_mem_cobounded {s : Set ℂ} (f : s ∈ cobounded ℂ) :
     (fun z : ℂ ↦ (z : 𝕊)) '' s ∪ {∞} ∈ 𝓝 (∞ : 𝕊) := by
   simp only [OnePoint.nhds_infty_eq, Filter.mem_sup, Filter.coclosedCompact_eq_cocompact, ←
-    atInf_eq_cocompact, Filter.mem_map]
+    Metric.cobounded_eq_cocompact, Filter.mem_map]
   exact ⟨Filter.mem_of_superset f fun _ m ↦ Or.inl (mem_image_of_mem _ m), Or.inr rfl⟩
 
-theorem prod_mem_inf_of_mem_atInf {s : Set (X × ℂ)} {x : X} (f : s ∈ 𝓝 x ×ˢ atInf (X := ℂ)) :
+theorem prod_mem_inf_of_mem_cobounded {s : Set (X × ℂ)} {x : X} (f : s ∈ 𝓝 x ×ˢ cobounded ℂ) :
     (fun p : X × ℂ ↦ (p.1, (p.2 : 𝕊))) '' s ∪ univ ×ˢ {∞} ∈ 𝓝 (x, (∞ : 𝕊)) := by
   rcases Filter.mem_prod_iff.mp f with ⟨t, tx, u, ui, sub⟩
   rw [nhds_prod_eq]
-  refine Filter.mem_prod_iff.mpr ⟨t, tx, (fun z : ℂ ↦ (z : 𝕊)) '' u ∪ {∞}, mem_inf_of_mem_atInf ui,
-    ?_⟩
+  refine Filter.mem_prod_iff.mpr ⟨t, tx, (fun z : ℂ ↦ (z : 𝕊)) '' u ∪ {∞},
+    mem_inf_of_mem_cobounded ui, ?_⟩
   intro ⟨y, z⟩ ⟨yt, m⟩
   simp only [mem_prod_eq, mem_image, mem_union, mem_singleton_iff, mem_univ, true_and,
     Prod.ext_iff] at yt m ⊢
@@ -454,14 +455,14 @@ theorem continuousAt_fill_coe {f : ℂ → X} {y : X} (fc : ContinuousAt f z) :
   simp only [OnePoint.continuousAt_coe, Function.comp_def, fill_coe, fc]
 
 /-- `fill` is continuous at `∞` -/
-theorem continuousAt_fill_inf {f : ℂ → X} {y : X} (fi : Tendsto f atInf (𝓝 y)) :
+theorem continuousAt_fill_inf {f : ℂ → X} {y : X} (fi : Tendsto f (cobounded ℂ) (𝓝 y)) :
     ContinuousAt (fill f y) ∞ := by
   simp only [OnePoint.continuousAt_infty', Filter.coclosedCompact_eq_cocompact, ←
-    atInf_eq_cocompact, Function.comp_def, fill_coe, fill_inf, fi]
+    Metric.cobounded_eq_cocompact, Function.comp_def, fill_coe, fill_inf, fi]
 
 /-- `fill` is continuous -/
-theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f) (fi : Tendsto f atInf (𝓝 y)) :
-    Continuous (fill f y) := by
+theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f)
+    (fi : Tendsto f (cobounded ℂ) (𝓝 y)) : Continuous (fill f y) := by
   rw [continuous_iff_continuousAt]; intro z; induction z using OnePoint.rec
   · exact continuousAt_fill_inf fi
   · exact continuousAt_fill_coe fc.continuousAt
@@ -478,7 +479,7 @@ theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : 
 
 /-- `fill` is analytic at `∞` -/
 theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
-    (fa : ∀ᶠ z in atInf, ContMDiffAt I I ⊤ f z) (fi : Tendsto f atInf (𝓝 y)) :
+    (fa : ∀ᶠ z in cobounded ℂ, ContMDiffAt I I ⊤ f z) (fi : Tendsto f (cobounded ℂ) (𝓝 y)) :
     ContMDiffAt I I ⊤ (fill f y) ∞ := by
   rw [mAnalyticAt_iff_of_boundaryless]
   use continuousAt_fill_inf fi
@@ -498,8 +499,8 @@ theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
         PartialHomeomorph.toFun_eq_coe]
   rw [e]; clear e
   apply Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
-  · apply (inv_tendsto_atInf.eventually fa).mp
-    apply (inv_tendsto_atInf.eventually (fi.eventually
+  · apply (inv_tendsto_cobounded.eventually fa).mp
+    apply (inv_tendsto_cobounded.eventually (fi.eventually
       ((isOpen_extChartAt_source y).eventually_mem (mem_extChartAt_source (I := I) y)))).mp
     apply eventually_nhdsWithin_of_forall; intro z z0 m fa
     simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at z0
@@ -517,11 +518,11 @@ theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
       apply tendsto_nhdsWithin_congr (f := fun z ↦ f z⁻¹)
       intro z z0; simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at z0
       simp only [z0, if_false]
-      exact Filter.Tendsto.comp fi inv_tendsto_atInf
+      exact Filter.Tendsto.comp fi inv_tendsto_cobounded
 
 /-- `fill` is analytic -/
 theorem mAnalytic_fill [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : ContMDiff I I ⊤ f)
-    (fi : Tendsto f atInf (𝓝 y)) : ContMDiff I I ⊤ (fill f y) := by
+    (fi : Tendsto f (cobounded ℂ) (𝓝 y)) : ContMDiff I I ⊤ (fill f y) := by
   intro z; induction z using OnePoint.rec
   · exact mAnalyticAt_fill_inf (.of_forall fa) fi
   · exact mAnalyticAt_fill_coe (fa _)
@@ -534,11 +535,11 @@ theorem continuousAt_lift_coe' (gc : ContinuousAt (uncurry g) (x, z)) :
   exact Filter.Tendsto.comp Filter.tendsto_map gc
 
 /-- `lift'` is continuous at `∞` -/
-theorem continuousAt_lift_inf' (gi : Tendsto (uncurry g) (𝓝 x ×ˢ atInf) atInf) :
+theorem continuousAt_lift_inf' (gi : Tendsto (uncurry g) (𝓝 x ×ˢ cobounded ℂ) (cobounded ℂ)) :
     ContinuousAt (uncurry (lift' g ∞)) (x, ∞) := by
   simp only [ContinuousAt, Filter.Tendsto, Filter.le_def, Filter.mem_map]; intro s m
   simp only [OnePoint.nhds_infty_eq, Filter.coclosedCompact_eq_cocompact, Filter.mem_sup,
-    Filter.mem_map, Filter.mem_pure, ← atInf_eq_cocompact, lift', rec_inf, uncurry] at m
+    Filter.mem_map, Filter.mem_pure, ← Metric.cobounded_eq_cocompact, lift', rec_inf, uncurry] at m
   simp only [Tendsto] at gi; specialize gi m.1
   simp only [Filter.mem_map, preimage_preimage] at gi
   have e : uncurry (lift' g ∞) ⁻¹' s =
@@ -550,11 +551,11 @@ theorem continuousAt_lift_inf' (gi : Tendsto (uncurry g) (𝓝 x ×ˢ atInf) atI
     · simp only [uncurry, lift', mem_preimage, rec_coe, prod_singleton, image_univ, mem_union,
         mem_image, Prod.ext_iff, coe_eq_coe, Prod.exists, exists_eq_right_right, exists_eq_right,
         mem_range, OnePoint.infty_ne_coe, and_false, exists_false, or_false]
-  rw [e]; exact prod_mem_inf_of_mem_atInf gi
+  rw [e]; exact prod_mem_inf_of_mem_cobounded gi
 
 /-- `lift'` is continuous -/
 theorem continuous_lift' (gc : Continuous (uncurry g))
-    (gi : ∀ x, Tendsto (uncurry g) (𝓝 x ×ˢ atInf) atInf) :
+    (gi : ∀ x, Tendsto (uncurry g) (𝓝 x ×ˢ cobounded ℂ) (cobounded ℂ)) :
     Continuous (uncurry (lift' g ∞)) := by
   rw [← continuousOn_univ]; intro ⟨x, z⟩ _; apply ContinuousAt.continuousWithinAt
   induction z using OnePoint.rec
@@ -568,13 +569,14 @@ theorem continuousAt_lift_coe (fc : ContinuousAt f z) : ContinuousAt (lift f y) 
   (continuousAt_lift_coe' gc).comp (ContinuousAt.prodMk continuousAt_const continuousAt_id)
 
 /-- `lift` is continuous at `∞` -/
-theorem continuousAt_lift_inf (fi : Tendsto f atInf atInf) : ContinuousAt (lift f ∞) ∞ :=
-  haveI gi : Tendsto (uncurry fun _ : Unit ↦ f) (𝓝 () ×ˢ atInf) atInf :=
+theorem continuousAt_lift_inf (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) :
+    ContinuousAt (lift f ∞) ∞ :=
+  haveI gi : Tendsto (uncurry fun _ : Unit ↦ f) (𝓝 () ×ˢ cobounded ℂ) (cobounded ℂ) :=
     fi.comp Filter.tendsto_snd
   (continuousAt_lift_inf' gi).comp (ContinuousAt.prodMk continuousAt_const continuousAt_id)
 
 /-- `lift` is continuous -/
-theorem continuous_lift (fc : Continuous f) (fi : Tendsto f atInf atInf) :
+theorem continuous_lift (fc : Continuous f) (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) :
     Continuous (lift f ∞) := by
   rw [continuous_iff_continuousAt]; intro z; induction z using OnePoint.rec
   · exact continuousAt_lift_inf fi
@@ -586,14 +588,14 @@ theorem mAnalyticAt_lift_coe (fa : AnalyticAt ℂ f z) : ContMDiffAt I I ⊤ (li
   exact mAnalyticAt_fill_coe ((mAnalytic_coe _).comp _ (fa.mAnalyticAt I I))
 
 /-- `lift` is analytic at `∞` -/
-theorem mAnalyticAt_lift_inf (fa : ∀ᶠ z in atInf, AnalyticAt ℂ f z) (fi : Tendsto f atInf atInf) :
-    ContMDiffAt I I ⊤ (lift f ∞) ∞ := by
+theorem mAnalyticAt_lift_inf (fa : ∀ᶠ z in cobounded ℂ, AnalyticAt ℂ f z)
+    (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) : ContMDiffAt I I ⊤ (lift f ∞) ∞ := by
   rw [lift_eq_fill]; apply mAnalyticAt_fill_inf
   exact fa.mp (.of_forall fun z fa ↦ (mAnalytic_coe _).comp _ (fa.mAnalyticAt I I))
   exact coe_tendsto_inf.comp fi
 
 /-- `lift` is analytic -/
-theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ) (fi : Tendsto f atInf atInf) :
+theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ) (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) :
     ContMDiff I I ⊤ (lift f ∞) := by
   intro z; induction z using OnePoint.rec
   · exact mAnalyticAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
@@ -601,7 +603,7 @@ theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ) (fi : Tendsto f atInf atI
 
 /-- `lift'` is analytic (the parameterized version) -/
 theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOnNhd ℂ (uncurry f) univ)
-    (fi : ∀ x, Tendsto (uncurry f) (𝓝 x ×ˢ atInf) atInf) :
+    (fi : ∀ x, Tendsto (uncurry f) (𝓝 x ×ˢ cobounded ℂ) (cobounded ℂ)) :
     ContMDiff II I ⊤ (uncurry (lift' f ∞)) := by
   apply osgoodManifold (continuous_lift' fa.continuous fi)
   · intro x z

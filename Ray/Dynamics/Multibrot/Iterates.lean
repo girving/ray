@@ -20,6 +20,7 @@ Our main result in this file is `iter_approx`, which shows that iterates grow as
 where `k` varies depending on `b` (see `iter_error_le_of_z3` and `iter_error_le_of_z4`).
 -/
 
+open Bornology (cobounded)
 open Complex (abs)
 open Filter (Tendsto atTop)
 open Real (exp log)
@@ -58,9 +59,9 @@ lemma le_self_iter (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (
   exact le_mul_of_one_le_left (norm_nonneg _) (one_le_pow₀ (by norm_num))
 
 /-- Iterates tend to infinity for large `z` -/
-theorem tendsto_iter_atInf (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
-    Tendsto (fun n ↦ (f' d c)^[n] z) atTop atInf := by
-  simp only [tendsto_atInf_iff_norm_tendsto_atTop]
+theorem tendsto_iter_cobounded (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    Tendsto (fun n ↦ (f' d c)^[n] z) atTop (cobounded ℂ) := by
+  simp only [tendsto_cobounded_iff_norm_tendsto_atTop]
   refine Filter.tendsto_atTop_mono (iter_large_z3 d z3 cz) ?_
   exact Filter.Tendsto.atTop_mul_const (by linarith) (tendsto_pow_atTop_atTop_of_one_lt one_lt_two)
 
