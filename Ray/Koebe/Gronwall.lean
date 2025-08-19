@@ -7,7 +7,7 @@ import Ray.Analytic.Holomorphic
 import Ray.Koebe.WindArea
 import Ray.Manifold.GlobalInverse
 import Ray.Misc.Annuli
-import Ray.Misc.AtInf
+import Ray.Misc.Cobounded
 
 /-!
 ## Grönwall's area theorem
@@ -31,6 +31,7 @@ Since Mathlib is missing the general formula for area within a curve, we prove t
 image is star-shaped for sufficiently large `r`, then use the machinery in `WindArea.lean`.
 -/
 
+open Bornology (cobounded)
 open Classical
 open Complex (abs arg)
 open Metric (ball closedBall isOpen_ball sphere)
@@ -391,13 +392,14 @@ def gg (i : Gronwall f) : PartialHomeomorph ℂ ℂ where
   continuousOn_invFun := i.gia.continuousOn
 
 /-- `g` tends to infinity at infinity -/
-lemma g_tendsto (i : Gronwall f) : Tendsto i.g atInf atInf := by
+lemma g_tendsto (i : Gronwall f) : Tendsto i.g (cobounded ℂ) (cobounded ℂ) := by
   unfold g
   have f0 := (i.fa 0 (by simp)).continuousAt
   simp only [ContinuousAt, i.f0, Metric.tendsto_nhds_nhds] at f0
   obtain ⟨s,s0,sh⟩ := f0 (1/2) (by simp)
   simp only [dist_zero_right, Complex.dist_eq, one_div] at sh
-  simp only [tendsto_atInf, Complex.norm_mul, atInf_basis.eventually_iff, mem_setOf_eq, true_and]
+  simp only [tendsto_cobounded, Complex.norm_mul, hasBasis_cobounded_norm_lt.eventually_iff,
+    mem_setOf_eq, true_and]
   intro r
   use max (2 * r) s⁻¹
   intro z lt
@@ -413,30 +415,65 @@ lemma g_tendsto (i : Gronwall f) : Tendsto i.g atInf atInf := by
   rw [(by ring_nf : r = 2 * r * 2⁻¹)]
   exact mul_lt_mul lt.1 f2 (by norm_num) (norm_nonneg _)
 
-/-- The outer region has the expected closure -/
+/-- The outer region has the expected closure.
+This proof is atrocious, but I'm tired of it and thus giving up on elegance. -/
 lemma closure_outer (i : Gronwall f) : ∀ᶠ r in atTop, closure (i.outer r) = i.g '' norm_Ici r := by
   filter_upwards [Filter.eventually_gt_atTop 1] with r r1
   apply subset_antisymm
   · intro w m
     simp only [outer, mem_closure_iff_frequently, mem_image, norm_Ioi, norm_Ici, mem_setOf_eq,
-      frequently_skolem] at m ⊢
-    obtain ⟨s,m⟩ := m
-    rcases tendsto_atInf_or_mapClusterPt s (𝓝 w) with t | ⟨z,c⟩
-    · have t := i.g_tendsto.comp t
-      replace e := m.mono fun _ p ↦ p.2
+      Filter.frequently_iff_seq_forall, Classical.skolem] at m ⊢
+    obtain ⟨s,st,z,m⟩ := m
+    rcases tendsto_cobounded_or_mapClusterPt z atTop with t | ⟨a,c⟩
+    · have zt := i.g_tendsto.comp t
+      replace e : ∀ n, i.g (z n) = s n := fun n ↦ (m n).2
       contrapose e
-      simp? [Function.comp_def] at t ⊢
+      simp only [Function.comp_def, not_forall] at zt ⊢
+      have large := zt.eventually (eventually_cobounded_le_norm (1 + 2 * ‖w‖))
+      have small := st.eventually (eventually_norm_sub_lt (x₀ := w) (ε := 1 + ‖w‖) (by positivity))
+      obtain ⟨n,le,lt⟩ := (large.and small).exists
+      use n
+      contrapose lt
+      simp only [Decidable.not_not, not_lt] at lt le ⊢
+      simp only [lt] at le
+      calc ‖s n - w‖
+        _ ≥ ‖s n‖ - ‖w‖ := by bound
+        _ ≥ 1 + 2 * ‖w‖ - ‖w‖ := by bound
+        _ = 1 + ‖w‖ := by ring
+    · use a
+      simp only [Metric.nhds_basis_ball.mapClusterPt_iff_frequently] at c
+      have ra : r ≤ ‖a‖ := by
+        refine le_of_forall_pos_lt_add fun e e0 ↦ ?_
+        obtain ⟨n,za⟩ := (c e e0).exists
+        calc ‖a‖ + e
+          _ = ‖z n - (z n - a)‖ + e := by ring_nf
+          _ ≥ ‖z n‖ - ‖z n - a‖ + e := by bound
+          _ > ‖z n‖ - e + e := by bound
+          _ = ‖z n‖ := by ring
+          _ ≥ r := by bound [(m n).1]
+      refine ⟨ra, ?_⟩
+      refine eq_of_forall_dist_le fun e e0 ↦ ?_
+      obtain ⟨d,d0,dg⟩ := Metric.continuousAt_iff.mp ((i.ga (z := a) (by order)).continuousAt) (e/2)
+        (by bound)
+      obtain ⟨n,sw,za⟩ := ((Metric.tendsto_nhds.mp st (e/2) (by bound)).and_frequently
+        (c d d0)).exists
+      specialize @dg (z n) (by simpa using za)
+      calc dist (i.g a) w
+        _ ≤ dist (i.g a) (i.g (z n)) + dist (i.g (z n)) w := by bound
+        _ = dist (i.g (z n)) (i.g a) + dist (s n) w := by rw [dist_comm, (m _).2]
+        _ ≤ e/2 + e/2 := by bound
+        _ = e := by ring
   · rw [← closure_norm_Ioi]
     refine ContinuousOn.image_closure (i.ga'.continuousOn.mono ?_)
     simp only [closure_norm_Ioi, r1, norm_Ici_subset_norm_Ioi]
 
- /-- The outer region has the expected frontier -/
+/-- The outer region has the expected frontier -/
 lemma frontier_outer (i : Gronwall f) : ∀ᶠ r in atTop,
     frontier (i.outer r) = i.g '' sphere 0 r := by
-  filter_upwards [Filter.eventually_gt_atTop 1] with r r1
-  simp only [frontier, (i.isOpen_outer r1).interior_eq]
-  ext w
-  simp? [outer]
+  filter_upwards [Filter.eventually_gt_atTop 1, i.closure_outer] with r r1 close
+  rw [frontier, (i.isOpen_outer r1).interior_eq, close, outer,
+    ← (i.inj.mono (norm_Ici_subset_norm_Ioi r1)).image_diff_subset norm_Ioi_subset_norm_Ici,
+    norm_Ici_diff_norm_Ioi]
 
 /-!
 ### Area within large radii
@@ -473,12 +510,34 @@ lemma wind (i : Gronwall f) : ∀ᶠ r in atTop, WindDiff (i.gc r) := by
     · apply differentiable_circleMap
     · simp [abs_of_pos r0, r1]
 
+/-- Eventually, the two notions of spheres coincide -/
+lemma sphere_eq (i : Gronwall f) : ∀ᶠ r in atTop,
+    i.g '' sphere 0 r = range (fun z ↦ (i.gc r z).val) := by
+  filter_upwards [i.g0, Filter.eventually_gt_atTop 0] with r g0 r0
+  ext w
+  simp only [mem_image, mem_sphere_iff_norm, sub_zero, mem_range, gc]
+  constructor
+  · intro ⟨z,zr,e⟩
+    have z0 : z ≠ 0 := by rw [ne_eq, ← norm_eq_zero]; linarith
+    refine ⟨snap z, ?_⟩
+    rw [Units.val_mk1]
+    · simp [coe_snap, z0, zr, mul_div_cancel₀ _ (Complex.ofReal_ne_zero.mpr r0.ne'), e]
+    · apply g0; simp [r0.le]
+  · intro ⟨z,e⟩
+    refine ⟨r * z.val, by simp [r0.le], ?_⟩
+    rwa [Units.val_mk1] at e
+    apply g0; simp [r0.le]
+
 /-- Our two notions of outside (based on `g` and star-shaped extrapolation) match -/
 lemma outer_eq_outer (i : Gronwall f) :
     ∀ᶠ r in atTop, ∀ w : Wind (i.gc r), i.outer r = w.outer := by
-  filter_upwards [Filter.eventually_gt_atTop 1, i.isPreconnected_outer] with r r1 c0 w
-  have c1 := w.isPreconnected_outer
-  apply subset_antisymm
+  filter_upwards [Filter.eventually_gt_atTop 1, i.isPreconnected_outer, i.frontier_outer,
+    i.sphere_eq] with r r1 c0 fo se w
+  refine c0.eq_of_frontier_eq w.isPreconnected_outer (i.isOpen_outer r1) w.isOpen_outer ?_ ?_
+  · simp only [fo, w.frontier_outer, w.sphere_eq, se]
+  · obtain ⟨z,zo,zr⟩ := ((i.g_tendsto.eventually w.large_mem_outer).and
+      (eventually_cobounded_lt_norm r)).exists
+    exact ⟨i.g z, ⟨z, zr, rfl⟩, zo⟩
 
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by

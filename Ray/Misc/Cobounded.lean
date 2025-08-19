@@ -121,3 +121,8 @@ lemma tendsto_cobounded_or_mapClusterPt [ProperSpace X] (f : α → X) (l : Filt
     have t := IsCompact.exists_mapClusterPt_of_frequently (isCompact_closedBall _ _) t
     obtain ⟨z,m,c⟩ := t
     exact ⟨z,c⟩
+
+lemma eventually_cobounded_lt_norm (r : ℝ) : ∀ᶠ x in cobounded X, r < ‖x‖ := by
+  filter_upwards [eventually_cobounded_le_norm (r + 1)]
+  intro x le
+  linarith

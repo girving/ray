@@ -36,6 +36,11 @@ lemma norm_Icc_eq_diff {r s : ℝ} : norm_Icc r s = closedBall 0 s \ ball 0 r :=
   simp only [norm_Icc, mem_preimage, mem_Icc, mem_diff, Metric.mem_closedBall, dist_zero_right,
     Metric.mem_ball, not_lt, and_comm]
 
+@[simp] lemma norm_Ici_diff_norm_Ioi {r : ℝ} : norm_Ici r \ norm_Ioi r = sphere 0 r := by
+  ext z
+  simp only [norm_Ici, norm_Ioi, mem_diff, mem_setOf_eq, not_lt, ← le_antisymm_iff,
+    mem_sphere_iff_norm, sub_zero, eq_comm]
+
 lemma isCompact_norm_Icc {r s : ℝ} : IsCompact (norm_Icc r s) := by
   rw [norm_Icc_eq_diff]; exact (isCompact_closedBall _ _).diff isOpen_ball
 
