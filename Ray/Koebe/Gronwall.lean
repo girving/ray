@@ -38,7 +38,7 @@ open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
 open MeasureTheory (volume)
-open scoped ContDiff Topology NNReal
+open scoped ContDiff Topology NNReal Real
 noncomputable section
 
 variable {α : Type}
@@ -73,6 +73,32 @@ lemma inj (i : Gronwall f) : InjOn i.g (norm_Ioi 1) := i.inj'
 /-- Power series coefficients of `f` -/
 def coeff (_ : Gronwall f) (n : ℕ) : ℂ :=
   iteratedDeriv n f 0 / n.factorial
+
+/-- The power series of `f` over the whole unit ball -/
+lemma hasFPowerSeriesOnBall (i : Gronwall f) :
+    HasFPowerSeriesOnBall f (.ofScalars ℂ i.coeff) 0 1 := by
+  have a0 := (i.fa 0 (by simp)).hasFPowerSeriesAt
+  obtain ⟨p,a1⟩ := (analyticOnNhd_ball_iff_hasFPowerSeriesOnBall (by norm_num)).mp
+    (Metric.emetric_ball (α := ℂ) ▸ i.fa)
+  have pe := a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt
+  unfold coeff
+  simp only [a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt] at a0 ⊢
+  simpa using a1
+
+/-- `coeff` decays geometrically as fast as we need to do our power series sums -/
+lemma norm_coeff_le (i : Gronwall f) {r : ℝ} (r0 : 0 < r) (r1 : r < 1) :
+    ∃ a ∈ Set.Ioo 0 1, ∃ C : ℝ, 0 < C ∧ ∀ n, ‖i.coeff n‖ ≤ C * (a / r) ^ n := by
+  have le := i.hasFPowerSeriesOnBall.r_le
+  set r' : ℝ≥0 := ⟨r, r0.le⟩
+  have r'1 : r' < 1 := by rw [← NNReal.mk_one]; simp only [r', ← NNReal.coe_lt_coe]; simp [r1]
+  have r'r : r' < (FormalMultilinearSeries.ofScalars ℂ i.coeff).radius :=
+    lt_of_lt_of_le (by simp only [ENNReal.coe_lt_one_iff, r'1]) le
+  obtain ⟨a,am,C,C0,le⟩ :=
+    (FormalMultilinearSeries.ofScalars ℂ i.coeff).norm_mul_pow_le_mul_pow_of_lt_radius r'r
+  refine ⟨a, am, C, C0, fun n ↦ ?_⟩
+  specialize le n
+  rw [div_pow, ← mul_div_assoc, le_div_iff₀ (by bound)]
+  simpa [r'] using le
 
 /-- Eventually `f` is large near 0 -/
 lemma f_large_near_one (i : Gronwall f) (b : ℝ) (b1 : b < 1) : ∀ᶠ z in 𝓝 0, b < ‖f z‖ := by
@@ -539,12 +565,43 @@ lemma outer_eq_outer (i : Gronwall f) :
       (eventually_cobounded_lt_norm r)).exists
     exact ⟨i.g z, ⟨z, zr, rfl⟩, zo⟩
 
+-- DO NOT SUBMIT: inner ℝ (w.fe t * Complex.I) (w.dfe t)
+lemma hasSum_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
+    HasSum (fun n : ℕ ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.fe t) := by
+  filter_upwards [Filter.eventually_gt_atTop 1, i.g0] with r r1 g0 w t
+  have r0 : 0 < r := by linarith
+  have ri0 : 0 < r⁻¹ := by bound
+  have ri1 : r⁻¹ < 1 := by bound
+  have circ : ∀ t, (r : ℂ) * Circle.exp t = circleMap 0 r t := by intro; simp [circleMap]
+  have sum : ∀ t, HasSum (fun n ↦ i.coeff n * circleMap 0 r⁻¹ t ^ n) (f (circleMap 0 r⁻¹ t)) := by
+    intro t
+    have sum := i.hasFPowerSeriesOnBall.hasSum (y := circleMap 0 r⁻¹ t)
+      (by simp [← ofReal_norm, abs_of_pos ri0, ri1])
+    simpa only [FormalMultilinearSeries.ofScalars_apply_eq, mul_comm, zero_add, mul_pow, smul_eq_mul,
+      ← mul_assoc, zero_add, Complex.ofReal_inv] using sum
+  have pow : ∀ n : ℕ, circleMap 0 r t * circleMap 0 r⁻¹ (-t) ^ n =
+      circleMap 0 r t ^ (1 - n : ℤ) := by
+    intro n
+    rw [zpow_sub₀, zpow_one, zpow_natCast, ← circleMap_zero_inv, inv_pow, div_eq_mul_inv]
+    simp [r0.ne']
+  rw [WindDiff.fe, gc, Units.val_mk1 (g0 _ (by simp [r0.le])), g, circ, circleMap_zero_inv]
+  replace sum := (sum (-t)).mul_left (circleMap 0 r t)
+  simp only [← mul_assoc, mul_comm _ (i.coeff _)] at sum
+  simp only [mul_assoc, pow] at sum
+  exact sum
+
+lemma hasSum_dfe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
+    HasSum (fun n : ℕ ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.dfe t) := by
+  filter_upwards [Filter.eventually_gt_atTop 1, i.hasSum_fe] with r r1 sum w t
+  simp only [WindDiff.dfe]
+  sorry
+
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by
-  filter_upwards [i.wind] with r w
-  have ed : i.disk r = w.wind.disk := by
-    simp only [disk, ← w.wind.compl_outer, compl_inj_iff, Wind.outer, outer]
-    simp?
+  filter_upwards [i.wind, i.outer_eq_outer] with r w oe
+  have ed : i.disk r = w.wind.disk := by simp only [disk, ← w.wind.compl_outer, oe w.wind]
+  simp only [ed, w.volume_eq]
+  sorry
 
 #exit
 

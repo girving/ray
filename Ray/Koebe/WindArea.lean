@@ -34,8 +34,8 @@ lemma wind (i : WindDiff f) : Wind f := ⟨i.fc, i.inj⟩
 
 -- Abbreviations for `f`-related functions
 def fe (_ : WindDiff f) (t : ℝ) : ℂ := (f (.exp t)).val
-def dfe (_ : WindDiff f) (t : ℝ) : ℂ := deriv (fun t ↦ (f (.exp t)).val) t
-def fdfe (_ : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ (fun t ↦ (f (.exp t)).val) t
+def dfe (i : WindDiff f) (t : ℝ) : ℂ := deriv i.fe t
+def fdfe (i : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ i.fe t
 
 @[simp] lemma deriv_fe (i : WindDiff f) {t : ℝ} : deriv i.fe t = i.dfe t := rfl
 lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
@@ -43,7 +43,7 @@ lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
 lemma hasFDerivAt_fe (i : WindDiff f) {t : ℝ} : HasFDerivAt i.fe (i.fdfe t) t :=
   i.diff.differentiableAt.hasFDerivAt
 @[simp] lemma fdfe_one (i : WindDiff f) {t : ℝ} : i.fdfe t 1 = i.dfe t := by
-  simp only [fdfe, dfe, fderiv_eq_smul_deriv, one_smul]
+  unfold dfe; unfold fdfe; unfold fe; simp only [fderiv_eq_smul_deriv, one_smul]
 
 -- Abbreviation for `fst` and `snd` as continuous linear maps
 private abbrev d1 := ContinuousLinearMap.fst ℝ ℝ ℝ
