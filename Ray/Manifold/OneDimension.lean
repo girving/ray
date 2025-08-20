@@ -223,7 +223,7 @@ theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f) 
     norm_num at c
   · rw [Function.iterate_succ', Critical,
       mfderiv_comp z ((fa _).mdifferentiableAt (OrderTop.le_top _))
-       ((fa.iter _ _).mdifferentiableAt (OrderTop.le_top _)),
+       ((fa.iterate _ _).mdifferentiableAt (OrderTop.le_top _)),
       mderiv_comp_eq_zero_iff] at c
     cases' c with c c; use n, c; exact h c
 
