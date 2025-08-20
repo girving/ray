@@ -1,8 +1,9 @@
 import Mathlib.Analysis.Analytic.Basic
-import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.Calculus.SmoothSeries
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.RemovableSingularity
+import Mathlib.Analysis.InnerProductSpace.Basic
 import Ray.Analytic.Holomorphic
 import Ray.Koebe.WindArea
 import Ray.Manifold.GlobalInverse
@@ -33,7 +34,7 @@ image is star-shaped for sufficiently large `r`, then use the machinery in `Wind
 
 open Bornology (cobounded)
 open Classical
-open Complex (abs arg)
+open Complex (abs arg I)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
@@ -565,7 +566,7 @@ lemma outer_eq_outer (i : Gronwall f) :
       (eventually_cobounded_lt_norm r)).exists
     exact ⟨i.g z, ⟨z, zr, rfl⟩, zo⟩
 
--- DO NOT SUBMIT: inner ℝ (w.fe t * Complex.I) (w.dfe t)
+/-- Power series for `w.fe` -/
 lemma hasSum_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
     HasSum (fun n : ℕ ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.fe t) := by
   filter_upwards [Filter.eventually_gt_atTop 1, i.g0] with r r1 g0 w t
@@ -590,11 +591,74 @@ lemma hasSum_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r),
   simp only [mul_assoc, pow] at sum
   exact sum
 
+/-- Power series for the derivative `w.dfe` -/
 lemma hasSum_dfe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
-    HasSum (fun n : ℕ ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.dfe t) := by
+    HasSum (fun n : ℕ ↦ (1 - n : ℤ) * I * i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.dfe t) := by
   filter_upwards [Filter.eventually_gt_atTop 1, i.hasSum_fe] with r r1 sum w t
   simp only [WindDiff.dfe]
-  sorry
+  have r0 : 0 < r := by linarith
+  have ri0 : 0 < r⁻¹ := by rw [inv_pos]; linarith
+  have ri1 : r⁻¹ < 1 := by bound
+  have c0 : ∀ {t}, circleMap 0 r t ≠ 0 := fun {t} ↦ circleMap_ne_center (by positivity)
+  obtain ⟨a,⟨a0,a1⟩,C,C0,cle⟩ := i.norm_coeff_le ri0 ri1
+  simp only [div_inv_eq_mul] at cle
+  set f := fun (n : ℕ) t ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)
+  set f' := fun (n : ℕ) t ↦ i.coeff n * ((1 - n : ℤ) * circleMap 0 r t ^ (1 - n - 1 : ℤ) *
+    (circleMap 0 r t * I))
+  have df : ∀ n t, HasDerivAt (f n) (f' n t) t := by
+    intro n t
+    simp only [f, f']
+    apply HasDerivAt.const_mul
+    exact (hasDerivAt_zpow (1 - n) (circleMap 0 r t) (.inl c0)).comp t (hasDerivAt_circleMap 0 r t)
+  have hf : ∀ n t, f n t = i.coeff n * circleMap 0 r t ^ (1 - n : ℤ) := by intro n t; rfl
+  have hf' : ∀ n t, f' n t = (1 - n : ℤ) * I * i.coeff n * circleMap 0 r t ^ (1 - n : ℤ) := by
+    intro n t
+    simp only [f', ← mul_assoc _ _ I, mul_assoc _ (_ ^ (_ : ℤ)) (circleMap _ _ _),
+      ← zpow_add_one₀ c0]
+    ring_nf
+  set u : ℕ → ℝ := fun n ↦ C * r * a ^ n
+  set v : ℕ → ℝ := fun n ↦ C * r * (n + 1) * a ^ n
+  have e : w.fe = fun t ↦ ∑' n, f n t := by ext t; exact (sum w t).tsum_eq.symm
+  rw [e]
+  simp only [← hf']
+  have su : Summable u :=
+    (summable_geometric_of_abs_lt_one (by simp [abs_of_pos a0, a1])).mul_left _
+  have sv : Summable v := by
+    simp only [v, mul_assoc _ _ (a^_)]
+    have s := summable_pow_mul_geometric_of_norm_lt_one 1 (r := a) (by simp [abs_of_pos a0, a1])
+    simp only [pow_one] at s
+    simp only [add_one_mul, mul_add]
+    exact (s.mul_left _).add su
+  have fu : ∀ n t, ‖f n t‖ ≤ u n := by
+    intro n t
+    simp only [Complex.norm_mul, norm_zpow, norm_circleMap_zero, abs_of_pos r0, zpow_sub₀ r0.ne',
+      zpow_one, zpow_natCast, f, u]
+    calc ‖i.coeff n‖ * (r / r ^ n)
+      _ ≤ C * (a * r) ^ n * (r / r ^ n) := by bound [cle n]
+      _ = C * r * a ^ n * (r ^ n * (r ^ n)⁻¹) := by rw [← inv_pow]; ring
+      _ ≤ C * r * a ^ n := by rw [mul_inv_cancel₀ (by positivity), mul_one]
+  have f'v : ∀ n t, ‖f' n t‖ ≤ v n := by
+    intro n t
+    have nb : ‖(1 - n : ℂ)‖ ≤ n + 1 := match n with
+      | 0 => by simp
+      | n + 1 => by simp; linarith
+    simp only [Int.cast_sub, Int.cast_one, Int.cast_natCast, sub_sub_cancel_left, zpow_neg,
+      zpow_natCast, ← mul_assoc, Complex.norm_mul, norm_inv, norm_pow, norm_circleMap_zero,
+      abs_of_pos r0, Complex.norm_I, mul_one, ge_iff_le, f', v]
+    calc ‖i.coeff n‖ * ‖(1 - n : ℂ)‖ * (r ^ n)⁻¹ * r
+      _ ≤ C * (a * r) ^ n * (n + 1) * (r ^ n)⁻¹ * r := by bound [cle n]
+      _ = C * r * (n + 1) * a ^ n * (r ^ n * (r ^ n)⁻¹) := by rw [← inv_pow]; ring
+      _ ≤ C * r * (n + 1) * a ^ n := by rw [mul_inv_cancel₀ (by positivity), mul_one]
+  rw [deriv_tsum_apply sv (y₀ := t)]
+  · simp only [(df _ _).deriv]
+    exact (sv.of_norm_bounded (fun n ↦ f'v n t)).hasSum
+  · intro n t
+    exact (df n t).differentiableAt
+  · intro n t
+    simp only [(df _ _).deriv, f'v]
+  · exact su.of_norm_bounded (fun n ↦ fu n t)
+
+-- DO NOT SUBMIT: inner ℝ (w.fe t * Complex.I) (w.dfe t)
 
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by

@@ -5,7 +5,7 @@ import Mathlib.Analysis.Complex.RemovableSingularity
 import Ray.Analytic.Holomorphic
 import Ray.Koebe.WindArea
 import Ray.Misc.Annuli
-import Ray.Misc.AtInf
+import Ray.Misc.Cobounded
 
 /-!
 ## Koebe quarter theorem
