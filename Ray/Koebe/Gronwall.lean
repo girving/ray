@@ -34,15 +34,15 @@ image is star-shaped for sufficiently large `r`, then use the machinery in `Wind
 
 open Bornology (cobounded)
 open Classical
-open Complex (abs arg I)
+open Complex (abs arg exp I)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
 open MeasureTheory (volume)
-open scoped ContDiff Topology NNReal Real
+open scoped ComplexConjugate ContDiff Topology NNReal Real
 noncomputable section
 
-variable {α : Type}
+variable {α β : Type}
 variable {f : ℂ → ℂ}
 
 /-!
@@ -537,6 +537,24 @@ lemma wind (i : Gronwall f) : ∀ᶠ r in atTop, WindDiff (i.gc r) := by
     · apply differentiable_circleMap
     · simp [abs_of_pos r0, r1]
 
+lemma gc_exp (i : Gronwall f) : ∀ᶠ r in atTop, ∀ t,
+    (i.gc r (Circle.exp t)).val = i.g (circleMap 0 r t) := by
+  filter_upwards [Filter.eventually_gt_atTop 1, i.g0, i.wind] with r r1 g0 w t
+  rw [gc, Units.val_mk1]
+  · simp [circleMap]
+  · apply g0; simp; linarith
+
+/-- `w.fe` is (real) analytic -/
+lemma analyticAt_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ (w : WindDiff (i.gc r)), ∀ t,
+    AnalyticAt ℝ w.fe t := by
+  filter_upwards [Filter.eventually_gt_atTop 1, i.g0, i.gc_exp] with r r1 g0 gc_exp w t
+  have r0 : 0 < r := by linarith
+  unfold WindDiff.fe
+  simp only [gc_exp]
+  refine (i.ga ?_).restrictScalars.comp ?_
+  · simp [abs_of_pos r0, r1]
+  · apply analyticOnNhd_circleMap; trivial
+
 /-- Eventually, the two notions of spheres coincide -/
 lemma sphere_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     i.g '' sphere 0 r = range (fun z ↦ (i.gc r z).val) := by
@@ -569,11 +587,10 @@ lemma outer_eq_outer (i : Gronwall f) :
 /-- Power series for `w.fe` -/
 lemma hasSum_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
     HasSum (fun n : ℕ ↦ i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)) (w.fe t) := by
-  filter_upwards [Filter.eventually_gt_atTop 1, i.g0] with r r1 g0 w t
+  filter_upwards [Filter.eventually_gt_atTop 1, i.gc_exp] with r r1 gc_exp w t
   have r0 : 0 < r := by linarith
   have ri0 : 0 < r⁻¹ := by bound
   have ri1 : r⁻¹ < 1 := by bound
-  have circ : ∀ t, (r : ℂ) * Circle.exp t = circleMap 0 r t := by intro; simp [circleMap]
   have sum : ∀ t, HasSum (fun n ↦ i.coeff n * circleMap 0 r⁻¹ t ^ n) (f (circleMap 0 r⁻¹ t)) := by
     intro t
     have sum := i.hasFPowerSeriesOnBall.hasSum (y := circleMap 0 r⁻¹ t)
@@ -585,7 +602,7 @@ lemma hasSum_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r),
     intro n
     rw [zpow_sub₀, zpow_one, zpow_natCast, ← circleMap_zero_inv, inv_pow, div_eq_mul_inv]
     simp [r0.ne']
-  rw [WindDiff.fe, gc, Units.val_mk1 (g0 _ (by simp [r0.le])), g, circ, circleMap_zero_inv]
+  rw [WindDiff.fe, gc_exp, g, circleMap_zero_inv]
   replace sum := (sum (-t)).mul_left (circleMap 0 r t)
   simp only [← mul_assoc, mul_comm _ (i.coeff _)] at sum
   simp only [mul_assoc, pow] at sum
@@ -658,13 +675,128 @@ lemma hasSum_dfe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r)
     simp only [(df _ _).deriv, f'v]
   · exact su.of_norm_bounded (fun n ↦ fu n t)
 
--- DO NOT SUBMIT: inner ℝ (w.fe t * Complex.I) (w.dfe t)
+-- DO NOT SUBMIT: Move elsewhere
+/-- Version of `HasDerivAt.inv` that works nicely over field towers -/
+theorem _root_.HasDerivAt.inv_tower {𝕜 𝕝 : Type} [NontriviallyNormedField 𝕜]
+    [NontriviallyNormedField 𝕝] [NormedAlgebra 𝕜 𝕝] {x : 𝕜} {c : 𝕜 → 𝕝} {c' : 𝕝}
+    (dc : HasDerivAt c c' x) (c0 : c x ≠ 0) : HasDerivAt c⁻¹ (-c' / c x ^ 2) x := by
+  have di := (hasFDerivAt_inv c0).restrictScalars 𝕜
+  have d := (di.comp x dc.hasFDerivAt).hasDerivAt
+  simpa [Function.comp_def, ← neg_div, ← div_eq_mul_inv] using d
+
+/-- `inner ℝ (w.fe t * I) (w.dfe t)` is eventually nonnegative -/
+lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
+    0 ≤ inner ℝ (w.fe t * I) (w.dfe t) := by
+  -- `deriv f 0 = 0`, and thus `‖deriv f z / f z‖ < 1` is small near `0`
+  have dfc : ContinuousAt (fun z ↦ deriv f z / f z) 0 := by
+    have a0 := i.fa 0 (by simp)
+    have d0 := a0.deriv.div a0 (by simp [i.f0])
+    exact d0.continuousAt
+  obtain ⟨s,s0,dfs⟩ := Metric.continuousAt_iff.mp dfc 1 (by simp)
+  simp only [dist_zero_right, i.df0.deriv, zero_div] at dfs
+  -- Now choose sufficiently large `r`
+  filter_upwards [Filter.eventually_gt_atTop (max 1 s⁻¹), i.g0, i.gc_exp] with r r1s g0 gc_exp w t
+  simp only [sup_lt_iff] at r1s
+  have r0 : 0 < r := by linarith
+  have ri1 : r⁻¹ < 1 := by bound
+  have rs : r⁻¹ < s := (inv_lt_comm₀ s0 r0).mp r1s.2
+  simp only [WindDiff.fe, WindDiff.dfe]
+  unfold WindDiff.fe
+  -- Various derivatives
+  set z := fun t ↦ circleMap 0 r t
+  have hz : ∀ t, circleMap 0 r t = z t := by intro; rfl
+  have circ : ∀ t, (r : ℂ) * Circle.exp t = z t := by intro; simp [circleMap, ← hz]
+  have z0 : ∀ {t}, z t ≠ 0 := by intro t; simp [z, r0.ne']
+  have fdz : ∀ t, DifferentiableAt ℂ f (z t)⁻¹ := by
+    intro t; exact (i.fa (z t)⁻¹ (by simp [z, abs_of_pos r0, ri1])).differentiableAt
+  have g0c : ∀ {t}, i.g (z t) ≠ 0 := by intro t; apply g0; simp [z, r0.le]
+  simp only [gc_exp, hz]
+  have dz : ∀ t, HasDerivAt z (z t * I) t := by
+    intro t; simp only [← hz]; apply hasDerivAt_circleMap
+  have dzi : ∀ t, HasDerivAt (fun t ↦ (z t)⁻¹) ((-(z t * I)) / (z t) ^ 2) t :=
+    fun t ↦ (dz t).inv_tower z0
+  simp only [pow_two, neg_div, mul_div_mul_comm, div_self z0, one_mul] at dzi
+  have dg : HasDerivAt (fun t ↦ i.g (z t))
+      (z t * I * f (z t)⁻¹ + z t * (deriv f (z t)⁻¹ * -(I / z t))) t :=
+    (dz t).mul ((fdz t).hasDerivAt.comp t (dzi t))
+  simp only [dg.deriv]
+  -- Now a bunch of poorly organised algebra
+  simp only [g, Complex.inner, add_mul, map_mul, Complex.conj_I]
+  generalize hw : z t = w
+  generalize hf : f w⁻¹ = fw
+  generalize hd : deriv f w⁻¹ = dfw
+  have nw : ‖w‖ = r := by simp [← hw, z, r0.le]
+  have f0 : 0 < ‖fw‖ := by simp [g, ← hf, ← hw] at g0c ⊢; exact g0c.2
+  ring_nf
+  simp only [Complex.I_sq]
+  ring_nf
+  have e : w * fw * (starRingEnd ℂ) w * (starRingEnd ℂ) fw = ‖w‖^2 * ‖fw‖^2 := by
+    simp only [mul_comm _ (conj w), ← mul_assoc, Complex.conj_mul']
+    simp only [mul_assoc, Complex.mul_conj']
+  simp only [e, Complex.mul_conj']
+  simp only [mul_assoc, ← mul_sub, ← Complex.ofReal_pow, Complex.re_ofReal_mul, Complex.sub_re,
+    Complex.ofReal_re]
+  apply mul_nonneg (by positivity)
+  rw [sub_nonneg]
+  refine le_trans (Complex.re_le_norm _) ?_
+  simp only [Complex.norm_mul, RCLike.norm_conj, norm_inv, nw, pow_two]
+  refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+  rw [← div_eq_mul_inv, div_le_iff₀ r0, mul_comm _ r, ← div_le_iff₀ f0]
+  specialize @dfs w⁻¹ (by simp [nw, rs])
+  simp only [hd, hf, Complex.norm_div] at dfs
+  linarith
+
+-- DO NOT SUBMIT: inner ℝ (w.fe t * I) (w.dfe t)
+--   w.fe t = ∑' n, i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)
+--   w.dfe t = ∑' n, (1 - n : ℤ) * I * i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)
+--   inner ℝ (w.fe t * I) (w.dfe t) = -(conj (fe t) * dfe t).im
+--     = -im ∑' n m, conj (i.coeff n) * conj (circleMap 0 r t ^ (1 - n : ℤ)) *
+--         (1 - m : ℤ) * I * i.coeff m * circleMap 0 r t ^ (1 - m : ℤ)
+--     = -re ∑' n m, (1 - m : ℤ) * i.coeff m * conj (i.coeff n) *
+--         conj (circleMap 0 r t ^ (1 - n : ℤ)) * circleMap 0 r t ^ (1 - m : ℤ)
+--     = -re ∑' n m, (1 - m : ℤ) * i.coeff m * conj (i.coeff n) * r ^ (2 - n - m : ℤ) *
+--         e ^ ((n - m : ℤ) * t * I)
+-- Let s = n + m, so that m = s - n. Continuing...
+--     = -re ∑' s, ∑ n ≤ s, (1 - s + n : ℤ) * i.coeff (s - n) * conj (i.coeff n) * r ^ (2 - s : ℤ) *
+--         e ^ ((2*n - s : ℤ) * t * I)
+/-- Power series for `w.dfe t * conj (w.fe t)` -/
+lemma hasSum_inner (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t : ℝ,
+    HasSum (fun p : ℕ × ℕ ↦ (1 - p.2) * i.coeff p.1 * conj (i.coeff p.2) *
+      r ^ (2 - p.1 - p.2 : ℤ) * exp ((p.1 - p.2) * t * I : ℂ))
+      (w.dfe t * conj (w.fe t)) := by
+  filter_upwards [i.hasSum_fe, i.hasSum_dfe] with r sfe sdfe w t
+  specialize sfe w t
+  replace sdfe := Complex.hasSum_conj'.mpr (sdfe w t)
+  have blah := (sfe.mul sdfe sorry)
+  -- Actually use https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/Normed/Ring/InfiniteSum.html#tsum_mul_tsum_of_summable_norm
+  sorry
 
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by
-  filter_upwards [i.wind, i.outer_eq_outer] with r w oe
+  filter_upwards [i.wind, i.outer_eq_outer, i.inner_nonneg, i.analyticAt_fe] with r w oe i0 fa
   have ed : i.disk r = w.wind.disk := by simp only [disk, ← w.wind.compl_outer, oe w.wind]
-  simp only [ed, w.volume_eq]
+  simp only [ed, w.volume_eq, abs_of_nonneg (i0 w _)]
+  simp only [Complex.inner, ← Complex.reCLM_apply]
+  have ii : IntervalIntegrable (fun t ↦ w.dfe t * (starRingEnd ℂ) (w.fe t * I)) volume (-π) π := by
+    apply Continuous.intervalIntegrable
+    simp only [WindDiff.dfe]
+    have fc1 : ContDiff ℝ 1 w.fe := by
+      rw [contDiff_iff_contDiffAt]
+      exact fun t ↦ (fa w t).contDiffAt.of_le le_top
+    have dc := fc1.continuous_deriv_one
+    have fc := fc1.continuous
+    continuity
+  have er : ∀ n : ℕ, (↑n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2) =
+      Complex.reCLM ((↑n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) := by
+    intro n; simp only [Complex.reCLM_apply, ← Complex.ofReal_mul, ← Complex.ofReal_pow,
+      ← Complex.ofReal_one, ← Complex.ofReal_sub, ← Complex.ofReal_natCast, ← Complex.ofReal_div,
+      Complex.ofReal_re]
+  rw [Complex.reCLM.intervalIntegral_comp_comm ii, Complex.reCLM_apply, ← Complex.re_ofReal_mul]
+  simp only [er, ← Complex.reCLM_apply]
+  apply Complex.reCLM.hasSum
+  simp only [Complex.ofReal_inv, Complex.ofReal_ofNat, map_mul, Complex.conj_I, mul_neg,
+    intervalIntegral.integral_neg, ← mul_assoc, intervalIntegral.integral_mul_const]
+  simp only [mul_comm _ I, ← mul_assoc, ← div_eq_mul_inv, ← neg_mul, ← neg_div]
   sorry
 
 #exit
