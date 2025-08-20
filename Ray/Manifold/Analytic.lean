@@ -249,11 +249,15 @@ theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCor
   refine ((analyticAt_fst.cpow analyticAt_snd ?_).mAnalyticAt _ _).comp _ (fa.prodMk ga)
   exact a
 
+-- begin #28674
+
 /-- Iterated `ContMDiff` functions are `ContMDiff`. -/
 theorem ContMDiff.iterate {f : M → M} {n : WithTop ℕ∞} (fa : ContMDiff I I n f) (k : ℕ) :
     ContMDiff I I n (f^[k]) := by
   induction' k with k h; simp only [Function.iterate_zero]; exact contMDiff_id
   simp only [Function.iterate_succ']; exact fa.comp h
+
+-- end #28674
 
 /-- If we're analytic at a point, we're locally analytic.
 This is true even with boundary, but for now we prove only the `Boundaryless` case. -/
