@@ -9,6 +9,7 @@ import Ray.Koebe.WindArea
 import Ray.Manifold.GlobalInverse
 import Ray.Misc.Annuli
 import Ray.Misc.Cobounded
+import Ray.Misc.Subexp
 
 /-!
 ## Grönwall's area theorem
@@ -628,15 +629,10 @@ def uf (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ := i.C r * r * i.a r ^ n
 def udf (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ := i.C r * r * (n + 1) * i.a r ^ n
 lemma summable_uf (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.uf r) := by
   filter_upwards [i.ac_prop] with r ⟨⟨a0,a1⟩,C0,_⟩
-  exact (summable_geometric_of_abs_lt_one (by simp [abs_of_pos a0, a1])).mul_left _
+  exact summable_subexp_mul_pow a0 a1
 lemma summable_udf (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.udf r) := by
   filter_upwards [i.summable_uf, i.ac_prop] with r suf ⟨⟨a0,a1⟩,C0,_⟩
-  unfold udf
-  simp only [mul_assoc _ _ (i.a r ^ _)]
-  have s := summable_pow_mul_geometric_of_norm_lt_one 1 (r := i.a r) (by simp [abs_of_pos a0, a1])
-  simp only [pow_one] at s
-  simp only [add_one_mul, mul_add]
-  exact (s.mul_left _).add suf
+  exact summable_subexp_mul_pow a0 a1
 lemma le_uf (i : Gronwall f) : ∀ᶠ r in atTop, ∀ n t,
     ‖i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)‖ ≤ i.uf r n := by
   filter_upwards [Filter.eventually_gt_atTop 1, i.ac_prop] with r r1 ⟨⟨a0,a1⟩,C0,cle⟩ n t
@@ -765,34 +761,136 @@ lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc 
   simp only [hd, hf, Complex.norm_div] at dfs
   linarith
 
--- DO NOT SUBMIT: inner ℝ (w.fe t * I) (w.dfe t)
---   w.fe t = ∑' n, i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)
---   w.dfe t = ∑' n, (1 - n : ℤ) * I * i.coeff n * circleMap 0 r t ^ (1 - n : ℤ)
---   inner ℝ (w.fe t * I) (w.dfe t) = -(conj (fe t) * dfe t).im
---     = -im ∑' n m, conj (i.coeff n) * conj (circleMap 0 r t ^ (1 - n : ℤ)) *
---         (1 - m : ℤ) * I * i.coeff m * circleMap 0 r t ^ (1 - m : ℤ)
---     = -re ∑' n m, (1 - m : ℤ) * i.coeff m * conj (i.coeff n) *
---         conj (circleMap 0 r t ^ (1 - n : ℤ)) * circleMap 0 r t ^ (1 - m : ℤ)
---     = -re ∑' n m, (1 - m : ℤ) * i.coeff m * conj (i.coeff n) * r ^ (2 - n - m : ℤ) *
---         e ^ ((n - m : ℤ) * t * I)
--- Let s = n + m, so that m = s - n. Continuing...
---     = -re ∑' s, ∑ n ≤ s, (1 - s + n : ℤ) * i.coeff (s - n) * conj (i.coeff n) * r ^ (2 - s : ℤ) *
---         e ^ ((2*n - s : ℤ) * t * I)
+-- DO NOT SUBMIT: Move elsewhere
+@[simp] lemma _root_.Complex.conj_circleMap {c : ℂ} {r : ℝ} {t : ℝ} :
+    conj (circleMap c r t) = circleMap (conj c) r (-t) := by
+  simp only [circleMap, map_add, map_mul, Complex.conj_ofReal, Complex.ofReal_neg,
+    neg_mul, ← Complex.exp_conj, Complex.conj_I, mul_neg]
+
+/-- Terms for our 2D sum -/
+def term (i : Gronwall f) (r : ℝ) (n m : ℕ) (t : ℝ) : ℂ :=
+  (1 - n) * I * i.coeff n * conj (i.coeff m) * r ^ 2 / r ^ (n + m) * exp ((m - n) * t * I)
+
+/-- `i.term` is continuous -/
+@[fun_prop] lemma continuous_term (i : Gronwall f) (r : ℝ) (n m : ℕ) :
+    Continuous (i.term r n m) := by
+  unfold term
+  fun_prop
+
+-- Bounds on `i.term`
+def ut (i : Gronwall f) (r : ℝ) (p : ℕ × ℕ) : ℝ := i.C r ^ 2 * (p.1 + 1) * r ^ 2 * i.a r ^ (p.1 + p.2)
+lemma le_ut (i : Gronwall f) : ∀ᶠ r in atTop, ∀ n m t, ‖i.term r n m t‖ ≤ i.ut r (n,m) := by
+  filter_upwards [Filter.eventually_gt_atTop 1, i.ac_prop] with r r1 ⟨⟨a0,a1⟩,C0,cle⟩ n m t
+  simp only [term, ut]
+  generalize i.a r = a at a0 a1 cle
+  have r0 : 0 < r := by linarith
+  have rn0 : ∀ {n}, r ^ n ≠ 0 := by intro n; positivity
+  have nb : ‖(1 - n : ℂ)‖ ≤ n + 1 := by induction' n with n; all_goals simp; try linarith
+  simp only [norm_mul, Complex.norm_div, Complex.norm_I, mul_one, RCLike.norm_conj, norm_pow,
+    Complex.norm_real, Real.norm_eq_abs, abs_of_pos r0, Complex.norm_exp, Complex.mul_re,
+    Complex.sub_re, Complex.natCast_re, Complex.ofReal_re, Complex.sub_im, Complex.natCast_im,
+    sub_self, Complex.ofReal_im, mul_zero, sub_zero, Complex.I_re, Complex.mul_im, zero_mul,
+    add_zero, Complex.I_im, Real.exp_zero]
+  calc ‖(1 - n : ℂ)‖ * ‖i.coeff n‖ * ‖i.coeff m‖ * r ^ 2 / r ^ (n + m)
+    _ ≤ (n + 1) * (i.C r * (a * r) ^ n) * (i.C r * (a * r) ^ m) * r ^ 2 / r ^ (n + m) := by bound
+    _ = i.C r ^ 2 * (n + 1) * r ^ 2 * a ^ (n + m) * (r ^ (n + m) / r ^ (n + m)) := by ring
+    _ = i.C r ^ 2 * (n + 1) * r ^ 2 * a ^ (n + m) := by simp only [div_self rn0, mul_one]
+lemma summable_ut (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.ut r) := by
+  filter_upwards [i.ac_prop] with r ⟨⟨a0,a1⟩,C0,cle⟩
+  unfold ut
+  generalize i.a r = a at a0 a1 cle
+  simp only [← mul_assoc, mul_comm _ (r ^ 2)]
+  simp only [mul_assoc _ (_ + _)]
+  apply Summable.mul_left
+  simp only [pow_add, ← mul_assoc]
+  apply Summable.mul_of_nonneg (f := fun n : ℕ ↦ (n + 1) * a ^ n) (g := fun m ↦ a ^ m)
+  · exact summable_subexp_mul_pow a0 a1
+  · exact summable_geometric_of_lt_one a0.le a1
+  · intro n; simp only [Pi.zero_apply]; bound
+  · intro n; simp only [Pi.zero_apply]; bound
+
 /-- Power series for `w.dfe t * conj (w.fe t)` -/
 lemma hasSum_inner (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t : ℝ,
-    HasSum (fun p : ℕ × ℕ ↦ (1 - p.2) * i.coeff p.1 * conj (i.coeff p.2) *
-      r ^ (2 - p.1 - p.2 : ℤ) * exp ((p.1 - p.2) * t * I : ℂ))
-      (w.dfe t * conj (w.fe t)) := by
-  filter_upwards [i.hasSum_fe, i.hasSum_dfe] with r sfe sdfe w t
-  specialize sfe w t
-  replace sdfe := Complex.hasSum_conj'.mpr (sdfe w t)
-  have blah := (sfe.mul sdfe sorry)
-  -- Actually use https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/Normed/Ring/InfiniteSum.html#tsum_mul_tsum_of_summable_norm
-  sorry
+    HasSum (fun ((n : ℕ), (m : ℕ)) ↦ i.term r n m t) (w.dfe t * conj (w.fe t)) := by
+  filter_upwards [i.hasSum_fe, i.hasSum_dfe, i.summable_uf, i.summable_udf, i.le_uf, i.le_udf,
+    Filter.eventually_gt_atTop 1] with r sfe sdfe suf sudf le_uf le_udf r1 w t
+  have c0 : ∀ {t}, circleMap 0 r t ≠ 0 := fun {t} ↦ circleMap_ne_center (by positivity)
+  have snf := suf.of_nonneg_of_le (by bound) (fun n ↦ le_uf n t)
+  have sndf := sudf.of_nonneg_of_le (by bound) (fun n ↦ le_udf n t)
+  simp only [← Complex.norm_conj (_ * _)] at snf
+  have sp := (summable_mul_of_summable_norm sndf snf).hasSum
+  simp only [← tsum_mul_tsum_of_summable_norm sndf snf,
+    (Complex.hasSum_conj'.mpr (sfe w t)).tsum_eq, (sdfe w t).tsum_eq] at sp
+  apply sp.congr_fun
+  intro ⟨n,m⟩
+  simp only [Int.cast_sub, Int.cast_one, Int.cast_natCast, zpow_sub₀ c0, zpow_one, zpow_natCast,
+    map_mul, map_div₀, Complex.conj_circleMap, map_zero, map_pow, term]
+  simp only [pow_add, div_eq_mul_inv, mul_inv_rev, sub_mul (m : ℂ), sub_mul (m * t : ℂ),
+    Complex.exp_sub, circleMap, zero_add, mul_pow, ← Complex.exp_nat_mul, Complex.ofReal_neg,
+    neg_mul, Complex.exp_neg, inv_pow, inv_inv, inv_mul_cancel₀ (Complex.exp_ne_zero _),
+    mul_comm _ (exp (t * I)), mul_comm _ (exp (t * I))⁻¹, ← mul_assoc, pow_two, one_mul]
+  ring
+
+/-- Our integrals commute with our sum -/
+lemma sum_integral_comm (i : Gronwall f) : ∀ᶠ r in atTop,
+    HasSum (fun (p : ℕ × ℕ) ↦ ∫ t in -π..π, i.term r p.1 p.2 t)
+      (∫ t in -π..π, ∑' (p : ℕ × ℕ), i.term r p.1 p.2 t) := by
+  filter_upwards [i.le_ut, i.summable_ut, i.hasSum_inner, i.wind]
+    with r le_ut summable_ut hasSum_inner w
+  apply intervalIntegral.hasSum_integral_of_dominated_convergence (bound := fun p t ↦ i.ut r p)
+  · intro n; apply Continuous.aestronglyMeasurable; fun_prop
+  · simp [le_ut]
+  · simp [summable_ut]
+  · apply intervalIntegrable_const; simp
+  · simp [(hasSum_inner w _).summable.hasSum]
+
+/-- Diagonal term integrals -/
+def term_diag (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
+  2 * π * (1 - n) * I * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
+
+/-- Only diagonal expoential integrals survive -/
+lemma _root_.integral_exp_mul_I (n : ℤ) :
+    ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
+  by_cases n0 : n = 0
+  · simp [n0]
+    ring
+  · have hd : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ exp (n * t * I)) (n * I * exp (n * t * I)) t := by
+      intro t
+      simp only [← mul_assoc, mul_comm _ I]
+      generalize I * n = c
+      simp only [mul_comm c]
+      apply HasDerivAt.cexp
+      nth_rw 2 [← (by simp : (1 : ℝ) * c = c)]
+      exact (hasDerivAt_id t).ofReal_comp.mul_const _
+    have d : deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) = fun t : ℝ ↦ exp (n * t * I) := by
+      ext t
+      rw [deriv_div_const, (hd t).deriv, mul_div_cancel_left₀ _ (by simp [n0])]
+    rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
+    · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
+        Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
+    · intro t _
+      simp only [div_eq_mul_inv]
+      apply DifferentiableAt.mul_const
+      exact (hd t).differentiableAt
+    · fun_prop
+
+/-- Only the diagonal `i.term` integrals survive -/
+lemma integral_term_diag (i : Gronwall f) (r : ℝ) (n m : ℕ) :
+    ∫ t in -π..π, i.term r n m t = if n = m then i.term_diag r n else 0 := by
+  have ce : (m - n : ℂ) = (m - n : ℤ) := by simp
+  simp only [term, term_diag, div_eq_mul_inv, intervalIntegral.integral_const_mul,
+    integral_exp_mul_I, ce, sub_eq_zero, Nat.cast_inj]
+  by_cases nm : n = m
+  · simp only [← nm, ↓reduceIte, ← Complex.conj_mul', ← two_mul, Complex.ofReal_mul,
+      Complex.ofReal_ofNat]
+    ring
+  · simp [nm, Ne.symm nm]
 
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by
-  filter_upwards [i.wind, i.outer_eq_outer, i.inner_nonneg, i.analyticAt_fe] with r w oe i0 fa
+  filter_upwards [i.wind, i.outer_eq_outer, i.inner_nonneg, i.analyticAt_fe, i.hasSum_inner,
+    i.sum_integral_comm]
+    with r w oe i0 fa is sum_integral_comm
   have ed : i.disk r = w.wind.disk := by simp only [disk, ← w.wind.compl_outer, oe w.wind]
   simp only [ed, w.volume_eq, abs_of_nonneg (i0 w _)]
   simp only [Complex.inner, ← Complex.reCLM_apply]
@@ -816,6 +914,7 @@ lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
   simp only [Complex.ofReal_inv, Complex.ofReal_ofNat, map_mul, Complex.conj_I, mul_neg,
     intervalIntegral.integral_neg, ← mul_assoc, intervalIntegral.integral_mul_const]
   simp only [mul_comm _ I, ← mul_assoc, ← div_eq_mul_inv, ← neg_mul, ← neg_div]
+  simp only [←(is w _).tsum_eq, ← sum_integral_comm.tsum_eq]
   sorry
 
 #exit
