@@ -43,7 +43,7 @@ open MeasureTheory (volume)
 open scoped ComplexConjugate ContDiff Topology NNReal Real
 noncomputable section
 
-variable {α β : Type}
+variable {α β ι : Type}
 variable {f : ℂ → ℂ}
 
 /-!
@@ -844,16 +844,11 @@ lemma sum_integral_comm (i : Gronwall f) : ∀ᶠ r in atTop,
   · apply intervalIntegrable_const; simp
   · simp [(hasSum_inner w _).summable.hasSum]
 
-/-- Diagonal term integrals -/
-def term_diag (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
-  2 * π * (1 - n) * I * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
-
 /-- Only diagonal expoential integrals survive -/
 lemma _root_.integral_exp_mul_I (n : ℤ) :
     ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
   by_cases n0 : n = 0
-  · simp [n0]
-    ring
+  · simp [n0, two_mul]
   · have hd : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ exp (n * t * I)) (n * I * exp (n * t * I)) t := by
       intro t
       simp only [← mul_assoc, mul_comm _ I]
@@ -868,11 +863,12 @@ lemma _root_.integral_exp_mul_I (n : ℤ) :
     rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
     · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
         Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
-    · intro t _
-      simp only [div_eq_mul_inv]
-      apply DifferentiableAt.mul_const
-      exact (hd t).differentiableAt
+    · exact fun t _ ↦ (hd t).differentiableAt.div_const _
     · fun_prop
+
+/-- Diagonal term integrals -/
+def term_diag (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
+  2 * π * (1 - n) * I * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
 
 /-- Only the diagonal `i.term` integrals survive -/
 lemma integral_term_diag (i : Gronwall f) (r : ℝ) (n m : ℕ) :
@@ -886,11 +882,51 @@ lemma integral_term_diag (i : Gronwall f) (r : ℝ) (n m : ℕ) :
     ring
   · simp [nm, Ne.symm nm]
 
+@[simp] lemma tsum_diag {f : ι → ℂ} {d : (n m : ι) → Decidable (n = m)} :
+   ∑' (p : ι × ι), @ite _ (p.1 = p.2) (d p.1 p.2) (f p.1) 0 = ∑' n, f n := by
+  apply tsum_eq_tsum_of_ne_zero_bij (i := fun n ↦ (n.val, n.val))
+  · intro ⟨n,_⟩ ⟨m,_⟩
+    simp
+  · intro ⟨n,m⟩ s
+    simp only [Function.mem_support, ne_eq, ite_eq_right_iff, Classical.not_imp] at s
+    simp [← s.1, s.2]
+  · simp
+
+/-- Our final series terms -/
+def gronwall_term (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ :=
+    π * (1 - n) * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
+
+/-- We also need the `ℂ` version -/
+def gronwall_c (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
+    π * (1 - n) * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
+
+/-- `i.gronwall_c` is summable -/
+def ug (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ :=
+  π * ‖(1 - n : ℂ)‖ * r ^ 2 * i.C r ^ 2 * i.a r ^ (2 * n)
+lemma le_ug (i : Gronwall f) : ∀ᶠ r in atTop, ∀ n, ‖i.gronwall_c r n‖ ≤ i.ug r n := by
+  filter_upwards [i.ac_prop, Filter.eventually_gt_atTop 1] with r ⟨⟨a0,a1⟩,C0,cle⟩ r1 n
+  have r0 : 0 < r := by linarith
+  simp only [gronwall_c, ug]
+  simp only [Complex.norm_div, Complex.norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_pos Real.pi_pos, norm_pow, sq_abs, abs_of_pos r0]
+  calc π * ‖(1 - n : ℂ)‖ * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
+    _ ≤ π * ‖(1 - n : ℂ)‖ * (i.C r * (i.a r * r) ^ n) ^ 2 * r ^ 2 / r ^ (2 * n) := by bound
+    _ = π * ‖(1 - n : ℂ)‖ * r ^ 2 * i.C r ^ 2 * i.a r ^ (2 * n) * (r / r) ^ (2 * n) := by ring
+    _ ≤ π * ‖(1 - n : ℂ)‖ * r ^ 2 * i.C r ^ 2 * i.a r ^ (2 * n) := by simp [div_self r0.ne']
+lemma summable_ug (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.ug r) := by
+  filter_upwards [i.ac_prop] with r ⟨⟨a0,a1⟩,C0,cle⟩
+  unfold ug
+  simp only [pow_mul]
+  exact summable_subexp_mul_pow (by bound) (pow_lt_one₀ (by bound) a1 (by norm_num))
+lemma summable_gronwall_c (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.gronwall_c r) := by
+  filter_upwards [i.summable_ug, i.le_ug] with r summable_ug le_ug
+  exact summable_ug.of_norm_bounded le_ug
+
 lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
-    HasSum (fun n ↦ (n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) (volume.real (i.disk r)) := by
+    HasSum (fun n ↦ i.gronwall_term r n) (volume.real (i.disk r)) := by
   filter_upwards [i.wind, i.outer_eq_outer, i.inner_nonneg, i.analyticAt_fe, i.hasSum_inner,
-    i.sum_integral_comm]
-    with r w oe i0 fa is sum_integral_comm
+    i.sum_integral_comm, i.summable_gronwall_c]
+    with r w oe i0 fa is sum_integral_comm summable_gronwall_c
   have ed : i.disk r = w.wind.disk := by simp only [disk, ← w.wind.compl_outer, oe w.wind]
   simp only [ed, w.volume_eq, abs_of_nonneg (i0 w _)]
   simp only [Complex.inner, ← Complex.reCLM_apply]
@@ -903,25 +939,28 @@ lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     have dc := fc1.continuous_deriv_one
     have fc := fc1.continuous
     continuity
-  have er : ∀ n : ℕ, (↑n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2) =
-      Complex.reCLM ((↑n - 1) * ‖i.coeff n‖ ^ 2 / r ^ (2 * n - 2)) := by
+  have er : ∀ n : ℕ, i.gronwall_term r n =
+      Complex.reCLM (π * (1 - ↑n) * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)) := by
     intro n; simp only [Complex.reCLM_apply, ← Complex.ofReal_mul, ← Complex.ofReal_pow,
       ← Complex.ofReal_one, ← Complex.ofReal_sub, ← Complex.ofReal_natCast, ← Complex.ofReal_div,
-      Complex.ofReal_re]
+      Complex.ofReal_re, gronwall_term]
   rw [Complex.reCLM.intervalIntegral_comp_comm ii, Complex.reCLM_apply, ← Complex.re_ofReal_mul]
   simp only [er, ← Complex.reCLM_apply]
   apply Complex.reCLM.hasSum
   simp only [Complex.ofReal_inv, Complex.ofReal_ofNat, map_mul, Complex.conj_I, mul_neg,
     intervalIntegral.integral_neg, ← mul_assoc, intervalIntegral.integral_mul_const]
   simp only [mul_comm _ I, ← mul_assoc, ← div_eq_mul_inv, ← neg_mul, ← neg_div]
-  simp only [←(is w _).tsum_eq, ← sum_integral_comm.tsum_eq]
-  sorry
+  simp only [←(is w _).tsum_eq, ← sum_integral_comm.tsum_eq, i.integral_term_diag, tsum_diag]
+  rw [← tsum_mul_left]
+  simp only [term_diag, mul_comm _ I, ← mul_assoc, div_eq_mul_inv, mul_neg, Complex.I_mul_I,
+    neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)]
+  exact summable_gronwall_c.hasSum
 
 #exit
 
 end Gronwall
 
-/-- Grönwall's area theorem -/
+/-- Grönwall's area theorem, standalone version -/
 theorem gronwall_area {f : ℂ → ℂ} (fa : AnalyticOn ℂ f (ball 0 1))
     (inj : InjOn f (ball 0 1)) (df : HasDerivAt f 1 0) :
     ball (f 0) (1/4) ⊆ f '' (ball 0 1) :=

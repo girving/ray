@@ -59,6 +59,10 @@ lemma subexp_def (f : ℕ → X) : Subexp f ↔ ∀ {a : ℝ}, 1 < a → f =O[at
 lemma subexp_iff_norm {f : ℕ → E} : Subexp f ↔ Subexp fun n ↦ ‖f n‖ := by
   simp only [subexp_def, isBigO_norm_left]
 
+/-- Norms are subexponential -/
+@[fun_prop] lemma Subexp.norm {f : ℕ → E} (h : Subexp f) : Subexp fun n ↦ ‖f n‖ := by
+  rwa [← subexp_iff_norm]
+
 /-- The identity function is subexponential, general version -/
 @[fun_prop] lemma subexp_natCast [NormSMulClass ℤ R] : Subexp (fun n : ℕ ↦ (n : R)) := by
   simp only [subexp_iff_norm (E := R), norm_natCast_eq_mul_norm_one]
