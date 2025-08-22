@@ -3,6 +3,7 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.RingTheory.Complex
 import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
@@ -138,7 +139,7 @@ lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p'
 -/
 
 lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
-  sorry
+  simp [Algebra.norm_complex_eq, Complex.normSq_eq_norm_sq]
 
 /-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/
 lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
