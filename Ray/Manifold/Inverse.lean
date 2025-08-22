@@ -140,7 +140,9 @@ lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := 
     apply MDifferentiableAt.hasMFDerivAt_comp2 fd
     · apply hasMFDerivAt_fst
     · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _)
-      exact ((ContMDiffAt.extChartAt_symm (mem_extChartAt_target _)).mdifferentiableAt le_top).hasMFDerivAt
+      exact (((contMDiffOn_extChartAt_symm _).contMDiffAt
+        (extChartAt_target_mem_nhds'
+        (mem_extChartAt_target _))).mdifferentiableAt le_top).hasMFDerivAt
     · rw [i.zz]; exact (i.fa.along_fst.mdifferentiableAt le_top).hasMFDerivAt
     · rw [i.zz]; exact (i.fa.along_snd.mdifferentiableAt le_top).hasMFDerivAt
 
@@ -298,7 +300,8 @@ theorem Cinv.he_symm_mAnalytic (i : Cinv f c z) : ContMDiffAt II II ω i.he.symm
 
 /-- Our inverse `g` is analytic -/
 theorem Cinv.ga (i : Cinv f c z) : ContMDiffAt II I ω (uncurry i.g) (c, f c z) := by
-  apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq
+  apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
+    (extChartAt_target_mem_nhds' (mem_extChartAt_target z))).comp_of_eq
   · refine contMDiffAt_snd.comp _ (i.he_symm_mAnalytic.comp_of_eq ?_ ?_)
     · apply contMDiffAt_fst.prodMk
       refine (contMDiffAt_extChartAt' ?_).comp _ contMDiffAt_snd

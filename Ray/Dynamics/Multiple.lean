@@ -182,20 +182,23 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I 
       apply mem_extChartAt_source
     rw [← hg, ←Function.comp_def, ← Function.comp_def,
       mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt le_top) _,
-      mfderiv_comp _ fd ((ContMDiffAt.extChartAt_symm _).mdifferentiableAt le_top),
+      mfderiv_comp _ fd (((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' _)).mdifferentiableAt le_top),
       PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
     · apply mem_extChartAt_source
     · apply mem_extChartAt_target
     · simp
     · exact MDifferentiableAt.comp _ fd
-        ((ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).mdifferentiableAt le_top)
+        (((contMDiffOn_extChartAt_symm _).contMDiffAt
+        (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).mdifferentiableAt le_top)
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
   refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
-  · apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).comp_of_eq
+  · apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).comp_of_eq
     apply (ha.mAnalyticAt I I).comp_of_eq
       (contMDiffAt_extChartAt' (mem_chart_source _ c)) rfl
     exact h0

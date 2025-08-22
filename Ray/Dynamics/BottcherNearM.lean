@@ -93,7 +93,8 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
     ModelWithCorners.toPartialEquiv_coe_symm, ModelWithCorners.left_inv, PartialHomeomorph.left_inv,
     mem_chart_source]
   · refine (s.fa _).comp₂ contMDiffAt_fst ?_
-    refine (ContMDiffAt.extChartAt_symm ?_).comp _ ?_
+    refine ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' ?_)).comp _ ?_
     · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
         ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
         PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
@@ -577,7 +578,8 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     apply ContMDiffAt.analyticAt I I
     simp only [s.f0]
     apply (contMDiffAt_extChartAt' _).comp; apply (s.fa _).along_snd.comp
-    exact ContMDiffAt.extChartAt_symm (PartialEquiv.map_source _ zm)
+    exact (contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' (PartialEquiv.map_source _ zm))
     simp only [PartialEquiv.left_inv _ zm]; exact extChartAt_source I a ▸ ezm
   have d0 : ∀ z, DifferentiableAt ℂ (fun z ↦ z - extChartAt I a a) z := fun z ↦
     differentiableAt_id.sub (differentiableAt_const _)
