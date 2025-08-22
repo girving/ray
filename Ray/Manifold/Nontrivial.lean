@@ -424,7 +424,7 @@ theorem ContMDiffOnNhd.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Spa
         extChartAt K (g x) (g ((extChartAt J x).symm y))) = d
     generalize hz : extChartAt J x x = z
     suffices h : d =ᶠ[𝓝 z] 0 by
-      simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq,
+      simp only [← hz, ← map_extChartAt_nhds_of_boundaryless x, Filter.eventually_map, Filter.EventuallyEq,
         ← ht] at h ⊢
       refine
         h.mp (((isOpen_extChartAt_source x).eventually_mem

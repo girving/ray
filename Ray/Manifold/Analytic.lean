@@ -265,7 +265,7 @@ theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace 
     [IsManifold I ω M] [IsManifold J ω N] {f : M → N} {x : M} (fa : ContMDiffAt I J ω f x) :
     ∀ᶠ y in 𝓝 x, ContMDiffAt I J ω f y := by
   have ea := (mAnalyticAt_iff_of_boundaryless.mp fa).2.eventually_analyticAt
-  simp only [← extChartAt_map_nhds', Filter.eventually_map] at ea
+  simp only [← map_extChartAt_nhds_of_boundaryless, Filter.eventually_map] at ea
   filter_upwards [ea, (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source (f x)).mem_nhds
     (mem_extChartAt_source (I := J) (f x)))).eventually_nhds,
     (isOpen_extChartAt_source x).eventually_mem (mem_extChartAt_source (I := I) x)]
