@@ -234,3 +234,69 @@ lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X
     simp only [isMinOn_iff, mem_diff, Metric.mem_closedBall, dist_comm, and_imp, mem_ball] at h m yr
     specialize h z (le_trans m.le yr) zs
     linarith
+
+/-- Eventually in terms of radii -/
+lemma eventually_nhdsGT_zero_ball_iff_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop} :
+    (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ ball c r, p x) ↔ ∀ᶠ x in 𝓝 c, p x := by
+  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff, Metric.nhds_basis_ball.eventually_iff]
+  constructor
+  · intro ⟨r,r0,h⟩
+    exact ⟨r/2, by bound, fun x m ↦ @h (r/2) (by simpa) _ m⟩
+  · intro ⟨r,r0,h⟩
+    refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
+    simp only [Metric.mem_ball, mem_Ioo] at m sr ⊢
+    linarith
+
+/-- Eventually in terms of radii and closed balls -/
+lemma eventually_nhdsGT_zero_closedBall_iff_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop} :
+    (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ closedBall c r, p x) ↔ ∀ᶠ x in 𝓝 c, p x := by
+  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff, Metric.nhds_basis_closedBall.eventually_iff]
+  constructor
+  · intro ⟨r,r0,h⟩
+    exact ⟨r/2, by bound, fun x m ↦ @h (r/2) (by simpa) _ m⟩
+  · intro ⟨r,r0,h⟩
+    refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
+    simp only [Metric.mem_closedBall, mem_Ioo] at m sr ⊢
+    linarith
+
+/-- Eventually in terms of radii and spheres -/
+lemma eventually_nhdsGT_zero_sphere_of_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop}
+    (h : ∀ᶠ x in 𝓝 c, p x) : (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ sphere c r, p x) := by
+  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff,
+    Metric.nhds_basis_closedBall.eventually_iff] at h ⊢
+  obtain ⟨r,r0,h⟩ := h
+  refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
+  simp only [Metric.mem_sphere, mem_Ioo, Metric.mem_closedBall] at m sr ⊢
+  rw [← m] at sr
+  exact sr.2.le
+
+/-- Flip `atTop` to `𝓝[>] 0` -/
+lemma eventually_atTop_iff_nhdsGT_zero {p : ℝ → Prop} :
+    (∀ᶠ r in atTop, p r) ↔ ∀ᶠ r in 𝓝[>] 0, p r⁻¹ := by
+  simp only [Filter.eventually_atTop, (nhdsGT_basis (0 : ℝ)).eventually_iff]
+  constructor
+  · intro ⟨r,h⟩
+    refine ⟨(max 1 r)⁻¹, by bound, fun s m ↦ h _ ?_⟩
+    rw [mem_Ioo, lt_inv_comm₀, max_lt_iff] at m
+    all_goals bound
+  · intro ⟨r,r0,h⟩
+    refine ⟨2 * r⁻¹, fun s m ↦ ?_⟩
+    refine inv_inv s ▸ @h s⁻¹ ?_
+    simp only [mem_Ioo, inv_pos]
+    have s0 : 0 < s := lt_of_lt_of_le (by bound) m
+    refine ⟨s0, ?_⟩
+    rw [inv_lt_comm₀ s0 r0]
+    exact lt_of_lt_of_le (lt_mul_of_one_lt_left (by bound) (by norm_num)) m
+
+/-- Pull an `∃` out of an `∃ᶠ` via Skolemization -/
+lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : X → Y → Prop}
+    (f : Filter X) : (∃ᶠ x in f, ∃ y, p x y) ↔ ∃ s : X → Y, ∃ᶠ x in f, p x (s x) := by
+  constructor
+  · intro h
+    set s : X → Y := fun x ↦ if q : ∃ y, p x y then Classical.choose q else Classical.choice n
+    use s
+    refine h.mp (.of_forall fun x e ↦ ?_)
+    simp only [e, ↓reduceDIte, choose_spec, s]
+  · intro ⟨s,h⟩
+    refine h.mp (.of_forall fun x e ↦ ?_)
+    use s x

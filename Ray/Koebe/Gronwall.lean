@@ -9,6 +9,8 @@ import Ray.Koebe.WindArea
 import Ray.Manifold.GlobalInverse
 import Ray.Misc.Annuli
 import Ray.Misc.Cobounded
+import Ray.Misc.Deriv
+import Ray.Misc.Linear
 import Ray.Misc.Subexp
 
 /-!
@@ -185,33 +187,6 @@ lemma analyticAt_ff (i : Gronwall f) : AnalyticAt ℝ i.ff 0 := by
 -- Cache this since inferring it is timing out
 instance Gromwall.fderiv_smul_zero_class : SMulZeroClass ℂ (ℂ × ℂ →L[ℂ] ℂ) := by infer_instance
 
--- DO NOT SUBMIT: Move elsewhere
-@[simp] lemma _root_.ContinuousLinearMap.smulRight_zero {M₁ : Type} [TopologicalSpace M₁]
-    [AddCommMonoid M₁] {M₂ : Type} [TopologicalSpace M₂] [AddCommMonoid M₂] {R : Type} {S : Type}
-    [Semiring R] [Semiring S] [Module R M₁] [Module R M₂] [Module R S] [Module S M₂]
-    [IsScalarTower R S M₂] [TopologicalSpace S] [ContinuousSMul S M₂] (c : M₁ →L[R] S)
-    : (c.smulRight (0 : M₂) : M₁ →L[R] M₂) = 0 := by
-  ext
-  simp only [ContinuousLinearMap.smulRight_apply, smul_zero, ContinuousLinearMap.zero_apply]
-
--- DO NOT SUBMIT: Move elsewhere
-lemma _root_.HasFDerivAt.comp_of_eq {𝕜 : Type} [NontriviallyNormedField 𝕜] {E : Type}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G] {f : E → F} {f' : E →L[𝕜] F} (x : E)
-    {g : F → G} {g' : F →L[𝕜] G} {y : F} (hg : HasFDerivAt g g' y) (hf : HasFDerivAt f f' x)
-    (e : f x = y) : HasFDerivAt (g ∘ f) (g'.comp f') x := by
-  rw [← e] at hg
-  exact hg.comp x hf
-
--- DO NOT SUBMIT: Move elsewhere
-lemma _root_.hasFDeriv_zero_of_comp_right {𝕜 E F G : Type} [NontriviallyNormedField 𝕜]
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    [NormedAddCommGroup G] [NormedSpace 𝕜 G] {f : F → G} {g : E → F} {y : F} {x : E}
-    (df : DifferentiableAt 𝕜 f y) (dg : HasFDerivAt g (0 : E →L[𝕜] F) x) (e : g x = y) :
-    HasFDerivAt (fun x ↦ f (g x)) (0 : E →L[𝕜] G) x := by
-  convert df.hasFDerivAt.comp_of_eq _ dg e
-  simp only [ContinuousLinearMap.comp_zero]
-
 /-- `f w / f z` is flat at `0` -/
 lemma ff_flat (i : Gronwall f) : HasFDerivAt i.ff (0 : ℂ × ℂ →L[ℝ] ℂ) (0 : ℂ × ℂ) := by
   unfold ff
@@ -233,41 +208,6 @@ lemma ff_flat (i : Gronwall f) : HasFDerivAt i.ff (0 : ℂ × ℂ →L[ℝ] ℂ)
   · exact dfi.comp_of_eq _ hasFDerivAt_fst (by simp)
   · exact df.comp_of_eq _ hasFDerivAt_snd (by simp)
 
--- DO NOT SUBMIT: Move elsewhere
-lemma eventually_nhdsGT_zero_ball_iff_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop} :
-    (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ ball c r, p x) ↔ ∀ᶠ x in 𝓝 c, p x := by
-  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff, Metric.nhds_basis_ball.eventually_iff]
-  constructor
-  · intro ⟨r,r0,h⟩
-    exact ⟨r/2, by bound, fun x m ↦ @h (r/2) (by simpa) _ m⟩
-  · intro ⟨r,r0,h⟩
-    refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
-    simp only [Metric.mem_ball, mem_Ioo] at m sr ⊢
-    linarith
-
--- DO NOT SUBMIT: Move elsewhere
-lemma eventually_nhdsGT_zero_closedBall_iff_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop} :
-    (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ closedBall c r, p x) ↔ ∀ᶠ x in 𝓝 c, p x := by
-  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff, Metric.nhds_basis_closedBall.eventually_iff]
-  constructor
-  · intro ⟨r,r0,h⟩
-    exact ⟨r/2, by bound, fun x m ↦ @h (r/2) (by simpa) _ m⟩
-  · intro ⟨r,r0,h⟩
-    refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
-    simp only [Metric.mem_closedBall, mem_Ioo] at m sr ⊢
-    linarith
-
--- DO NOT SUBMIT: Move elsewhere
-lemma eventually_nhdsGT_zero_sphere_of_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop}
-    (h : ∀ᶠ x in 𝓝 c, p x) : (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ sphere c r, p x) := by
-  simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff,
-    Metric.nhds_basis_closedBall.eventually_iff] at h ⊢
-  obtain ⟨r,r0,h⟩ := h
-  refine ⟨r, by bound, fun s sr x m ↦ @h _ ?_⟩
-  simp only [Metric.mem_sphere, mem_Ioo, Metric.mem_closedBall] at m sr ⊢
-  rw [← m] at sr
-  exact sr.2.le
-
 /-- `f w / f z` is arbitrarily Lipschitz near `0` -/
 lemma ff_lipschitz (i : Gronwall f) {L : ℝ≥0} (L0 : 0 < L) :
     ∀ᶠ r in 𝓝[>] 0, LipschitzOnWith L i.ff (closedBall 0 r) := by
@@ -285,24 +225,6 @@ lemma ff_lipschitz (i : Gronwall f) {L : ℝ≥0} (L0 : 0 < L) :
   simp only [← eventually_nhdsGT_zero_closedBall_iff_nhds] at df dL
   filter_upwards [df, dL] with r df dL
   exact Convex.lipschitzOnWith_of_nnnorm_fderiv_le df dL (convex_closedBall _ _)
-
--- DO NOT SUBMIT: Move elsewhere
-lemma eventually_atTop_iff_nhdsGT_zero {p : ℝ → Prop} :
-    (∀ᶠ r in atTop, p r) ↔ ∀ᶠ r in 𝓝[>] 0, p r⁻¹ := by
-  simp only [Filter.eventually_atTop, (nhdsGT_basis (0 : ℝ)).eventually_iff]
-  constructor
-  · intro ⟨r,h⟩
-    refine ⟨(max 1 r)⁻¹, by bound, fun s m ↦ h _ ?_⟩
-    rw [mem_Ioo, lt_inv_comm₀, max_lt_iff] at m
-    all_goals bound
-  · intro ⟨r,r0,h⟩
-    refine ⟨2 * r⁻¹, fun s m ↦ ?_⟩
-    refine inv_inv s ▸ @h s⁻¹ ?_
-    simp only [mem_Ioo, inv_pos]
-    have s0 : 0 < s := lt_of_lt_of_le (by bound) m
-    refine ⟨s0, ?_⟩
-    rw [inv_lt_comm₀ s0 r0]
-    exact lt_of_lt_of_le (lt_mul_of_one_lt_left (by bound) (by norm_num)) m
 
 /-- `g` is nonzero for large `r` -/
 lemma g0 (i : Gronwall f) : ∀ᶠ r in atTop, ∀ z ∈ sphere 0 r, i.g z ≠ 0 := by
@@ -392,20 +314,6 @@ lemma isOpen_outer (i : Gronwall f) {r : ℝ} (r1 : 1 < r) : IsOpen (i.outer r) 
   intro z m
   simp only [norm_Ioi, mem_setOf_eq] at m ⊢
   linarith
-
--- DO NOT SUBMIT: Move elsewhere
-/-- Pull an `∃` out of an `∃ᶠ` via Skolemization -/
-lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : X → Y → Prop}
-    (f : Filter X) : (∃ᶠ x in f, ∃ y, p x y) ↔ ∃ s : X → Y, ∃ᶠ x in f, p x (s x) := by
-  constructor
-  · intro h
-    set s : X → Y := fun x ↦ if q : ∃ y, p x y then Classical.choose q else Classical.choice n
-    use s
-    refine h.mp (.of_forall fun x e ↦ ?_)
-    simp only [e, ↓reduceDIte, choose_spec, s]
-  · intro ⟨s,h⟩
-    refine h.mp (.of_forall fun x e ↦ ?_)
-    use s x
 
 -- DO NOT SUBMIT: Do I need this?
 /-- Be lazy and use a global inverse hammer to make the following easier -/
@@ -690,15 +598,6 @@ lemma hasSum_dfe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r)
     simp only [(df _ _).deriv, f'v]
   · exact suf.of_norm_bounded (fun n ↦ fu n t)
 
--- DO NOT SUBMIT: Move elsewhere
-/-- Version of `HasDerivAt.inv` that works nicely over field towers -/
-theorem _root_.HasDerivAt.inv_tower {𝕜 𝕝 : Type} [NontriviallyNormedField 𝕜]
-    [NontriviallyNormedField 𝕝] [NormedAlgebra 𝕜 𝕝] {x : 𝕜} {c : 𝕜 → 𝕝} {c' : 𝕝}
-    (dc : HasDerivAt c c' x) (c0 : c x ≠ 0) : HasDerivAt c⁻¹ (-c' / c x ^ 2) x := by
-  have di := (hasFDerivAt_inv c0).restrictScalars 𝕜
-  have d := (di.comp x dc.hasFDerivAt).hasDerivAt
-  simpa [Function.comp_def, ← neg_div, ← div_eq_mul_inv] using d
-
 /-- `inner ℝ (w.fe t * I) (w.dfe t)` is eventually nonnegative -/
 lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
     0 ≤ inner ℝ (w.fe t * I) (w.dfe t) := by
@@ -760,12 +659,6 @@ lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc 
   specialize @dfs w⁻¹ (by simp [nw, rs])
   simp only [hd, hf, Complex.norm_div] at dfs
   linarith
-
--- DO NOT SUBMIT: Move elsewhere
-@[simp] lemma _root_.Complex.conj_circleMap {c : ℂ} {r : ℝ} {t : ℝ} :
-    conj (circleMap c r t) = circleMap (conj c) r (-t) := by
-  simp only [circleMap, map_add, map_mul, Complex.conj_ofReal, Complex.ofReal_neg,
-    neg_mul, ← Complex.exp_conj, Complex.conj_I, mul_neg]
 
 /-- Terms for our 2D sum -/
 def term (i : Gronwall f) (r : ℝ) (n m : ℕ) (t : ℝ) : ℂ :=
@@ -843,28 +736,6 @@ lemma sum_integral_comm (i : Gronwall f) : ∀ᶠ r in atTop,
   · simp [summable_ut]
   · apply intervalIntegrable_const; simp
   · simp [(hasSum_inner w _).summable.hasSum]
-
-/-- Only diagonal expoential integrals survive -/
-lemma _root_.integral_exp_mul_I (n : ℤ) :
-    ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
-  by_cases n0 : n = 0
-  · simp [n0, two_mul]
-  · have hd : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ exp (n * t * I)) (n * I * exp (n * t * I)) t := by
-      intro t
-      simp only [← mul_assoc, mul_comm _ I]
-      generalize I * n = c
-      simp only [mul_comm c]
-      apply HasDerivAt.cexp
-      nth_rw 2 [← (by simp : (1 : ℝ) * c = c)]
-      exact (hasDerivAt_id t).ofReal_comp.mul_const _
-    have d : deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) = fun t : ℝ ↦ exp (n * t * I) := by
-      ext t
-      rw [deriv_div_const, (hd t).deriv, mul_div_cancel_left₀ _ (by simp [n0])]
-    rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
-    · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
-        Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
-    · exact fun t _ ↦ (hd t).differentiableAt.div_const _
-    · fun_prop
 
 /-- Diagonal term integrals -/
 def term_diag (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
@@ -955,8 +826,6 @@ lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
   simp only [term_diag, mul_comm _ I, ← mul_assoc, div_eq_mul_inv, mul_neg, Complex.I_mul_I,
     neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)]
   exact summable_gronwall_c.hasSum
-
-#exit
 
 end Gronwall
 
