@@ -5,6 +5,7 @@ import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Ray.Analytic.Holomorphic
+import Ray.Hartogs.FubiniBall
 import Ray.Koebe.WindArea
 import Ray.Manifold.GlobalInverse
 import Ray.Misc.Annuli
@@ -793,8 +794,9 @@ lemma summable_gronwall_c (i : Gronwall f) : ∀ᶠ r in atTop, Summable (i.gron
   filter_upwards [i.summable_ug, i.le_ug] with r summable_ug le_ug
   exact summable_ug.of_norm_bounded le_ug
 
-lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
-    HasSum (fun n ↦ i.gronwall_term r n) (volume.real (i.disk r)) := by
+/-- The area within large radii is given by the Grönwall series -/
+lemma large_volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
+    HasSum (i.gronwall_term r) (volume.real (i.disk r)) := by
   filter_upwards [i.wind, i.outer_eq_outer, i.inner_nonneg, i.analyticAt_fe, i.hasSum_inner,
     i.sum_integral_comm, i.summable_gronwall_c]
     with r w oe i0 fa is sum_integral_comm summable_gronwall_c
@@ -810,9 +812,10 @@ lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     have dc := fc1.continuous_deriv_one
     have fc := fc1.continuous
     continuity
-  have er : ∀ n : ℕ, i.gronwall_term r n =
+  have er : i.gronwall_term r = fun n ↦
       Complex.reCLM (π * (1 - ↑n) * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)) := by
-    intro n; simp only [Complex.reCLM_apply, ← Complex.ofReal_mul, ← Complex.ofReal_pow,
+    ext n
+    simp only [Complex.reCLM_apply, ← Complex.ofReal_mul, ← Complex.ofReal_pow,
       ← Complex.ofReal_one, ← Complex.ofReal_sub, ← Complex.ofReal_natCast, ← Complex.ofReal_div,
       Complex.ofReal_re, gronwall_term]
   rw [Complex.reCLM.intervalIntegral_comp_comm ii, Complex.reCLM_apply, ← Complex.re_ofReal_mul]
@@ -827,7 +830,52 @@ lemma volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)]
   exact summable_gronwall_c.hasSum
 
+/-!
+### Area within small annuli
+
+We integrate in terms of `i.g` directly to compute the area of small annuli.
+-/
+
+lemma disk_diff_disk (i : Gronwall f) {r s : ℝ} (r1 : 1 ≤ r) (rs : r ≤ s) :
+    i.disk s \ i.disk r = i.g '' annulus_oc 0 r s := by
+  simp only [disk, compl_sdiff_compl, outer]
+  rw [← (i.inj.mono _).image_diff_subset]
+  · apply congr_arg₂ _ rfl
+    ext w
+    simp [norm_Ioi, annulus_oc, and_comm]
+  · exact norm_Ioi_subset_norm_Ioi rs
+  · exact norm_Ioi_subset_norm_Ioi r1
+
+/-- The area within an annulus is given by the Grönwall series -/
+lemma small_volume_eq (i : Gronwall f) {r s : ℝ} (r1 : 1 ≤ r) (rs : r ≤ s) :
+    HasSum (i.gronwall_term r) (volume.real (i.disk s \ i.disk r)) := by
+  have ie : ∫ z in i.g '' annulus_oc 0 r s, (1 : ℝ) = volume.real (i.g '' annulus_oc 0 r s) • 1 :=
+    MeasureTheory.setIntegral_const _
+  simp only [smul_eq_mul, mul_one] at ie
+  rw [i.disk_diff_disk r1 rs, ← ie]
+  have ga : AnalyticOnNhd ℂ i.g (annulus_oc 0 r s) := i.ga'.mono (annulus_oc_subset_norm_Ioi r1)
+  have d : ∀ z ∈ annulus_oc 0 r s, HasFDerivWithinAt i.g (fderiv ℝ i.g z) (annulus_oc 0 r s) z :=
+    fun z m ↦ (ga z m).restrictScalars.hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
+  have ed : ∀ z ∈ annulus_oc 0 r s, |(fderiv ℝ i.g z).det| = ‖deriv i.g z‖ ^ 2 :=
+    fun z m ↦ by simp only [Complex.fderiv_det (ga z m).differentiableAt, abs_sq]
+  rw [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume measurableSet_annulus_oc
+    (f' := fderiv ℝ i.g) d (i.inj.mono (annulus_oc_subset_norm_Ioi r1))]
+  simp only [smul_eq_mul, mul_one, MeasureTheory.integral_congr_ae
+    (MeasureTheory.ae_restrict_of_forall_mem measurableSet_annulus_oc ed)]
+  sorry
+
+  /- DO NOT SUBMIT
+ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    {f : ℂ → E} {c : ℂ} {r0 r1 : ℝ} (fc : ContinuousOn f (annulus_cc c r0 r1)) (r0p : 0 ≤ r0) :
+    ∫ z in annulus_oc c r0 r1, f z =
+      ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
+      -/
+
 end Gronwall
+
+/-!
+### Grönwall's area theorem, standalone version
+-/
 
 /-- Grönwall's area theorem, standalone version -/
 theorem gronwall_area {f : ℂ → ℂ} (fa : AnalyticOn ℂ f (ball 0 1))

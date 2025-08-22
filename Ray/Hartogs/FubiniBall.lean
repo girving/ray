@@ -2,6 +2,7 @@ import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Ray.Misc.Annuli
 import Ray.Misc.Complex
 import Ray.Misc.Measure
 import Ray.Misc.Prod
@@ -87,13 +88,6 @@ theorem square.rp {r0 r1 : ℝ} {x : ℝ × ℝ} (r0p : 0 ≤ r0) : x ∈ square
 
 theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
   apply_rules [MeasurableSet.prod, measurableSet_Ioc]
-
-def annulus_oc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ closedBall c r0
-def annulus_cc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ ball c r0
-
-lemma annulus_oc_subset_annulus_cc {c : ℂ} {r0 r1 : ℝ} :
-    annulus_oc c r0 r1 ⊆ annulus_cc c r0 r1 :=
-  diff_subset_diff (subset_refl _) Metric.ball_subset_closedBall
 
 theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     Complex.measurableEquivRealProd.symm ⁻¹' (annulus_oc c r0 r1) =

@@ -3,6 +3,7 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
 ## Complex facts
@@ -131,3 +132,20 @@ lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p'
   apply congr_arg
   convert ContinuousLinearMap.smulRight_apply.symm
   simp only [ContinuousLinearMap.one_apply, one_smul]
+
+/-!
+### Determinants of complex derivatives
+-/
+
+lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
+  sorry
+
+/-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/
+lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
+    (fderiv ℝ f z).det = ‖deriv f z‖ ^ 2 := by
+  have d1 := df.hasDerivAt.hasFDerivAt.restrictScalars ℝ
+  have d2 := (df.restrictScalars ℝ).hasFDerivAt
+  rw [d2.unique d1]
+  simp only [ContinuousLinearMap.det, ContinuousLinearMap.coe_restrictScalars, Complex.algebra_norm,
+    LinearMap.det_restrictScalars, LinearMap.det_ring, ContinuousLinearMap.coe_coe,
+    ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, smul_eq_mul, one_mul]
