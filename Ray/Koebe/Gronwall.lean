@@ -42,7 +42,7 @@ open Complex (abs arg exp I)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
-open MeasureTheory (volume)
+open MeasureTheory (volume IntegrableOn)
 open scoped ComplexConjugate ContDiff Topology NNReal Real
 noncomputable section
 
@@ -772,6 +772,12 @@ def gronwall_term (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ :=
 def gronwall_c (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
     π * (1 - n) * ‖i.coeff n‖ ^ 2 * r ^ 2 / r ^ (2 * n)
 
+-- The two are related
+lemma ofReal_gronwall_term (i : Gronwall f) (r : ℝ) (n : ℕ) :
+    (i.gronwall_term r n : ℂ) = i.gronwall_c r n := by simp [gronwall_term, gronwall_c]
+lemma gronwall_term_eq_c (i : Gronwall f) (r : ℝ) :
+    i.gronwall_term r = fun n ↦ (i.gronwall_c r n).re := by simp [← ofReal_gronwall_term]
+
 /-- `i.gronwall_c` is summable -/
 def ug (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ :=
   π * ‖(1 - n : ℂ)‖ * r ^ 2 * i.C r ^ 2 * i.a r ^ (2 * n)
@@ -846,30 +852,126 @@ lemma disk_diff_disk (i : Gronwall f) {r s : ℝ} (r1 : 1 ≤ r) (rs : r ≤ s) 
   · exact norm_Ioi_subset_norm_Ioi rs
   · exact norm_Ioi_subset_norm_Ioi r1
 
+-- DO NOT SUBMIT: Move these way up, and use them. Or drop them, if unused
+-- The naming matches `WindDiff.fe` and `WindDiff.dfe`, though `ge` and `dge` could also work -/
+def fe (i : Gronwall f) (r t : ℝ) : ℂ := i.g (circleMap 0 r t)
+def dfe (i : Gronwall f) (r t : ℝ) : ℂ := deriv i.g (circleMap 0 r t) * circleMap 0 r t
+
+-- DO NOT SUBMIT: Move to Circle
+/-- The derivative of `circleMap` w.r.t. the radius -/
+lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
+    HasDerivAt (fun r ↦ circleMap c r t) (circleMap 0 1 t) r := by
+  simp only [circleMap, zero_add]
+  exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _
+
+-- DO NOT SUBMIT: Remove
+/-- The radial integrals in `small_volume_eq` -/
+lemma radial_integral (i : Gronwall f) {r s t : ℝ} (r1 : 1 < r) (rs : r ≤ s) :
+    ∫ a in r..s, a * ‖deriv i.g (circleMap 0 a t)‖ ^ 2 = sorry := by
+      --inner ℝ (i.fe s t * I) (i.dfe s t) - inner ℝ (i.fe r t * I) (i.dfe r t) := by
+  stop
+  set h : ℝ → ℝ := fun a ↦ inner ℝ (i.fe a t * I) (i.dfe a t)
+  set h' : ℝ → ℝ := fun a ↦ a * ‖deriv i.g (circleMap 0 a t)‖ ^ 2
+  have d : ∀ a ∈ uIcc r s, HasDerivAt h (h' a) a := by
+    intro a m
+    simp only [uIcc_of_le rs, mem_Icc] at m
+    simp only [h, fe, dfe]
+    -- z = circleMap 0 a t
+    -- z' = circleMap 0 1 t = w = z / a
+    -- (f z)' = f' z * z'
+    --   (inner ℝ (i.g z * I) (i.g' z * z))'
+    -- = inner ℝ (i.g z * I) (i.g' z * z)' + inner ℝ ((i.g z)' * I) (i.g' z * z)
+    -- = a⁻¹ * (inner ℝ (i.g z * I) (i.g'' z * z^2 + i.g' z * z) +
+    --          inner ℝ (i.g' z * z * I) (i.g' z * z))
+    --
+    -- ∫ a * ‖g' (a z)‖ ^ 2 da
+  rw [intervalIntegral.integral_congr fun a m ↦ (d a m).deriv.symm]
+  apply intervalIntegral.integral_deriv_eq_sub
+  · exact fun a m ↦ (d a m).differentiableAt
+  · apply ContinuousOn.intervalIntegrable
+    sorry
+
+-- 1D series for our inner integrals
+-- ∂t z = z * I
+-- f z = ∑ n, c n * z ^ n
+-- f' z = ∑ n, n * c n * z ^ (n - 1)
+-- g' z = (z * f z⁻¹)' = f z⁻¹ - f' z⁻¹ / z
+--      = ∑ n, (1 - n) * c n / z ^ n
+def single (i : Gronwall f) (r t : ℝ) (n : ℕ) : ℂ :=
+  (1 - n) * i.coeff n / circleMap 0 r t ^ n
+
+lemma hasSum_single (i : Gronwall f) {r t : ℝ} (r1 : 1 < r) :
+    HasSum (i.single r t) (deriv i.g (circleMap 0 r t)) := by
+  sorry
+  --have dg : ∀ z, 1 < ‖z‖ → deriv i.g z = ∑ n, (1 - n) * i.coeff n / z ^ n := by
+
+-- Terms and bounds for our inner integrals
+def inner_term (_ : Gronwall f) (r : ℝ) (n : ℕ) : ℝ := r * n
+def inner_c (_ : Gronwall f) (r : ℝ) (n : ℕ) : ℂ := r * n
+lemma inner_term_eq_c (i : Gronwall f) (r : ℝ) : i.inner_term r = fun n ↦ (i.inner_c r n).re := by
+  ext n
+  simp [inner_term, inner_c]
+
+lemma small_inner_integral (i : Gronwall f) {r : ℝ} (r1 : 1 < r) :
+    HasSum (i.inner_term r) (∫ t in 0..2 * π, ‖deriv i.g (circleMap 0 r t)‖ ^ 2) := by
+  have r0 : 0 < r := by linarith
+  -- Lift to a `ℂ` statement
+  have ga : ∀ t, AnalyticAt ℂ i.g (circleMap 0 r t) := fun t ↦ i.ga (by simpa [abs_of_pos r0])
+  have da : ∀ t, AnalyticAt ℝ (fun t ↦ deriv i.g (circleMap 0 r t)) t :=
+    fun t ↦ (ga t).deriv.restrictScalars.comp analyticAt_circleMap
+  have ic : Continuous (fun t ↦ deriv i.g (circleMap 0 r t) *
+      conj (deriv i.g (circleMap 0 r t))) := by
+    rw [continuous_iff_continuousAt]
+    intro t
+    have c := (da t).continuousAt
+    exact c.mul (Complex.continuous_conj.continuousAt.comp c)
+  simp only [inner_term_eq_c, ← real_inner_self_eq_norm_sq, Complex.inner, ← Complex.reCLM_apply]
+  rw [ContinuousLinearMap.intervalIntegral_comp_comm]
+  swap; exact ic.intervalIntegrable 0 (2 * π)
+
 /-- The area within an annulus is given by the Grönwall series -/
-lemma small_volume_eq (i : Gronwall f) {r s : ℝ} (r1 : 1 ≤ r) (rs : r ≤ s) :
+lemma small_volume_eq (i : Gronwall f) {r s : ℝ} (r1 : 1 < r) (rs : r ≤ s) :
     HasSum (i.gronwall_term r) (volume.real (i.disk s \ i.disk r)) := by
+  have r0 : 0 < r := by linarith
   have ie : ∫ z in i.g '' annulus_oc 0 r s, (1 : ℝ) = volume.real (i.g '' annulus_oc 0 r s) • 1 :=
     MeasureTheory.setIntegral_const _
   simp only [smul_eq_mul, mul_one] at ie
-  rw [i.disk_diff_disk r1 rs, ← ie]
-  have ga : AnalyticOnNhd ℂ i.g (annulus_oc 0 r s) := i.ga'.mono (annulus_oc_subset_norm_Ioi r1)
-  have d : ∀ z ∈ annulus_oc 0 r s, HasFDerivWithinAt i.g (fderiv ℝ i.g z) (annulus_oc 0 r s) z :=
-    fun z m ↦ (ga z m).restrictScalars.hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
+  rw [i.disk_diff_disk r1.le rs, ← ie]
+  have ga : AnalyticOnNhd ℂ i.g (annulus_cc 0 r s) := i.ga'.mono (annulus_cc_subset_norm_Ioi r1)
+  have ga' := ga.mono annulus_oc_subset_annulus_cc
+  have gd : ∀ z ∈ annulus_oc 0 r s, HasFDerivWithinAt i.g (fderiv ℝ i.g z) (annulus_oc 0 r s) z :=
+    fun z m ↦ (ga' z m).restrictScalars.hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
+  have gc : ContinuousOn (fun z ↦ ‖deriv i.g z‖ ^ 2) (annulus_cc 0 r s) :=
+    ga.deriv.continuousOn.norm.pow 2
+  have gi : IntegrableOn (fun p ↦ p.1 * ‖deriv i.g (circleMap 0 p.1 p.2)‖ ^ 2)
+      (Ioc r s ×ˢ Ioc 0 (2 * π)) (volume.prod volume) := by
+    -- DO NOT SUBMIT: Remove if we don't use this
+    have sub : Ioc r s ×ˢ Ioc 0 (2 * π) ⊆ Icc r s ×ˢ Icc 0 (2 * π) := by
+      simp only [prod_subset_prod_iff, Ioc_subset_Icc_self, true_and, true_or]
+    refine IntegrableOn.mono_set ?_ sub
+    refine ContinuousOn.integrableOn_compact ?_ ?_
+    · exact isCompact_Icc.prod isCompact_Icc
+    · refine continuousOn_fst.mul ?_
+      refine ContinuousOn.pow ?_ 2
+      refine ContinuousOn.norm ?_
+      refine ga.deriv.continuousOn.comp (by fun_prop) ?_
+      intro ⟨t,u⟩ ⟨tm,um⟩
+      simp only [mem_Icc] at tm
+      have t0 : 0 ≤ t := by linarith
+      simp [annulus_cc, abs_of_nonneg t0, tm]
   have ed : ∀ z ∈ annulus_oc 0 r s, |(fderiv ℝ i.g z).det| = ‖deriv i.g z‖ ^ 2 :=
-    fun z m ↦ by simp only [Complex.fderiv_det (ga z m).differentiableAt, abs_sq]
-  rw [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume measurableSet_annulus_oc
-    (f' := fderiv ℝ i.g) d (i.inj.mono (annulus_oc_subset_norm_Ioi r1))]
-  simp only [smul_eq_mul, mul_one, MeasureTheory.integral_congr_ae
-    (MeasureTheory.ae_restrict_of_forall_mem measurableSet_annulus_oc ed)]
-  sorry
-
-  /- DO NOT SUBMIT
- theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-    {f : ℂ → E} {c : ℂ} {r0 r1 : ℝ} (fc : ContinuousOn f (annulus_cc c r0 r1)) (r0p : 0 ≤ r0) :
-    ∫ z in annulus_oc c r0 r1, f z =
-      ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
-      -/
+    fun z m ↦ by simp only [Complex.fderiv_det (ga' z m).differentiableAt, abs_sq]
+  simp only [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume
+      measurableSet_annulus_oc (f' := fderiv ℝ i.g) gd
+      (i.inj.mono (annulus_oc_subset_norm_Ioi r1.le)), smul_eq_mul, mul_one,
+    MeasureTheory.integral_congr_ae
+      (MeasureTheory.ae_restrict_of_forall_mem measurableSet_annulus_oc ed),
+    fubini_annulus gc r0.le,
+    ← intervalIntegral.integral_of_le rs, ← intervalIntegral.integral_of_le Real.two_pi_pos.le]
+    --← intervalIntegral.integral_const_mul]
+    --intervalIntegral.integral_integral_comm rs Real.two_pi_pos.le gi]  -- DO NOT SUBMIT
+  simp only [← real_inner_self_eq_norm_sq, Complex.inner, gronwall_term_eq_c,
+    ← Complex.reCLM_apply]
 
 end Gronwall
 

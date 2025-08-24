@@ -128,3 +128,9 @@ lemma annulus_oc_subset_norm_Ioi {a r s : ℝ} (ar : a ≤ r) : annulus_oc 0 r s
   simp only [annulus_oc, mem_diff, Metric.mem_closedBall, dist_zero_right, not_le, norm_Ioi,
     mem_setOf_eq] at m ⊢
   exact lt_of_le_of_lt ar m.2
+
+lemma annulus_cc_subset_norm_Ioi {a r s : ℝ} (ar : a < r) : annulus_cc 0 r s ⊆ norm_Ioi a := by
+  intro z m
+  simp only [annulus_cc, mem_diff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball, not_lt,
+    norm_Ioi, mem_setOf_eq] at m ⊢
+  exact lt_of_lt_of_le ar m.2

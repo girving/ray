@@ -3,6 +3,7 @@ import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Ray.Misc.Annuli
+import Ray.Misc.Circle
 import Ray.Misc.Complex
 import Ray.Misc.Measure
 import Ray.Misc.Prod
@@ -197,10 +198,6 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
   simp only [ContinuousLinearEquiv.coe_symm_toHomeomorph]
   apply Complex.ext; · simp only [Complex.equivRealProdCLM_symm_apply_re]
   · simp only [Complex.equivRealProdCLM_symm_apply_im]
-
-/-- `circleMap` is continuous on `ℝ × ℝ` -/
-theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
-  continuity
 
 /-- Integration over a complex annulus using polar coordinates -/
 theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]

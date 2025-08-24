@@ -3,6 +3,7 @@ import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Mathlib.Topology.GDelta.MetrizableSpace
+import Ray.Misc.Complex
 
 /-!
 ## `Circle` facts
@@ -148,3 +149,14 @@ lemma integral_exp_mul_I (n : ℤ) :
         Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
     · exact fun t _ ↦ (hd t).differentiableAt.div_const _
     · fun_prop
+
+/-- `circleMap` is continuous on `ℝ × ℝ` -/
+@[fun_prop] theorem continuous_circleMap_full {c : ℂ} :
+    Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
+  continuity
+
+/-- `circleMap` is analytic in `t` -/
+@[fun_prop] theorem analyticAt_circleMap {c : ℂ} {r t : ℝ} : AnalyticAt ℝ (circleMap c r) t := by
+  unfold circleMap
+  refine analyticAt_const.add (analyticAt_const.mul (analyticAt_cexp.restrictScalars.comp ?_))
+  exact Complex.analyticAt_ofReal.mul analyticAt_const
