@@ -10,6 +10,8 @@ open Filter (atTop)
 open Stream' (cons)
 open scoped Topology Stream
 
+variable {G : Type} [NormedAddCommGroup G]
+
 /-- Insert `0` into a `Finset ℕ`, adding `1` to existing elements -/
 def push (N : Finset ℕ) :=
   insert 0 (Finset.image (fun n ↦ n + 1) N)
@@ -69,7 +71,7 @@ theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
   rw [h]; exact Filter.mem_atTop _
 
 /-- Triangle inequality for finset sums of complex numbers -/
-theorem finset_complex_abs_sum_le (N : Finset ℕ) (f : ℕ → ℂ) :
+theorem finset_complex_abs_sum_le (N : Finset ℕ) (f : ℕ → G) :
     ‖N.sum fun n ↦ f n‖ ≤ N.sum fun n ↦ ‖f n‖ := by
   induction' N using Finset.induction with n N Nn h; · simp
   · rw [Finset.sum_insert Nn]
