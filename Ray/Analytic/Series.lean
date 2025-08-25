@@ -193,3 +193,13 @@ theorem fast_series_converge {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (
   · exact uniform_analytic_lim o (fun N ↦ N.analyticOnNhd_fun_sum fun _ _ ↦ h _)
       (fast_series_converge_uniformly_on a0 a1 hf)
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)
+
+/-- Analytic series that converge exponentially converge to analytic functions, tsum version -/
+theorem fast_series_converge_tsum_at {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+    (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
+    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
+    AnalyticOnNhd ℂ (fun z ↦ ∑' n, f n z) s := by
+  obtain ⟨g, ga, gs⟩ := fast_series_converge o a0 a1 h hf
+  rwa [analyticOnNhd_congr (g := g) o]
+  intro z m
+  simp only [(gs z m).tsum_eq]

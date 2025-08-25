@@ -15,7 +15,7 @@ open Metric (sphere)
 open Complex (arg log I imCLM slitPlane)
 open ContinuousLinearMap (lsmul)
 open Set
-open scoped ContDiff Real
+open scoped ContDiff Real ComplexConjugate
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -68,6 +68,10 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     rw [mul_comm _ (⌈_⌉:ℂ), mul_assoc, Complex.exp_int_mul, ← ha]
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
       one_zpow, div_one, true_or]
+
+@[fun_prop] lemma ContinuousAt.complex_conj {f : X → ℂ} {x : X} (h : ContinuousAt f x) :
+    ContinuousAt (fun x ↦ conj (f x)) x :=
+  Complex.continuous_conj.continuousAt.comp h
 
 /-!
 ### Derivatives mixing `ℝ` and `ℂ`
@@ -138,7 +142,7 @@ lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p'
 ### Determinants of complex derivatives
 -/
 
-lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
+@[simp] lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
   simp [Algebra.norm_complex_eq, Complex.normSq_eq_norm_sq]
 
 /-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/

@@ -50,6 +50,9 @@ lemma norm_Icc_eq_diff {r s : ℝ} : norm_Icc r s = closedBall 0 s \ ball 0 r :=
 lemma isCompact_norm_Icc {r s : ℝ} : IsCompact (norm_Icc r s) := by
   rw [norm_Icc_eq_diff]; exact (isCompact_closedBall _ _).diff isOpen_ball
 
+lemma isCompact_annulus_cc {c : ℂ} {r s : ℝ} : IsCompact (annulus_cc c r s) := by
+  exact (isCompact_closedBall _ _).diff isOpen_ball
+
 lemma norm_Ioi_subset_norm_Ici {r : ℝ} : norm_Ioi r ⊆ norm_Ici r := by
   simp only [norm_Ioi, norm_Ici, setOf_subset_setOf]; intro _; exact le_of_lt
 
@@ -123,6 +126,9 @@ lemma annulus_oc_subset_annulus_cc {c : ℂ} {r0 r1 : ℝ} : annulus_oc c r0 r1 
 lemma measurableSet_annulus_oc {c : ℂ} {r0 r1 : ℝ} : MeasurableSet (annulus_oc c r0 r1) :=
   measurableSet_closedBall.diff measurableSet_closedBall
 
+lemma measurableSet_annulus_cc {c : ℂ} {r0 r1 : ℝ} : MeasurableSet (annulus_cc c r0 r1) :=
+  measurableSet_closedBall.diff measurableSet_ball
+
 lemma annulus_oc_subset_norm_Ioi {a r s : ℝ} (ar : a ≤ r) : annulus_oc 0 r s ⊆ norm_Ioi a := by
   intro z m
   simp only [annulus_oc, mem_diff, Metric.mem_closedBall, dist_zero_right, not_le, norm_Ioi,
@@ -134,3 +140,10 @@ lemma annulus_cc_subset_norm_Ioi {a r s : ℝ} (ar : a < r) : annulus_cc 0 r s �
   simp only [annulus_cc, mem_diff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball, not_lt,
     norm_Ioi, mem_setOf_eq] at m ⊢
   exact lt_of_lt_of_le ar m.2
+
+lemma symmDiff_annulus_oc_annulus_cc {c : ℂ} {r s : ℝ} (rs : r ≤ s) :
+    (symmDiff (annulus_oc c r s) (annulus_cc c r s)) = sphere c r := by
+  ext z
+  simp only [annulus_oc, annulus_cc, mem_symmDiff, mem_diff, Metric.mem_closedBall, dist_eq_norm,
+    not_le, Metric.mem_ball, not_lt, not_and, mem_sphere_iff_norm]
+  grind
