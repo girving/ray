@@ -275,3 +275,20 @@ lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A]
   simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
     ContinuousLinearMap.one_apply]
   apply exists_ne
+
+/-- `mkPiRing` is continuous -/
+lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [NontriviallyNormedField 𝕜]
+    [Fintype ι] [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E] :
+    Continuous (fun z : E ↦ ContinuousMultilinearMap.mkPiRing 𝕜 ι z) := by
+  rw [Metric.continuous_iff]
+  intro x e e0
+  refine ⟨e / 2, by bound, fun y xy ↦ ?_⟩
+  simp only [dist_eq_norm] at xy
+  refine lt_of_le_of_lt (b := e / 2) ?_ (by bound)
+  rw [dist_eq_norm, ContinuousMultilinearMap.opNorm_le_iff (by bound)]
+  intro m
+  simp only [ContinuousMultilinearMap.sub_apply, ContinuousMultilinearMap.mkPiRing_apply,
+    ← smul_sub]
+  refine le_trans (norm_smul_le _ _) ?_
+  rw [mul_comm]
+  bound
