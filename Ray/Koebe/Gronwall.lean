@@ -4,6 +4,7 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.InnerProductSpace.Basic
+import Ray.Analytic.ConjConj
 import Ray.Analytic.Holomorphic
 import Ray.Analytic.Series
 import Ray.Hartogs.FubiniBall
@@ -1019,18 +1020,12 @@ lemma continuousOn_integrand (i : Gronwall f) (r1 : 1 < r) :
   · apply Complex.continuous_conj.continuousAt.comp
     exact (gc (by simpa)).comp (by fun_prop)
 
--- DO NOT SUBMIT: Move to ConjConj.lean and prove
-/-- Two conj's cancel out for analyticity -/
-lemma _root_.AnalyticAt.conj_conj {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z) :
-    AnalyticAt ℂ (fun z ↦ conj (f (conj z))) z := by
-  sorry
-
 /-- Our integrand is analytic -/
 lemma analyticAt_integrand (i : Gronwall f) (r1 : 1 < r) (wm : w ∈ annulus_cc 0 r s)
     (zr : r⁻¹ < ‖z‖) : AnalyticAt ℂ (i.integrand w) z := by
-  have da : AnalyticAt ℂ (fun z ↦ deriv i.g (w * z)) z :=
-    (i.ga (by simp [wz_norm r1 wm zr])).deriv.comp (by fun_prop)
-  exact da.mul da.conj_conj
+  have da : ∀ z, r⁻¹ < ‖z‖ → AnalyticAt ℂ (fun z ↦ deriv i.g (w * z)) z :=
+    fun z zr ↦ (i.ga (by simp [wz_norm r1 wm zr])).deriv.comp (by fun_prop)
+  exact (da z zr).mul (da (conj z) (by simpa)).conj_conj
 
 /-- Our integrand is integrable -/
 lemma integrable_integrand (i : Gronwall f) (r1 : 1 < r) (zr : r⁻¹ < ‖z‖) :
