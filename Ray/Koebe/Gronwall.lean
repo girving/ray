@@ -7,9 +7,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Ray.Analytic.ConjConj
 import Ray.Analytic.Holomorphic
 import Ray.Analytic.Series
-import Ray.Hartogs.FubiniBall
 import Ray.Koebe.WindArea
-import Ray.Manifold.GlobalInverse
 import Ray.Misc.Annuli
 import Ray.Misc.Cobounded
 import Ray.Misc.Deriv
@@ -293,6 +291,23 @@ def outer (i : Gronwall f) (r : ℝ) : Set ℂ := i.g '' norm_Ioi r
 /-- The complement region inside a `g` cycle -/
 def disk (i : Gronwall f) (r : ℝ) : Set ℂ := (i.outer r)ᶜ
 
+-- Monotonicity of `i.outer` and `i.disk`
+lemma outer_subset_outer (i : Gronwall f) (rs : r ≤ s) : i.outer s ⊆ i.outer r :=
+  image_mono (norm_Ioi_subset_norm_Ioi rs)
+lemma disk_subset_disk (i : Gronwall f) (rs : r ≤ s) : i.disk r ⊆ i.disk s :=
+  compl_subset_compl.mpr (i.outer_subset_outer rs)
+
+/-- The difference between two disks is the annulus between them -/
+lemma disk_diff_disk (i : Gronwall f) (r1 : 1 ≤ r) (rs : r ≤ s) :
+    i.disk s \ i.disk r = i.g '' annulus_oc 0 r s := by
+  simp only [disk, compl_sdiff_compl, outer]
+  rw [← (i.inj.mono _).image_diff_subset]
+  · apply congr_arg₂ _ rfl
+    ext w
+    simp [norm_Ioi, annulus_oc, and_comm]
+  · exact norm_Ioi_subset_norm_Ioi rs
+  · exact norm_Ioi_subset_norm_Ioi r1
+
 /-- The outer region is preconnected -/
 lemma isPreconnected_outer (i : Gronwall f) : ∀ᶠ r in atTop, IsPreconnected (i.outer r) := by
   filter_upwards [Filter.eventually_gt_atTop 1] with r r1
@@ -318,32 +333,11 @@ lemma isOpen_outer (i : Gronwall f) (r1 : 1 < r) : IsOpen (i.outer r) := by
   simp only [norm_Ioi, mem_setOf_eq] at m ⊢
   linarith
 
--- DO NOT SUBMIT: Do I need this?
-/-- Be lazy and use a global inverse hammer to make the following easier -/
-lemma exists_inv (i : Gronwall f) : ∃ gi : ℂ → ℂ,
-    AnalyticOnNhd ℂ gi (i.g '' norm_Ioi 1) ∧ ∀ z, z ∈ norm_Ioi 1 → gi (i.g z) = z :=
-  global_complex_inverse_fun_open'' i.ga' i.inj isOpen_norm_Ioi
-def gi (i : Gronwall f) : ℂ → ℂ := choose i.exists_inv
-lemma gia (i : Gronwall f) : AnalyticOnNhd ℂ i.gi (i.g '' norm_Ioi 1) :=
-  (choose_spec i.exists_inv).1
-lemma gi_g (i : Gronwall f) {z : ℂ} (m : z ∈ norm_Ioi 1) : i.gi (i.g z) = z :=
-  (choose_spec i.exists_inv).2 z m
-
--- DO NOT SUBMIT: Do I need this?
-/-- `g` and `gi` as a partial homeomorph -/
-def gg (i : Gronwall f) : PartialHomeomorph ℂ ℂ where
-  toFun := i.g
-  invFun := i.gi
-  source := norm_Ioi 1
-  target := i.g '' norm_Ioi 1
-  map_source' := by aesop
-  map_target' := by intro x ⟨y,m,e⟩; simp only [← e, i.gi_g m, m]
-  left_inv' := by intro x m; simp only [i.gi_g m]
-  right_inv' := by intro x ⟨y,m,e⟩; simp only [← e, i.gi_g m]
-  open_source := isOpen_norm_Ioi
-  open_target := i.g_open _ (by rfl) isOpen_norm_Ioi
-  continuousOn_toFun := i.ga'.continuousOn
-  continuousOn_invFun := i.gia.continuousOn
+-- Measurability of `i.outer` and `i.disk`
+lemma measurableSet_outer (i : Gronwall f) (r1 : 1 < r) : MeasurableSet (i.outer r) :=
+  (i.isOpen_outer r1).measurableSet
+lemma measurableSet_disk (i : Gronwall f) (r1 : 1 < r) : MeasurableSet (i.disk r) :=
+  (i.measurableSet_outer r1).compl
 
 /-- `g` tends to infinity at infinity -/
 lemma g_tendsto (i : Gronwall f) : Tendsto i.g (cobounded ℂ) (cobounded ℂ) := by
@@ -843,125 +837,14 @@ lemma large_volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
     (by rwa [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)])).hasSum
 
 /-!
-### Area within small annuli
-
-We integrate in terms of `i.g` directly to compute the area of small annuli.
+### Large areas restated as an analytic function
 -/
 
-lemma disk_diff_disk (i : Gronwall f) (r1 : 1 ≤ r) (rs : r ≤ s) :
-    i.disk s \ i.disk r = i.g '' annulus_oc 0 r s := by
-  simp only [disk, compl_sdiff_compl, outer]
-  rw [← (i.inj.mono _).image_diff_subset]
-  · apply congr_arg₂ _ rfl
-    ext w
-    simp [norm_Ioi, annulus_oc, and_comm]
-  · exact norm_Ioi_subset_norm_Ioi rs
-  · exact norm_Ioi_subset_norm_Ioi r1
-
--- DO NOT SUBMIT: Move these way up, and use them. Or drop them, if unused
--- The naming matches `WindDiff.fe` and `WindDiff.dfe`, though `ge` and `dge` could also work -/
-def fe (i : Gronwall f) (r t : ℝ) : ℂ := i.g (circleMap 0 r t)
-def dfe (i : Gronwall f) (r t : ℝ) : ℂ := deriv i.g (circleMap 0 r t) * circleMap 0 r t
-
--- DO NOT SUBMIT: Move to Circle
-/-- The derivative of `circleMap` w.r.t. the radius -/
-lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
-    HasDerivAt (fun r ↦ circleMap c r t) (circleMap 0 1 t) r := by
-  simp only [circleMap, zero_add]
-  exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _
-
--- DO NOT SUBMIT: Remove
-/-- The radial integrals in `small_volume_eq` -/
-lemma radial_integral (i : Gronwall f) {r s t : ℝ} (r1 : 1 < r) (rs : r ≤ s) :
-    ∫ a in r..s, a * ‖deriv i.g (circleMap 0 a t)‖ ^ 2 = sorry := by
-      --inner ℝ (i.fe s t * I) (i.dfe s t) - inner ℝ (i.fe r t * I) (i.dfe r t) := by
-  stop
-  set h : ℝ → ℝ := fun a ↦ inner ℝ (i.fe a t * I) (i.dfe a t)
-  set h' : ℝ → ℝ := fun a ↦ a * ‖deriv i.g (circleMap 0 a t)‖ ^ 2
-  have d : ∀ a ∈ uIcc r s, HasDerivAt h (h' a) a := by
-    intro a m
-    simp only [uIcc_of_le rs, mem_Icc] at m
-    simp only [h, fe, dfe]
-    -- z = circleMap 0 a t
-    -- z' = circleMap 0 1 t = w = z / a
-    -- (f z)' = f' z * z'
-    --   (inner ℝ (i.g z * I) (i.g' z * z))'
-    -- = inner ℝ (i.g z * I) (i.g' z * z)' + inner ℝ ((i.g z)' * I) (i.g' z * z)
-    -- = a⁻¹ * (inner ℝ (i.g z * I) (i.g'' z * z^2 + i.g' z * z) +
-    --          inner ℝ (i.g' z * z * I) (i.g' z * z))
-    --
-    -- ∫ a * ‖g' (a z)‖ ^ 2 da
-  rw [intervalIntegral.integral_congr fun a m ↦ (d a m).deriv.symm]
-  apply intervalIntegral.integral_deriv_eq_sub
-  · exact fun a m ↦ (d a m).differentiableAt
-  · apply ContinuousOn.intervalIntegrable
-    sorry
-
--- 1D series for our inner integrals
--- ∂t z = z * I
--- f z = ∑ n, c n * z ^ n
--- f' z = ∑ n, n * c n * z ^ (n - 1)
--- g' z = (z * f z⁻¹)' = f z⁻¹ - f' z⁻¹ / z
---      = ∑ n, (1 - n) * c n / z ^ n
-def single (i : Gronwall f) (r t : ℝ) (n : ℕ) : ℂ :=
-  (1 - n) * i.coeff n / circleMap 0 r t ^ n
-
-lemma hasSum_single (i : Gronwall f) {r t : ℝ} (r1 : 1 < r) :
-    HasSum (i.single r t) (deriv i.g (circleMap 0 r t)) := by
-  sorry
-  --have dg : ∀ z, 1 < ‖z‖ → deriv i.g z = ∑ n, (1 - n) * i.coeff n / z ^ n := by
-
--- Terms and bounds for our inner integrals
-def inner_term (_ : Gronwall f) (r : ℝ) (n : ℕ) : ℝ := r * n
-def inner_c (_ : Gronwall f) (r : ℝ) (n : ℕ) : ℂ := r * n
-lemma inner_term_eq_c (i : Gronwall f) (r : ℝ) : i.inner_term r = fun n ↦ (i.inner_c r n).re := by
-  ext n
-  simp [inner_term, inner_c]
-
-lemma small_inner_integral (i : Gronwall f) (r1 : 1 < r) :
-    HasSum (i.inner_term r) (∫ t in 0..2 * π, ‖deriv i.g (circleMap 0 r t)‖ ^ 2) := by
-  have r0 : 0 < r := by linarith
-  -- Lift to a `ℂ` statement
-  have ga : ∀ t, AnalyticAt ℂ i.g (circleMap 0 r t) := fun t ↦ i.ga (by simpa [abs_of_pos r0])
-  have da : ∀ t, AnalyticAt ℝ (fun t ↦ deriv i.g (circleMap 0 r t)) t :=
-    fun t ↦ (ga t).deriv.restrictScalars.comp analyticAt_circleMap
-  have ic : Continuous (fun t ↦ deriv i.g (circleMap 0 r t) *
-      conj (deriv i.g (circleMap 0 r t))) := by
-    rw [continuous_iff_continuousAt]
-    intro t
-    have c := (da t).continuousAt
-    exact c.mul (Complex.continuous_conj.continuousAt.comp c)
-  simp only [inner_term_eq_c, ← real_inner_self_eq_norm_sq, Complex.inner, ← Complex.reCLM_apply]
-  rw [ContinuousLinearMap.intervalIntegral_comp_comm]
-  swap; exact ic.intervalIntegrable 0 (2 * π)
-  sorry
-
-/-- The difference between Gronwall terms at different (complex) radii -/
-def gronwall_diff (i : Gronwall f) (r s : ℂ) (n : ℕ) : ℂ :=
-  i.gronwall_c s n - i.gronwall_c r n
-
-/-- The term differences are summable -/
-lemma diff_le_ug (i : Gronwall f) (r1 : 1 < r) (zr : r ≤ ‖z‖) (zs : ‖z‖ ≤ s) (n : ℕ) :
-    ‖i.gronwall_diff z s n‖ ≤ 2 * i.ug r s n := by
-  have rs : r ≤ s := by linarith
-  have sa : |s| = s := by rw [abs_of_pos (by linarith)]
-  calc ‖i.gronwall_diff z s n‖
-    _ = ‖i.gronwall_c s n - i.gronwall_c z n‖ := rfl
-    _ ≤ ‖i.gronwall_c s n‖ + ‖i.gronwall_c z n‖ := norm_sub_le _ _
-    _ ≤ i.ug r s n + i.ug r s n := by
-        apply add_le_add
-        all_goals apply i.le_ug r1
-        all_goals simp [sa, rs, zr, zs]
-    _ = 2 * i.ug r s n := by ring
-lemma summable_diff (i : Gronwall f) (r1 : 1 < r) (zr : r ≤ ‖z‖) (zs : ‖z‖ ≤ s) :
-    Summable (i.gronwall_diff z s) :=
-  ((i.summable_ug r1 (s := s)).mul_left 2).of_norm_bounded (fun n ↦ i.diff_le_ug r1 zr zs n)
-
-/-- The difference series sum as we'd expect -/
-lemma tsum_diff_eq (i : Gronwall f) {r : ℂ} (r1 : 1 < ‖r‖) (s1 : 1 < s) :
-    ∑' n, i.gronwall_diff r s n = (∑' n, i.gronwall_c s n) - (∑' n, i.gronwall_c r n) := by
-  have s0 : 0 < s := by linarith
-  exact (i.summable_gronwall_c (by simpa [abs_of_pos s0])).tsum_sub (i.summable_gronwall_c r1)
+/-- The area within large annuli is given by the complex Grönwall series -/
+lemma large_volume_eq_series (i : Gronwall f) : ∀ᶠ r : ℝ in atTop,
+    ∑' n, i.gronwall_c r n = volume.real (i.disk r) := by
+  filter_upwards [i.large_volume_eq, Filter.eventually_gt_atTop 1] with r h r1
+  simpa [gronwall_c, gronwall_term] using (Complex.ofRealCLM.hasSum h).tsum_eq
 
 /-- The Gronwall series is analytic -/
 lemma analyticAt_series (i : Gronwall f) {z : ℂ} (z1 : 1 < ‖z‖) :
@@ -989,6 +872,55 @@ lemma analyticAt_series (i : Gronwall f) {z : ℂ} (z1 : 1 < ‖z‖) :
       refine le_trans (i.le_ug t1 zm.1.le zm.2.le n) (le_trans ?_ (le n))
       simp [abs_of_pos Real.pi_pos, b, ug, pow_mul]
   exact ta _ (by simp [norm_Ioo, tr, s])
+
+/-- Disks have finite area -/
+@[simp, aesop (rule_sets := [finiteness]) safe apply] lemma volume_finite (i : Gronwall f) :
+    volume (i.disk r) ≠ ⊤ := by
+  have large : ∀ᶠ r in atTop, volume (i.disk r) ≠ ⊤ := by
+    filter_upwards [i.wind, i.outer_eq_outer] with r w oe
+    have ed : i.disk r = w.wind.disk := by simp only [disk, ← w.wind.compl_outer, oe w.wind]
+    exact ed ▸ w.wind.isCompact_disk.measure_ne_top
+  obtain ⟨s,rs,f⟩ := ((Filter.eventually_ge_atTop r).and large).exists
+  simp only [← lt_top_iff_ne_top] at f ⊢
+  exact lt_of_le_of_lt (MeasureTheory.measure_mono (i.disk_subset_disk rs)) f
+
+lemma volume_diff_eq (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
+    volume.real (i.disk s \ i.disk r) = volume.real (i.disk s) - volume.real (i.disk r) := by
+  rw [← MeasureTheory.measureReal_diff (i.disk_subset_disk rs) (i.measurableSet_disk r1)]
+
+/-!
+### Area within small annuli as an integral
+
+We write small radii in terms of an integral, then show the integral is analytic.
+We extend our formula down to small radii via analytic continuation.
+-/
+
+/-- The difference between Gronwall terms at different (complex) radii -/
+def gronwall_diff (i : Gronwall f) (r s : ℂ) (n : ℕ) : ℂ :=
+  i.gronwall_c s n - i.gronwall_c r n
+
+/-- The term differences are summable -/
+lemma diff_le_ug (i : Gronwall f) (r1 : 1 < r) (zr : r ≤ ‖z‖) (zs : ‖z‖ ≤ s) (n : ℕ) :
+    ‖i.gronwall_diff z s n‖ ≤ 2 * i.ug r s n := by
+  have rs : r ≤ s := by linarith
+  have sa : |s| = s := by rw [abs_of_pos (by linarith)]
+  calc ‖i.gronwall_diff z s n‖
+    _ = ‖i.gronwall_c s n - i.gronwall_c z n‖ := rfl
+    _ ≤ ‖i.gronwall_c s n‖ + ‖i.gronwall_c z n‖ := norm_sub_le _ _
+    _ ≤ i.ug r s n + i.ug r s n := by
+        apply add_le_add
+        all_goals apply i.le_ug r1
+        all_goals simp [sa, rs, zr, zs]
+    _ = 2 * i.ug r s n := by ring
+lemma summable_diff (i : Gronwall f) (r1 : 1 < r) (zr : r ≤ ‖z‖) (zs : ‖z‖ ≤ s) :
+    Summable (i.gronwall_diff z s) :=
+  ((i.summable_ug r1 (s := s)).mul_left 2).of_norm_bounded (fun n ↦ i.diff_le_ug r1 zr zs n)
+
+/-- The difference series sum as we'd expect -/
+lemma tsum_diff_eq (i : Gronwall f) {r : ℂ} (r1 : 1 < ‖r‖) (s1 : 1 < s) :
+    ∑' n, i.gronwall_diff r s n = (∑' n, i.gronwall_c s n) - (∑' n, i.gronwall_c r n) := by
+  have s0 : 0 < s := by linarith
+  exact (i.summable_gronwall_c (by simpa [abs_of_pos s0])).tsum_sub (i.summable_gronwall_c r1)
 
 /-- Our volume differences as an integral -/
 def volume_integral (i : Gronwall f) (r s : ℝ) : ℝ :=
@@ -1033,6 +965,16 @@ lemma integrable_integrand (i : Gronwall f) (r1 : 1 < r) (zr : r⁻¹ < ‖z‖)
   apply ContinuousOn.integrableOn_compact isCompact_annulus_cc
   exact (i.continuousOn_integrand r1).uncurry_right z (by simpa [norm_Ioi])
 
+-- DO NOT SUBMIT: Delete the above, probably, if we only use this one.
+/-- Our integrand is integrable -/
+lemma integrable_sq_norm (i : Gronwall f) (r1 : 1 < r) :
+    IntegrableOn (fun w ↦ ‖deriv i.g w‖ ^ 2) (annulus_cc 0 r s) := by
+  apply ContinuousOn.integrableOn_compact isCompact_annulus_cc
+  intro z m
+  simp only [annulus_cc, mem_diff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball,
+    not_lt] at m
+  exact ((i.ga (by linarith)).deriv.continuousAt.norm.pow 2).continuousWithinAt
+
 /-- Write small volumes in terms of integrals -/
 lemma small_volume_eq_integral (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
     volume.real (i.disk s \ i.disk r) = i.volume_integral r s := by
@@ -1061,18 +1003,17 @@ lemma small_volume_eq_integral (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
 /-- Write small volumes in terms of complex integrals -/
 lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z : ℝ) (z0 : 0 < z) :
     volume.real (i.disk s \ i.disk r) =
-      z ^ 2 * (i.volume_integral_c (r / z) (s / z) z).re := by
+      z ^ 2 * i.volume_integral_c (r / z) (s / z) z := by
   have z0' : (z : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr z0.ne'
   set u : ℂ → ℂ → ℂ := i.integrand
-  have si : ∀ w, ‖deriv i.g w‖ ^ 2 = (i.integrand w 1).re := by
+  have si : ∀ w, ‖deriv i.g w‖ ^ 2 = i.integrand w 1 := by
     intro w
-    simp only [mul_one, map_one, integrand, ← real_inner_self_eq_norm_sq, Complex.inner]
-  simp only [i.small_volume_eq_integral r1 rs, volume_integral_c, volume_integral, si,
-    ← Complex.re_ofReal_mul, ← MeasureTheory.integral_const_mul]
-  simp only [← Complex.reCLM_apply]
-  rw [ContinuousLinearMap.integral_comp_comm]
-  · apply congr_arg₂ _ rfl
-    set t : ℂ → ℂ := fun w ↦ w * z
+    simp only [mul_one, map_one, integrand, ← real_inner_self_eq_norm_sq, Complex.inner,
+      ← Complex.ofReal_pow, Complex.mul_conj, Complex.ofReal_re]
+  simp only [i.small_volume_eq_integral r1 rs, volume_integral_c, volume_integral,
+    ← MeasureTheory.integral_const_mul, ← Complex.ofRealCLM_apply]
+  rw [← ContinuousLinearMap.integral_comp_comm]
+  · set t : ℂ → ℂ := fun w ↦ w * z
     have tn : ∀ w, ‖t w‖ = ‖w‖ * z := by simp [t, z0.le]
     have ti : t '' annulus_cc 0 (r / ‖z‖) (s / ‖z‖) = annulus_cc 0 r s := by
       ext a
@@ -1090,57 +1031,53 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
     have dt' := fun w ↦ (dt w).hasFDerivAt.restrictScalars ℝ
     rw [← ti, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul (μ := volume)
       (hf' := fun w _ ↦ (dt' w).hasFDerivWithinAt)]
-    · simp only [Real.norm_eq_abs, Complex.real_smul, Complex.ofReal_pow, abs_of_pos z0]
+    · simp only [Real.norm_eq_abs, Complex.real_smul, abs_of_pos z0]
       apply congr_arg₂ _ rfl
       ext w
-      simp [ContinuousLinearMap.det, LinearMap.det_restrictScalars, integrand, t]
+      simp [ContinuousLinearMap.det, LinearMap.det_restrictScalars, integrand, t, si]
     · exact measurableSet_annulus_cc
     · exact (mul_left_injective₀ z0').injOn
-  · exact i.integrable_integrand r1 (by simp; bound)
+  · exact i.integrable_sq_norm r1
 
-/-- The area within an annulus is given by the Grönwall series -/
-lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
-    HasSum (i.gronwall_term r) (volume.real (i.disk s \ i.disk r)) := by
-  have r0 : 0 < r := by linarith
-  have ie : ∫ z in i.g '' annulus_oc 0 r s, (1 : ℝ) = volume.real (i.g '' annulus_oc 0 r s) • 1 :=
-    MeasureTheory.setIntegral_const _
-  simp only [smul_eq_mul, mul_one] at ie
-  rw [i.disk_diff_disk r1.le rs, ← ie]
-  have ga : AnalyticOnNhd ℂ i.g (annulus_cc 0 r s) := i.ga'.mono (annulus_cc_subset_norm_Ioi r1)
-  have ga' := ga.mono annulus_oc_subset_annulus_cc
-  have gd : ∀ z ∈ annulus_oc 0 r s, HasFDerivWithinAt i.g (fderiv ℝ i.g z) (annulus_oc 0 r s) z :=
-    fun z m ↦ (ga' z m).restrictScalars.hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
-  have gc : ContinuousOn (fun z ↦ ‖deriv i.g z‖ ^ 2) (annulus_cc 0 r s) :=
-    ga.deriv.continuousOn.norm.pow 2
-  have gi : IntegrableOn (fun p ↦ p.1 * ‖deriv i.g (circleMap 0 p.1 p.2)‖ ^ 2)
-      (Ioc r s ×ˢ Ioc 0 (2 * π)) (volume.prod volume) := by
-    -- DO NOT SUBMIT: Remove if we don't use this
-    have sub : Ioc r s ×ˢ Ioc 0 (2 * π) ⊆ Icc r s ×ˢ Icc 0 (2 * π) := by
-      simp only [prod_subset_prod_iff, Ioc_subset_Icc_self, true_and, true_or]
-    refine IntegrableOn.mono_set ?_ sub
-    refine ContinuousOn.integrableOn_compact ?_ ?_
-    · exact isCompact_Icc.prod isCompact_Icc
-    · refine continuousOn_fst.mul ?_
-      refine ContinuousOn.pow ?_ 2
-      refine ContinuousOn.norm ?_
-      refine ga.deriv.continuousOn.comp (by fun_prop) ?_
-      intro ⟨t,u⟩ ⟨tm,um⟩
-      simp only [mem_Icc] at tm
-      have t0 : 0 ≤ t := by linarith
-      simp [annulus_cc, abs_of_nonneg t0, tm]
-  have ed : ∀ z ∈ annulus_oc 0 r s, |(fderiv ℝ i.g z).det| = ‖deriv i.g z‖ ^ 2 :=
-    fun z m ↦ by simp only [Complex.fderiv_det (ga' z m).differentiableAt, abs_sq]
-  simp only [MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul volume
-      measurableSet_annulus_oc (f' := fderiv ℝ i.g) gd
-      (i.inj.mono (annulus_oc_subset_norm_Ioi r1.le)), smul_eq_mul, mul_one,
-    MeasureTheory.integral_congr_ae
-      (MeasureTheory.ae_restrict_of_forall_mem measurableSet_annulus_oc ed)]
-    --fubini_annulus gc r0.le,
-    --← intervalIntegral.integral_of_le rs, ← intervalIntegral.integral_of_le Real.two_pi_pos.le]
-    --← intervalIntegral.integral_const_mul]
-    --intervalIntegral.integral_integral_comm rs Real.two_pi_pos.le gi]  -- DO NOT SUBMIT
-  simp only [← real_inner_self_eq_norm_sq, Complex.inner, gronwall_term_eq_c,
-    ← Complex.reCLM_apply]
+/-!
+### Area within small annuli via analytic continuation
+
+We push the large radius formula down to small radii via analytic continuation.
+-/
+
+/-- Our large radius formula holds for small radii -/
+lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
+    ∑' n, i.gronwall_c r n = volume.real (i.disk r) := by
+  -- Reduce to an equality of two analytic functions
+  have r0 : 0 < r := by positivity
+  have ri : 0 < r⁻¹ := by positivity
+  obtain ⟨s,large⟩ := Filter.eventually_atTop.mp
+    ((Filter.eventually_ge_atTop r).and i.large_volume_eq_series)
+  have rs := (large s (le_refl _)).1
+  replace large := fun t ts ↦ (large t ts).2
+  set u : ℂ → ℂ := fun z ↦ ∑' n, i.gronwall_c z n
+  set v : ℂ → ℂ := fun z ↦ i.volume_integral_c r s z
+  have hu : ∀ z, (∑' n, i.gronwall_c z n) = u z := by intro; rfl
+  have hv : ∀ z, i.volume_integral_c r s z = v z := by intro; rfl
+  simp only [hu] at large ⊢
+  have small : ∀ m > r⁻¹, volume.real (i.disk (s * m)) - volume.real (i.disk (r * m)) =
+      m ^ 2 * i.volume_integral_c r s m := by
+    intro m mr
+    have m0 : 0 < m := lt_trans ri mr
+    have rm1 : 1 < r * m := by
+      calc r * m
+        _ > r * r⁻¹ := by bound
+        _ = 1 := by rw [mul_inv_cancel₀ r0.ne']
+    rw [← Complex.ofReal_sub, ← volume_diff_eq _ rm1 (by bound),
+      i.small_volume_eq_integral_c (z := m) rm1 (by bound) (by bound)]
+    simp only [mul_div_cancel_right₀ _ m0.ne']
+  suffices h : u s - u r = volume.real (i.disk s) - volume.real (i.disk r) by
+    simpa [u, large s (le_refl _)] using h
+  have small1 := small 1 (by bound)
+  simp only [mul_one, Complex.ofReal_one, one_pow, one_mul] at small1
+  rw [small1, hv]
+  -- Analytic continuation does the rest
+  sorry
 
 end Gronwall
 

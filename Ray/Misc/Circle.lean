@@ -160,3 +160,9 @@ lemma integral_exp_mul_I (n : ℤ) :
   unfold circleMap
   refine analyticAt_const.add (analyticAt_const.mul (analyticAt_cexp.restrictScalars.comp ?_))
   exact Complex.analyticAt_ofReal.mul analyticAt_const
+
+/-- The derivative of `circleMap` w.r.t. the radius -/
+lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
+    HasDerivAt (fun r ↦ circleMap c r t) (circleMap 0 1 t) r := by
+  simp only [circleMap, zero_add]
+  exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _
