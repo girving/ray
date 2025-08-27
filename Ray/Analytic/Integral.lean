@@ -20,24 +20,27 @@ open scoped NNReal Real
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X] [MeasurableSpace X] [OpensMeasurableSpace X]
-  [FirstCountableTopology X]
+  [FirstCountableTopology X] [T2Space X]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
 variable {f : X → ℂ → E} {μ : Measure X} {s : Set X} {c : ℂ} {r : ℝ≥0}
 variable {x : X} {z : ℂ} {p : X × ℂ} {n : ℕ} {t : ℝ}
 
 /-- Our various assumptions -/
-structure Holo [CompleteSpace E] [OpensMeasurableSpace X] [FirstCountableTopology X]
+structure Holo [CompleteSpace E] [OpensMeasurableSpace X] [FirstCountableTopology X] [T2Space X]
     (f : X → ℂ → E) (μ : Measure X) (s : Set X) (c : ℂ) (r : ℝ≥0) : Prop where
   r0 : 0 < r
   sc : IsCompact s
-  sm : MeasurableSet s
-  μs : μ s < ⊤
+  μs : μ s ≠ ⊤
   fc : ContinuousOn (uncurry f) (s ×ˢ closedBall c r)
   fd : ∀ x ∈ s, ∀ z ∈ ball c r, DifferentiableAt ℂ (f x) z
 
 namespace Holo
 
 attribute [bound_forward] Holo.r0
+attribute [aesop (rule_sets := [finiteness]) safe forward] Holo.μs
+
+lemma sm (i : Holo f μ s c r) : MeasurableSet s :=
+  i.sc.measurableSet
 
 /-- Our power series is the `cauchyPowerSeries`, integrated over `s` -/
 def series (_ : Holo f μ s c r) : FormalMultilinearSeries ℂ ℂ E :=
@@ -74,7 +77,7 @@ def le_C' (i : Holo f μ s c r) (xs : x ∈ s) (zm : z ∈ closedBall c r) : ‖
 
 /-- Our series is bounded -/
 @[bound] lemma norm_series_le (i : Holo f μ s c r) : ‖i.series n‖ ≤ i.C * r⁻¹ ^ n * μ.real s :=
-  norm_setIntegral_le_of_norm_le_const i.μs (C := i.C * r⁻¹ ^ n)
+  norm_setIntegral_le_of_norm_le_const (by finiteness) (C := i.C * r⁻¹ ^ n)
     (fun _ m ↦ i.norm_cauchyPowerSeries_le m)
 
 /-- Our series has nice radius of convergence -/
@@ -133,7 +136,7 @@ lemma continuousOn_cauchyPowerSeries_apply (i : Holo f μ s c r) {y : ℂ} :
 /-- The inner power series is integral w.r.t. `x` -/
 lemma integrableOn_cauchyPowerSeries (i : Holo f μ s c r) :
     IntegrableOn (fun x ↦ cauchyPowerSeries (f x) c r n) s μ := by
-  apply IntegrableOn.of_bound i.μs (C := i.C * r⁻¹ ^ n)
+  apply IntegrableOn.of_bound (by finiteness) (C := i.C * r⁻¹ ^ n)
   · refine ContinuousOn.aestronglyMeasurable_of_isCompact ?_ i.sc i.sm
     exact ContinuousMultilinearMap.continuous_mkPiRing.comp_continuousOn
       (continuousOn_const.smul i.continuousOn_cauchy_integral)
@@ -148,7 +151,7 @@ lemma integrableOn_cauchyPowerSeries (i : Holo f μ s c r) :
 /-- The inner power series is integrable, when applied -/
 lemma integrableOn_cauchyPowerSeries_apply (i : Holo f μ s c r) {y : ℂ} :
     IntegrableOn (fun x ↦ cauchyPowerSeries (f x) c r n fun _ ↦ y) s μ := by
-  apply IntegrableOn.of_bound i.μs (C := i.C * r⁻¹ ^ n * ‖y‖ ^ n)
+  apply IntegrableOn.of_bound (by finiteness) (C := i.C * r⁻¹ ^ n * ‖y‖ ^ n)
   · refine ContinuousOn.aestronglyMeasurable_of_isCompact ?_ i.sc i.sm
     simp only [cauchyPowerSeries, ContinuousMultilinearMap.mkPiRing_apply, Finset.prod_const,
       Finset.card_univ, Fintype.card_fin, smul_smul (y ^ n)]
@@ -162,7 +165,7 @@ lemma summable_cauchyPowerSeries_apply (i : Holo f μ s c r) {y : ℂ} (yr : ‖
     simp only [mul_assoc _ _ (‖y‖ ^ _), ← mul_pow, NNReal.coe_inv, ← div_eq_inv_mul]
     exact (summable_geometric_of_lt_one (by bound) (by bound)).mul_left _
   · intro n
-    refine norm_setIntegral_le_of_norm_le_const i.μs fun x xs ↦ ?_
+    refine norm_setIntegral_le_of_norm_le_const (by finiteness) fun x xs ↦ ?_
     simp only [norm_norm]
     bound
 
@@ -193,24 +196,22 @@ end Holo
 -/
 
 /-- Well-behaved integrals of analytic functions are analytic, ball version -/
-theorem analyticOnNhd_integral_ball {r : ℝ} (fc : ContinuousOn (uncurry f) (s ×ˢ closedBall c r))
+theorem AnalyticOnNhd.integral_ball {r : ℝ} (fc : ContinuousOn (uncurry f) (s ×ˢ closedBall c r))
     (fd : ∀ x ∈ s, ∀ z ∈ ball c r, DifferentiableAt ℂ (f x) z) (r0 : 0 < r) (sc : IsCompact s)
-    (sm : MeasurableSet s) (μs : μ s < ⊤ := by finiteness) :
-    AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) (ball c r) := by
+    (μs : μ s ≠ ⊤ := by finiteness) : AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) (ball c r) := by
   set r' : ℝ≥0 := ⟨r, r0.le⟩
-  set i : Holo f μ s c r' := ⟨r0, sc, sm, μs, fc, fd⟩
+  set i : Holo f μ s c r' := ⟨r0, sc, μs, fc, fd⟩
   have e : ball c r = EMetric.ball c r' := by simp [r']
   rw [e]
   exact i.hasFPowerSeriesOnBall_integral.analyticOnNhd
 
 /-- Well-behaved integrals of analytic functions are analytic, general set version -/
-theorem analyticOnNhd_integral {t : Set ℂ} (fc : ContinuousOn (uncurry f) (s ×ˢ t))
-    (fa : ∀ x ∈ s, AnalyticOnNhd ℂ (f x) t) (sc : IsCompact s) (sm : MeasurableSet s)
-    (μs : μ s < ⊤ := by finiteness) (ot : IsOpen t) :
-    AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) t := by
+theorem AnalyticOnNhd.integral {t : Set ℂ} (fc : ContinuousOn (uncurry f) (s ×ˢ t))
+    (fa : ∀ x ∈ s, AnalyticOnNhd ℂ (f x) t) (sc : IsCompact s) (μs : μ s ≠ ⊤ := by finiteness)
+    (ot : IsOpen t) : AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) t := by
   intro c ct
   obtain ⟨r,r0,rt⟩ := Metric.isOpen_iff.mp ot c ct
-  have ia := analyticOnNhd_integral_ball (f := f) (c := c) (r := r / 2) ?_ ?_ (by bound) sc sm μs
+  have ia := AnalyticOnNhd.integral_ball (f := f) (c := c) (r := r / 2) ?_ ?_ (by bound) sc
   · exact ia _ (by simp [r0])
   · exact fc.mono (prod_mono_right (subset_trans (Metric.closedBall_subset_ball (by bound)) rt))
   · intro x xs z m

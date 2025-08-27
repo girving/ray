@@ -5,6 +5,7 @@ import Ray.Misc.Connected
 ## Finite and infinite annuli
 -/
 
+open MeasureTheory (volume)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open scoped Real Topology
@@ -128,6 +129,9 @@ lemma measurableSet_annulus_oc {c : ℂ} {r0 r1 : ℝ} : MeasurableSet (annulus_
 
 lemma measurableSet_annulus_cc {c : ℂ} {r0 r1 : ℝ} : MeasurableSet (annulus_cc c r0 r1) :=
   measurableSet_closedBall.diff measurableSet_ball
+
+@[simp, aesop (rule_sets := [finiteness]) safe apply] lemma finite_measure_annulus_cc {c : ℂ}
+    {r0 r1 : ℝ} : volume (annulus_cc c r0 r1) ≠ ⊤ := isCompact_annulus_cc.measure_ne_top
 
 lemma annulus_oc_subset_norm_Ioi {a r s : ℝ} (ar : a ≤ r) : annulus_oc 0 r s ⊆ norm_Ioi a := by
   intro z m

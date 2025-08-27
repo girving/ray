@@ -6,6 +6,7 @@ import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Ray.Analytic.ConjConj
 import Ray.Analytic.Holomorphic
+import Ray.Analytic.Integral
 import Ray.Analytic.Series
 import Ray.Koebe.WindArea
 import Ray.Misc.Annuli
@@ -975,6 +976,12 @@ lemma integrable_sq_norm (i : Gronwall f) (r1 : 1 < r) :
     not_lt] at m
   exact ((i.ga (by linarith)).deriv.continuousAt.norm.pow 2).continuousWithinAt
 
+/-- Our volume integral is analytic -/
+lemma analyticOnNhd_integral (i : Gronwall f) (r1 : 1 < r) :
+    AnalyticOnNhd ℂ (i.volume_integral_c r s) (norm_Ioi r⁻¹) :=
+  AnalyticOnNhd.integral (i.continuousOn_integrand r1)
+    (fun x xm z ↦ i.analyticAt_integrand r1 xm) isCompact_annulus_cc (by finiteness) isOpen_norm_Ioi
+
 /-- Write small volumes in terms of integrals -/
 lemma small_volume_eq_integral (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
     volume.real (i.disk s \ i.disk r) = i.volume_integral r s := by
@@ -1045,6 +1052,17 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
 We push the large radius formula down to small radii via analytic continuation.
 -/
 
+/-- Real numbers approach their complex target from above -/
+lemma map_ofReal_nhdsGT_le_nhds {x : ℝ} : (𝓝[>] x).map (fun z : ℝ ↦ (z : ℂ)) ≤ 𝓝[≠] (x : ℂ) := by
+  rw [Filter.map_le_iff_le_comap]
+  apply Tendsto.le_comap
+  apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+  · exact Filter.Tendsto.mono_left Complex.continuous_ofReal.continuousAt nhdsWithin_le_nhds
+  · simp only [mem_compl_iff, mem_singleton_iff, eventually_nhdsWithin_iff, mem_Ioi,
+      Complex.ofReal_inj]
+    filter_upwards with t lt
+    exact lt.ne'
+
 /-- Our large radius formula holds for small radii -/
 lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
     ∑' n, i.gronwall_c r n = volume.real (i.disk r) := by
@@ -1055,11 +1073,7 @@ lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
     ((Filter.eventually_ge_atTop r).and i.large_volume_eq_series)
   have rs := (large s (le_refl _)).1
   replace large := fun t ts ↦ (large t ts).2
-  set u : ℂ → ℂ := fun z ↦ ∑' n, i.gronwall_c z n
-  set v : ℂ → ℂ := fun z ↦ i.volume_integral_c r s z
-  have hu : ∀ z, (∑' n, i.gronwall_c z n) = u z := by intro; rfl
-  have hv : ∀ z, i.volume_integral_c r s z = v z := by intro; rfl
-  simp only [hu] at large ⊢
+  have s0 : 0 < s := by linarith
   have small : ∀ m > r⁻¹, volume.real (i.disk (s * m)) - volume.real (i.disk (r * m)) =
       m ^ 2 * i.volume_integral_c r s m := by
     intro m mr
@@ -1071,13 +1085,52 @@ lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
     rw [← Complex.ofReal_sub, ← volume_diff_eq _ rm1 (by bound),
       i.small_volume_eq_integral_c (z := m) rm1 (by bound) (by bound)]
     simp only [mul_div_cancel_right₀ _ m0.ne']
-  suffices h : u s - u r = volume.real (i.disk s) - volume.real (i.disk r) by
-    simpa [u, large s (le_refl _)] using h
+  suffices h : (∑' n, i.gronwall_c s n) - (∑' n, i.gronwall_c r n) =
+      volume.real (i.disk s) - volume.real (i.disk r) by
+    simpa [large s (le_refl _)] using h
   have small1 := small 1 (by bound)
   simp only [mul_one, Complex.ofReal_one, one_pow, one_mul] at small1
-  rw [small1, hv]
+  rw [small1]
   -- Analytic continuation does the rest
-  sorry
+  set u : ℂ → ℂ := fun z ↦ (∑' n, i.gronwall_c (s * z) n) - (∑' n, i.gronwall_c (r * z) n) -
+    z ^ 2 * i.volume_integral_c r s z
+  suffices u1 : u 1 = 0 by
+    simp only [mul_one, u, one_pow, one_mul] at u1
+    rwa [← sub_eq_zero]
+  have ua : AnalyticOnNhd ℂ u (norm_Ioi r⁻¹) := by
+    intro z zr
+    simp only [norm_Ioi, mem_setOf_eq] at zr
+    have zr' := (inv_lt_iff_one_lt_mul₀' r0).mp zr
+    refine AnalyticAt.sub (AnalyticAt.sub ?_ ?_) ?_
+    · refine (i.analyticAt_series (lt_of_lt_of_le zr' ?_)).comp (by fun_prop)
+      simp only [Complex.norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos s0]
+      bound
+    · exact (i.analyticAt_series (by simpa [abs_of_pos r0])).comp (by fun_prop)
+    · exact (analyticAt_id.pow 2).mul (i.analyticOnNhd_integral r1 _ zr)
+  have u0 : ∃ᶠ z in 𝓝[≠] ((s / r : ℝ) : ℂ), u z = 0 := by
+    refine Filter.Frequently.filter_mono ?_ map_ofReal_nhdsGT_le_nhds
+    simp only [Filter.frequently_map]
+    apply Filter.Eventually.frequently
+    simp only [eventually_nhdsWithin_iff]
+    filter_upwards with z m
+    simp only [mem_Ioi, u, ← Complex.ofReal_mul] at m ⊢
+    rw [large, large, small, sub_self]
+    · refine lt_trans ?_ m
+      rw [div_eq_mul_inv]
+      bound
+    · rw [div_lt_iff₀ r0] at m
+      nlinarith
+    · have z1 : 1 ≤ z := le_trans (by bound) m.le
+      bound
+  have ue : EqOn u 0 (norm_Ioi r⁻¹) := by
+    refine ua.eqOn_zero_of_preconnected_of_frequently_eq_zero isPreconnected_norm_Ioi ?_ u0
+    simp only [norm_Ioi, Complex.ofReal_div, mem_setOf_eq, Complex.norm_div, Complex.norm_real,
+      Real.norm_eq_abs, abs_of_pos s0, abs_of_pos r0]
+    rw [div_eq_mul_inv]
+    bound
+  apply ue
+  simp only [norm_Ioi, mem_setOf_eq, one_mem, CStarRing.norm_of_mem_unitary]
+  bound
 
 end Gronwall
 
