@@ -94,6 +94,11 @@ lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
     abel
   rw [s] at c; assumption
 
+/-- Dropping the first term subtracts it (`tsum` version) -/
+lemma tsum_drop {f : ℕ → G} (h : Summable f) :
+    ∑' n, f n = f 0 + ∑' n, f (n + 1) := by
+  rw [(sum_drop h.hasSum).tsum_eq, add_sub_cancel]
+
 variable [CompleteSpace E] [CompleteSpace G]
 
 /-- Uniformly vanishing series are summable -/

@@ -4,6 +4,7 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.Normed.Group.Tannery
 import Ray.Analytic.ConjConj
 import Ray.Analytic.Holomorphic
 import Ray.Analytic.Integral
@@ -1063,8 +1064,8 @@ lemma map_ofReal_nhdsGT_le_nhds {x : ℝ} : (𝓝[>] x).map (fun z : ℝ ↦ (z 
     filter_upwards with t lt
     exact lt.ne'
 
-/-- Our large radius formula holds for small radii -/
-lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
+/-- Our large radius formula holds for small radii, complex version -/
+lemma small_volume_eq_c (i : Gronwall f) (r1 : 1 < r) :
     ∑' n, i.gronwall_c r n = volume.real (i.disk r) := by
   -- Reduce to an equality of two analytic functions
   have r0 : 0 < r := by positivity
@@ -1131,6 +1132,73 @@ lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
   apply ue
   simp only [norm_Ioi, mem_setOf_eq, one_mem, CStarRing.norm_of_mem_unitary]
   bound
+
+/-- Our large radius formula holds for small radii, real version -/
+lemma small_volume_eq (i : Gronwall f) (r1 : 1 < r) :
+    volume.real (i.disk r) = ∑' n, i.gronwall_term r n := by
+  rw [← Complex.ofReal_inj, ← i.small_volume_eq_c r1, ← Complex.ofRealCLM_apply (∑' _, _),
+    ContinuousLinearMap.map_tsum]
+  · simp only [Complex.ofRealCLM_apply, ofReal_gronwall_term]
+  · exact i.summable_gronwall_term r1
+
+/-!
+### Volume in terms of a nonnegative series
+-/
+
+/-- The nonnegative terms in the Grönwall series (i.e., without the first term) -/
+def gronwall_nonneg (i : Gronwall f) (r : ℝ) (n : ℕ) : ℝ :=
+  π * n * ‖i.coeff (n + 1)‖ ^ 2 / r ^ (2 * n)
+
+/-- Volume in terms of a nonnegative series -/
+lemma small_volume_eq_nonneg (i : Gronwall f) (r1 : 1 < r) :
+    volume.real (i.disk r) = π * ‖i.coeff 0‖ ^ 2 * r ^ 2 - ∑' n, i.gronwall_nonneg r n := by
+  have r0 : 0 < r := by positivity
+  rw [i.small_volume_eq r1, tsum_drop (i.summable_gronwall_term r1)]
+  simp only [gronwall_term, CharP.cast_eq_zero, sub_zero, mul_one, mul_zero, pow_zero, div_one,
+    Nat.cast_add, Nat.cast_one, sub_add_cancel_right, mul_neg, neg_mul, neg_div, mul_div_assoc,
+    tsum_neg, ← sub_eq_add_neg, gronwall_nonneg, sub_right_inj, ← inv_div _ (r ^ 2),
+    ← div_eq_mul_inv]
+  refine tsum_congr fun n ↦ ?_
+  rw [div_eq_mul_inv _ (r ^ 2), ← pow_sub₀ _ r0.ne' (by omega), mul_add_one, Nat.add_sub_cancel]
+
+/-!
+### Volume at `r = 1`
+-/
+
+-- DO NOT SUBMIT: Move to MonotoneSeries.lean
+lemma tendsto_tsum_of_monotone (a : ℕ → ℕ → ℝ) (h : ∀ n, a n ≤ b n)
+
+/-- Volume at `r = 1` -/
+lemma volume_one (i : Gronwall f) :
+    volume.real (i.disk 1) = π * ‖i.coeff 0‖ ^ 2 - ∑' n, π * n * ‖i.coeff (n + 1)‖ ^ 2 := by
+  have np : ∀ n : ℕ, 0 < (n + 1 : ℝ) := fun n ↦ by positivity
+  set r : ℕ → ℝ := fun n ↦ 1 + 1 / (n + 1)
+  have r1 : ∀ {n}, 1 < r n := by
+    intro n
+    simp only [one_div, lt_add_iff_pos_right, inv_pos, r]
+    linarith
+  have tv : Tendsto (fun n ↦ volume (i.disk (r n))) atTop (𝓝 (volume (i.disk 1))) := by
+    have e : i.disk 1 = ⋂ n, (i.disk (r n)) := by
+      apply subset_antisymm
+      · simp only [subset_iInter_iff]
+        exact fun n ↦ i.disk_subset_disk (by bound)
+      · simp only [disk, ← compl_iUnion, compl_subset_compl, outer, ← image_iUnion]
+        apply image_mono
+        intro z m
+        simp only [norm_Ioi, mem_setOf_eq, mem_iUnion] at m ⊢
+        obtain ⟨n, lt⟩ := exists_nat_gt (‖z‖ - 1)⁻¹
+        refine ⟨n, ?_⟩
+        simp only [r, add_comm (1 : ℝ), ← lt_sub_iff_add_lt, one_div]
+        rw [inv_lt_comm₀ (by bound) (by linarith), ← sub_lt_iff_lt_add]
+        exact lt_trans (by linarith) lt
+    rw [e]
+    apply MeasureTheory.tendsto_measure_iInter_atTop
+    · exact fun n ↦ (i.measurableSet_disk r1).nullMeasurableSet
+    · exact fun n m nm ↦ i.disk_subset_disk (by bound [np n])
+    · use 0; finiteness
+  have ts : Tendsto (fun n ↦ ∑' m, i.gronwall_nonneg (r n) m) atTop
+      (𝓝 (∑' n, π * n * ‖i.coeff (n + 1)‖ ^ 2)) := by
+    apply tendsto_tsum_of_dominated_convergence
 
 end Gronwall
 
