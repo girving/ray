@@ -3,8 +3,9 @@ import Mathlib.Algebra.EuclideanDomain.Field
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Ray.Koebe.Snap
-import Ray.Misc.Circle
 import Ray.Misc.Annuli
+import Ray.Misc.Circle
+import Ray.Misc.Cobounded
 
 /-!
 ## If `f : Circle → ℂˣ` is continuous with injective snap, it bounds a star-shaped region
@@ -12,6 +13,7 @@ import Ray.Misc.Annuli
 And we can extrapolate the parameterisation outwards to cover the whole plane.
 -/
 
+open Bornology (cobounded)
 open Complex (arg exp I)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
@@ -183,6 +185,16 @@ lemma isOpen_inner (i : Wind f) : IsOpen i.inner := by
 @[simp] lemma zero_mem_inner (i : Wind f) : 0 ∈ i.inner := by use 0; simp
 @[simp] lemma zero_mem_disk (i : Wind f) : 0 ∈ i.disk := by use 0; simp
 
+lemma sphere_eq (i : Wind f) : i.g '' sphere 0 1 = range (fun z ↦ (f z).val) := by
+  ext w
+  simp only [i.g_apply, Complex.real_smul, mem_image, mem_sphere_iff_norm, sub_zero, mem_range]
+  constructor
+  · intro ⟨x,x1,e⟩
+    simp only [x1, Complex.ofReal_one, one_mul] at e
+    exact ⟨_, e⟩
+  · intro ⟨x,e⟩
+    exact ⟨x.val, by simp, by simp [e]⟩
+
 lemma frontier_disk (i : Wind f) : frontier i.disk = i.g '' sphere 0 1 := by
   simp only [disk, ← Homeomorph.image_frontier]
   rw [frontier_closedBall _ (by norm_num)]
@@ -208,3 +220,14 @@ lemma isOpen_outer (i : Wind f) : IsOpen i.outer := by
 lemma isPreconnected_outer (i : Wind f) : IsPreconnected i.outer := by
   apply isPreconnected_norm_Ioi.image
   exact i.g.continuous.continuousOn
+
+/-- `i.outer` contains all sufficiently large points -/
+lemma large_mem_outer (i : Wind f) : ∀ᶠ z in cobounded ℂ, z ∈ i.outer := by
+  filter_upwards [eventually_cobounded_lt_norm i.max]
+  intro z lt
+  simp only [outer, mem_image]
+  refine ⟨i.g.symm z, ?_, by simp only [i.g.apply_symm_apply]⟩
+  simp only [norm_Ioi, i.g_symm_apply, mem_setOf_eq, Complex.norm_mul, Complex.norm_div,
+    Complex.norm_real, norm_norm, norm_eq_of_mem_sphere, mul_one]
+  rw [one_lt_div₀ (by simp)]
+  exact lt_of_le_of_lt i.le_max lt

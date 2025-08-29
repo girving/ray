@@ -1,15 +1,6 @@
-import Mathlib.Analysis.Analytic.Basic
+import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Complex.ReImTopology
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
-import Mathlib.Data.Set.Basic
-import Mathlib.Topology.MetricSpace.Basic
-import Mathlib.Topology.UniformSpace.UniformConvergence
-import Ray.Analytic.Analytic
 import Ray.Misc.Bounds
-import Ray.Misc.Topology
 
 /-!
 ## Convergent sequences of analytic functions
@@ -24,20 +15,9 @@ open Metric (ball closedBall sphere)
 open scoped Real NNReal Topology
 noncomputable section
 
-theorem cauchy_on_cball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
-    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
-    HasFPowerSeriesOnBall f (cauchyPowerSeries f z r) z r := by
-  have hd : DifferentiableOn ℂ f (closedBall z r) := by
-    intro x H; exact AnalyticAt.differentiableWithinAt (h x H)
-  set p : FormalMultilinearSeries ℂ ℂ ℂ := cauchyPowerSeries f z r
-  exact DifferentiableOn.hasFPowerSeriesOnBall hd rp
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 
-theorem analyticOn_cball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
-    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
-    ∃ p : FormalMultilinearSeries ℂ ℂ ℂ, HasFPowerSeriesOnBall f p z r :=
-  ⟨cauchyPowerSeries f z r, cauchy_on_cball_radius rp h⟩
-
-theorem analyticOn_small_cball {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (h : AnalyticOnNhd ℂ f (ball z r))
+theorem analyticOn_small_cball {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (h : AnalyticOnNhd ℂ f (ball z r))
     (s : ℝ≥0) (sr : s < r) : AnalyticOnNhd ℂ f (closedBall z s) := by
   intro x hx
   rw [closedBall] at hx; simp at hx
@@ -45,9 +25,119 @@ theorem analyticOn_small_cball {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (h : An
     rw [ball]; simp only [dist_lt_coe, Set.mem_setOf_eq]; exact lt_of_le_of_lt hx sr
   exact h x hb
 
-theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
+theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : ℂ} {n : ℕ} (rp : r > 0)
+    (h : ∀ w ∈ closedBall c r, ‖f w‖ ≤ d) :
+    ‖cauchyPowerSeries f c r n fun _ ↦ w‖ ≤ ‖w‖ ^ n * r⁻¹ ^ n * d := by
+  set wr := ‖w‖ ^ n * r⁻¹ ^ n * d
+  rw [cauchyPowerSeries_apply f c r n w, norm_smul]
+  generalize hg : (fun z ↦ (w / (z - c)) ^ n • (z - c)⁻¹ • f z) = g
+  have gs : ∀ z ∈ sphere c r, ‖g z‖ ≤ wr * r⁻¹ := by
+    intro z; simp only [mem_sphere_iff_norm]; intro zr
+    simp only [← hg, zr, div_pow, norm_smul, norm_div, norm_pow, norm_inv]
+    have zb : z ∈ closedBall c r := by
+      simp only [Metric.mem_closedBall, Complex.dist_eq, zr, le_refl]
+    have zs := h z zb
+    calc ‖w‖ ^ n / ↑r ^ n * (r⁻¹ * ‖f z‖)
+      _ = ‖w‖ ^ n * (r⁻¹ ^ n : ℝ≥0) * (r⁻¹ * ‖f z‖) := by
+        rw [div_eq_mul_inv, ← inv_pow, NNReal.coe_pow, NNReal.coe_inv]
+      _ ≤ ‖w‖ ^ n * r⁻¹ ^ n * (r⁻¹ * d) := by bound
+      _ = ‖w‖ ^ n * r⁻¹ ^ n * d * r⁻¹ := by ring
+      _ = wr * r⁻¹ := rfl
+  have cn := circleIntegral.norm_integral_le_of_norm_le_const (NNReal.coe_nonneg r) gs
+  simp only [mul_inv_rev, Complex.inv_I, norm_neg, norm_mul, Complex.norm_I, norm_inv,
+    Complex.norm_real, Complex.norm_two, one_mul, div_pow, Real.norm_eq_abs] at hg cn ⊢
+  have p3 : ‖π‖ = π := abs_of_nonneg (by bound)
+  calc ‖π‖⁻¹ * 2⁻¹ * ‖circleIntegral g c ↑r‖
+    _ ≤ ‖π‖⁻¹ * 2⁻¹ * (2 * π * r * (wr * r⁻¹)) := by bound
+    _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
+    _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
+    _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
+    _ = wr := by field_simp
+
+theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
+    (gi : CircleIntegrable g c r) :
+    circleIntegral f c r - circleIntegral g c r = circleIntegral (f - g) c r := by
+  rw [circleIntegral]
+  generalize hf : (fun θ : ℝ ↦ deriv (circleMap c r) θ • f (circleMap c r θ)) = fc
+  rw [circleIntegral]
+  generalize hg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • g (circleMap c r θ)) = gc
+  rw [circleIntegral]
+  generalize hfg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • (f - g) (circleMap c r θ)) = fgc
+  have hs : fc - gc = fgc := by
+    rw [← hf, ← hg, ← hfg]; funext
+    simp only [deriv_circleMap, Pi.sub_apply, smul_sub]
+  rw [← hs]; clear hfg hs fgc; symm
+  have fci := CircleIntegrable.out fi; rw [hf] at fci
+  have gci := CircleIntegrable.out gi; rw [hg] at gci
+  exact intervalIntegral.integral_sub fci gci
+
+theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
+  simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
+  intro h; rw [h] at rp; simp only [gt_iff_lt, not_lt_zero'] at rp
+
+theorem cauchy_is_circleIntegrable {f : ℂ → E} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
+    (h : ContinuousOn f (closedBall c r)) :
+    CircleIntegrable (fun z ↦ (w ^ n / (z - c) ^ n) • ((z - c)⁻¹ • f z)) c r := by
+  refine ContinuousOn.intervalIntegrable ?_
+  refine ContinuousOn.smul ?_ ?_
+  · refine continuousOn_const.div ?_ ?_
+    · apply Continuous.continuousOn
+      fun_prop
+    · simp [rp.ne']
+  · refine ContinuousOn.smul ?_ ?_
+    · apply Continuous.continuousOn
+      refine Continuous.inv₀ (by continuity) fun x ↦ circleMap_nz rp
+    · refine ContinuousOn.comp h (Continuous.continuousOn (by continuity)) ?_
+      intro θ _; exact circleMap_mem_closedBall c (NNReal.coe_nonneg r) θ
+
+theorem cauchy_sub {f g : ℂ → E} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
+    (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r)) :
+    ((cauchyPowerSeries f c r n fun _ ↦ w) - cauchyPowerSeries g c r n fun _ ↦ w) =
+      cauchyPowerSeries (f - g) c r n fun _ ↦ w := by
+  rw [cauchyPowerSeries_apply f c r n w]
+  rw [cauchyPowerSeries_apply g c r n w]
+  rw [cauchyPowerSeries_apply (f - g) c r n w]
+  set s : ℂ := (2 * π * I)⁻¹
+  simp only [div_pow, Pi.sub_apply, smul_sub]
+  have fi := cauchy_is_circleIntegrable n w rp cf
+  have gi := cauchy_is_circleIntegrable n w rp cg
+  have cia := circleIntegral_sub fi gi
+  rw [← smul_sub, cia]
+  clear cia fi gi cf cg rp
+  have flip :
+    ((fun z ↦ (w ^ n / (z - c) ^ n) • ((z - c)⁻¹ • f z)) - fun z ↦
+        (w ^ n / (z - c) ^ n) • ((z - c)⁻¹ • g z)) =
+      fun z ↦ (w ^ n / (z - c) ^ n) • ((z - c)⁻¹ • f z) -
+        (w ^ n / (z - c) ^ n) • ((z - c)⁻¹ • g z) :=
+    rfl
+  simp only [flip]
+
+theorem cauchy_dist {f g : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
+    (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r))
+    (h : ∀ z, z ∈ closedBall c r → ‖f z - g z‖ ≤ d) :
+    dist (cauchyPowerSeries f c r n fun _ ↦ w) (cauchyPowerSeries g c r n fun _ ↦ w) ≤
+      ‖w‖ ^ n * r⁻¹ ^ n * d := by
+  rw [dist_eq_norm, cauchy_sub n w rp cf cg]
+  refine cauchy_bound rp ?_; intro z zr; simp at h zr; refine h z zr
+
+variable [CompleteSpace E]
+
+theorem cauchy_on_cball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
+    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
+    HasFPowerSeriesOnBall f (cauchyPowerSeries f z r) z r := by
+  have hd : DifferentiableOn ℂ f (closedBall z r) := by
+    intro x H; exact AnalyticAt.differentiableWithinAt (h x H)
+  set p : FormalMultilinearSeries ℂ ℂ E := cauchyPowerSeries f z r
+  exact DifferentiableOn.hasFPowerSeriesOnBall hd rp
+
+theorem analyticOn_cball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
+    (h : AnalyticOnNhd ℂ f (closedBall z r)) :
+    ∃ p : FormalMultilinearSeries ℂ ℂ E, HasFPowerSeriesOnBall f p z r :=
+  ⟨cauchyPowerSeries f z r, cauchy_on_cball_radius rp h⟩
+
+theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r > 0)
     (h : AnalyticOnNhd ℂ f (ball z r)) :
-    ∃ p : FormalMultilinearSeries ℂ ℂ ℂ, HasFPowerSeriesOnBall f p z r := by
+    ∃ p : FormalMultilinearSeries ℂ ℂ E, HasFPowerSeriesOnBall f p z r := by
   have h0 := analyticOn_small_cball h (r / 2) (NNReal.half_lt_self <| rp.ne')
   rcases analyticOn_cball_radius (half_pos rp) h0 with ⟨p, ph⟩
   set R := FormalMultilinearSeries.radius p
@@ -81,103 +171,8 @@ theorem analyticOn_ball_radius {f : ℂ → ℂ} {z : ℂ} {r : ℝ≥0} (rp : r
       _ < t := t0
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm
 
-theorem cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : ℂ} {n : ℕ} (rp : r > 0)
-    (h : ∀ w ∈ closedBall c r, ‖f w‖ ≤ d) :
-    ‖cauchyPowerSeries f c r n fun _ ↦ w‖ ≤ ‖w‖ ^ n * r⁻¹ ^ n * d := by
-  set wr := ‖w‖ ^ n * r⁻¹ ^ n * d
-  rw [cauchyPowerSeries_apply f c r n w, smul_eq_mul, norm_mul]
-  generalize hg : (fun z ↦ (w / (z - c)) ^ n • (z - c)⁻¹ • f z) = g
-  have gs : ∀ z ∈ sphere c r, ‖g z‖ ≤ wr * r⁻¹ := by
-    intro z; simp only [mem_sphere_iff_norm]; intro zr
-    simp only [← hg, zr, div_pow, Algebra.id.smul_eq_mul, norm_mul, norm_div, norm_pow, norm_inv]
-    have zb : z ∈ closedBall c r := by
-      simp only [Metric.mem_closedBall, Complex.dist_eq, zr, le_refl]
-    have zs := h z zb
-    calc ‖w‖ ^ n / ↑r ^ n * (r⁻¹ * ‖f z‖)
-      _ = ‖w‖ ^ n * (r⁻¹ ^ n : ℝ≥0) * (r⁻¹ * ‖f z‖) := by
-        rw [div_eq_mul_inv, ← inv_pow, NNReal.coe_pow, NNReal.coe_inv]
-      _ ≤ ‖w‖ ^ n * r⁻¹ ^ n * (r⁻¹ * d) := by bound
-      _ = ‖w‖ ^ n * r⁻¹ ^ n * d * r⁻¹ := by ring
-      _ = wr * r⁻¹ := rfl
-  have cn := circleIntegral.norm_integral_le_of_norm_le_const (NNReal.coe_nonneg r) gs
-  simp only [mul_inv_rev, Complex.inv_I, norm_neg, norm_mul,
-    Complex.norm_I, norm_inv, Complex.norm_real, Complex.norm_two, one_mul, div_pow,
-    Algebra.id.smul_eq_mul, Real.norm_eq_abs] at hg cn ⊢
-  have p3 : ‖π‖ = π := abs_of_nonneg (by bound)
-  calc ‖π‖⁻¹ * 2⁻¹ * ‖circleIntegral g c ↑r‖
-    _ ≤ ‖π‖⁻¹ * 2⁻¹ * (2 * π * r * (wr * r⁻¹)) := by bound
-    _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
-    _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
-    _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by field_simp
-
-theorem circleIntegral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
-    (gi : CircleIntegrable g c r) :
-    circleIntegral f c r - circleIntegral g c r = circleIntegral (f - g) c r := by
-  rw [circleIntegral]
-  generalize hf : (fun θ : ℝ ↦ deriv (circleMap c r) θ • f (circleMap c r θ)) = fc
-  rw [circleIntegral]
-  generalize hg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • g (circleMap c r θ)) = gc
-  rw [circleIntegral]
-  generalize hfg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • (f - g) (circleMap c r θ)) = fgc
-  have hs : fc - gc = fgc := by
-    rw [← hf, ← hg, ← hfg]; funext
-    simp only [deriv_circleMap, Algebra.id.smul_eq_mul, Pi.sub_apply, mul_sub_left_distrib]
-  rw [← hs]; clear hfg hs fgc; symm
-  have fci := CircleIntegrable.out fi; rw [hf] at fci
-  have gci := CircleIntegrable.out gi; rw [hg] at gci
-  exact intervalIntegral.integral_sub fci gci
-
-theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
-  simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
-  intro h; rw [h] at rp; simp only [gt_iff_lt, not_lt_zero'] at rp
-
-theorem cauchy_is_circleIntegrable {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
-    (h : ContinuousOn f (closedBall c r)) :
-    CircleIntegrable (fun z ↦ w ^ n / (z - c) ^ n * ((z - c)⁻¹ * f z)) c r := by
-  refine ContinuousOn.intervalIntegrable ?_
-  refine ContinuousOn.mul ?_ ?_
-  · refine ContinuousOn.mul continuousOn_const ?_
-    apply Continuous.continuousOn
-    refine Continuous.inv₀ ?_ fun x ↦ pow_ne_zero n (circleMap_nz rp)
-    apply Continuous.pow; continuity
-  · refine ContinuousOn.mul ?_ ?_
-    · apply Continuous.continuousOn
-      refine Continuous.inv₀ (by continuity) fun x ↦ circleMap_nz rp
-    · refine ContinuousOn.comp h (Continuous.continuousOn (by continuity)) ?_
-      intro θ _; exact circleMap_mem_closedBall c (NNReal.coe_nonneg r) θ
-
-theorem cauchy_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
-    (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r)) :
-    ((cauchyPowerSeries f c r n fun _ ↦ w) - cauchyPowerSeries g c r n fun _ ↦ w) =
-      cauchyPowerSeries (f - g) c r n fun _ ↦ w := by
-  rw [cauchyPowerSeries_apply f c r n w]
-  rw [cauchyPowerSeries_apply g c r n w]
-  rw [cauchyPowerSeries_apply (f - g) c r n w]
-  set s : ℂ := (2 * π * I)⁻¹
-  simp only [div_pow, Algebra.id.smul_eq_mul, Pi.sub_apply]
-  have fi := cauchy_is_circleIntegrable n w rp cf
-  have gi := cauchy_is_circleIntegrable n w rp cg
-  have cia := circleIntegral_sub fi gi
-  rw [← mul_sub_left_distrib, cia]
-  clear cia fi gi cf cg rp
-  have flip :
-    ((fun z ↦ w ^ n / (z - c) ^ n * ((z - c)⁻¹ * f z)) - fun z ↦
-        w ^ n / (z - c) ^ n * ((z - c)⁻¹ * g z)) =
-      fun z ↦ w ^ n / (z - c) ^ n * ((z - c)⁻¹ * f z) - w ^ n / (z - c) ^ n * ((z - c)⁻¹ * g z) :=
-    rfl
-  simp only [flip, mul_sub_left_distrib]
-
-theorem cauchy_dist {f g : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
-    (cf : ContinuousOn f (closedBall c r)) (cg : ContinuousOn g (closedBall c r))
-    (h : ∀ z, z ∈ closedBall c r → ‖f z - g z‖ ≤ d) :
-    dist (cauchyPowerSeries f c r n fun _ ↦ w) (cauchyPowerSeries g c r n fun _ ↦ w) ≤
-      ‖w‖ ^ n * r⁻¹ ^ n * d := by
-  rw [Complex.dist_eq, cauchy_sub n w rp cf cg]
-  refine cauchy_bound rp ?_; intro z zr; simp at h zr; refine h z zr
-
 /-- Uniform limits of analytic functions are analytic -/
-theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → ℂ} {g : ℂ → ℂ}
+theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → E} {g : ℂ → E}
     {s : Set ℂ} (o : IsOpen s) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (u : TendstoUniformlyOn f g atTop s) : AnalyticOnNhd ℂ g s := by
   intro c hc
@@ -237,7 +232,9 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
       generalize hd' : d.toNNReal = d'
       have dd : (d' : ℝ) = d := by rw [← hd']; exact Real.coe_toNNReal d dp.le
       have hcb : ∀ z, z ∈ closedBall c r → ‖g z - f n z‖ ≤ d' := by
-        intro z zb; exact _root_.trans (hn z (cb zb)).le (le_of_eq dd.symm)
+        intro z zb
+        simp only [dist_eq_norm] at hn
+        exact le_trans (hn z (cb zb)).le (le_of_eq dd.symm)
       exact _root_.trans (cauchy_dist k y rp cg (cf n) hcb)
         (mul_le_mul_of_nonneg_left (le_of_eq dd) (by bound))
     · have pgb : (M.sum fun k ↦ a ^ k) ≤ (1 - a)⁻¹ := partial_geometric_bound M a0 a1

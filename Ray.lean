@@ -11,5 +11,7 @@ import Ray.Dynamics.Multibrot.Postcritical
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
+import Ray.Koebe.Gronwall
+import Ray.Koebe.Wind
 import Ray.Koebe.WindArea
 import Ray.Misc.ChartedSpace

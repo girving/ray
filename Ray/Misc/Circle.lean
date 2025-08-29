@@ -1,14 +1,18 @@
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Mathlib.Topology.GDelta.MetrizableSpace
+import Ray.Misc.Complex
 
 /-!
 ## `Circle` facts
 -/
 
 open Classical
-open Complex (arg slitPlane)
+open Complex (arg exp I slitPlane)
 open Set
-open scoped Real
+open scoped Real ComplexConjugate
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -118,3 +122,47 @@ lemma Circle.isHomeomorph_of_injective {f : Circle → Circle} (cont : Continuou
     (inj : f.Injective) : IsHomeomorph f := by
   rw [isHomeomorph_iff_continuous_bijective]
   exact ⟨cont, inj, surjective_of_injective cont inj⟩
+
+@[simp] lemma Complex.conj_circleMap {c : ℂ} {r : ℝ} {t : ℝ} :
+    conj (circleMap c r t) = circleMap (conj c) r (-t) := by
+  simp only [circleMap, map_add, map_mul, Complex.conj_ofReal, Complex.ofReal_neg,
+    neg_mul, ← Complex.exp_conj, Complex.conj_I, mul_neg]
+
+/-- Only diagonal expoential integrals survive -/
+lemma integral_exp_mul_I (n : ℤ) :
+    ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
+  by_cases n0 : n = 0
+  · simp [n0, two_mul]
+  · have hd : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ exp (n * t * I)) (n * I * exp (n * t * I)) t := by
+      intro t
+      simp only [← mul_assoc, mul_comm _ I]
+      generalize I * n = c
+      simp only [mul_comm c]
+      apply HasDerivAt.cexp
+      nth_rw 2 [← (by simp : (1 : ℝ) * c = c)]
+      exact (hasDerivAt_id t).ofReal_comp.mul_const _
+    have d : deriv (fun t : ℝ ↦ exp (n * t * I) / (n * I)) = fun t : ℝ ↦ exp (n * t * I) := by
+      ext t
+      rw [deriv_div_const, (hd t).deriv, mul_div_cancel_left₀ _ (by simp [n0])]
+    rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
+    · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
+        Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
+    · exact fun t _ ↦ (hd t).differentiableAt.div_const _
+    · fun_prop
+
+/-- `circleMap` is continuous on `ℝ × ℝ` -/
+@[fun_prop] theorem continuous_circleMap_full {c : ℂ} :
+    Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
+  continuity
+
+/-- `circleMap` is analytic in `t` -/
+@[fun_prop] theorem analyticAt_circleMap {c : ℂ} {r t : ℝ} : AnalyticAt ℝ (circleMap c r) t := by
+  unfold circleMap
+  refine analyticAt_const.add (analyticAt_const.mul (analyticAt_cexp.restrictScalars.comp ?_))
+  exact Complex.analyticAt_ofReal.mul analyticAt_const
+
+/-- The derivative of `circleMap` w.r.t. the radius -/
+lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
+    HasDerivAt (fun r ↦ circleMap c r t) (circleMap 0 1 t) r := by
+  simp only [circleMap, zero_add]
+  exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _

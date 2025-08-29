@@ -22,6 +22,7 @@ noncomputable section
 
 variable {n : ℕ}
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
+variable {ι : Type}
 variable {R A B E : Type} [Semiring R]
 
 theorem ContinuousMultilinearMap.toFun_eq_coe {R A B : Type} [Semiring R] [AddCommMonoid A]
@@ -275,3 +276,41 @@ lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A]
   simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
     ContinuousLinearMap.one_apply]
   apply exists_ne
+
+/-- `mkPiRing` is continuous -/
+lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [NontriviallyNormedField 𝕜]
+    [Fintype ι] [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E] :
+    Continuous (fun z : E ↦ ContinuousMultilinearMap.mkPiRing 𝕜 ι z) := by
+  rw [Metric.continuous_iff]
+  intro x e e0
+  refine ⟨e / 2, by bound, fun y xy ↦ ?_⟩
+  simp only [dist_eq_norm] at xy
+  refine lt_of_le_of_lt (b := e / 2) ?_ (by bound)
+  rw [dist_eq_norm, ContinuousMultilinearMap.opNorm_le_iff (by bound)]
+  intro m
+  simp only [ContinuousMultilinearMap.sub_apply, ContinuousMultilinearMap.mkPiRing_apply,
+    ← smul_sub]
+  refine le_trans (norm_smul_le _ _) ?_
+  rw [mul_comm]
+  bound
+
+/-!
+### Conjugate a `ContinuousMultilinearMap` with complex `conj`
+-/
+
+/-- Conjugate a `ContinuousMultilinearMap` with complex `conj` -/
+def ContinuousMultilinearMap.conj_conj [Fintype ι]
+    (m : ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ) :
+    ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ where
+  toFun := fun z ↦ conj (m fun i ↦ conj (z i))
+  map_update_add' g a x y := by
+    simp only [← map_add, Function.apply_update (fun _ z ↦ conj z) (g := g), ← m.map_update_add]
+  map_update_smul' g a s y := by
+    simp only [smul_eq_mul, Function.apply_update (fun _ z ↦ conj z) (g := g), map_mul]
+    simp only [← smul_eq_mul, m.map_update_smul]
+    simp only [smul_eq_mul, map_mul, RingHomCompTriple.comp_apply, RingHom.id_apply]
+  cont := by continuity
+
+@[simp] lemma ContinuousMultilinearMap.conj_conj_apply [Fintype ι]
+    (m : ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ) (x : ι → ℂ) :
+    m.conj_conj x = conj (m fun i ↦ conj (x i)) := rfl

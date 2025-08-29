@@ -3,6 +3,7 @@ import Mathlib.Data.Complex.FiniteDimensional
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.Prod
 import Ray.Koebe.Wind
+import Ray.Misc.Bound
 import Ray.Misc.Measure
 
 /-!
@@ -34,8 +35,8 @@ lemma wind (i : WindDiff f) : Wind f := ⟨i.fc, i.inj⟩
 
 -- Abbreviations for `f`-related functions
 def fe (_ : WindDiff f) (t : ℝ) : ℂ := (f (.exp t)).val
-def dfe (_ : WindDiff f) (t : ℝ) : ℂ := deriv (fun t ↦ (f (.exp t)).val) t
-def fdfe (_ : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ (fun t ↦ (f (.exp t)).val) t
+def dfe (i : WindDiff f) (t : ℝ) : ℂ := deriv i.fe t
+def fdfe (i : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ i.fe t
 
 @[simp] lemma deriv_fe (i : WindDiff f) {t : ℝ} : deriv i.fe t = i.dfe t := rfl
 lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
@@ -43,7 +44,7 @@ lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
 lemma hasFDerivAt_fe (i : WindDiff f) {t : ℝ} : HasFDerivAt i.fe (i.fdfe t) t :=
   i.diff.differentiableAt.hasFDerivAt
 @[simp] lemma fdfe_one (i : WindDiff f) {t : ℝ} : i.fdfe t 1 = i.dfe t := by
-  simp only [fdfe, dfe, fderiv_eq_smul_deriv, one_smul]
+  unfold dfe; unfold fdfe; unfold fe; simp only [fderiv_eq_smul_deriv, one_smul]
 
 -- Abbreviation for `fst` and `snd` as continuous linear maps
 private abbrev d1 := ContinuousLinearMap.fst ℝ ℝ ℝ
@@ -148,7 +149,7 @@ lemma measurableSet_gs_square (i : WindDiff f) : MeasurableSet (i.gs '' square) 
 
 /-- The area of `i.disk` as a circle integral -/
 theorem volume_eq (i : WindDiff f) :
-    volume.real i.wind.disk = 2⁻¹ * ∫ t in Ioc (-π) π, |inner ℝ (i.fe t * I) (i.dfe t)| := by
+    volume.real i.wind.disk = 2⁻¹ * ∫ t in (-π)..π, |inner ℝ (i.fe t * I) (i.dfe t)| := by
   simp only [i.disk_eq, image_union, MeasureTheory.Measure.real, image_singleton,
     measure_union_eq_right, MeasureTheory.NoAtoms.measure_singleton]
   rw [MeasurableEquiv.image_symm, Complex.volume_preserving_equiv_real_prod.measure_preimage
@@ -160,7 +161,8 @@ theorem volume_eq (i : WindDiff f) :
     (fun _ _ ↦ i.fderiv.hasFDerivWithinAt) i.injOn_gs, i.dgs_det, smul_eq_mul, mul_one, abs_mul]
   refine Eq.trans (MeasureTheory.setIntegral_prod_mul (s := Ioc 0 1) (t := Ioc (-π) π)
     (f := fun x ↦ |x|) (g := fun x ↦ |inner ℝ (i.fe x * I) (i.dfe x)|)) ?_
-  refine congr_arg₂ _ ?_ rfl
-  rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioc (g := fun x ↦ x)]
-  · simp [← intervalIntegral.integral_of_le zero_le_one]
-  · intro x m; simp [m.1.le]
+  refine congr_arg₂ _ ?_ ?_
+  · rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioc (g := fun x ↦ x)]
+    · simp [← intervalIntegral.integral_of_le zero_le_one]
+    · intro x m; simp [m.1.le]
+  · rw [intervalIntegral.integral_of_le (by bound)]

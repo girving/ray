@@ -2,6 +2,7 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Prod
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
@@ -331,3 +332,14 @@ lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s 
 lemma measure_union_eq_right {s t : Set M} (s0 : μ s = 0) : μ (s ∪ t) = μ t := by
   rw [Set.union_comm]
   exact measure_union_eq_left s0
+
+/-- Commute two interval integrals -/
+lemma intervalIntegral.integral_integral_comm {f : ℝ × ℝ → G} {a0 a1 b0 b1 : ℝ} {μ ν : Measure ℝ}
+    (a01 : a0 ≤ a1) (b01 : b0 ≤ b1) (i : IntegrableOn f (Ioc a0 a1 ×ˢ Ioc b0 b1) (μ.prod ν))
+    [SFinite μ] [SFinite ν] :
+    ∫ x in a0..a1, ∫ y in b0..b1, f (x,y) ∂ν ∂μ = ∫ y in b0..b1, ∫ x in a0..a1, f (x,y) ∂μ ∂ν := by
+  simp only [intervalIntegral.integral_of_le, a01, b01]
+  rw [← MeasureTheory.setIntegral_prod _ i, ← MeasureTheory.setIntegral_prod_swap,
+    MeasureTheory.setIntegral_prod]
+  · rfl
+  · exact i.swap

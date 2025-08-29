@@ -3,6 +3,8 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.RingTheory.Complex
+import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
 ## Complex facts
@@ -13,7 +15,7 @@ open Metric (sphere)
 open Complex (arg log I imCLM slitPlane)
 open ContinuousLinearMap (lsmul)
 open Set
-open scoped ContDiff Real
+open scoped ContDiff Real ComplexConjugate
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -66,6 +68,10 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     rw [mul_comm _ (⌈_⌉:ℂ), mul_assoc, Complex.exp_int_mul, ← ha]
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
       one_zpow, div_one, true_or]
+
+@[fun_prop] lemma ContinuousAt.complex_conj {f : X → ℂ} {x : X} (h : ContinuousAt f x) :
+    ContinuousAt (fun x ↦ conj (f x)) x :=
+  Complex.continuous_conj.continuousAt.comp h
 
 /-!
 ### Derivatives mixing `ℝ` and `ℂ`
@@ -131,3 +137,20 @@ lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p'
   apply congr_arg
   convert ContinuousLinearMap.smulRight_apply.symm
   simp only [ContinuousLinearMap.one_apply, one_smul]
+
+/-!
+### Determinants of complex derivatives
+-/
+
+@[simp] lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
+  simp [Algebra.norm_complex_eq, Complex.normSq_eq_norm_sq]
+
+/-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/
+lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
+    (fderiv ℝ f z).det = ‖deriv f z‖ ^ 2 := by
+  have d1 := df.hasDerivAt.hasFDerivAt.restrictScalars ℝ
+  have d2 := (df.restrictScalars ℝ).hasFDerivAt
+  rw [d2.unique d1]
+  simp only [ContinuousLinearMap.det, ContinuousLinearMap.coe_restrictScalars, Complex.algebra_norm,
+    LinearMap.det_restrictScalars, LinearMap.det_ring, ContinuousLinearMap.coe_coe,
+    ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, smul_eq_mul, one_mul]

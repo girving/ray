@@ -2,6 +2,8 @@ import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Ray.Misc.Annuli
+import Ray.Misc.Circle
 import Ray.Misc.Complex
 import Ray.Misc.Measure
 import Ray.Misc.Prod
@@ -87,13 +89,6 @@ theorem square.rp {r0 r1 : ℝ} {x : ℝ × ℝ} (r0p : 0 ≤ r0) : x ∈ square
 
 theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
   apply_rules [MeasurableSet.prod, measurableSet_Ioc]
-
-def annulus_oc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ closedBall c r0
-def annulus_cc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ ball c r0
-
-lemma annulus_oc_subset_annulus_cc {c : ℂ} {r0 r1 : ℝ} :
-    annulus_oc c r0 r1 ⊆ annulus_cc c r0 r1 :=
-  diff_subset_diff (subset_refl _) Metric.ball_subset_closedBall
 
 theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     Complex.measurableEquivRealProd.symm ⁻¹' (annulus_oc c r0 r1) =
@@ -203,10 +198,6 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
   simp only [ContinuousLinearEquiv.coe_symm_toHomeomorph]
   apply Complex.ext; · simp only [Complex.equivRealProdCLM_symm_apply_re]
   · simp only [Complex.equivRealProdCLM_symm_apply_im]
-
-/-- `circleMap` is continuous on `ℝ × ℝ` -/
-theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
-  continuity
 
 /-- Integration over a complex annulus using polar coordinates -/
 theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
