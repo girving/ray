@@ -117,8 +117,8 @@ theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → G) :
   rw [dist_add_right ((A \ B).sum f) ((B \ A).sum f) ((A ∩ B).sum f)]
   rw [dist_eq_norm]
   trans (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖)
-  · have ha := finset_complex_abs_sum_le (A \ B) f
-    have hb := finset_complex_abs_sum_le (B \ A) f
+  · have ha := finset_norm_sum_le (A \ B) f
+    have hb := finset_norm_sum_le (B \ A) f
     calc ‖(A \ B).sum f - (B \ A).sum f‖
       _ ≤ ‖(A \ B).sum f‖ + ‖(B \ A).sum f‖ := by bound
       _ ≤ (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖) := by bound

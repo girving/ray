@@ -142,7 +142,7 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → G} {s : Se
         N.sum fun n ↦ f n z‖ := by rw [dist_eq_norm]
     _ = e / 4 + ‖(M \ N).sum fun n ↦ f n z‖ := by rw [add_sub_cancel_left]
     _ ≤ e / 4 + (M \ N).sum fun n ↦ ‖f n z‖ := by
-      linarith [finset_complex_abs_sum_le (M \ N) fun n ↦ f n z]
+      linarith [finset_norm_sum_le (M \ N) fun n ↦ f n z]
     _ ≤ e / 4 + e / 4 := by linarith [hm (M \ N) z (sdiff_late M Nm) zs]
     _ = e / 2 := by ring
     _ < e := by linarith
