@@ -11,6 +11,7 @@ variable {α G₀ : Type*}
 
 attribute [bound] norm_add_le mul_lt_of_lt_one_left Complex.normSq_nonneg norm_inner_le_norm
   Units.norm_pos Real.cosh_pos norm_sub_norm_le neg_le_self Finset.norm_prod_le
+  Real.toNNReal_le_toNNReal
 
 @[bound] private alias ⟨_, Bound.ennreal_coe_pos⟩ := ENNReal.coe_pos
 

@@ -14,7 +14,7 @@ open Metric (ball closedBall sphere mem_sphere mem_ball)
 open Filter
 open OrderDual (ofDual toDual)
 open Set
-open scoped Real NNReal Topology Filter
+open scoped Real NNReal Topology Filter ENNReal
 noncomputable section
 
 /-- Uniform cauchy sequences on compact sets are uniformly bounded -/
@@ -300,3 +300,9 @@ lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : 
   · intro ⟨s,h⟩
     refine h.mp (.of_forall fun x e ↦ ?_)
     use s x
+
+lemma ENNReal.continuousAt_toNNReal {x : ℝ≥0∞} (h : x ≠ ⊤) :
+    ContinuousAt (fun x ↦ x.toNNReal) x := by
+  apply ENNReal.continuousOn_toNNReal.continuousAt
+  apply ENNReal.isOpen_ne_top.mem_nhds
+  simpa only [ne_eq, Set.mem_setOf_eq]
