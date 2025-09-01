@@ -123,6 +123,8 @@ end Nhds
 
 section Deriv
 
+-- begin #29130
+
 /-- `HasMFDerivAt` of `x ↦ (f x, g x)` is `df.prod dg` -/
 theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
     {df : TangentSpace I x →L[𝕜] TangentSpace J (f x)} (fh : HasMFDerivAt I J f x df)
@@ -130,6 +132,8 @@ theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
     HasMFDerivAt I (J.prod K) (fun y ↦ (f y, g y)) x (df.prod dg) := by
   simp only [HasMFDerivAt] at fh gh ⊢
   use fh.1.prodMk gh.1; exact fh.2.prodMk gh.2
+
+-- end #29130
 
 /-- `TangentSpace` commutes with products -/
 theorem tangentSpace_prod (x : M) (y : N) :
