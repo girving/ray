@@ -29,6 +29,12 @@ variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
+lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
+    AnalyticAt 𝕜 (fun z ↦ f z / w) c := by
+  by_cases w0 : w = 0
+  · simp only [w0, div_zero, analyticAt_const]
+  · exact fa.div analyticAt_const w0
+
 /-- The order of a zero at a point.
     We define this in terms of the function alone so that expressions involving order can
     depend only on `f`. -/

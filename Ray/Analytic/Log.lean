@@ -1,4 +1,5 @@
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import Ray.Analytic.Analytic
 import Ray.Misc.Continuation
 
 /-!
@@ -47,7 +48,7 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     refine ⟨g, ?_⟩
     filter_upwards [isOpen_ball.eventually_mem wm, slit w wm] with z zm s
     refine ⟨?_, ?_⟩
-    · exact (((fa _ zm).div analyticAt_const (f0 _ wm)).clog s).add analyticAt_const
+    · exact ((fa _ zm).div_const.clog s).add analyticAt_const
     · have zw : f z / f w ≠ 0 := by simp [f0 _ zm, f0 _ wm]
       simp only [g, Complex.exp_add, Complex.exp_log zw, Complex.exp_log (f0 _ wm),
         div_mul_cancel₀ _ (f0 _ wm)]
@@ -101,3 +102,14 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
   obtain ⟨g,_,pg⟩ := i.grow
   simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal] at pg
   exact ⟨g, fun _ m ↦ (pg _ m).1, fun _ m ↦ (pg _ m).2⟩
+
+/-- `n`th roots of nonzero analytic functions exist -/
+theorem AnalyticOnNhd.exists_root (fa : AnalyticOnNhd ℂ f (ball c r))
+    (f0 : ∀ z ∈ ball c r, f z ≠ 0) {n : ℕ} (n0 : n ≠ 0) :
+    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ ∀ z ∈ ball c r, f z = g z ^ n := by
+  obtain ⟨g, ga, fg⟩ := fa.exists_log f0
+  refine ⟨fun z ↦ exp (g z / n), ?_, ?_⟩
+  · intro z m
+    exact (ga _ m).div_const.cexp
+  · intro z m
+    rw [fg z m, ← Complex.exp_nat_mul, mul_div_cancel₀ _ (by simpa)]
