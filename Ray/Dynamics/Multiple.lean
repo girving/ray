@@ -229,10 +229,25 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I 
       rw [PartialEquiv.left_inv _ m0] at gh
       rw [(PartialEquiv.injOn _).eq_iff m3 m2] at gh; exact gh
 
+/-- Injectivity on an open set implies nonzero derivative (flat version) -/
+theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s) (so : IsOpen s) {c : ℂ}
+    (m : c ∈ s) (fa : AnalyticAt ℂ f c) : deriv f c ≠ 0 := by
+  contrapose inj
+  simp only [not_not, InjOn, not_forall] at inj ⊢
+  have d := inj ▸ fa.differentiableAt.hasDerivAt
+  rcases not_local_inj_of_deriv_zero fa d with ⟨g, ga, gc, fg⟩
+  have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=
+    ga.continuousAt.eventually_mem (so.mem_nhds (by simp only [gc, m]))
+  replace fg := fg.and (((so.eventually_mem m).and gm).filter_mono nhdsWithin_le_nhds)
+  rcases @Filter.Eventually.exists _ _ _ (AnalyticManifold.punctured_nhds_neBot I c) fg
+    with ⟨z, ⟨gz, fg⟩, zs, gs⟩
+  use g z, gs, z, zs, fg, gz
+
 /-- Injectivity on an open set implies nonzero derivative (manifold version) -/
 theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s) {c : S}
     (m : c ∈ s) (fa : ContMDiffAt I I ω f c) : mfderiv I I f c ≠ 0 := by
-  contrapose inj; simp only [not_not, InjOn, not_forall] at inj ⊢
+  contrapose inj
+  simp only [not_not, InjOn, not_forall] at inj ⊢
   rcases not_local_inj_of_mfderiv_zero fa inj with ⟨g, ga, gc, fg⟩
   have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=
     ga.continuousAt.eventually_mem (so.mem_nhds (by simp only [gc, m]))

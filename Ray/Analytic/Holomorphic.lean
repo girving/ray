@@ -96,5 +96,5 @@ lemma analyticOnNhd_ball_iff_hasFPowerSeriesOnBall {f : ℂ → E} {c : ℂ} {r 
     exact a.analyticOnNhd
 
 /-- The principle branch of sqrt -/
-def sqrt (z : ℂ) : ℂ :=
+def Complex.sqrt (z : ℂ) : ℂ :=
   exp (log z / 2)

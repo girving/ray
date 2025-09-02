@@ -32,9 +32,11 @@ lemma exp_eq_exp_of_lt {z w : ℂ} (e : exp z = exp w) (lt : ‖z - w‖ < 2 * �
 /-- Logarithms of nonzero analytic functions exist -/
 theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     (f0 : ∀ z ∈ ball c r, f z ≠ 0) :
-    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ ∀ z ∈ ball c r, f z = exp (g z) := by
+    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ g c = Complex.log (f c) ∧
+      ∀ z ∈ ball c r, f z = exp (g z) := by
   by_cases r0 : r ≤ 0
   · simp [Metric.ball_eq_empty.mpr r0]
+    exact ⟨fun z ↦ Complex.log (f z), rfl⟩
   simp only [not_le] at r0
   set p : (ℂ → ℂ) → ℂ → Prop := fun g z ↦ AnalyticAt ℂ g z ∧ f z = exp (g z)
   have slit : ∀ w ∈ ball c r, ∀ᶠ z in 𝓝 w, f z / f w ∈ Complex.slitPlane := by
@@ -42,16 +44,17 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     refine ((fa _ wm).continuousAt.div_const _).eventually_mem ?_
     simp only [div_self (f0 _ wm)]
     exact Complex.isOpen_slitPlane.mem_nhds (by simp)
-  have loc : ∀ w ∈ ball c r, ∃ g, ∀ᶠ z in 𝓝 w, p g z := by
+  have loc : ∀ w ∈ ball c r, ∃ g, g w = Complex.log (f w) ∧ ∀ᶠ z in 𝓝 w, p g z := by
     intro w wm
     set g : ℂ → ℂ := fun z ↦ Complex.log (f z / f w) + Complex.log (f w)
-    refine ⟨g, ?_⟩
-    filter_upwards [isOpen_ball.eventually_mem wm, slit w wm] with z zm s
-    refine ⟨?_, ?_⟩
-    · exact ((fa _ zm).div_const.clog s).add analyticAt_const
-    · have zw : f z / f w ≠ 0 := by simp [f0 _ zm, f0 _ wm]
-      simp only [g, Complex.exp_add, Complex.exp_log zw, Complex.exp_log (f0 _ wm),
-        div_mul_cancel₀ _ (f0 _ wm)]
+    refine ⟨g, ?_, ?_⟩
+    · simp only [g, div_self (f0 _ wm), Complex.log_one, zero_add]
+    · filter_upwards [isOpen_ball.eventually_mem wm, slit w wm] with z zm s
+      refine ⟨?_, ?_⟩
+      · exact ((fa _ zm).div_const.clog s).add analyticAt_const
+      · have zw : f z / f w ≠ 0 := by simp [f0 _ zm, f0 _ wm]
+        simp only [g, Complex.exp_add, Complex.exp_log zw, Complex.exp_log (f0 _ wm),
+          div_mul_cancel₀ _ (f0 _ wm)]
   have near : ∀ {w g h} (pg : p g w) (ph : p h w) (e : g w = h w),
       ∀ᶠ z in 𝓝 w, ‖g z - h z‖ < 2 * π := by
     intro w g h pg ph e
@@ -66,7 +69,7 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     · exact fun z m ↦ (ph _ m).1
     · filter_upwards [ot.eventually_mem wt, near (pg _ wt) (ph _ wt) e] with z zm near
       exact exp_eq_exp_of_lt ((pg _ zm).2.symm.trans (ph _ zm).2) near
-  obtain ⟨fs, fsp⟩ := loc c (by simp [r0])
+  obtain ⟨fs, fsc, fsp⟩ := loc c (by simp [r0])
   have i : Continuation p c r fs := {
     pos := r0
     congr := by
@@ -75,7 +78,7 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     start := fsp
     point := by
       intro g t w t0 tr pg wt
-      obtain ⟨h,ph⟩ := loc w (Metric.closedBall_subset_ball tr wt)
+      obtain ⟨h,_,ph⟩ := loc w (Metric.closedBall_subset_ball tr wt)
       obtain ⟨e,e0,ph⟩ := Metric.eventually_nhds_iff_ball.mp ph
       have all : ∀ᶠ z in 𝓝 w, z ∈ ball w e := isOpen_ball.eventually_mem (by simp [e0])
       have freq : ∃ᶠ z in 𝓝 w, z ∈ ball c t := by
@@ -99,17 +102,19 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
         exact ph' _ m
       · exact (all.and_frequently freq).mp (.of_forall fun y m ↦ ⟨m.2, (gh' m).symm⟩)
     unique := unique }
-  obtain ⟨g,_,pg⟩ := i.grow
+  obtain ⟨g,e,pg⟩ := i.grow
   simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal] at pg
-  exact ⟨g, fun _ m ↦ (pg _ m).1, fun _ m ↦ (pg _ m).2⟩
+  exact ⟨g, fun _ m ↦ (pg _ m).1, by simp only [e, fsc], fun _ m ↦ (pg _ m).2⟩
 
 /-- `n`th roots of nonzero analytic functions exist -/
 theorem AnalyticOnNhd.exists_root (fa : AnalyticOnNhd ℂ f (ball c r))
     (f0 : ∀ z ∈ ball c r, f z ≠ 0) {n : ℕ} (n0 : n ≠ 0) :
-    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ ∀ z ∈ ball c r, f z = g z ^ n := by
-  obtain ⟨g, ga, fg⟩ := fa.exists_log f0
-  refine ⟨fun z ↦ exp (g z / n), ?_, ?_⟩
+    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ g c = exp (Complex.log (f c) / n) ∧
+      ∀ z ∈ ball c r, f z = g z ^ n := by
+  obtain ⟨g, ga, e, fg⟩ := fa.exists_log f0
+  refine ⟨fun z ↦ exp (g z / n), ?_, ?_, ?_⟩
   · intro z m
     exact (ga _ m).div_const.cexp
+  · simp only [e]
   · intro z m
     rw [fg z m, ← Complex.exp_nat_mul, mul_div_cancel₀ _ (by simpa)]
