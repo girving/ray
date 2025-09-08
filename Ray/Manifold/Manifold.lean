@@ -25,14 +25,14 @@ variable {B N : Type} [TopologicalSpace B] [TopologicalSpace N]
 variable {C O : Type} [TopologicalSpace C] [TopologicalSpace O]
 variable {D P : Type} [TopologicalSpace D] [TopologicalSpace P]
 
-/- /-- Version of `ModelWithCorners.prod_apply` with `x ∈ H × H'` rather than `ModelProd H H'`.  This
+/-- Version of `ModelWithCorners.prod_apply` with `x ∈ H × H'` rather than `ModelProd H H'`.  This
 comes up because other simplification doesn't stay in `ModelProd`. -/
 @[simp]
 lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
     [TopologicalSpace H'] (I' : ModelWithCorners 𝕜 E' H') (x : H × H') :
     (I.prod I') x = (I x.1, I' x.2) :=
-  ModelWithCorners.prod_apply _ _ _ -/
+  ModelWithCorners.prod_apply _ _ _
 
 section ReflChart
 

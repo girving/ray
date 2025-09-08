@@ -9,7 +9,7 @@ import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Ray.Analytic.Within
-import Ray.Manifold.ManifoldUpstream
+import Ray.Manifold.Manifold
 
 /-!
 ## Facts about analytic manifolds

@@ -1,6 +1,6 @@
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
-import Ray.Manifold.ManifoldUpstream
+import Ray.Manifold.Manifold
 import Ray.Hartogs.Osgood
 import Ray.Misc.Multilinear
 
