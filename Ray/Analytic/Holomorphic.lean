@@ -64,6 +64,37 @@ theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ �
     exact (d.mono uv).differentiableOn (le_refl _)
   · intro a; exact a.contDiffAt.of_le le_top
 
+/-- If `f` is analytic in an open ball, it has a power series over that ball -/
+lemma analyticOnNhd_ball_iff_hasFPowerSeriesOnBall {f : ℂ → E} {c : ℂ} {r : ℝ≥0∞} (r0 : 0 < r) :
+    AnalyticOnNhd ℂ f (EMetric.ball c r) ↔
+      ∃ p : FormalMultilinearSeries ℂ ℂ E, HasFPowerSeriesOnBall f p c r := by
+  constructor
+  · intro a
+    obtain ⟨p,s,hs⟩ := a c (by simp only [EMetric.mem_ball, edist_self, r0])
+    have grow : ∀ t : ℝ≥0, 0 < t → t < r → HasFPowerSeriesOnBall f p c t := by
+      intro t t0 tr
+      have d : DifferentiableOn ℂ f (closedBall c t) := by
+        apply (a.mono ?_).differentiableOn
+        intro x m
+        simp only [Metric.mem_closedBall, dist_le_coe, EMetric.mem_ball,
+          ← ENNReal.coe_le_coe, ← edist_nndist] at m ⊢
+        order
+      have ht := d.hasFPowerSeriesOnBall t0
+      exact hs.hasFPowerSeriesAt.eq_formalMultilinearSeries ht.hasFPowerSeriesAt ▸ ht
+    refine ⟨p, ?_, r0, ?_⟩
+    · exact ENNReal.le_of_forall_pos_nnreal_lt fun t t0 tr ↦ (grow t t0 tr).r_le
+    · intro y yr
+      simp only [EMetric.mem_ball, edist_zero_right] at yr
+      obtain ⟨t,yt,tr⟩ := ENNReal.lt_iff_exists_nnreal_btwn.mp yr
+      have t0 : 0 < t := by
+        simp only [enorm_eq_nnnorm, ENNReal.coe_lt_coe] at yt
+        exact pos_of_gt yt
+      refine (grow t t0 tr).hasSum ?_
+      simp only [Metric.emetric_ball_nnreal, Metric.mem_ball, dist_zero_right]
+      simpa only [← ofReal_norm, ENNReal.ofReal_lt_coe_iff, norm_nonneg] using yt
+  · intro ⟨p,a⟩
+    exact a.analyticOnNhd
+
 /-- The principle branch of sqrt -/
-def sqrt (z : ℂ) : ℂ :=
+def Complex.sqrt (z : ℂ) : ℂ :=
   exp (log z / 2)

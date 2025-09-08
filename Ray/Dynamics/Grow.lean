@@ -1,4 +1,3 @@
--- Bottcher map throughout a superattracting basis (up to critical points)
 import Mathlib.Topology.ExtendFrom
 import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Dynamics.Postcritical

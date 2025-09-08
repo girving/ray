@@ -23,6 +23,7 @@ In detail, this file contains:
 6. Ineffective estimates for `bottcher` and `potential` near `∞`.
 -/
 
+open Bornology (cobounded)
 open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball closedBall mem_ball_self mem_ball mem_closedBall)
@@ -103,11 +104,12 @@ theorem deriv_f' {d : ℕ} {z : ℂ} : deriv (f' d c) z = d * z ^ (d - 1) := by
     (hasDerivAt_pow _ _).add (hasDerivAt_const _ _)
   simp only [add_zero] at h; exact h.deriv
 
-theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf) atInf := by
-  simp only [atInf_basis.tendsto_right_iff, Set.mem_setOf_eq,
+theorem tendsto_f'_cobounded (c : ℂ) :
+    Tendsto (uncurry (f' d)) (𝓝 c ×ˢ cobounded ℂ) (cobounded ℂ) := by
+  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, Set.mem_setOf_eq,
     forall_true_left, uncurry, Metric.eventually_nhds_prod_iff]
   intro r; use 1, zero_lt_one, fun z ↦ max r 0 + ‖c‖ + 1 < ‖z‖; constructor
-  · refine (eventually_atInf (max r 0 + ‖c‖ + 1)).mp (.of_forall fun w h ↦ ?_)
+  · refine (eventually_cobounded (max r 0 + ‖c‖ + 1)).mp (.of_forall fun w h ↦ ?_)
     exact h
   · intro e ec z h
     simp only [Complex.dist_eq] at ec
@@ -126,7 +128,7 @@ theorem tendsto_f'_atInf (c : ℂ) : Tendsto (uncurry (f' d)) (𝓝 c ×ˢ atInf
       _ ≥ r := le_max_left _ _
 
 theorem mAnalyticAt_f : ContMDiff II I ω (uncurry (f d)) :=
-  mAnalytic_lift' analytic_f' tendsto_f'_atInf
+  mAnalytic_lift' analytic_f' tendsto_f'_cobounded
 
 theorem writtenInExtChartAt_coe_f {d : ℕ} {z : ℂ} :
     writtenInExtChartAt I I (z : 𝕊) (f d c) = f' d c := by
@@ -383,13 +385,13 @@ theorem f_f'_iter {d : ℕ} (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c
   simp only [f, lift', rec_coe]
 
 theorem multibrot_coe {d : ℕ} :
-    c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop atInf := by
-  simp only [multibrot, mem_setOf, f_f'_iter, tendsto_inf_iff_tendsto_atInf]
+    c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop (cobounded ℂ) := by
+  simp only [multibrot, mem_setOf, f_f'_iter, tendsto_inf_iff_tendsto_cobounded]
 
 /-- Closed Julia sets are not outside radius `max 2 (abs c)` -/
 theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) : (c,↑z) ∈ (superF d).basin := by
-  simp only [(superF d).basin_iff_attracts, Attracts, f_f'_iter, tendsto_inf_iff_tendsto_atInf,
-    tendsto_atInf_iff_norm_tendsto_atTop] at z2 ⊢
+  simp only [(superF d).basin_iff_attracts, Attracts, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
+    tendsto_cobounded_iff_norm_tendsto_atTop] at z2 ⊢
   apply Filter.tendsto_atTop_mono (iter_large d ‖z‖ z2.le (le_refl _) cz)
   refine Filter.Tendsto.atTop_mul_pos (by linarith) ?_ tendsto_const_nhds
   apply tendsto_pow_atTop_atTop_of_one_lt; linarith
@@ -436,7 +438,7 @@ theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c = (f d
       rw [← hg, ← hg, Function.iterate_succ_apply', Function.iterate_succ_apply', hg, hg, nk, e, h]
       use k + 1, Nat.succ_le_iff.mpr (Ne.lt_of_le e kb)
       rw [← hg, ← hg, Function.iterate_succ_apply', Function.iterate_succ_apply', hg, hg, nk]
-  simp only [multibrot_coe, atInf_basis.tendsto_right_iff, true_imp_iff, not_forall,
+  simp only [multibrot_coe, hasBasis_cobounded_norm_lt.tendsto_right_iff, true_imp_iff, not_forall,
     Filter.not_eventually, mem_setOf, not_lt, hg]
   use partialSups (fun k ↦ ‖g k‖) b
   refine .of_forall ?_; intro k; rcases lo k with ⟨l, lb, kl⟩
@@ -476,7 +478,7 @@ theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉
         _ ≥ s ^ 2 * (s - 1) ^ k - s * (s - 1) ^ k := by bound
         _ = s * ((s - 1) ^ k * (s - 1)) := by ring
         _ = s * (s - 1) ^ (k + 1) := by rw [pow_succ]
-  simp only [tendsto_atInf_iff_norm_tendsto_atTop]
+  simp only [tendsto_cobounded_iff_norm_tendsto_atTop]
   rw [← Filter.tendsto_add_atTop_iff_nat n]; apply Filter.tendsto_atTop_mono b
   refine Filter.Tendsto.pos_mul_atTop (by linarith) tendsto_const_nhds ?_
   apply tendsto_pow_atTop_atTop_of_one_lt; linarith
@@ -487,7 +489,7 @@ theorem multibrot_eq_le_two :
   simp only [mem_iInter, mem_preimage, mem_closedBall, Complex.dist_eq, sub_zero]
   constructor; · intro m n; contrapose m; simp only [not_le] at m; exact not_multibrot_of_two_lt m
   · intro h; contrapose h
-    simp only [multibrot_coe, tendsto_atInf_iff_norm_tendsto_atTop, not_not, not_forall, not_le,
+    simp only [multibrot_coe, tendsto_cobounded_iff_norm_tendsto_atTop, not_not, not_forall, not_le,
       Filter.tendsto_atTop, not_exists] at h ⊢
     rcases(h 3).exists with ⟨n, h⟩; use n; linarith
 
@@ -556,8 +558,10 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < ‖c‖) : ‖bottcher' d c‖ ≤ 3
   rw [ae, ← hg]; exact bottcherNear_le (superNearF d c) ct
 
 /-- `bottcher' d c → 0` as `c → ∞` -/
-theorem bottcher_tendsto_zero : Tendsto (bottcher' d) atInf (𝓝 0) := by
-  rw [Metric.tendsto_nhds]; intro r rp; rw [atInf_basis.eventually_iff]
+theorem bottcher_tendsto_zero : Tendsto (bottcher' d) (cobounded ℂ) (𝓝 0) := by
+  rw [Metric.tendsto_nhds]
+  intro r rp
+  rw [hasBasis_cobounded_norm_lt.eventually_iff]
   use max 16 (3 / r)
   simp only [true_and, mem_setOf, Complex.dist_eq, sub_zero, max_lt_iff]
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
@@ -578,7 +582,7 @@ theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
     ContMDiffOnNhd I I (bottcher d) (multibrotExt d) := by
   intro c m; induction c using OnePoint.rec
   · refine mAnalyticAt_fill_inf ?_ bottcher_tendsto_zero
-    rw [atInf_basis.eventually_iff]; use 2
+    rw [hasBasis_cobounded_norm_lt.eventually_iff]; use 2
     simp only [true_and, mem_setOf]
     intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).mAnalyticAt I I
   · simp only [multibrotExt_coe] at m
@@ -719,10 +723,10 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
 
 /-- `s.bottcher c z ~ 1/z` for large `z` -/
 theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
-    Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) atInf (𝓝 1) := by
+    Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) (cobounded ℂ) (𝓝 1) := by
   set s := superF d
-  have e : ∀ᶠ z : ℂ in atInf, s.bottcher c z * z = s.bottcherNear c z * z := by
-    suffices e : ∀ᶠ z : ℂ in atInf, s.bottcher c z = s.bottcherNear c z by
+  have e : ∀ᶠ z : ℂ in cobounded ℂ, s.bottcher c z * z = s.bottcherNear c z * z := by
+    suffices e : ∀ᶠ z : ℂ in cobounded ℂ, s.bottcher c z = s.bottcherNear c z by
       exact e.mp (.of_forall fun z e ↦ by rw [e])
     refine coe_tendsto_inf.eventually (p := fun z ↦ s.bottcher c z = s.bottcherNear c z) ?_
     apply s.bottcher_eq_bottcherNear
@@ -730,7 +734,7 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   have m := bottcherNear_monic (s.superNearC.s (mem_univ c))
   simp only [hasDerivAt_iff_tendsto, sub_zero, bottcherNear_zero, smul_eq_mul, mul_one,
     Metric.tendsto_nhds_nhds, Real.dist_eq, Complex.dist_eq] at m
-  simp only [Metric.tendsto_nhds, atInf_basis.eventually_iff, true_and, mem_setOf,
+  simp only [Metric.tendsto_nhds, hasBasis_cobounded_norm_lt.eventually_iff, true_and, mem_setOf,
     Complex.dist_eq]
   intro e ep; rcases m e ep with ⟨r, rp, h⟩; use 1 / r; intro z zr
   have az0 : ‖z‖ ≠ 0 := (lt_trans (one_div_pos.mpr rp) zr).ne'
@@ -747,7 +751,7 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
 
 /-- `s.potential c z ~ 1/abs z` for large `z` -/
 theorem potential_tendsto (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
-    Tendsto (fun z : ℂ ↦ (superF d).potential c z * ‖z‖) atInf (𝓝 1) := by
+    Tendsto (fun z : ℂ ↦ (superF d).potential c z * ‖z‖) (cobounded ℂ) (𝓝 1) := by
   set s := superF d
   have c := continuous_norm.continuousAt.tendsto.comp (bottcher_large_approx d c)
   simpa only [s.norm_bottcher, norm_mul, norm_one, Function.comp_def] using c

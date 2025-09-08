@@ -135,3 +135,17 @@ theorem global_complex_inverse_fun_open' {f : S → T} [Nonempty S] {s : Set S}
     ∃ g : T → S, ContMDiffOnNhd I I g (f '' s) ∧ ∀ z, z ∈ s → g (f z) = z :=
   weak_global_complex_inverse_fun_open fa
     (fun _ m ↦ inj.mfderiv_ne_zero so m (fa.contMDiffAt (so.mem_nhds m))) inj so
+
+/-- The global 1D inverse function theorem (open, complex case): if `f : ℂ → ℂ` is injective on an
+    open set `s`, it has a global analytic inverse. -/
+theorem global_complex_inverse_fun_open'' {f : ℂ → ℂ} {s : Set ℂ}
+    (fa : AnalyticOnNhd ℂ f s) (inj : InjOn f s) (so : IsOpen s) :
+    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (f '' s) ∧ ∀ z, z ∈ s → g (f z) = z := by
+  have ⟨g,ga,gf⟩ := global_complex_inverse_fun_open' (f := f) ?_ inj so
+  · refine ⟨g, ?_, gf⟩
+    intro z m
+    exact (ga z m).analyticAt
+  · intro z m
+    specialize fa z m
+    rw [analyticAt_iff_mAnalyticAt (I := I) (J := I)] at fa
+    exact fa.contMDiffWithinAt

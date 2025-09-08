@@ -29,6 +29,31 @@ variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
+lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
+    AnalyticAt 𝕜 (fun z ↦ f z / w) c := by
+  by_cases w0 : w = 0
+  · simp only [w0, div_zero, analyticAt_const]
+  · exact fa.div analyticAt_const w0
+
+lemma AnalyticAt.dslope {f : 𝕜 → E} {c x : 𝕜} (fa : AnalyticAt 𝕜 f x) :
+    AnalyticAt 𝕜 (dslope f c) x := by
+  by_cases e : x = c
+  · obtain ⟨p,fp⟩ := fa
+    simp only [← e]
+    exact ⟨_, fp.has_fpower_series_dslope_fslope⟩
+  · rw [analyticAt_congr (dslope_eventuallyEq_slope_of_ne _ e)]
+    apply AnalyticAt.smul
+    · exact AnalyticAt.inv (by fun_prop) (by simpa only [ne_eq, sub_eq_zero])
+    · simp only [vsub_eq_sub]
+      exact fa.sub analyticAt_const
+
+/-- Power series coefficients in terms of iterated derivatives -/
+lemma HasFPowerSeriesAt.coeff_eq_iteratedDeriv_div [CompleteSpace 𝕜] [CharZero 𝕜] {f : 𝕜 → 𝕜}
+    {p : FormalMultilinearSeries 𝕜 𝕜 𝕜} {c : 𝕜} (fp : HasFPowerSeriesAt f p c) (n : ℕ) :
+    p.coeff n = iteratedDeriv n f c / n.factorial := by
+  simp only [fp.eq_formalMultilinearSeries (AnalyticAt.hasFPowerSeriesAt ⟨_, fp⟩),
+    FormalMultilinearSeries.coeff_ofScalars]
+
 /-- The order of a zero at a point.
     We define this in terms of the function alone so that expressions involving order can
     depend only on `f`. -/
@@ -92,17 +117,17 @@ theorem AnalyticAt.leading_approx {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt �
   rcases fa with ⟨p, fp⟩
   generalize ha : leadingCoeff f c = a
   generalize hd : orderAt f c = d
-  have ha' : (Function.swap dslope c)^[d] f c = a := by rw [← ha, ← hd, leadingCoeff]
+  have ha' : (Function.swap _root_.dslope c)^[d] f c = a := by rw [← ha, ← hd, leadingCoeff]
   have e := fp.eq_pow_order_mul_iterate_dslope
   simp_rw [← fp.orderAt_unique, hd] at e
   apply Asymptotics.IsLittleO.of_isBigOWith; intro k kp
   rw [Asymptotics.isBigOWith_iff]
   apply e.mp
-  have dc : ContinuousAt ((Function.swap dslope c)^[d] f) c :=
+  have dc : ContinuousAt ((Function.swap _root_.dslope c)^[d] f) c :=
     (fp.has_fpower_series_iterate_dslope_fslope d).analyticAt.continuousAt
   rcases Metric.continuousAt_iff.mp dc k kp with ⟨r, rp, rh⟩
   rw [ha'] at rh
-  generalize hg : (Function.swap dslope c)^[d] f = g; rw [hg] at rh
+  generalize hg : (Function.swap _root_.dslope c)^[d] f = g; rw [hg] at rh
   rw [Metric.eventually_nhds_iff]; use r, rp; intro y yr fe; rw [fe]
   specialize rh yr; rw [dist_eq_norm] at rh
   calc ‖(y - c) ^ d • g y - (y - c) ^ d • a‖
@@ -262,7 +287,7 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
     have hg' : ∀ z, (z - c) ^ n • f z = g z := by
       rw [←hg]; simp only [forall_const]
     simp_rw [hg'] at h ⊢
-    have e : (Function.swap dslope c fun z ↦ (z - c) • g z) = g := by
+    have e : (Function.swap _root_.dslope c fun z ↦ (z - c) • g z) = g := by
       simp only [Function.swap, dslope_sub_smul, Function.update_eq_self_iff]
       rw [deriv_fun_smul]
       simp only [sub_self, zero_smul, deriv_fun_sub, differentiableAt_fun_id,

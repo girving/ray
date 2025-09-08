@@ -2,6 +2,9 @@ import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Ray.Misc.Annuli
+import Ray.Misc.Circle
+import Ray.Misc.Complex
 import Ray.Misc.Measure
 import Ray.Misc.Prod
 
@@ -24,7 +27,7 @@ open Set
 open scoped Real
 noncomputable section
 
-section realCircleMap
+namespace RealCircleMap
 
 /-- `circleMap` as a map from `ℝ² → ℝ²` -/
 def realCircleMap (c : ℂ) (x : ℝ × ℝ) : ℝ × ℝ :=
@@ -71,49 +74,10 @@ lemma rcmDeriv.det (x : ℝ × ℝ) : (rcmDeriv x).det = x.1 := by
     _ = x.1 * (cos x.2 ^ 2 + sin x.2 ^ 2) := by ring
     _ = x.1 := by simp only [Real.cos_sq_add_sin_sq, mul_one]
 
-end realCircleMap
+end RealCircleMap
 
-/-- Spheres are empty iff the radius is negative -/
-@[simp]
-theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere c r = ∅ ↔ r < 0 := by
-  constructor
-  · intro rp; contrapose rp; simp at rp
-    refine Nonempty.ne_empty ⟨c + r, ?_⟩
-    simpa only [mem_sphere_iff_norm, add_sub_cancel_left, RCLike.norm_ofReal, abs_eq_self]
-  · intro n; contrapose n
-    rw [← not_nonempty_iff_eq_empty] at n
-    simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
-
-/-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
-theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
-    ∃ t, t ∈ Ioc 0 (2 * π) ∧ z = circleMap c r t := by
-  by_cases rp : r < 0
-  · simp only [Metric.sphere_eq_empty.mpr rp, mem_empty_iff_false] at zs
-  simp only [not_lt] at rp
-  rw [←abs_of_nonneg rp, ← range_circleMap, mem_range] at zs
-  rcases zs with ⟨t, ht⟩
-  generalize ha : 2 * π = a
-  have ap : a > 0 := by rw [←ha]; bound
-  generalize hs : t + a - a * ⌈t / a⌉ = s
-  use s; constructor
-  · simp only [mem_Ioc, sub_pos, tsub_le_iff_right, ← hs]
-    constructor
-    · calc a * ⌈t / a⌉
-        _ < a * (t / a + 1) := by bound
-        _ = a / a * t + a := by ring
-        _ = t + a := by field_simp [ap.ne']
-    · calc a + a * ⌈t / a⌉
-        _ ≥ a + a * (t / a) := by bound
-        _ = a / a * t + a := by ring
-        _ = t + a := by field_simp [ap.ne']
-  · simp only [←ht, circleMap, Complex.ofReal_sub, Complex.ofReal_add, Complex.ofReal_mul,
-      Complex.ofReal_intCast, add_right_inj, mul_eq_mul_left_iff, Complex.ofReal_eq_zero, ← hs]
-    rw [mul_sub_right_distrib, right_distrib, Complex.exp_sub, Complex.exp_add]
-    rw [mul_comm _ (⌈_⌉:ℂ), mul_assoc, Complex.exp_int_mul, ← ha]
-    simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
-      one_zpow, div_one, true_or]
-
-section FubiniHelper
+namespace FubiniHelper
+open RealCircleMap
 
 /-- The square that we'll map onto the ball -/
 def square (r0 r1 : ℝ) : Set (ℝ × ℝ) :=
@@ -125,13 +89,6 @@ theorem square.rp {r0 r1 : ℝ} {x : ℝ × ℝ} (r0p : 0 ≤ r0) : x ∈ square
 
 theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
   apply_rules [MeasurableSet.prod, measurableSet_Ioc]
-
-def annulus_oc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ closedBall c r0
-def annulus_cc (c : ℂ) (r0 r1 : ℝ) : Set ℂ := closedBall c r1 \ ball c r0
-
-lemma annulus_oc_subset_annulus_cc {c : ℂ} {r0 r1 : ℝ} :
-    annulus_oc c r0 r1 ⊆ annulus_cc c r0 r1 :=
-  diff_subset_diff (subset_refl _) Metric.ball_subset_closedBall
 
 theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     Complex.measurableEquivRealProd.symm ⁻¹' (annulus_oc c r0 r1) =
@@ -230,6 +187,8 @@ theorem rcm_inj {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) : InjOn (realCircleMap 
   simp only [Prod.mk.eta] at g; exact g
 
 end FubiniHelper
+open RealCircleMap
+open FubiniHelper
 
 /-- Inverse lemma for fubini_ball -/
 theorem measurable_symm_equiv_inverse {z : ℂ} :
@@ -240,17 +199,13 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
   apply Complex.ext; · simp only [Complex.equivRealProdCLM_symm_apply_re]
   · simp only [Complex.equivRealProdCLM_symm_apply_im]
 
-/-- `circleMap` is continuous on `ℝ × ℝ` -/
-theorem continuous_circleMap_full {c : ℂ} : Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
-  continuity
-
 /-- Integration over a complex annulus using polar coordinates -/
 theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     {f : ℂ → E} {c : ℂ} {r0 r1 : ℝ} (fc : ContinuousOn f (annulus_cc c r0 r1)) (r0p : 0 ≤ r0) :
     ∫ z in annulus_oc c r0 r1, f z =
       ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have im := MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod
-  rw [←MeasurePreserving.setIntegral_preimage_emb im
+  rw [← MeasurePreserving.setIntegral_preimage_emb im
     Complex.measurableEquivRealProd.symm.measurableEmbedding f _]
   clear im
   rw [square_eq r0p]
@@ -289,7 +244,7 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
       ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
   have center : closedBall c r =ᵐ[volume] (closedBall c r \ {c} : Set ℂ) := ae_minus_point
   rw [MeasureTheory.setIntegral_congr_set center]; clear center
-  rw [←Metric.closedBall_zero, ←annulus_oc]
+  rw [← Metric.closedBall_zero, ← annulus_oc]
   apply fubini_annulus
   · simpa only [annulus_cc, Metric.ball_zero, diff_empty]
   · rfl
@@ -307,18 +262,18 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
   exact f
 
 /-- `closedBall` with positive radius has positive, nonzero volume -/
-theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) :=
-  { measurable := measurableSet_closedBall
-    finite := by
-      simp only [Complex.volume_closedBall]
-      apply ENNReal.mul_lt_top
-      · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
-      · exact ENNReal.coe_lt_top
-    pos := by
-      simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedAdd.mul_pos,
-        ENNReal.coe_pos, NNReal.pi_pos, and_true]
-      apply ENNReal.pow_pos
-      bound }
+theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) where
+  measurable := measurableSet_closedBall
+  finite := by
+    simp only [Complex.volume_closedBall]
+    apply ENNReal.mul_lt_top
+    · exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    · exact ENNReal.coe_lt_top
+  pos := by
+    simp only [Complex.volume_closedBall, gt_iff_lt, CanonicallyOrderedAdd.mul_pos,
+      ENNReal.coe_pos, NNReal.pi_pos, and_true]
+    apply ENNReal.pow_pos
+    bound
 
 /-- `closedBall` with positive radius has positive volume near each point -/
 theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet (closedBall c r) := by

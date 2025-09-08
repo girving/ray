@@ -8,13 +8,7 @@ Mandelbrot set in Lean. The main result is that [the Mandelbrot set and its
 complement are connected](http://github.com/girving/ray/blob/main/Ray/Dynamics/Mandelbrot.lean#L37), by exhibiting the
 analytic Böttcher homeomorphism from the exterior of the Mandelbrot set to the
 exterior of the closed unit disk. But I'm also using it to learn Lean
-generally, which means detours along the way. The main results are
-
-* **[Hartogs's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity)** -
-  [Hartogs.lean](http://github.com/girving/ray/blob/main/Ray/Hartogs/Hartogs.lean):
-  Let $E$ be a separable Banach space, and $f : \mathbb{C}^2 \to E$
-  a function which is analytic along each axis at each point in an open set $S \subset \mathbb{C}^2$.
-  Then $f$ is jointly analytic in $S$.
+generally, which means detours along the way. The main complex dynamics results are
 
 * **[Bottcher's theorem](https://en.wikipedia.org/wiki/B%C3%B6ttcher%27s_equation)** -
   [BottcherNear.lean](http://github.com/girving/ray/blob/main/Ray/Dynamics/BottcherNear.lean):
@@ -48,6 +42,24 @@ generally, which means detours along the way. The main results are
   [Mandelbrot.lean](http://github.com/girving/ray/blob/main/Ray/Dynamics/Mandelbrot.lean#L37):
   Each Multibrot set $M_d$ and its complement $\mathbb{S} - M_d$
   are corrected, including the Mandelbrot set $M = M_2$.
+
+Plus a few other results in complex analysis:
+
+* **[Hartogs's theorem](https://en.wikipedia.org/wiki/Hartogs%27s_theorem_on_separate_holomorphicity)** -
+  [Hartogs.lean](http://github.com/girving/ray/blob/main/Ray/Hartogs/Hartogs.lean):
+  Let $E$ be a separable Banach space, and $f : \mathbb{C}^2 \to E$
+  a function which is analytic along each axis at each point in an open set $S \subset \mathbb{C}^2$.
+  Then $f$ is jointly analytic in $S$.
+
+* **[Grönwall's area theorem](https://en.wikipedia.org/wiki/Koebe_quarter_theorem#Gronwall's_area_theorem)** -
+  [Gronwall.lean](https://github.com/girving/ray/blob/main/Ray/Koebe/Gronwall.lean):
+  If $g(z) = z + b_1 z^{-1} + b_2 z^{-2} + \cdots$ is analytic and injective for $|z| > 1$, then the
+  area of the set missed by $g$ is $\pi - \pi \sum_{n \ge 1} n |b_n|^2$.
+
+* **[Koebe quarter theorem](https://en.wikipedia.org/wiki/Koebe_quarter_theorem)** -
+  [Koebe.lean](https://github.com/girving/ray/blob/main/Ray/Koebe/Koebe.lean):
+  If $f : D_1(0) \to \mathbb{C}$ is analytic and injective on the unit disk
+  $D_1(0) \subset \mathbb{C}$, then the range of $f$ contains the disk $D_{|f'(0) / 4|}(f(0))$.
 
 ## Rendering
 

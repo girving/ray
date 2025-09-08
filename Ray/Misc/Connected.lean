@@ -1,4 +1,5 @@
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Ray.Misc.Set
 import Ray.Misc.Topology
 
 /-!
@@ -18,6 +19,7 @@ open Set
 open scoped NNReal Topology Real
 noncomputable section
 
+variable {α : Type}
 variable {X : Type} [TopologicalSpace X]
 variable {I : Type} [TopologicalSpace I] [ConditionallyCompleteLinearOrder I]
 variable [DenselyOrdered I] [OrderTopology I]
@@ -280,3 +282,36 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
       max_eq_right m.1]
   · intro ⟨a, n⟩; simp only [mem_preimage, Path.coe_mk_mk, ← hq]
     exact lo _ (min_le_right _ _)
+
+theorem IsPathConnected.of_frontier' {X : Type} [TopologicalSpace X] [PathConnectedSpace X]
+    {s : Set X} (pc : IsPathConnected (frontier s)) (sc : IsClosed s) : IsPathConnected s :=
+  IsPathConnected.of_frontier pc continuous_id sc
+
+/-- If open, preconnected `s` intersects `t` but does not touch `frontier t`, then `s ⊆ t` -/
+theorem IsPreconnected.subset_of_disjoint_frontier {s t : Set X} (sp : IsPreconnected s)
+    (os : IsOpen s) (ot : IsOpen t) (i : Disjoint (frontier t) s) (n : (s ∩ t).Nonempty) :
+    s ⊆ t := by
+  have e : s = s ∩ t ∪ (s \ closure t) := by
+    simp only [closure_eq_interior_union_frontier, ot.interior_eq, union_comm t, diff_union,
+      inter_union_diff, i.sdiff_eq_right]
+  have d : s ∩ (s ∩ t ∩ (s \ closure t)) = ∅ := by
+    ext x
+    simp only [mem_inter_iff, mem_diff, mem_empty_iff_false, iff_false, not_and, not_not, and_imp,
+      forall_self_imp]
+    intro _ m _
+    exact subset_closure m
+  rcases isPreconnected_iff_subset_of_disjoint.mp sp (s ∩ t) (s \ closure t) (os.inter ot)
+    (os.sdiff isClosed_closure) (by simp only [← e, subset_refl]) d with h | h
+  · exact subset_trans h inter_subset_right
+  · obtain ⟨_, xs, xt⟩ := n
+    have xd := h xs
+    simp [subset_closure xt] at xd
+
+/-- Two intersecting, open, preconnected sets with common frontier are the same -/
+theorem IsPreconnected.eq_of_frontier_eq {s t : Set X} (sp : IsPreconnected s)
+    (tp : IsPreconnected t) (os : IsOpen s) (ot : IsOpen t) (f : frontier s = frontier t)
+    (n : (s ∩ t).Nonempty) : s = t := by
+  apply subset_antisymm
+  · exact sp.subset_of_disjoint_frontier os ot (f ▸ disjoint_frontier_iff_isOpen.mpr os) n
+  · exact tp.subset_of_disjoint_frontier ot os (f ▸ disjoint_frontier_iff_isOpen.mpr ot)
+      (inter_comm _ _ ▸ n)

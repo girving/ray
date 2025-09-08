@@ -22,37 +22,30 @@ open Metric (ball closedBall sphere)
 open scoped Real NNReal ENNReal Topology symmDiff
 noncomputable section
 
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
+variable {G : Type} [NormedAddCommGroup G]
+
 /-- Summability restricted to sets -/
-def SummableOn (f : ℕ → ℂ → ℂ) (s : Set ℂ) :=
+def SummableOn (f : ℕ → ℂ → E) (s : Set ℂ) :=
   ∀ z, z ∈ s → Summable fun n ↦ f n z
 
 /-- `n ↦ f n z` has a convergent sum for each `z ∈ s` -/
-def HasSumOn (f : ℕ → ℂ → ℂ) (g : ℂ → ℂ) (s : Set ℂ) :=
+def HasSumOn (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
   ∀ z, z ∈ s → HasSum (fun n ↦ f n z) (g z)
 
 /-- The parameterized limit of an infinite sum, if it exists -/
-noncomputable def tsumOn (f : ℕ → ℂ → ℂ) := fun z ↦ tsum fun n ↦ f n z
+noncomputable def tsumOn (f : ℕ → ℂ → E) := fun z ↦ tsum fun n ↦ f n z
 
 /-- Uniform convergence of sums on a set -/
-def HasUniformSum (f : ℕ → ℂ → ℂ) (g : ℂ → ℂ) (s : Set ℂ) :=
+def HasUniformSum (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
   TendstoUniformlyOn (fun (N : Finset ℕ) z ↦ N.sum fun n ↦ f n z) g atTop s
 
 /-- Uniform vanishing means late sums are uniformly small -/
-def UniformVanishing (f : ℕ → ℂ → ℂ) (s : Set ℂ) :=
+def UniformVanishing (f : ℕ → ℂ → E) (s : Set ℂ) :=
   ∀ e : ℝ, e > 0 → ∃ n : ℕ, ∀ (N : Finset ℕ) (z), Late N n → z ∈ s → (N.sum fun n ↦ ‖f n z‖) < e
 
-/-- Uniformly vanishing series are summable -/
-theorem uniformVanishing_to_summable {f : ℕ → ℂ → ℂ} {s : Set ℂ} {z : ℂ} (zs : z ∈ s)
-    (h : UniformVanishing f s) : Summable fun n ↦ f n z := by
-  rw [summable_iff_vanishing_norm]; intro e ep
-  rcases h e ep with ⟨m, hm⟩
-  use Finset.range m; intro A d
-  calc ‖A.sum (fun n ↦ f n z)‖
-    _ ≤ A.sum (fun n ↦ ‖f n z‖) := by bound
-    _ < e := hm _ _ (late_iff_disjoint_range.mpr d) zs
-
 /-- Uniformly vanishing series results in uniform Cauchy sequences of finite sums -/
-theorem uniformVanishing_to_uniform_cauchy_series {f : ℕ → ℂ → ℂ} {s : Set ℂ}
+theorem uniformVanishing_to_uniform_cauchy_series {f : ℕ → ℂ → G} {s : Set ℂ}
     (h : UniformVanishing f s) :
     UniformCauchySeqOn (fun (N : Finset ℕ) z ↦ N.sum fun n ↦ f n z) atTop s := by
   rw [Metric.uniformCauchySeqOn_iff]
@@ -64,8 +57,62 @@ theorem uniformVanishing_to_uniform_cauchy_series {f : ℕ → ℂ → ℂ} {s :
     _ ≤ (A ∆ B).sum fun n ↦ ‖f n z‖ := symmDiff_bound _ _ _
     _ < e := hm (A ∆ B) z (symmDiff_late HA HB) zs
 
+/-- Geometric bounds with c ≤ 0 are degenerate -/
+theorem CNonpos.degenerate {f : ℕ → ℂ → G} {s : Set ℂ} {c a : ℝ} (c0 : c ≤ 0) (a0 : 0 ≤ a)
+    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : ∀ n z, z ∈ s → f n z = 0 := by
+  intro n z zs; specialize hf n z zs
+  have ca : c * a ^ n ≤ 0 := mul_nonpos_iff.mpr (Or.inr ⟨c0, by bound⟩)
+  exact norm_eq_zero.mp (le_antisymm (le_trans hf ca) (norm_nonneg _))
+
+/-- Adding one more term to a sum adds it -/
+theorem sum_cons {a g : G} {f : ℕ → G} (h : HasSum f g) :
+    HasSum (Stream'.cons a f) (a + g) := by
+  rw [HasSum] at h ⊢
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_add_left a) g) h
+  have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum f) =
+      (fun N : Finset ℕ ↦ N.sum (Stream'.cons a f)) ∘ push := by
+    apply funext; intro N; simp; exact push_sum
+  rw [s] at ha
+  exact tendsto_comp_push.mp ha
+
+/-- Adding one more term to a sum adds it (`tprod` version) -/
+lemma sum_cons' {a : G} {f : ℕ → G} (h : Summable f) :
+    tsum (Stream'.cons a f) = a + tsum f := by
+  rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; rw [HasSum.tsum_eq _]; exact sum_cons h
+
+/-- Dropping the first term subtracts it -/
+lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
+    HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
+  have c := sum_cons (a := -f 0) h
+  rw [HasSum]
+  rw [neg_add_eq_sub, HasSum, ← tendsto_comp_push, ← tendsto_comp_push] at c
+  have s : ((fun N : Finset ℕ ↦ N.sum fun n ↦ (Stream'.cons (-f 0) f) n) ∘ push) ∘ push =
+      fun N : Finset ℕ ↦ N.sum fun n ↦ f (n + 1) := by
+    clear c h g; apply funext; intro N; simp
+    nth_rw 2 [← Stream'.eta f]
+    simp only [←push_sum, Stream'.head, Stream'.tail, Stream'.get]
+    abel
+  rw [s] at c; assumption
+
+/-- Dropping the first term subtracts it (`tsum` version) -/
+lemma tsum_drop {f : ℕ → G} (h : Summable f) :
+    ∑' n, f n = f 0 + ∑' n, f (n + 1) := by
+  rw [(sum_drop h.hasSum).tsum_eq, add_sub_cancel]
+
+variable [CompleteSpace E] [CompleteSpace G]
+
+/-- Uniformly vanishing series are summable -/
+theorem uniformVanishing_to_summable {f : ℕ → ℂ → G} {s : Set ℂ} {z : ℂ} (zs : z ∈ s)
+    (h : UniformVanishing f s) : Summable fun n ↦ f n z := by
+  rw [summable_iff_vanishing_norm]; intro e ep
+  rcases h e ep with ⟨m, hm⟩
+  use Finset.range m; intro A d
+  calc ‖A.sum (fun n ↦ f n z)‖
+    _ ≤ A.sum (fun n ↦ ‖f n z‖) := by bound
+    _ < e := hm _ _ (late_iff_disjoint_range.mpr d) zs
+
 /-- If a series is uniformly vanishing, it tends to its limit uniformly -/
-theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ}
+theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → G} {s : Set ℂ}
     (h : UniformVanishing f s) : HasUniformSum f (tsumOn f) s := by
   rw [HasUniformSum, Metric.tendstoUniformlyOn_iff]
   intro e ep
@@ -92,23 +139,16 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → ℂ} {s : 
     _ = e / 4 + dist ((N.sum fun n ↦ f n z) + (M \ N).sum fun n ↦ f n z)
         (N.sum fun n ↦ f n z) := by rw [Finset.sum_union Finset.disjoint_sdiff]
     _ = e / 4 + ‖((N.sum fun n ↦ f n z) + (M \ N).sum fun n ↦ f n z) -
-        N.sum fun n ↦ f n z‖ := by rw [Complex.dist_eq]
-    _ = e / 4 + ‖(M \ N).sum fun n ↦ f n z‖ := by ring_nf
+        N.sum fun n ↦ f n z‖ := by rw [dist_eq_norm]
+    _ = e / 4 + ‖(M \ N).sum fun n ↦ f n z‖ := by rw [add_sub_cancel_left]
     _ ≤ e / 4 + (M \ N).sum fun n ↦ ‖f n z‖ := by
-      linarith [finset_complex_abs_sum_le (M \ N) fun n ↦ f n z]
+      linarith [finset_norm_sum_le (M \ N) fun n ↦ f n z]
     _ ≤ e / 4 + e / 4 := by linarith [hm (M \ N) z (sdiff_late M Nm) zs]
     _ = e / 2 := by ring
     _ < e := by linarith
 
-/-- Geometric bounds with c ≤ 0 are degenerate -/
-theorem CNonpos.degenerate {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (c0 : c ≤ 0) (a0 : 0 ≤ a)
-    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : ∀ n z, z ∈ s → f n z = 0 := by
-  intro n z zs; specialize hf n z zs
-  have ca : c * a ^ n ≤ 0 := mul_nonpos_iff.mpr (Or.inr ⟨c0, by bound⟩)
-  exact norm_eq_zero.mp (le_antisymm (le_trans hf ca) (norm_nonneg _))
-
 /-- Uniformly exponentially converging series converge uniformly -/
-theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (a0 : 0 ≤ a)
+theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → G} {s : Set ℂ} {c a : ℝ} (a0 : 0 ≤ a)
     (a1 : a < 1) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : HasUniformSum f (tsumOn f) s := by
   by_cases c0 : c ≤ 0
   · have fz := CNonpos.degenerate c0 a0 hf; simp only at fz
@@ -139,10 +179,10 @@ theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → ℂ} {s : Set ℂ
       _ < e := by linarith
 
 /-- Exponentially converging series converge -/
-theorem fast_series_converge_at {f : ℕ → ℂ} {c a : ℝ} (a0 : 0 ≤ a) (a1 : a < 1)
+theorem fast_series_converge_at {f : ℕ → G} {c a : ℝ} (a0 : 0 ≤ a) (a1 : a < 1)
     (hf : ∀ n, ‖f n‖ ≤ c * a ^ n) : Summable f := by
   set s : Set ℂ := {0}
-  set g : ℕ → ℂ → ℂ := fun n _ ↦ f n
+  set g : ℕ → ℂ → G := fun n _ ↦ f n
   have hg : ∀ n z, z ∈ s → ‖g n z‖ ≤ c * a ^ n := fun n z _ ↦ hf n
   have u := fast_series_converge_uniformly_on a0 a1 hg
   simp at u
@@ -151,40 +191,20 @@ theorem fast_series_converge_at {f : ℕ → ℂ} {c a : ℝ} (a0 : 0 ≤ a) (a1
   apply HasSum.summable; assumption
 
 /-- Analytic series that converge exponentially converge to analytic functions -/
-theorem fast_series_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s) (a0 : 0 ≤ a)
+theorem fast_series_converge {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s) (a0 : 0 ≤ a)
     (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
-    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g s ∧ HasSumOn f g s := by
+    ∃ g : ℂ → E, AnalyticOnNhd ℂ g s ∧ HasSumOn f g s := by
   use tsumOn f; constructor
   · exact uniform_analytic_lim o (fun N ↦ N.analyticOnNhd_fun_sum fun _ _ ↦ h _)
       (fast_series_converge_uniformly_on a0 a1 hf)
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)
 
-/-- Adding one more term to a sum adds it -/
-theorem sum_cons {X : Type} [NormedAddCommGroup X] {a g : X} {f : ℕ → X} (h : HasSum f g) :
-    HasSum (Stream'.cons a f) (a + g) := by
-  rw [HasSum] at h ⊢
-  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_add_left a) g) h
-  have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum f) =
-      (fun N : Finset ℕ ↦ N.sum (Stream'.cons a f)) ∘ push := by
-    apply funext; intro N; simp; exact push_sum
-  rw [s] at ha
-  exact tendsto_comp_push.mp ha
-
-/-- Adding one more term to a sum adds it (`tprod` version) -/
-lemma sum_cons' {a : ℂ} {f : ℕ → ℂ} (h : Summable f) :
-    tsum (Stream'.cons a f) = a + tsum f := by
-  rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; rw [HasSum.tsum_eq _]; exact sum_cons h
-
-/-- Dropping the first term subtracts it -/
-lemma sum_drop {X : Type} [NormedAddCommGroup X] {f : ℕ → X} {g : X} (h : HasSum f g) :
-    HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
-  have c := sum_cons (a := -f 0) h
-  rw [HasSum]
-  rw [neg_add_eq_sub, HasSum, ← tendsto_comp_push, ← tendsto_comp_push] at c
-  have s : ((fun N : Finset ℕ ↦ N.sum fun n ↦ (Stream'.cons (-f 0) f) n) ∘ push) ∘ push =
-      fun N : Finset ℕ ↦ N.sum fun n ↦ f (n + 1) := by
-    clear c h g; apply funext; intro N; simp
-    nth_rw 2 [← Stream'.eta f]
-    simp only [←push_sum, Stream'.head, Stream'.tail, Stream'.get]
-    abel
-  rw [s] at c; assumption
+/-- Analytic series that converge exponentially converge to analytic functions, tsum version -/
+theorem fast_series_converge_tsum_at {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+    (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
+    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
+    AnalyticOnNhd ℂ (fun z ↦ ∑' n, f n z) s := by
+  obtain ⟨g, ga, gs⟩ := fast_series_converge o a0 a1 h hf
+  rwa [analyticOnNhd_congr (g := g) o]
+  intro z m
+  simp only [(gs z m).tsum_eq]

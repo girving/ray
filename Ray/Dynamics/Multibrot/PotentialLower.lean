@@ -27,8 +27,8 @@ private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
 lemma pass_through (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) (m : (c,↑z) ∈ (superF 2).basin) :
     ∃ n, ‖(f' 2 c)^[n+1] z‖ ∈ Ioc 4 20 := by
   set s := superF 2
-  simp only [s.basin_iff_attracts, Attracts, RiemannSphere.tendsto_inf_iff_tendsto_atInf, f_f'_iter,
-    tendsto_atInf_iff_norm_tendsto_atTop] at m
+  simp only [s.basin_iff_attracts, Attracts, RiemannSphere.tendsto_inf_iff_tendsto_cobounded, f_f'_iter,
+    tendsto_cobounded_iff_norm_tendsto_atTop] at m
   rcases Filter.tendsto_atTop_atTop.mp m 5 with ⟨n,h⟩
   generalize hp : (fun n ↦ 4 < ‖(f' 2 c)^[n] z‖) = p
   replace h : p n := by rw [←hp]; linarith [h n (by linarith)]

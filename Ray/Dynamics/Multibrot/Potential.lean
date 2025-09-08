@@ -43,7 +43,7 @@ lemma tendsto_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z‖) (cz : �
     exact h
   simp only [← s.norm_bottcher, ← norm_mul, mul_comm _ (s.bottcher _ _)]
   rw [Metric.tendsto_atTop]; intro r rp
-  rcases Metric.tendsto_atTop.mp ((bottcher_large_approx d c).comp (tendsto_iter_atInf d z3 cz))
+  rcases Metric.tendsto_atTop.mp ((bottcher_large_approx d c).comp (tendsto_iter_cobounded d z3 cz))
       (min (1 / 2) (r / 4)) (by bound) with ⟨n, h⟩
   use n; intro k nk; specialize h k nk
   generalize hw : (f' d c)^[k] z = w; generalize hp : s.bottcher c w * w = p

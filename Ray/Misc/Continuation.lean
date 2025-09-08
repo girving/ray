@@ -7,7 +7,7 @@ import Ray.Misc.Connected
 We give an abstract version of "analytic continuation" from a convex set to its compact closure,
 assuming that local continuation is possible at each boundary point.  We do not refer to analytic
 functions directly at all: instead we speak of functions which everywhere satisfy a predicate
-`p : (E → S) → E → Prop` where `E` is a normed space and `α : Type`.
+`p : (E → α) → E → Prop` where `E` is a normed space and `α : Type`.
 
 Convexity is used only to guarantee a "good open cover" in the sense of
 https://ncatlab.org/nlab/show/good+open+cover: a family of neighborhoods such that intersections
@@ -20,16 +20,17 @@ the existence of Riemannian metrics.
 -/
 
 open Classical
-open Metric (ball isOpen_ball mem_ball mem_ball_self)
+open Filter (Tendsto atTop)
+open Metric (ball closedBall isOpen_ball mem_ball mem_ball_self closedBall_zero)
 open Set
 open scoped Real Topology
 noncomputable section
 
--- Continuation of a functional equation from an open convex set to its closure
-section Continuation
-
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E]
 variable {α : Type} {p : (E → α) → E → Prop} {s : Set E} {f : E → α} {z : E}
+
+-- Continuation of a functional equation from an open convex set to its closure
+section Continuation
 
 /-- Information we need to continue a function from a convex set `s` to `closure s`, while
     preserving local properties of the function.  Such properties are represented by an abstract
@@ -188,3 +189,153 @@ theorem Base.up (b : Base p s f) : ∀ᶠ z in 𝓝ˢ (closure s), p b.u z := by
   apply Filter.eventually_of_mem (b.ot.mem_nhdsSet.mpr b.cover)
   intro x m; refine b.congr (b.gp (b.y m) (b.yt m)) ?_
   exact ((b.ug _).eventuallyEq_of_mem ((b.ot.inter isOpen_ball).mem_nhds ⟨m, b.yt m⟩)).symm
+
+/-!
+### Continuation throughout a ball, starting from a point
+-/
+
+variable [ProperSpace E]
+variable {c : E} {s' : Set E} {r t : ℝ}
+
+/-- Information we need to continue a function throughout an open ball. -/
+structure Continuation [NormedSpace ℝ E] [ProperSpace E] (p : (E → α) → E → Prop)
+    (c : E) (r : ℝ) (fs : E → α) : Prop where
+  /-- The radius is positive -/
+  pos : 0 < r
+  /-- `p f x` is a local property of `f` near `x` -/
+  congr : ∀ {f g x}, p f x → f =ᶠ[𝓝 x] g → p g x
+  /-- The seed `fs` is valid near `x` -/
+  start : ∀ᶠ y in 𝓝 c, p fs y
+  /-- Given `f` valid on convex `s`, we can continue `f` to a neighorhood of any `x ∈ closure s` -/
+  point : ∀ {f t x}, 0 < t → t < r → (∀ᶠ x in 𝓝ˢ (ball c t), p f x) → x ∈ closedBall c t →
+    ∃ g, (∀ᶠ z in 𝓝 x, p g z) ∧ ∃ᶠ z in 𝓝 x, z ∈ ball c t ∧ g z = f z
+  /-- If `f0, f1` are valid on an open preconnected set, and match somewhere,
+      they match everywhere -/
+  unique : ∀ {f0 f1 : E → α} {t : Set E}, IsOpen t → IsPreconnected t →
+    (∀ x, x ∈ t → p f0 x) → (∀ x, x ∈ t → p f1 x) → (∃ x, x ∈ t ∧ f0 x = f1 x) → EqOn f0 f1 t
+
+namespace Continuation
+
+variable {fs : E → α}
+variable {i : Continuation p c r fs}
+attribute [bound_forward] Continuation.pos
+
+/-- We can grow out through a set `t` -/
+def Grow (_ : Continuation p c r fs) (s : Set E) : Prop :=
+  ∃ f, f c = fs c ∧ ∀ᶠ x in 𝓝ˢ s, p f x
+
+/-- Grow is monotonic -/
+lemma Grow.mono (g : i.Grow s) (sub : s' ⊆ s) : i.Grow s' := by
+  obtain ⟨f, e, h⟩ := g
+  exact ⟨f, e, h.filter_mono (nhdsSet_mono sub)⟩
+
+/-- We can grow through a small open ball -/
+lemma grow_small (i : Continuation p c r fs) : ∃ t > 0, t ≤ r ∧ i.Grow (ball c t) := by
+  obtain ⟨t,t0,g⟩ := Metric.eventually_nhds_iff_ball.mp i.start
+  refine ⟨min t r, by bound, by bound, fs, ?_⟩
+  simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal]
+  aesop
+
+/-- If we can grow up to `ball c r`, we can grow through the closure -/
+lemma Grow.closed (g : i.Grow (ball c t)) (tr : t < r) : i.Grow (closedBall c t) := by
+  by_cases t0 : t ≤ 0
+  · obtain ⟨u,u0,ur,g⟩ := i.grow_small
+    exact g.mono (Metric.closedBall_subset_ball (by linarith))
+  simp only [not_le] at t0
+  obtain ⟨f, e, pf⟩ := g
+  have b : Base p (ball c t) f := {
+    convex := convex_ball _ _
+    compact := by
+      apply (isCompact_closedBall c r).of_isClosed_subset isClosed_closure
+      simp only [closure_ball _ t0.ne', Metric.closedBall_subset_closedBall tr.le]
+    congr := i.congr
+    start := pf
+    point := fun {x m} ↦ i.point t0 tr pf (by simpa [closure_ball _ t0.ne'] using m)
+    unique := i.unique }
+  refine ⟨b.u, ?_, ?_⟩
+  · exact (b.uf.self_of_nhdsSet (mem_ball_self t0)).trans e
+  · refine b.up.filter_mono (nhdsSet_mono ?_)
+    simp only [closure_ball _ t0.ne', subset_refl]
+
+/-- If we can grow through a closed ball, we can grow through a larger open ball -/
+lemma Grow.open (g : i.Grow (closedBall c t)) : ∃ u > t, i.Grow (ball c u) := by
+  obtain ⟨f, e, h⟩ := g
+  obtain ⟨s',o,sub,h⟩ := eventually_nhdsSet_iff_exists.mp h
+  obtain ⟨u,lt,sub'⟩ := exists_ball_superset sub o
+  refine ⟨u, lt, f, e, ?_⟩
+  simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal]
+  intro x m
+  exact h x (sub' m)
+
+/-- If we grow up until everything before `t`, we grow to `t` -/
+lemma Grow.sup {u : ℕ → ℝ} (mono : Monotone u) (tend : Tendsto u atTop (𝓝 t)) (t0 : 0 < t)
+    (grow : ∀ n, i.Grow (ball c (u n))) : i.Grow (ball c t) := by
+  have ut : ∀ n, u n ≤ t := fun n ↦ mono.ge_of_tendsto tend n
+  have ex : ∀ t' < t, ∃ n, t' < u n := fun t' lt ↦ tend.exists_lt lt
+  set n : E → ℕ := fun x ↦ if lt : ‖x - c‖ < t then Nat.find (ex _ lt) else Nat.find (ex 0 t0)
+  have u0 : ∀ x, 0 < u (n x) := by
+    intro x
+    simp only [n]
+    split_ifs with lt
+    · exact lt_of_le_of_lt (norm_nonneg _) (Nat.find_spec (ex _ lt))
+    · exact Nat.find_spec (ex 0 t0)
+  have nlt : ∀ x, ‖x - c‖ < t → ‖x - c‖ < u (n x) := by
+    intro x lt
+    simp only [lt, n]
+    exact Nat.find_spec (ex _ lt)
+  set fn : E → E → α := fun x ↦ choose (grow (n x))
+  have spec : ∀ x, fn x c = fs c ∧ ∀ᶠ y in 𝓝ˢ (ball c (u (n x))), p (fn x) y :=
+    fun x ↦ choose_spec (grow (n x))
+  set f : E → α := fun x ↦ fn x x
+  refine ⟨f, (spec _).1, ?_⟩
+  simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal, mem_ball, dist_eq_norm]
+  intro x xlt
+  apply i.congr (f := fn x) (g := f)
+  · specialize spec x
+    simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal, mem_ball, dist_eq_norm] at spec
+    exact spec.2 x (nlt x xlt)
+  · have elt : ∀ᶠ y in 𝓝 x, ‖y - c‖ < u (n x) :=
+      ContinuousAt.eventually_lt (f := fun x ↦ ‖x - c‖) (by fun_prop) continuousAt_const (nlt x xlt)
+    filter_upwards [elt] with y ylt
+    have sx := (spec x).2
+    have sy := (spec y).2
+    simp only [isOpen_ball.nhdsSet_eq, Filter.eventually_principal, mem_ball, dist_eq_norm] at sx sy
+    refine i.unique (f0 := fn x) (f1 := fn y) (t := ball c (min (u (n x)) (u (n y)))) isOpen_ball
+      (convex_ball _ _).isPreconnected ?_ ?_ ⟨c, ?_⟩ ?_
+    · intro z m
+      apply sx
+      simp only [mem_ball, dist_eq_norm, lt_inf_iff] at m
+      exact m.1
+    · intro z m
+      apply sy
+      simp only [mem_ball, dist_eq_norm, lt_inf_iff] at m
+      exact m.2
+    · simp [u0, (spec _).1]
+    · have yt := lt_of_lt_of_le ylt (ut _)
+      simp only [yt, ↓reduceDIte, mem_ball, dist_eq_norm, lt_inf_iff, ylt, true_and, gt_iff_lt, n]
+      simpa using Nat.find_spec (ex _ yt)
+
+/-- We can grow through the whole ball -/
+lemma grow : i.Grow (ball c r) := by
+  set s : Set ℝ := {t | 0 < t ∧ t ≤ r ∧ i.Grow (ball c t)}
+  have above : BddAbove s := bddAbove_def.mpr ⟨r, by aesop⟩
+  obtain ⟨t0, t0p, t0r, g0⟩ := i.grow_small
+  have start : t0 ∈ s := by aesop
+  have ne : s.Nonempty := ⟨t0, start⟩
+  have pos : 0 < sSup s := lt_csSup_of_lt above start t0p
+  have sup_le : sSup s ≤ r := csSup_le ne (by aesop)
+  have down : ∀ a b, 0 < a → a ≤ b → b ∈ s → a ∈ s := by
+    intro a b a0 ab bs
+    exact ⟨a0, le_trans ab bs.2.1, bs.2.2.mono (Metric.ball_subset_ball ab)⟩
+  have self : sSup s ∈ s := by
+    obtain ⟨u,mono,tend,grow⟩ := exists_seq_tendsto_sSup ne above
+    exact ⟨pos, sup_le, Grow.sup mono tend pos (fun n ↦ (grow n).2.2)⟩
+  by_cases sup_lt : sSup s < r
+  · obtain ⟨t,sup_t,g⟩ := (self.2.2.closed sup_lt).open
+    have lt : sSup s < min t r := by bound
+    obtain ⟨u,su,utr⟩ := exists_between lt
+    simp only [lt_inf_iff] at utr
+    have us : u ∈ s := ⟨by linarith, by linarith, g.mono (Metric.ball_subset_ball utr.1.le)⟩
+    linarith [le_csSup above us]
+  · simp only [not_lt] at sup_lt
+    exact (down r (sSup s) i.pos sup_lt self).2.2

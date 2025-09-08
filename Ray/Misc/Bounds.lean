@@ -20,6 +20,11 @@ open Complex (exp log I slitPlane)
 open Filter (atTop)
 open scoped Real NNReal Topology symmDiff
 
+variable {α : Type}
+variable {M : Type} [AddCommMonoid M]
+variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
+variable {G : Type} [NormedAddCommGroup G]
+
 /-- A `Finset ℕ` with only large elements -/
 def Late (N : Finset ℕ) (m : ℕ) :=
   ∀ n, n ∈ N → n ≥ m
@@ -94,7 +99,7 @@ theorem finset_partition (A B : Finset ℕ) : A = A \ B ∪ A ∩ B := by
     cases' h with m m
     repeat exact m.1
 
-theorem finset_sum_partition (A B : Finset ℕ) (f : ℕ → ℂ) :
+theorem finset_sum_partition (A B : Finset ℕ) (f : ℕ → M) :
     A.sum f = (A \ B).sum f + (A ∩ B).sum f := by
   have ha : A = A \ B ∪ A ∩ B := finset_partition A B
   nth_rw 1 [ha]
@@ -106,14 +111,14 @@ theorem sdiff_sdiff_disjoint (A B : Finset ℕ) : Disjoint (A \ B) (B \ A) :=
 theorem symmDiff_union (A B : Finset ℕ) : A ∆ B = A \ B ∪ B \ A := by
   rw [symmDiff_def, Finset.sup_eq_union]
 
-theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → ℂ) :
+theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → G) :
     dist (A.sum f) (B.sum f) ≤ (A ∆ B).sum (fun n ↦ ‖f n‖) := by
   rw [finset_sum_partition A B f, finset_sum_partition B A f, Finset.inter_comm B A]
   rw [dist_add_right ((A \ B).sum f) ((B \ A).sum f) ((A ∩ B).sum f)]
-  rw [Complex.dist_eq]
+  rw [dist_eq_norm]
   trans (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖)
-  · have ha := finset_complex_abs_sum_le (A \ B) f
-    have hb := finset_complex_abs_sum_le (B \ A) f
+  · have ha := finset_norm_sum_le (A \ B) f
+    have hb := finset_norm_sum_le (B \ A) f
     calc ‖(A \ B).sum f - (B \ A).sum f‖
       _ ≤ ‖(A \ B).sum f‖ + ‖(B \ A).sum f‖ := by bound
       _ ≤ (A \ B).sum (fun n ↦ ‖f n‖) + (B \ A).sum (fun n ↦ ‖f n‖) := by bound
@@ -418,3 +423,16 @@ theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
     rw [Complex.exp_sum]; apply Finset.prod_congr rfl
     intro n m; rw [Complex.exp_log (f0 n m)]
   rw [e]; exact _root_.trans (exp_small (by linarith)) (by linarith)
+
+/-- If `z, w` are close, then `0 < (z⁻¹ * w).re` -/
+lemma re_mul_inv_pos_of_close {z w : ℂ} (wz : ‖w - z‖ < ‖z‖) : 0 < (z⁻¹ * w).re := by
+  have z0 : z ≠ 0 := norm_ne_zero_iff.mp (lt_of_le_of_lt (by bound) wz).ne'
+  have h : ‖z⁻¹ * w - 1‖ < 1 := by
+    nth_rw 1 [← inv_mul_cancel₀ z0]
+    simp only [← mul_sub, norm_mul, norm_inv]
+    simp only [← div_eq_inv_mul]
+    bound [norm_pos_iff.mpr z0]
+  generalize z⁻¹ * w = x at h
+  rw [norm_sub_rev] at h
+  simpa only [Complex.sub_re, Complex.one_re, sub_lt_self_iff] using
+    lt_of_le_of_lt (Complex.re_le_norm _) h

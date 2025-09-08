@@ -1,3 +1,4 @@
+import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Analysis.Complex.Norm
@@ -9,6 +10,9 @@ import Mathlib.Analysis.Complex.Norm
 open Filter (atTop)
 open Stream' (cons)
 open scoped Topology Stream
+
+variable {G : Type} [NormedAddCommGroup G]
+variable {H : Type} [CommMonoid H]
 
 /-- Insert `0` into a `Finset ℕ`, adding `1` to existing elements -/
 def push (N : Finset ℕ) :=
@@ -46,7 +50,7 @@ theorem push_sum {X : Type} [AddCommGroup X] {a : X} {f : ℕ → X} {N : Finset
   rw [push]; simp; rfl
 
 /-- `push` and products interact nicely -/
-theorem push_prod {a : ℂ} {f : ℕ → ℂ} {N : Finset ℕ} : a * N.prod f = (push N).prod (cons a f) := by
+theorem push_prod {a : H} {f : ℕ → H} {N : Finset ℕ} : a * N.prod f = (push N).prod (cons a f) := by
   rw [push]; simp; rfl
 
 /-- The range of `push` is `Finset`s containing 0 -/
@@ -68,8 +72,8 @@ theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
   have h : {N : Finset ℕ | 0 ∈ N} = {N : Finset ℕ | {0} ≤ N} := by simp
   rw [h]; exact Filter.mem_atTop _
 
-/-- Triangle inequality for finset sums of complex numbers -/
-theorem finset_complex_abs_sum_le (N : Finset ℕ) (f : ℕ → ℂ) :
+/-- Triangle inequality for finset sums -/
+theorem finset_norm_sum_le (N : Finset ℕ) (f : ℕ → G) :
     ‖N.sum fun n ↦ f n‖ ≤ N.sum fun n ↦ ‖f n‖ := by
   induction' N using Finset.induction with n N Nn h; · simp
   · rw [Finset.sum_insert Nn]
