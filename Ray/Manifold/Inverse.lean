@@ -147,7 +147,7 @@ lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := 
     · rw [i.zz]; exact (i.fa.along_snd.mdifferentiableAt le_top).hasMFDerivAt
 
 lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
-  refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst
+  refine HasMFDerivAt.prodMk ?_ i.has_df'; apply hasMFDerivAt_fst
 
 omit cms in
 lemma Cinv.dei_de' (i : Cinv f c z) : ∀ t, i.dei' (i.de' t) = t := by

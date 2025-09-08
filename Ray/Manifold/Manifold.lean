@@ -112,18 +112,6 @@ end Nhds
 
 section Deriv
 
--- begin #29130
-
-/-- `HasMFDerivAt` of `x ↦ (f x, g x)` is `df.prod dg` -/
-theorem HasMFDerivAt.prod {f : M → N} {g : M → O} {x : M}
-    {df : TangentSpace I x →L[𝕜] TangentSpace J (f x)} (fh : HasMFDerivAt I J f x df)
-    {dg : TangentSpace I x →L[𝕜] TangentSpace K (g x)} (gh : HasMFDerivAt I K g x dg) :
-    HasMFDerivAt I (J.prod K) (fun y ↦ (f y, g y)) x (df.prod dg) := by
-  simp only [HasMFDerivAt] at fh gh ⊢
-  use fh.1.prodMk gh.1; exact fh.2.prodMk gh.2
-
--- end #29130
-
 /-- `TangentSpace` commutes with products -/
 theorem tangentSpace_prod (x : M) (y : N) :
     TangentSpace (I.prod J) (x, y) = (TangentSpace I x × TangentSpace J y) := by
@@ -152,7 +140,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     intro u
     have d : HasMFDerivAt J L (uncurry f ∘ fun x ↦ (x, z)) y
         (df.comp ((ContinuousLinearMap.id 𝕜 (TangentSpace J y)).prod 0)) :=
-      fh.comp y ((hasMFDerivAt_id _).prod (hasMFDerivAt_const _ _))
+      fh.comp y ((hasMFDerivAt_id _).prodMk (hasMFDerivAt_const _ _))
     simp only [hasMFDerivAt_unique fh0 d]
     refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
     refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
@@ -163,7 +151,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
     have d : HasMFDerivAt K L (uncurry f ∘ fun x ↦ (y, x)) z (df.comp
         ((0 : TangentSpace K z →L[𝕜] TangentSpace J y).prod
           (ContinuousLinearMap.id 𝕜 (TangentSpace K z)))) :=
-      fh.comp z ((hasMFDerivAt_const _ _).prod (hasMFDerivAt_id _))
+      fh.comp z ((hasMFDerivAt_const _ _).prodMk (hasMFDerivAt_id _))
     rw [hasMFDerivAt_unique fh1 d]
     refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
     refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
@@ -184,7 +172,7 @@ theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {
     {df1 : TangentSpace K (h x) →L[𝕜] TangentSpace L (f (g x) (h x))}
     (fh1 : HasMFDerivAt K L (fun y ↦ f (g x) y) (h x) df1) :
     HasMFDerivAt I L (fun y ↦ f (g y) (h y)) x (df0.comp dg + df1.comp dh) := by
-  have fh := (fd.hasMFDerivAt_uncurry fh0 fh1).comp x (gh.prod hh)
+  have fh := (fd.hasMFDerivAt_uncurry fh0 fh1).comp x (gh.prodMk hh)
   simp only [ContinuousLinearMap.add_comp, ContinuousLinearMap.comp_assoc] at fh
   exact fh
 
