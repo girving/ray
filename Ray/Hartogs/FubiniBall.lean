@@ -14,7 +14,7 @@ disk integrals to `intervalIntegral`s of `circleIntegral`s.
 We extend the result for annuli as well, since we use that for the Koebe quarter theorem.
 -/
 
-open Complex (abs arg exp I)
+open Complex (arg exp I)
 open LinearMap (toMatrix_apply)
 open MeasureTheory
 open Metric (ball closedBall sphere)

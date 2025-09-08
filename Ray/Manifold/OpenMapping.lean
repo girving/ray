@@ -26,10 +26,10 @@ extentions of the flat versions lifted to charts.
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto)
 open Function (curry uncurry)
-open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
+open Metric (ball closedBall isOpen_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set

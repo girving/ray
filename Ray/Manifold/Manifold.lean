@@ -81,17 +81,6 @@ def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [Top
   continuousOn_toFun := continuousOn_extChartAt x
   continuousOn_invFun := continuousOn_extChartAt_symm x
 
-/- /-- `extChartAt` maps `𝓝` to `𝓝` -/
-theorem extChartAt_map_nhds [I.Boundaryless] {x y : M} (m : y ∈ (extChartAt I x).source) :
-    Filter.map (extChartAt I x) (𝓝 y) = 𝓝 (extChartAt I x y) :=
-  (extChartAt' I x).map_nhds_eq m
-
-/-- `extChartAt` maps `𝓝` to `𝓝` -/
-theorem extChartAt_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
-    [TopologicalSpace M] [ChartedSpace A M] (x : M) :
-    Filter.map (extChartAt I x) (𝓝 x) = 𝓝 (extChartAt I x x) :=
-  map_extChartAt_nhds_of_boundaryless x -/
-
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
 theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
     Filter.map (extChartAt I x).symm (𝓝 y) = 𝓝 ((extChartAt I x).symm y) :=

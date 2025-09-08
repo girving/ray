@@ -36,10 +36,10 @@ From these, we have a variety of consequences, such as:
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto)
 open Function (curry uncurry)
-open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
+open Metric (ball closedBall isOpen_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set
@@ -135,11 +135,11 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
   generalize hn' : (⟨n, np⟩ : ℕ+) = n'
   have e : {z : ℂ | z ^ n = 1} ⊆ (fun x : ℂˣ ↦ (x : ℂ)) '' (rootsOfUnity n' ℂ : Set ℂˣ) := by
     intro z e; simp only [mem_setOf] at e
-    simp only [mem_image, SetLike.mem_coe, mem_rootsOfUnity]
+    simp only [mem_image, SetLike.mem_coe]
     by_cases z0 : z = 0
     · simp only [z0, zero_pow n0, zero_ne_one] at e
     · use Units.mk0 z z0
-      simp only [← hn', ← Units.val_inj, Units.val_pow_eq_pow_val, Units.val_mk0, e, Units.val_one,
+      simp [← hn', ← Units.val_inj, Units.val_pow_eq_pow_val, Units.val_mk0, e, Units.val_one,
         and_self]
   apply Set.Countable.mono e; clear e; apply Countable.image; apply Set.Finite.countable
   rw [Set.finite_def]

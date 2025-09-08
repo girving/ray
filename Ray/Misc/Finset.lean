@@ -1,6 +1,6 @@
-import Mathlib.Data.Complex.Norm
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
+import Mathlib.Analysis.Complex.Norm
 
 /-!
 ## `Finset ℕ` machinery for use in sums and products

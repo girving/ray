@@ -3,7 +3,7 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.ReImTopology
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.UniformSpace.UniformConvergence
@@ -109,7 +109,7 @@ theorem cauchy_bound {f : ℂ → ℂ} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w 
     _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by field_simp
+    _ = wr := by field_simp; norm_cast; field_simp; simp 
 
 theorem circleIntegral_sub {f g : ℂ → ℂ} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :

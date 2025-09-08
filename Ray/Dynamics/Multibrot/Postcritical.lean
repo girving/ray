@@ -6,7 +6,6 @@ import Ray.Dynamics.Multibrot.Potential
 We show that any `(c,z)` with `4 ≤ abs c ≤ abs z` is postcritical.
 -/
 
-open Complex (abs)
 open Real (exp log)
 open RiemannSphere
 open Set

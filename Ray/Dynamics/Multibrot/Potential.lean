@@ -11,7 +11,6 @@ the iterate growth rate estimates in `Iterates.lean`:
    `k = 1.927` if `6 ≤ abs z`.
 -/
 
-open Complex (abs)
 open Filter (Tendsto atTop)
 open Metric (ball mem_ball_self mem_ball)
 open Real (exp log)

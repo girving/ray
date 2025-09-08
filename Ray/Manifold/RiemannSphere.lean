@@ -17,7 +17,7 @@ namely `coe` and `inv ∘ coe`, giving the Riemann sphere `𝕊`.
 -/
 
 open Classical
-open Complex (abs)
+open Complex 
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open OneDimension

@@ -3,7 +3,7 @@ import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Stream.Init

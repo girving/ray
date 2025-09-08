@@ -21,7 +21,7 @@ since for higher potentials we choose roots arbitrarily.
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball mem_closedBall mem_ball_self)

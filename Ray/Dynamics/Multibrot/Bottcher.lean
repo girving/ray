@@ -19,7 +19,7 @@ Our main results are:
 3. `bottcher d` is monic at `∞` (has derivative 1 there)
 -/
 
-open Complex (abs)
+open Complex
 open Filter (Tendsto)
 open Metric (closedBall mem_closedBall mem_closedBall_self)
 open Real (exp log)

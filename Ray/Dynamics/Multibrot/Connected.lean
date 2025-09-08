@@ -10,7 +10,7 @@ connected: it's a ball.  But also the Multibrot set itself is connected, since i
 intersection of compact, connected sets (the levelsets of `potential d`).
 -/
 
-open Complex (abs)
+open Complex 
 open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball sphere closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall

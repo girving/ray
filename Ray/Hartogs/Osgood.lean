@@ -5,7 +5,7 @@ import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
@@ -46,7 +46,7 @@ For a quick refresher on why the Cauchy power series works, for `c = 0`:
       = Σ_n w^n (2πi)⁻¹ ∫_C dz  z⁻¹^n * z⁻¹ * f z
 -/
 
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere isOpen_ball)
@@ -239,7 +239,7 @@ theorem sum_integral_commute {f : ℕ → ℂ → E} {g : ℂ → E} {c : ℂ} {
     exact fb n (circleMap c r t) (circleMap_mem_sphere _ (by linarith) _)
   · apply MeasureTheory.ae_of_all; intro t _
     exact Summable.mul_left _ bs
-  · simp only [_root_.intervalIntegrable_const]
+  · simp [_root_.intervalIntegrable_const]
   · apply MeasureTheory.ae_of_all; intro t _
     apply HasSum.const_smul
     exact h (circleMap c r t) (circleMap_mem_sphere _ (by linarith) _)

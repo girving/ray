@@ -31,7 +31,7 @@ of `s.potential`.
 -/
 
 open Classical
-open Complex (exp log abs cpow)
+open Complex (exp log cpow)
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)

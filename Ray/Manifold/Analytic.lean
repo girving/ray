@@ -70,71 +70,6 @@ theorem mAnalytic_iff_of_boundaryless [I.Boundaryless] [IsManifold I ω M] [IsMa
 
 -- end #28286
 
-/- /-- ContMDiff functions are continuous (explicit `I`, `J` version) -/
-theorem ContMDiffAt.continuousAt' (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
-    {M N : Type} [TopologicalSpace M] [ChartedSpace A M] [TopologicalSpace N] [ChartedSpace B N]
-    [I.Boundaryless] [J.Boundaryless] [CompleteSpace F]
-    {f : M → N} {x : M} (h : ContMDiffAt I J ω f x) :
-    ContinuousAt f x := h.continuousAt -/
-
-/- /-- `I.toPartialEquiv = I` in terms of `coe` -/
-lemma ModelWithCorners.coe_coe (I : ModelWithCorners 𝕜 E A) :
-    ⇑I.toPartialEquiv = (I : A → E) := rfl
-
-/-- `I.toPartialEquiv.symm = I.symm` in terms of `coe` -/
-theorem ModelWithCorners.coe_coe_symm (I : ModelWithCorners 𝕜 E A) :
-    ⇑I.toPartialEquiv.symm = (I.symm : E → A) := rfl -/
-
-/- /-- `extChartAt` is analytic (boundary or not) -/
-lemma ContMDiffAt.extChartAt [CompleteSpace E] [cm : IsManifold I ⊤ M]
-    {x y : M} (ys : y ∈ (extChartAt I x).source) :
-    ContMDiffAt I 𝓘(𝕜, E) ω (extChartAt I x) y := by
-  refine contMDiffOn_extChartAt.contMDiffAt ?_
-
-  -- simp only [extChartAt_source] at ys
-  -- exact contMDiffAt_extChartAt' ys -/
-
-/- /-- `I` preserves `𝓝` if it is boundaryless -/
-lemma ModelWithCorners.map_nhds_eq_of_boundaryless [I.Boundaryless] {x : A} :
-    (𝓝 x).map I = 𝓝 (I x) := by
-  simp only [I.map_nhds_eq, I.range_eq_univ, nhdsWithin_univ] -/
-
-/- /-- `extChartAt.symm` is analytic if we're boundaryless -/
-theorem ContMDiffAt.extChartAt_symm [CompleteSpace E] [I.Boundaryless] [cm : IsManifold I ω M]
-    {x : M} {y : E} (ys : y ∈ (_root_.extChartAt I x).target) :
-    ContMDiffAt 𝓘(𝕜, E) I ω (_root_.extChartAt I x).symm y := by
-  refine (contMDiffOn_extChartAt_symm _).contMDiffAt (extChartAt_target_mem_nhds' ys)
-  /- suffices h : ContMDiffWithinAt 𝓘(𝕜, E) I ω (_root_.extChartAt I x).symm (range I) y by
-    simp only [mfld_simps, mAnalyticAt_iff, contMDiffWithinAt_iff, I.range_eq_univ,
-      contDiffWithinAt_univ, analyticWithinAt_univ, continuousWithinAt_univ] at h ⊢
-    exact ⟨h.1, h.2.analyticAt⟩
-  exact contMDiffWithinAt_extChartAt_symm_range x ys -/ -/
-
-/- /-- `ContMDiffAt` depends only on local values -/
-theorem ContMDiffAt.congr [CompleteSpace F] {f g : M → N} {x : M} (fa : ContMDiffAt I J ω f x)
-    (e : f =ᶠ[𝓝 x] g) : ContMDiffAt I J ω g x :=
-  ContMDiffAt.congr_of_eventuallyEq fa (id (Filter.EventuallyEq.symm e)) -/
-
--- begin #28292
-
-/-- `ContMDiffAt.comp` for a function of two arguments -/
-theorem ContMDiffAt.comp₂ [IsManifold I ω M] [IsManifold J ω N] [IsManifold K ω O]
-    [IsManifold L ω P] {h : N × M → P} {f : O → N} {g : O → M} {x : O}
-    (ha : ContMDiffAt (J.prod I) L ω h (f x, g x)) (fa : ContMDiffAt K J ω f x)
-    (ga : ContMDiffAt K I ω g x) : ContMDiffAt K L ω (fun x ↦ h (f x, g x)) x :=
-  ha.comp (f := fun x ↦ (f x, g x)) _ (fa.prodMk ga)
-
-/-- `ContMDiffAt.comp₂`, with a separate argument for point equality -/
-theorem ContMDiffAt.comp₂_of_eq [IsManifold I ω M] [IsManifold J ω N] [IsManifold K ω O]
-    [IsManifold L ω P] {h : N × M → P} {f : O → N} {g : O → M} {x : O} {y : N × M}
-    (ha : ContMDiffAt (J.prod I) L ω h y) (fa : ContMDiffAt K J ω f x)
-    (ga : ContMDiffAt K I ω g x) (e : (f x, g x) = y) :
-    ContMDiffAt K L ω (fun x ↦ h (f x, g x)) x := by
-  rw [← e] at ha
-  exact ha.comp₂ fa ga
-
--- end #28292
-
 section Iff
 
 variable (I J)
@@ -165,81 +100,6 @@ theorem ContMDiffAt.analyticAt [CompleteSpace F] (I : ModelWithCorners 𝕜 E A)
     ContMDiffAt I J ω f x → AnalyticAt 𝕜 f x :=
   (analyticAt_iff_mAnalyticAt _ _).mpr
 
--- begin #28292
-
-/-- Curried analytic functions are analytic in the first coordinate -/
-theorem ContMDiffAt.along_fst [CompleteSpace G] [CompleteSpace H] [IsManifold I ω M]
-    [IsManifold K ω O] [IsManifold L ω P]
-    {f : M → O → P} {x : M} {y : O} (fa : ContMDiffAt (I.prod K) L ω (uncurry f) (x, y)) :
-    ContMDiffAt I L ω (fun x ↦ f x y) x :=
-  fa.comp₂ contMDiffAt_id contMDiffAt_const
-
-/-- Curried analytic functions are analytic in the second coordinate -/
-theorem ContMDiffAt.along_snd [CompleteSpace G] [IsManifold I ω M] [IsManifold J ω N]
-    [IsManifold K ω O] [CompleteSpace E] {f : M → N → O} {x : M} {y : N}
-    (fa : ContMDiffAt (I.prod J) K ω (uncurry f) (x, y)) :
-    ContMDiffAt J K ω (fun y ↦ f x y) y :=
-  fa.comp₂ contMDiffAt_const contMDiffAt_id
-
-/-- Curried analytic functions are analytic in the first coordinate -/
-theorem ContMDiff.along_fst [CompleteSpace G] [CompleteSpace H] [IsManifold I ω M]
-    [IsManifold K ω O] [IsManifold L ω P]
-    {f : M → O → P} (fa : ContMDiff (I.prod K) L ω (uncurry f)) {y : O} :
-    ContMDiff I L ω (fun x ↦ f x y) :=
-  fun _ ↦ (fa _).along_fst
-
-/-- Curried analytic functions are analytic in the second coordinate -/
-theorem ContMDiff.along_snd [CompleteSpace G] [IsManifold I ω M] [IsManifold J ω N]
-    [IsManifold K ω O] [CompleteSpace E] {f : M → N → O} {x : M}
-    (fa : ContMDiff (I.prod J) K ω (uncurry f)) :
-    ContMDiff J K ω (fun y ↦ f x y) :=
-  fun _ ↦ (fa _).along_snd
-
--- end #28292
-
-/-
-
-/-- Addition is analytic -/
-theorem ContMDiffAt.add [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] {f g : O → F} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, F)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, F)) ω g x) :
-    ContMDiffAt K (𝓘(𝕜, F)) ω (fun x ↦ f x + g x) x := by
-  have e : (fun x ↦ f x + g x) = (fun p : F × F ↦ p.1 + p.2) ∘ fun x ↦ (f x, g x) := rfl
-  rw [e]
-  exact ((analyticAt_fst.add analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
-
-/-- Subtraction is analytic -/
-theorem ContMDiffAt.sub [CompleteSpace F] [CompleteSpace G] [IsManifold K ω O] {f g : O → F} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, F)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, F)) ω g x) :
-    ContMDiffAt K (𝓘(𝕜, F)) ω (fun x ↦ f x - g x) x :=
-  ((analyticAt_fst.sub analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
-
-/-- Multiplication is analytic -/
-theorem ContMDiffAt.mul' [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f g : O → 𝕜} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω g x) :
-    ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x * g x) x :=
-  ((analyticAt_fst.mul analyticAt_snd).mAnalyticAt _ _).comp _ (fa.prodMk ga)
-
-/-- Inverse is analytic away from zeros -/
-theorem ContMDiffAt.inv [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (f0 : f x ≠ 0) :
-    ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ (f x)⁻¹) x :=
-  ((analyticAt_id.inv f0).mAnalyticAt _ _).comp _ fa
-
-/-- Division is analytic away from denominator zeros -/
-theorem ContMDiffAt.div [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f g : O → 𝕜} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) (ga : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω g x) (g0 : g x ≠ 0) :
-    ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x / g x) x := by
-  simp only [div_eq_mul_inv]; exact fa.mul (ga.inv g0)
-
-/-- Powers are analytic -/
-theorem ContMDiffAt.pow [CompleteSpace 𝕜] [CompleteSpace G] [IsManifold K ω O] {f : O → 𝕜} {x : O}
-    (fa : ContMDiffAt K (𝓘(𝕜, 𝕜)) ω f x) {n : ℕ} :
-    ContMDiffAt K (𝓘(𝕜, 𝕜)) ω (fun x ↦ f x ^ n) x := by
-  have e : (fun x ↦ f x ^ n) = (fun z : 𝕜 ↦ z ^ n) ∘ f := rfl
-  rw [e]; exact ((analyticAt_id.pow _).mAnalyticAt _ _).comp _ fa
-
--/
-
 /-- Complex powers `f x ^ g x` are analytic if `f x` avoids the negative real axis  -/
 theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCorners ℂ E A}
     [IsManifold I ω M] {f g : M → ℂ} {x : M} (fa : ContMDiffAt I (𝓘(ℂ, ℂ)) ω f x)
@@ -249,16 +109,6 @@ theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCor
   rw [e]
   refine ((analyticAt_fst.cpow analyticAt_snd ?_).mAnalyticAt _ _).comp _ (fa.prodMk ga)
   exact a
-
--- begin #28674
-
-/-- Iterated `ContMDiff` functions are `ContMDiff`. -/
-theorem ContMDiff.iterate {f : M → M} {n : WithTop ℕ∞} (fa : ContMDiff I I n f) (k : ℕ) :
-    ContMDiff I I n (f^[k]) := by
-  induction' k with k h; simp only [Function.iterate_zero]; exact contMDiff_id
-  simp only [Function.iterate_succ']; exact fa.comp h
-
--- end #28674
 
 /-- If we're analytic at a point, we're locally analytic.
 This is true even with boundary, but for now we prove only the `Boundaryless` case. -/

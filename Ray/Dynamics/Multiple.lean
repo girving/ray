@@ -21,7 +21,7 @@ The proof proceeds in w.l.o.g. stages, reducing first from manifolds to `ℂ →
 the point to `0` and standardizing the leading coefficient to be 1.
 -/
 
-open Complex (exp log abs cpow)
+open Complex (exp log cpow)
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)

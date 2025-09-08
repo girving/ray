@@ -20,7 +20,6 @@ Our main result in this file is `iter_approx`, which shows that iterates grow as
 where `k` varies depending on `b` (see `iter_error_le_of_z3` and `iter_error_le_of_z4`).
 -/
 
-open Complex (abs)
 open Filter (Tendsto atTop)
 open Real (exp log)
 open Set
