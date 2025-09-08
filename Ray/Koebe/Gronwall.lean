@@ -228,7 +228,6 @@ lemma g_inj (i : Gronwall f) : ∀ᶠ r in atTop, InjOn (fun z ↦ snap (i.g z))
     simp only [ne_eq, w0, not_false_eq_true, z0, snap_div, Circle.coe_div, coe_snap, wr,
       Complex.ofReal_inv, div_inv_eq_mul, zr]
     field_simp [r0.ne']
-    ring
   rw [mul_comm, ← div_eq_div_iff_mul_eq_mul, ← snap_div fz0 fw0, ← snap_div w0 z0, Circle.ext_iff,
     wz] at e
   generalize ha : z⁻¹ = a at e fz0

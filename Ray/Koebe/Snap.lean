@@ -141,7 +141,7 @@ def Units.mk1 (x : α) : αˣ :=
 @[simp] lemma Units.val_mk1 {x : α} (x0 : x ≠ 0) : (Units.mk1 x).val = x := by
   simp only [mk1, ne_eq, x0, not_false_eq_true, ↓reduceDIte, val_mk0]
 
-lemma Units.continuousAt_mk1 [TopologicalSpace α] [T1Space α] [HasContinuousInv₀ α]
+lemma Units.continuousAt_mk1 [TopologicalSpace α] [T1Space α] [ContinuousInv₀ α]
     {x : α} (x0 : x ≠ 0) : ContinuousAt (fun x ↦ Units.mk1 x) x := by
   simp only [isInducing_embedProduct.continuousAt_iff, Function.comp_def, embedProduct_apply,
     val_inv_eq_inv_val, MulOpposite.op_inv]

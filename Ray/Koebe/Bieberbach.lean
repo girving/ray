@@ -21,7 +21,7 @@ works because `f z / z ≠ 0` and is analytic throughout the ball.
 -/
 
 open Classical
-open Complex (abs arg)
+open Complex (arg)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
@@ -157,7 +157,7 @@ theorem bieberbach (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 
     (gronwall_volume_le_two g.fa g.f0 g.df0 g.inj)
   simp only [Complex.norm_div, Complex.norm_ofNat, div_pow, sub_nonneg] at le
   nth_rw 2 [← mul_one π] at le
-  rw [mul_le_mul_left Real.pi_pos] at le
+  rw [mul_le_mul_iff_right₀ Real.pi_pos] at le
   simp only [iteratedDeriv_eq_iterate, Function.iterate_succ_apply, Function.iterate_zero_apply,
     b.ddh0, Complex.norm_div, Complex.norm_ofNat, norm_neg] at le
   rw [div_le_one (by norm_num), sq_le_sq₀ (by bound) (by norm_num), div_le_iff₀ (by norm_num)] at le
