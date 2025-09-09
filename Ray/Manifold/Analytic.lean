@@ -36,8 +36,6 @@ variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]
 variable {P : Type} {L : ModelWithCorners 𝕜 H D} [TopologicalSpace P]
 variable [ChartedSpace A M] [ChartedSpace B N] [ChartedSpace C O] [ChartedSpace D P]
 
--- begin #28286
-
 /-- Functions are `ContMDiffAt` iff they are continuous and analytic in charts -/
 theorem mAnalyticAt_iff {f : M → N} {x : M} [CompleteSpace F] :
     ContMDiffAt I J ω f x ↔ ContinuousAt f x ∧
@@ -67,8 +65,6 @@ theorem mAnalytic_iff_of_boundaryless [I.Boundaryless] [IsManifold I ω M] [IsMa
       ∀ x : M, AnalyticAt 𝕜 (extChartAt J (f x) ∘ f ∘ (extChartAt I x).symm)
         (extChartAt I x x) := by
   simp only [mAnalytic_iff, I.range_eq_univ, analyticWithinAt_univ]
-
--- end #28286
 
 section Iff
 

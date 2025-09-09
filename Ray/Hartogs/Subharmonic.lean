@@ -232,7 +232,8 @@ theorem AnalyticOnNhd.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ}
     simp only [MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter, Real.volume_real_Ioc,
       sub_zero]
     rw [max_eq_left Real.two_pi_pos.le]
-    rw [← smul_assoc, Complex.real_smul]; field_simp [Real.pi_ne_zero]
+    rw [← smul_assoc, Complex.real_smul]
+    field_simp [Real.pi_ne_zero]
     simp
   · intro z zs; rw [Set.diff_empty] at zs
     exact (fa z (Metric.ball_subset_closedBall zs)).differentiableAt
@@ -303,7 +304,6 @@ theorem AnalyticOnNhd.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa
         field_simp [norm_ne_zero_iff.mp anz]
         exact Complex.ofReal_mem_slitPlane.mpr
           (norm_pos_iff.mpr (ne_zero_of_norm_ne_zero anz))
-
       rcases Metric.isOpen_iff.mp (isOpen_analyticAt ℂ h) c ha with ⟨r0, r0p, r0a⟩
       rcases Metric.continuousAt_iff.mp fac (‖f c‖ - b.exp) (sub_pos.mpr bf) with
         ⟨r1, r1p, r1h⟩
