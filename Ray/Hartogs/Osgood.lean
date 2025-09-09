@@ -5,7 +5,7 @@ import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
@@ -46,7 +46,7 @@ For a quick refresher on why the Cauchy power series works, for `c = 0`:
       = Σ_n w^n (2πi)⁻¹ ∫_C dz  z⁻¹^n * z⁻¹ * f z
 -/
 
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere isOpen_ball)

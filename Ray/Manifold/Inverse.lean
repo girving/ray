@@ -133,19 +133,21 @@ variable [cmt : IsManifold I ω T]
 lemma Cinv.has_df' (i : Cinv f c z) : HasMFDerivAt II I i.f' (c, i.z') i.df' := by
   apply HasMFDerivAt.comp (I' := I) (c, i.z')
   · rw [i.zz]
-    exact ((ContMDiffAt.extChartAt (mem_extChartAt_source _)).mdifferentiableAt le_top).hasMFDerivAt
+    exact ((contMDiffAt_extChartAt' (mem_chart_source _ _)).mdifferentiableAt le_top).hasMFDerivAt
   · simp only [Cinv.df]
     have fd := i.fa.mdifferentiableAt le_top
     rw [← i.zz] at fd
     apply MDifferentiableAt.hasMFDerivAt_comp2 fd
     · apply hasMFDerivAt_fst
     · refine HasMFDerivAt.comp _ ?_ (hasMFDerivAt_snd _)
-      exact ((ContMDiffAt.extChartAt_symm (mem_extChartAt_target _)).mdifferentiableAt le_top).hasMFDerivAt
+      exact (((contMDiffOn_extChartAt_symm _).contMDiffAt
+        (extChartAt_target_mem_nhds'
+        (mem_extChartAt_target _))).mdifferentiableAt le_top).hasMFDerivAt
     · rw [i.zz]; exact (i.fa.along_fst.mdifferentiableAt le_top).hasMFDerivAt
     · rw [i.zz]; exact (i.fa.along_snd.mdifferentiableAt le_top).hasMFDerivAt
 
 lemma Cinv.has_dh (i : Cinv f c z) : HasMFDerivAt II II i.h (c, i.z') i.dh := by
-  refine HasMFDerivAt.prod ?_ i.has_df'; apply hasMFDerivAt_fst
+  refine HasMFDerivAt.prodMk ?_ i.has_df'; apply hasMFDerivAt_fst
 
 omit cms in
 lemma Cinv.dei_de' (i : Cinv f c z) : ∀ t, i.dei' (i.de' t) = t := by
@@ -298,11 +300,12 @@ theorem Cinv.he_symm_mAnalytic (i : Cinv f c z) : ContMDiffAt II II ω i.he.symm
 
 /-- Our inverse `g` is analytic -/
 theorem Cinv.ga (i : Cinv f c z) : ContMDiffAt II I ω (uncurry i.g) (c, f c z) := by
-  apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq
+  apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
+    (extChartAt_target_mem_nhds' (mem_extChartAt_target z))).comp_of_eq
   · refine contMDiffAt_snd.comp _ (i.he_symm_mAnalytic.comp_of_eq ?_ ?_)
     · apply contMDiffAt_fst.prodMk
-      refine (ContMDiffAt.extChartAt ?_).comp _ contMDiffAt_snd
-      exact mem_extChartAt_source _
+      refine (contMDiffAt_extChartAt' ?_).comp _ contMDiffAt_snd
+      exact mem_chart_source _ _
     · rfl
   · exact i.inv_at
 

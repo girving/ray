@@ -10,7 +10,7 @@ The proof follows Wikipedia: https://en.wikipedia.org/wiki/Koebe_quarter_theorem
 -/
 
 open Classical
-open Complex (abs arg)
+open Complex (arg)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
@@ -79,7 +79,7 @@ theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn
         Nat.add_one_sub_one, pow_one, deriv_const_sub, mul_neg, sub_neg_eq_add, add_div, ← pow_mul,
         Nat.reduceMul]
       ring_nf
-      have e0 : w ^ 3 * w⁻¹ ^ 4 * 2 = 2 * w⁻¹ := by field_simp [w0]; ring
+      have e0 : w ^ 3 * w⁻¹ ^ 4 * 2 = 2 * w⁻¹ := by field_simp [w0]
       have e1 : w ^ 4 * deriv (deriv f) 0 * w⁻¹ ^ 4 = deriv (deriv f) 0 := by field_simp [w0]
       simp only [e0, e1, add_comm, mul_comm _ (2 : ℂ)]
     · simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff, sub0 _ m0]
@@ -121,6 +121,7 @@ theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball
     intro z zm w wm e
     simp only [g] at e
     field_simp [d0] at e
+    simp only [sub_left_inj] at e
     exact (inj.eq_iff zm wm).mp e
   have g0 : g 0 = 0 := by simp [g]
   have dg0 : deriv g 0 = 1 := by simp [g, div_self d0]

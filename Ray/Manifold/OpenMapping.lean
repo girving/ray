@@ -26,10 +26,10 @@ extentions of the flat versions lifted to charts.
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto)
 open Function (curry uncurry)
-open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
+open Metric (ball closedBall isOpen_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set
@@ -187,7 +187,7 @@ theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAna
       (extChartAt I z z) := by
   use (mAnalyticAt_iff_of_boundaryless.mp n.mAnalyticAt).2.mAnalyticAt I I
   have c := n.nonconst; contrapose c
-  simp only [Filter.not_frequently, not_not, ← extChartAt_map_nhds' I z,
+  simp only [Filter.not_frequently, not_not, ← map_extChartAt_nhds_of_boundaryless z,
     Filter.eventually_map] at c ⊢
   apply c.mp
   apply ((isOpen_extChartAt_source z).eventually_mem (mem_extChartAt_source (I := I) z)).mp
@@ -215,7 +215,7 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [IsManifold I ω T] {f : S → T}
     --   map c⁻¹ (𝓝 (g (c z))) ≤ map c⁻¹ (map g (𝓝 (c z))  -- Monotonicity of map
     --   𝓝 (c⁻¹ (g (c z))) ≤ map (c' ∘ g ∘ c) (𝓝 z)        -- Charts map 𝓝 to 𝓝
     --   𝓝 (f z) ≤ map f (𝓝 z)                             -- Congruence
-    simp only [← extChartAt_map_nhds' I z, Filter.map_map] at h
+    simp only [← map_extChartAt_nhds_of_boundaryless z, Filter.map_map] at h
     replace h := @Filter.map_mono _ _ (extChartAt I (f z)).symm _ _ h
     simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source z)] at h
     simp only [extChartAt_symm_map_nhds' I (f z), Filter.map_map, Function.comp_def] at h
@@ -247,7 +247,7 @@ theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [IsManifold I ω T] {f : �
   have h := gn.nhds_le_map_nhds_param' ga
   -- We follow the 𝓝 ≤ 𝓝 argument of nontrivial_mAnalytic_at.nhds_le_map_nhds
   -- above, but a bit more complicated due to the parameterization.
-  simp only [nhds_prod_eq, ← extChartAt_map_nhds' I z, Filter.map_map,
+  simp only [nhds_prod_eq, ← map_extChartAt_nhds_of_boundaryless z, Filter.map_map,
     Filter.prod_map_id_map_eq] at h
   replace h := @Filter.map_mono _ _ (fun p : ℂ × ℂ ↦ (p.1, (extChartAt I (f c z)).symm p.2)) _ _ h
   simp only [← hg] at h; rw [PartialEquiv.left_inv _ (mem_extChartAt_source z)] at h

@@ -1,7 +1,7 @@
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Init
 import Mathlib.Topology.MetricSpace.Basic
@@ -16,7 +16,7 @@ import Ray.Misc.Bounds
 Uniformly convergent series of analytic functions have analytic limits.
 -/
 
-open Complex (abs)
+open Complex
 open Filter (atTop)
 open Metric (ball closedBall sphere)
 open scoped Real NNReal ENNReal Topology symmDiff

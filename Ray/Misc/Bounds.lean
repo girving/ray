@@ -2,9 +2,9 @@ import Mathlib.Analysis.Normed.Ring.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
-import Mathlib.Data.Complex.ExponentialBounds
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Tactic.Bound
 import Mathlib.Tactic.FieldSimp
@@ -16,7 +16,7 @@ import Ray.Misc.Finset
 -/
 
 open Classical
-open Complex (abs exp log I slitPlane)
+open Complex (exp log I slitPlane)
 open Filter (atTop)
 open scoped Real NNReal Topology symmDiff
 
@@ -211,7 +211,7 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : ‖z‖ < r) :
         rw [derivWithin.clog o ws, derivWithin.cid o ws]
         simp only [one_div, norm_inv]
         rw [inv_le_comm₀]
-        have aw := sa w ws; simp at aw; field_simp; assumption
+        have aw := sa w ws; simp at aw; field_simp; linarith
         have aw := sa w ws; linarith; norm_num; assumption
         exact differentiableWithinAt_id
         exact sp w ws
@@ -394,7 +394,7 @@ theorem log_add (a b : ℝ) (a0 : 0 < a) (ab0 : 0 < a + b) :
 /-- `log (abs (a + b)) = log (abs a) + log (abs (1 + b/a))` -/
 theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
     Real.log (‖a + b‖) = Real.log (‖a‖) + Real.log (‖1 + b/a‖) := by
-  have d0 : 1 + b/a ≠ 0 := by field_simp [a0, ab0]
+  have d0 : 1 + b/a ≠ 0 := by field_simp [a0, ab0]; exact div_ne_zero ab0 a0
   have a0' : ‖a‖ ≠ 0 := norm_ne_zero_iff.mpr a0
   have d0' : ‖1 + b / a‖ ≠ 0 := norm_ne_zero_iff.mpr d0
   rw [←Real.log_mul a0' d0', ← Complex.norm_mul, left_distrib, mul_one, mul_div_cancel₀ _ a0]

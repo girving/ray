@@ -21,7 +21,7 @@ since for higher potentials we choose roots arbitrarily.
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball mem_closedBall mem_ball_self)
@@ -78,8 +78,8 @@ theorem Super.eqOn_bottcher_bottcherPost (s : Super f d a) [OnePreimage s] :
 /-- `s.bottcher` is analytic on `s.post` -/
 theorem Super.bottcher_mAnalyticOn (s : Super f d a) [OnePreimage s] :
     ContMDiffOnNhd II I (uncurry s.bottcher) s.post := by
-  intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr
-  exact s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)
+  intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr_of_eventuallyEq
+  exact (s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)).symm
 
 /-- `s.bottcher` is the left inverse of `s.ray` -/
 theorem Super.bottcher_ray (s : Super f d a) [OnePreimage s] (m : (c, x) ∈ s.ext) :
@@ -176,7 +176,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     intro c z m
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d by
       refine (ContMDiffOnNhd.eq_of_locally_eq ?_ (fun z m ↦
-        (s.bottcher_mAnalyticOn (c, z) m).along_snd.pow) (s.post_slice_connected c).isPreconnected
+        ((contMDiff_pow _).contMDiffAt.comp _ (s.bottcher_mAnalyticOn (c, z) m).along_snd)) (s.post_slice_connected c).isPreconnected
         ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
       intro z m
       exact (s.bottcher_mAnalyticOn _ (s.stays_post m)).along_snd.comp _ (s.fa _).along_snd

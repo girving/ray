@@ -1,4 +1,5 @@
 import Mathlib.Topology.AlexandrovDiscrete
+import Mathlib.Geometry.Manifold.Algebra.LieGroup
 import Ray.Dynamics.BottcherNear
 import Ray.Manifold.Analytic
 import Ray.Manifold.Inverse
@@ -21,7 +22,7 @@ iteration sends `s.near` to `s.near`.
 -/
 
 open Classical
-open Complex (exp log abs cpow)
+open Complex (exp log cpow)
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)
@@ -85,14 +86,15 @@ theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
 theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [analyticAt_iff_mAnalyticAt II I]
   refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp _ ?_
-  refine (ContMDiffAt.extChartAt ?_).comp _ ?_
+  refine (contMDiffAt_extChartAt' ?_).comp _ ?_
   · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
-      ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
-      PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm, ModelWithCorners.toPartialEquiv_coe_symm,
-      ModelWithCorners.left_inv, PartialHomeomorph.left_inv, mem_chart_source, PartialEquiv.trans_source,
-      ModelWithCorners.source_eq, Set.preimage_univ, Set.inter_univ]
+    ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
+    PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm,
+    ModelWithCorners.toPartialEquiv_coe_symm, ModelWithCorners.left_inv, PartialHomeomorph.left_inv,
+    mem_chart_source]
   · refine (s.fa _).comp₂ contMDiffAt_fst ?_
-    refine (ContMDiffAt.extChartAt_symm ?_).comp _ ?_
+    refine ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' ?_)).comp _ ?_
     · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
         ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
         PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
@@ -455,7 +457,7 @@ theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
   have h2 : ContMDiffAt II II ω (fun p : ℂ × S ↦
       (p.1, extChartAt I a p.2 - extChartAt I a a)) p := by
     apply contMDiffAt_fst.prodMk; apply ContMDiffAt.sub
-    exact (ContMDiffAt.extChartAt (s.near_subset_chart m)).comp _ contMDiffAt_snd
+    exact (contMDiffAt_extChartAt' (extChartAt_source I a ▸ (s.near_subset_chart m))).comp _ contMDiffAt_snd
     exact contMDiffAt_const
   exact (h1.comp_of_eq h2 rfl).contMDiffWithinAt
 
@@ -530,7 +532,7 @@ theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     rw [u, mfderiv_sub, mfderiv_const, sub_zero]
     · exact extChartAt_mderiv_ne_zero a
-    · exact (ContMDiffAt.extChartAt (mem_extChartAt_source a)).mdifferentiableAt le_top
+    · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt le_top
     · apply mdifferentiableAt_const
 
 /-- `s.bottcherNear` is invertible near any `(c,a)` -/
@@ -575,9 +577,10 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
     apply AnalyticAt.differentiableAt
     apply ContMDiffAt.analyticAt I I
     simp only [s.f0]
-    apply (ContMDiffAt.extChartAt _).comp; apply (s.fa _).along_snd.comp
-    exact ContMDiffAt.extChartAt_symm (PartialEquiv.map_source _ zm)
-    simp only [PartialEquiv.left_inv _ zm]; exact ezm
+    apply (contMDiffAt_extChartAt' _).comp; apply (s.fa _).along_snd.comp
+    exact (contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' (PartialEquiv.map_source _ zm))
+    simp only [PartialEquiv.left_inv _ zm]; exact extChartAt_source I a ▸ ezm
   have d0 : ∀ z, DifferentiableAt ℂ (fun z ↦ z - extChartAt I a a) z := fun z ↦
     differentiableAt_id.sub (differentiableAt_const _)
   have d1 : DifferentiableAt ℂ (g ∘ fun z : ℂ ↦ z + extChartAt I a a)

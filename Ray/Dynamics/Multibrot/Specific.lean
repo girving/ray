@@ -1,4 +1,4 @@
-import Mathlib.Data.Complex.ExponentialBounds
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.NumberTheory.NumberField.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
@@ -6,7 +6,6 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 ## Bounds about `exp`, `log` at specific values or bounds
 -/
 
-open Complex (abs)
 open Real (exp log)
 open Set
 noncomputable section

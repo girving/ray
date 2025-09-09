@@ -223,7 +223,7 @@ theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f) 
     norm_num at c
   · rw [Function.iterate_succ', Critical,
       mfderiv_comp z ((fa _).mdifferentiableAt (OrderTop.le_top _))
-       ((fa.iter _ _).mdifferentiableAt (OrderTop.le_top _)),
+       ((fa.iterate _ _).mdifferentiableAt (OrderTop.le_top _)),
       mderiv_comp_eq_zero_iff] at c
     cases' c with c c; use n, c; exact h c
 
@@ -297,9 +297,10 @@ theorem ContMDiffAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) :
     AnalyticAt ℂ (uncurry (inChart f c z)) (c, _root_.extChartAt I z z) := by
   apply ContMDiffAt.analyticAt II I
-  apply (ContMDiffAt.extChartAt (mem_extChartAt_source (f c z))).comp_of_eq
+  apply (contMDiffAt_extChartAt' (extChartAt_source I (f c z) ▸ (mem_extChartAt_source (f c z)))).comp_of_eq
   apply fa.comp₂_of_eq contMDiffAt_fst
-  apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target z)).comp_of_eq contMDiffAt_snd
+  apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
+    (extChartAt_target_mem_nhds' (mem_extChartAt_target z))).comp_of_eq contMDiffAt_snd
   repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source z)]
 
 /-- `inChart` preserves critical points locally -/
@@ -316,15 +317,17 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   simp only [uncurry] at fm
   have m' := PartialEquiv.map_source _ m
   simp only [← mfderiv_eq_zero_iff_deriv_eq_zero]
-  have cd : ContMDiffAt I I ω (extChartAt I (f c z)) (f e w) := ContMDiffAt.extChartAt fm
+  have cd : ContMDiffAt I I ω (extChartAt I (f c z)) (f e w) := contMDiffAt_extChartAt' (extChartAt_source I (f c z) ▸ fm)
   have fd : ContMDiffAt I I ω (f e ∘ (extChartAt I z).symm) (extChartAt I z w) := by
     simp only [Function.comp_def]
-    exact ContMDiffAt.comp_of_eq fa.along_snd (ContMDiffAt.extChartAt_symm m')
+    exact ContMDiffAt.comp_of_eq fa.along_snd ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' m'))
       (PartialEquiv.right_inv _ m)
   have ce : inChart f c z e = extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
   rw [ce, mfderiv_comp_of_eq (cd.mdifferentiableAt le_top) (fd.mdifferentiableAt le_top) ?blah,
     mfderiv_comp_of_eq (fa.along_snd.mdifferentiableAt le_top)
-      ((ContMDiffAt.extChartAt_symm m').mdifferentiableAt le_top)]
+      (((contMDiffOn_extChartAt_symm _).contMDiffAt
+        (extChartAt_target_mem_nhds' m')).mdifferentiableAt le_top)]
   · simp only [mderiv_comp_eq_zero_iff, Function.comp]
     rw [(extChartAt I z).left_inv m]
     simp only [extChartAt_mderiv_ne_zero' fm, false_or]
@@ -392,14 +395,16 @@ theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
   · exact (continuousAt_extChartAt' fm).comp_of_eq
         (fc.continuousAt.comp (continuousAt_extChartAt_symm'' m)) rfl
   · apply ContMDiffAt.analyticAt I I
-    refine (ContMDiffAt.extChartAt fm).comp_of_eq ?_ rfl
+    refine (contMDiffAt_extChartAt' (extChartAt_source I (f p) ▸ fm)).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢
-    exact (f0 _ _).comp _ (ContMDiffAt.extChartAt_symm m.1)
+    exact (f0 _ _).comp _ ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' m.1))
   · apply ContMDiffAt.analyticAt I I
-    refine (ContMDiffAt.extChartAt fm).comp_of_eq ?_ rfl
+    refine (contMDiffAt_extChartAt' (extChartAt_source I (f p) ▸ fm)).comp_of_eq ?_ rfl
     rw [extChartAt_prod] at m
     simp only [Function.comp, extChartAt_prod, PartialEquiv.prod_symm, PartialEquiv.prod_coe,
       PartialEquiv.prod_target, mem_prod_eq] at m ⊢
-    exact (f1 _ _).comp _ (ContMDiffAt.extChartAt_symm m.2)
+    exact (f1 _ _).comp _ ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' m.2))

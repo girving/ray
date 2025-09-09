@@ -1,5 +1,5 @@
 import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Complex.Exponential
+import Mathlib.Analysis.Complex.Exponential
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import Mathlib.Topology.Basic

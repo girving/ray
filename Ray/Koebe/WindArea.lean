@@ -1,5 +1,4 @@
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-import Mathlib.Data.Complex.FiniteDimensional
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.Prod
 import Ray.Koebe.Wind

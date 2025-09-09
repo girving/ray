@@ -39,7 +39,7 @@ subharmonic functions that are bounded above and limsup bounded pointwise are li
 uniformly.  This is the key piece of measure theory needed for Hartogs' theorem.
 -/
 
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (Tendsto liminf limsup atTop)
 open Function (uncurry)
 open MeasureTheory
@@ -147,7 +147,8 @@ theorem HarmonicOn.const (a : E) {s : Set ℂ} : HarmonicOn (fun _ ↦ a) s :=
       intro c r _ _
       rw [average_eq]
       simp [← smul_assoc, smul_eq_mul]
-      field_simp [NiceVolume.itau.real_pos.ne'] }
+      field_simp [NiceVolume.itau.real_pos.ne']
+      simp }
 
 /-- Differences are harmonic -/
 theorem HarmonicOn.sub {f g : ℂ → F} {s : Set ℂ} (fh : HarmonicOn f s) (gh : HarmonicOn g s) :
@@ -224,13 +225,16 @@ theorem AnalyticOnNhd.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ}
     Set.countable_empty (Metric.mem_ball_self rp) fa.continuousOn ?_
   · simp_rw [circleIntegral, deriv_circleMap, circleMap_sub_center, smul_smul, mul_comm _ I] at h
     field_simp [circleMap_ne_center rp.ne'] at h
-    rw [← smul_smul, IsUnit.smul_left_cancel (Ne.isUnit Complex.I_ne_zero)] at h
+    simp only [intervalIntegral.integral_smul] at h
+    rw [mul_assoc, ← smul_smul, IsUnit.smul_left_cancel (Ne.isUnit Complex.I_ne_zero)] at h
     rw [intervalIntegral.integral_of_le Real.two_pi_pos.le] at h
     rw [average_eq, itau, h]
     simp only [MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter, Real.volume_real_Ioc,
       sub_zero]
     rw [max_eq_left Real.two_pi_pos.le]
-    rw [← smul_assoc, Complex.real_smul]; field_simp [Real.pi_ne_zero]
+    rw [← smul_assoc, Complex.real_smul]
+    field_simp [Real.pi_ne_zero]
+    simp
   · intro z zs; rw [Set.diff_empty] at zs
     exact (fa z (Metric.ball_subset_closedBall zs)).differentiableAt
 
@@ -296,7 +300,10 @@ theorem AnalyticOnNhd.maxLogAbsSubharmonicOn {f : ℂ → ℂ} {s : Set ℂ} (fa
       have ha : AnalyticAt ℂ h c := by
         rw [← hh]
         apply (analyticAt_const.mul (fa c (interior_subset cs))).clog
+        simp only [Pi.mul_apply]
         field_simp [norm_ne_zero_iff.mp anz]
+        exact Complex.ofReal_mem_slitPlane.mpr
+          (norm_pos_iff.mpr (ne_zero_of_norm_ne_zero anz))
       rcases Metric.isOpen_iff.mp (isOpen_analyticAt ℂ h) c ha with ⟨r0, r0p, r0a⟩
       rcases Metric.continuousAt_iff.mp fac (‖f c‖ - b.exp) (sub_pos.mpr bf) with
         ⟨r1, r1p, r1h⟩
@@ -403,7 +410,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   have unz : (u : ℂ) ≠ 0 := by
     simp only [u0.ne', Ne, Complex.ofReal_eq_zero, not_false_iff]
   field_simp [unz] at us
-  exact us.symm
+  simpa using us.symm
 
 /-- A subharmonic function achieves its maximum on the boundary -/
 theorem SubharmonicOn.maximum_principle {f : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
@@ -473,7 +480,7 @@ This is needed below for the global submean property for subharmonic functions.
 variable {c : ℂ} {r : ℝ}
 
 theorem rri (rp : 0 < r) (z : ℂ) : c + r * ((↑r)⁻¹ * (z - c)) = z := by
-  ring_nf; field_simp [rp.ne']
+  ring_nf; field_simp [rp.ne']; simp
 
 theorem rir (rp : r > 0) (z : ℂ) : (↑r)⁻¹ * (c + r * z - c) = z := by
   ring_nf; field_simp [rp.ne']
@@ -760,7 +767,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
     calc 2 * π * s * f c
       _ ≤ 2 * π * s * ((2 * π)⁻¹ * i) := by bound
       _ = s * (2 * π * (2 * π)⁻¹) * i := by ring_nf
-      _ ≤ s * i := by field_simp [Real.two_pi_pos.ne']
+      _ ≤ s * i := by field_simp [Real.two_pi_pos.ne']; rfl
   have im := integral_mono_ae ?_ ?_ m
   · generalize hi : ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) = i
     rw [hi] at im; clear hi m

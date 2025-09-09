@@ -1,7 +1,7 @@
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 import Mathlib.Analysis.Complex.Schwarz
 import Mathlib.Analysis.Normed.Group.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Ray.Analytic.Analytic
@@ -42,7 +42,7 @@ References:
 2. https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf
 -/
 
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open MeasureTheory.MeasureSpace (volume)
@@ -698,7 +698,7 @@ theorem unevenLog_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1)
     _ = c.log.exp / (↑n * (d - e)).exp * (↑n * d).exp := by ring_nf
     _ = (c.log - ↑n * (d - e)).exp * (↑n * d).exp := by rw [Real.exp_sub]
     _ ≤ (c.log - c.log / (d - e) * (d - e)).exp * (↑n * d).exp := by bound
-    _ ≤ (↑n * d).exp := by field_simp [(sub_pos.mpr ed).ne']
+    _ ≤ (↑n * d).exp := by field_simp [(sub_pos.mpr ed).ne']; simp
 
 /-- Our `maxLog` function is subharmonic -/
 theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology E]
@@ -735,7 +735,7 @@ theorem unevenSeries_strong_bound [CompleteSpace E] [SecondCountableTopology E]
   rw [Real.exp_nat_mul, Real.exp_log (div_pos u.r1p sp), div_eq_mul_inv, mul_pow] at a
   --rw [Real.exp_nat_mul, Real.exp_log (div_pos u.r1p sp), div_eq_mul_inv, mul_pow, abs_pow,
   --  abs_of_pos u.r1p] at a
-  exact (mul_le_mul_left (by bound)).mp a
+  exact (mul_le_mul_iff_right₀ (by bound)).mp a
 
 /-- The nonuniform bound holds uniformly, without `∀ᶠ` -/
 theorem unevenSeries_strong_bound' [CompleteSpace E] [SecondCountableTopology E]
@@ -753,7 +753,11 @@ theorem unevenSeries_strong_bound' [CompleteSpace E] [SecondCountableTopology E]
   by_cases kn : k ≤ n
   · specialize gb zs k kn
     calc ‖unevenSeries u z k‖
-      _ = s⁻¹ ^ k * (s ^ k * ‖unevenSeries u z k‖) := by ring_nf; field_simp [(pow_pos sp _).ne']
+      _ = s⁻¹ ^ k * (s ^ k * ‖unevenSeries u z k‖) := by
+        ring_nf; field_simp [(pow_pos sp _).ne']
+        simp only [one_div, inv_pow, mul_assoc]
+        rw [mul_inv_cancel₀ (pow_ne_zero k (ne_of_lt sp).symm)]
+        simp
       _ ≤ s⁻¹ ^ k * b := by bound
       _ = b * s⁻¹ ^ k := by ring_nf
       _ ≤ max 1 b * s⁻¹ ^ k := by bound

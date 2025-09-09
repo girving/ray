@@ -122,7 +122,7 @@ lemma continuousOn_cauchy_integral (i : Holo f μ s c r) :
       norm_circleMap_zero, NNReal.abs_eq, Complex.norm_I, mul_one, norm_inv, norm_pow,
       NNReal.coe_inv, NNReal.coe_pow]
     bound
-  · exact integrableOn_const (by simp)
+  · exact integrableOn_const (by simpa using not_eq_of_beq_eq_false rfl)
   · refine ae_of_all _ fun t ↦ ?_
     exact ContinuousOn.uncurry_right (f := g) t (mem_univ _) ic
 

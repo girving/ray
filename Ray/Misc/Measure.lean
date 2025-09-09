@@ -39,7 +39,7 @@ theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t :
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
     intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true]
   refine Filter.Eventually.mono ?_ e
-  exact measure_zero_iff_ae_notMem.mp tz
+  exact measure_eq_zero_iff_ae_notMem.mp tz
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
 theorem ae_minus_point [NoAtoms (volume : Measure M)] {s : Set M} {x : M} :

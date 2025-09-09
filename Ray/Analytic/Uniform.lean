@@ -52,7 +52,7 @@ theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : 
     _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by field_simp
+    _ = wr := by field_simp; norm_cast; field_simp; simp 
 
 theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :

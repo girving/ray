@@ -1,7 +1,7 @@
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Complex.Trigonometric
+import Mathlib.Analysis.Complex.Trigonometric
 
 /-!
 ## Register some bound lemmas

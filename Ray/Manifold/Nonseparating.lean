@@ -11,7 +11,7 @@ dimension (or in at least one complex dimension), but we also need `line ×ˢ po
 complex dimensions.
 -/
 
-open Complex (abs)
+open Complex
 open Metric (ball mem_ball)
 open OneDimension
 open Set

@@ -7,7 +7,7 @@ import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Pi.Bounds
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic
 import Ray.Analytic.Analytic
@@ -20,7 +20,7 @@ import Ray.Misc.Topology
 ## Basics about complex analytic functions
 -/
 
-open Complex (abs exp I log)
+open Complex (exp I log)
 open Filter (atTop)
 open Metric (ball closedBall sphere isOpen_ball)
 open Set (univ)

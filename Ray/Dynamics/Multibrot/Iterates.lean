@@ -21,7 +21,6 @@ where `k` varies depending on `b` (see `iter_error_le_of_z3` and `iter_error_le_
 -/
 
 open Bornology (cobounded)
-open Complex (abs)
 open Filter (Tendsto atTop)
 open Real (exp log)
 open Set

@@ -1,5 +1,6 @@
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Analytic.Holomorphic
 import Ray.Manifold.OneDimension
 import Ray.Misc.Connected
@@ -35,10 +36,10 @@ From these, we have a variety of consequences, such as:
 -/
 
 open Classical
-open Complex (abs)
+open Complex
 open Filter (Tendsto)
 open Function (curry uncurry)
-open Metric (ball closedBall isOpen_ball isClosed_ball mem_ball mem_closedBall mem_ball_self
+open Metric (ball closedBall isOpen_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set
@@ -134,11 +135,11 @@ theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOf
   generalize hn' : (⟨n, np⟩ : ℕ+) = n'
   have e : {z : ℂ | z ^ n = 1} ⊆ (fun x : ℂˣ ↦ (x : ℂ)) '' (rootsOfUnity n' ℂ : Set ℂˣ) := by
     intro z e; simp only [mem_setOf] at e
-    simp only [mem_image, SetLike.mem_coe, mem_rootsOfUnity]
+    simp only [mem_image, SetLike.mem_coe]
     by_cases z0 : z = 0
     · simp only [z0, zero_pow n0, zero_ne_one] at e
     · use Units.mk0 z z0
-      simp only [← hn', ← Units.val_inj, Units.val_pow_eq_pow_val, Units.val_mk0, e, Units.val_one,
+      simp [← hn', ← Units.val_inj, Units.val_pow_eq_pow_val, Units.val_mk0, e, Units.val_one,
         and_self]
   apply Set.Countable.mono e; clear e; apply Countable.image; apply Set.Finite.countable
   rw [Set.finite_def]
@@ -376,13 +377,13 @@ theorem nontrivialMAnalyticAt_pow {d : ℕ} (d0 : d > 0) {z : ℂ} :
 theorem NontrivialMAnalyticAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : ContMDiffAt I I ω f z)
     (d0 : 0 < d) : NontrivialMAnalyticAt (fun z ↦ f z ^ d) z ↔ NontrivialMAnalyticAt f z := by
   refine ⟨?_, (nontrivialMAnalyticAt_pow d0).comp⟩
-  have pa : ContMDiffAt I I ω (fun z ↦ z ^ d) (f z) := ContMDiffAt.pow contMDiffAt_id
+  have pa : ContMDiffAt I I ω (fun z ↦ z ^ d) (f z) := (contMDiff_pow d).contMDiffAt
   intro h; refine (NontrivialMAnalyticAt.anti ?_ pa fa).2; exact h
 
 /-- Nontriviality depends only locally on `f` -/
 theorem NontrivialMAnalyticAt.congr {f g : S → T} {z : S} (n : NontrivialMAnalyticAt f z)
     (e : f =ᶠ[𝓝 z] g) : NontrivialMAnalyticAt g z := by
-  use n.mAnalyticAt.congr e
+  use n.mAnalyticAt.congr_of_eventuallyEq e.symm
   refine n.nonconst.mp (e.mp (.of_forall fun w ew n ↦ ?_))
   rwa [← ew, ← e.self_of_nhds]
 
@@ -423,7 +424,7 @@ theorem ContMDiffOnNhd.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Spa
         extChartAt K (g x) (g ((extChartAt J x).symm y))) = d
     generalize hz : extChartAt J x x = z
     suffices h : d =ᶠ[𝓝 z] 0 by
-      simp only [← hz, ← extChartAt_map_nhds' J x, Filter.eventually_map, Filter.EventuallyEq,
+      simp only [← hz, ← map_extChartAt_nhds_of_boundaryless x, Filter.eventually_map, Filter.EventuallyEq,
         ← ht] at h ⊢
       refine
         h.mp (((isOpen_extChartAt_source x).eventually_mem

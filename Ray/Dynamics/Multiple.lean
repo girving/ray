@@ -1,4 +1,5 @@
 import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.Geometry.Manifold.Algebra.Structures
 import Ray.Manifold.Inverse
 import Ray.Manifold.LocalInj
 import Ray.Dynamics.BottcherNear
@@ -20,7 +21,7 @@ The proof proceeds in w.l.o.g. stages, reducing first from manifolds to `ℂ →
 the point to `0` and standardizing the leading coefficient to be 1.
 -/
 
-open Complex (exp log abs cpow)
+open Complex (exp log cpow)
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball ball_mem_nhds mem_ball_self nonempty_ball)
@@ -180,23 +181,26 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I 
       exact fa.mdifferentiableAt le_top
       apply mem_extChartAt_source
     rw [← hg, ←Function.comp_def, ← Function.comp_def,
-      mfderiv_comp _ ((ContMDiffAt.extChartAt _).mdifferentiableAt le_top) _,
-      mfderiv_comp _ fd ((ContMDiffAt.extChartAt_symm _).mdifferentiableAt le_top),
+      mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt le_top) _,
+      mfderiv_comp _ fd (((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' _)).mdifferentiableAt le_top),
       PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
     · apply mem_extChartAt_source
     · apply mem_extChartAt_target
     · simp
     · exact MDifferentiableAt.comp _ fd
-        ((ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).mdifferentiableAt le_top)
+        (((contMDiffOn_extChartAt_symm _).contMDiffAt
+        (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).mdifferentiableAt le_top)
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
   replace dg := dg'.hasDerivAt; clear dg'
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
   refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
-  · apply (ContMDiffAt.extChartAt_symm (mem_extChartAt_target c)).comp_of_eq
+  · apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
+      (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).comp_of_eq
     apply (ha.mAnalyticAt I I).comp_of_eq
-      (ContMDiffAt.extChartAt (mem_extChartAt_source c)) rfl
+      (contMDiffAt_extChartAt' (mem_chart_source _ c)) rfl
     exact h0
   · simp only [h0, PartialEquiv.left_inv _ (mem_extChartAt_source c)]
   · rw [eventually_nhdsWithin_iff] at e ⊢

@@ -20,7 +20,7 @@ Connectivity of the Multibrot set and its complement are easy consequences of (5
 `Multibrot/Connected.lean` and `Mandelbrot.lean`.
 -/
 
-open Complex (abs)
+open Complex 
 open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)

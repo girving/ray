@@ -2,6 +2,7 @@ import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Data.Complex.Basic
+import Mathlib.Geometry.Manifold.Algebra.LieGroup
 import Mathlib.Topology.Compactification.OnePoint.Basic
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
@@ -17,7 +18,7 @@ namely `coe` and `inv ∘ coe`, giving the Riemann sphere `𝕊`.
 
 open Bornology (cobounded)
 open Classical
-open Complex (abs)
+open Complex 
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open OneDimension
@@ -473,7 +474,7 @@ theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : 
   have e : (fun x : 𝕊 ↦ f x.toComplex) =ᶠ[𝓝 ↑z] fill f y := by
     simp only [OnePoint.nhds_coe_eq, Filter.EventuallyEq, Filter.eventually_map, toComplex_coe,
       fill_coe, Filter.eventually_true]
-  refine ContMDiffAt.congr ?_ e
+  refine ContMDiffAt.congr_of_eventuallyEq ?_ e.symm
   refine fa.comp_of_eq mAnalyticAt_toComplex ?_
   simp only [toComplex_coe]
 
@@ -510,8 +511,8 @@ theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
       simp only [Ne, id_eq] at w0; simp only [w0, if_false]
     refine DifferentiableAt.congr_of_eventuallyEq ?_ e
     apply AnalyticAt.differentiableAt; apply ContMDiffAt.analyticAt I I
-    refine (ContMDiffAt.extChartAt ?_).comp _ ?_; exact m
-    exact fa.comp _ (contMDiffAt_id.inv z0)
+    refine (contMDiffAt_extChartAt' (extChartAt_source I y ▸ m)).comp _ ?_
+    exact fa.comp _ (contMDiffAt_id.inv₀ z0)
   · refine (continuousAt_extChartAt' ?_).comp ?_
     · simp only [if_pos, mem_extChartAt_source]
     · simp only [← continuousWithinAt_compl_self, ContinuousWithinAt]
