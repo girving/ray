@@ -20,7 +20,7 @@ Connectivity of the Multibrot set and its complement are easy consequences of (5
 `Multibrot/Connected.lean` and `Mandelbrot.lean`.
 -/
 
-open Complex 
+open Complex
 open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
@@ -142,6 +142,10 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     simp only [not_not] at p0; rw [(p0i p0).1] at db
     exact bottcher_mfderiv_inf_ne_zero db
 
+@[simp] lemma bottcher_coe_ne_zero {c : ℂ} (m : ↑c ∈ multibrotExt d) : bottcher d c ≠ 0 := by
+  rw [← bottcher_inf (d := d)]
+  exact bottcher_inj.ne m (by simp) (by simp)
+
 /-!
 ## The external ray map, and `bottcherHomeomorph`
 -/
@@ -189,3 +193,59 @@ def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : PartialHomeomorph 𝕊 ℂ w
   open_target := isOpen_ball
   continuousOn_toFun := (bottcherMAnalytic d).continuousOn
   continuousOn_invFun := (rayMAnalytic d).continuousOn
+
+lemma ray_inj : InjOn (ray d) (ball (0 : ℂ) 1) :=
+  (bottcherHomeomorph d).symm.injOn
+
+@[simp] lemma ray_zero : ray d 0 = ∞ := by
+  simpa only [bottcher_inf] using ray_bottcher (d := d) (c := ∞) (by simp)
+
+@[simp] lemma ray_ne_zero {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z ≠ 0 := by
+  have h := (bottcherHomeomorph d).map_target m
+  contrapose h
+  simp only [ne_eq, not_not] at h
+  simp [bottcherHomeomorph, h]
+
+@[simp] lemma norm_bottcher_lt_one {z : 𝕊} (m : z ∈ multibrotExt d) : ‖bottcher d z‖ < 1 := by
+  simpa [bottcherHomeomorph] using (bottcherHomeomorph d).map_source m
+
+/-!
+### `inv_ray`: Ray as an analytic function
+-/
+
+/-- `ray` as an analytic `ℂ → ℂ` function -/
+def inv_ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ :=
+  fun z ↦ (ray d z)⁻¹.toComplex
+
+@[simp] lemma inv_ray_zero : inv_ray d 0 = 0 := by
+  simp only [inv_ray, ray_zero, RiemannSphere.inv_inf, toComplex_zero]
+
+@[simp] lemma inv_ray_ne_zero {z : ℂ} (z0 : z ≠ 0) (m : z ∈ ball (0 : ℂ) 1) : inv_ray d z ≠ 0 := by
+  simp only [inv_ray, ne_eq, toComplex_eq_zero, RiemannSphere.inv_eq_zero, inv_eq_inf,
+    ray_ne_zero m, or_false]
+  rw [← ray_zero (d := d)]
+  exact ray_inj.ne m (by simp) z0
+
+/-- `ray_inv d` is analytic on `ball 0 1` -/
+lemma inv_ray_analytic {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (inv_ray d) z := by
+  refine ContDiffAt.contDiffWithinAt (ContMDiffAt.contDiffAt ?_)
+  refine ((mAnalyticAt_toComplex' ?_).comp _ (mAnalytic_inv _)).comp _ (rayMAnalytic d z m)
+  simp [m]
+
+lemma bottcher_inv_inv_ray {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) :
+    bottcher_inv d (inv_ray d z) = z := by
+  simp only [bottcher_inv, inv_ray]
+  rw [RiemannSphere.coe_toComplex (by simp [ray_ne_zero m]), inv_inv, bottcher_ray m]
+
+/-- `ray` is monic at `0 ↦ ∞` -/
+lemma ray_hasDerivAt_one : HasDerivAt (inv_ray d) 1 0 := by
+  have m : 0 ∈ ball (0 : ℂ) 1 := by simp
+  have dr : DifferentiableAt ℂ (inv_ray d) 0 := (inv_ray_analytic m).differentiableAt le_top
+  have dc : HasDerivAt (fun z ↦ bottcher_inv d (inv_ray d z)) 1 0 := by
+    apply (hasDerivAt_id _).congr_of_eventuallyEq
+    filter_upwards [isOpen_ball.eventually_mem m] with z m
+    simp only [bottcher_inv_inv_ray m, id]
+  have c := deriv_comp_of_eq (h₂ := bottcher_inv d) (h := inv_ray d) 0
+    bottcher_hasDerivAt_one.differentiableAt dr (by simp)
+  simp only [Function.comp_def, dc.deriv, bottcher_hasDerivAt_one.deriv, one_mul, inv_ray_zero] at c
+  exact c ▸ dr.hasDerivAt

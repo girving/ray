@@ -1,6 +1,7 @@
 import Ray.Analytic.Log
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.Mandelbrot
+import Ray.Dynamics.Multibrot.Area
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Dynamics.Multibrot.Connected

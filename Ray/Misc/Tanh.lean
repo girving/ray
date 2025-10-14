@@ -7,14 +7,14 @@ import Ray.Misc.Bound
 -/
 
 open Real (cosh sinh tanh)
-open scoped Real
+open scoped Real ContDiff
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
 variable {x y : ℝ}
 
-lemma Real.analyticAt_tanh : AnalyticAt ℝ tanh x := by
-  rw [analyticAt_congr (.of_forall Real.tanh_eq_sinh_div_cosh)]
+lemma Real.contDiffAt_tanh : ContDiffAt ℝ ω tanh x := by
+  rw [contDiffAt_congr (.of_forall Real.tanh_eq_sinh_div_cosh)]
   exact Real.analyticAt_sinh.div Real.analyticAt_cosh (Real.cosh_pos _).ne'
 
 @[fun_prop] lemma Real.continuous_tanh : Continuous tanh := by

@@ -73,7 +73,7 @@ def multibrotExt (d : ℕ) : Set 𝕊 :=
   ((fun z : ℂ ↦ (z : 𝕊)) '' multibrot d)ᶜ ∪ {(∞ : 𝕊)}
 
 -- Basic properties of multibrot_ext
-theorem multibrotExt_inf {d : ℕ} : (∞ : 𝕊) ∈ multibrotExt d :=
+@[simp] theorem multibrotExt_inf {d : ℕ} : (∞ : 𝕊) ∈ multibrotExt d :=
   subset_union_right rfl
 theorem multibrotExt_coe {d : ℕ} {c : ℂ} : ↑c ∈ multibrotExt d ↔ c ∉ multibrot d := by
   simp only [multibrotExt, mem_union, mem_singleton_iff, coe_eq_inf_iff, or_false, mem_image,
@@ -337,7 +337,7 @@ def bottcher (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℂ :=
 
 -- `bottcher` at `ℂ` and `∞`
 theorem bottcher_coe {c : ℂ} : bottcher d c = bottcher' d c := rfl
-theorem bottcher_inf : bottcher d ∞ = 0 := rfl
+@[simp] theorem bottcher_inf : bottcher d ∞ = 0 := rfl
 
 /-!
 ## Exponential lower and upper bounds on iterates
@@ -451,8 +451,12 @@ theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multibrot d 
   exact multibrot_of_repeat (Nat.zero_lt_succ _) (_root_.trans i0 i1.symm)
 
 /-- `0 ∈ multbrot d` -/
-theorem multibrot_zero : (0 : ℂ) ∈ multibrot d := by
+@[simp] theorem multibrot_zero : (0 : ℂ) ∈ multibrot d := by
   apply multibrot_of_zero; rw [Function.iterate_zero_apply, coe_zero]
+
+/-- `0 ∉ multibrotExt d` -/
+@[simp] theorem multibrotExt_zero : (0 : 𝕊) ∉ multibrotExt d := by
+  simp only [← coe_zero, multibrotExt_coe, not_not, multibrot_zero]
 
 theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
   by_cases c2 : 2 < ‖c‖; exact multibrot_two_lt c2

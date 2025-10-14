@@ -157,10 +157,16 @@ theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] {c : ℂ} (c16 : 16 < ‖c‖
     ‖bottcher' d c - c⁻¹‖ ≤ 16 * ‖c‖⁻¹ ^ 2 :=
   bottcher_approx_z d c16 (le_refl _)
 
+/-- `bottcher` near `∞` as an analytic `ℂ → ℂ` function -/
+def bottcher_inv (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ :=
+  fun z ↦ bottcher d (↑z)⁻¹
+
+lemma bottcher_inv_def : bottcher_inv d = fun z : ℂ ↦ bottcher d (↑z)⁻¹ := rfl
+
 /-- bottcher is monic at `∞` (has derivative 1) -/
-theorem bottcher_hasDerivAt_one : HasDerivAt (fun z : ℂ ↦ bottcher d (↑z)⁻¹) 1 0 := by
-  rw [HasDerivAt, HasDerivAtFilter, bottcher, hasFDerivAtFilter_iff_isLittleO, coe_zero, inv_zero',
-    fill_inf]
+theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
+  rw [HasDerivAt, HasDerivAtFilter, bottcher_inv_def, bottcher, hasFDerivAtFilter_iff_isLittleO,
+    coe_zero, inv_zero', fill_inf]
   simp only [sub_zero, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
     smul_eq_mul, mul_one]
   rw [Asymptotics.isLittleO_iff]
@@ -188,7 +194,7 @@ theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
     RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
-  rw [bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
+  rw [← bottcher_inv_def, bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
   rw [Ne, ContinuousLinearMap.ext_iff, not_forall]; use 1
   simp only [ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
     Algebra.id.smul_eq_mul, mul_one]

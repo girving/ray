@@ -18,7 +18,7 @@ namely `coe` and `inv ∘ coe`, giving the Riemann sphere `𝕊`.
 
 open Bornology (cobounded)
 open Classical
-open Complex 
+open Complex
 open Filter (Tendsto atTop)
 open Function (curry uncurry)
 open OneDimension
@@ -63,12 +63,13 @@ theorem map_rec {A B : Sort*} (g : A → B) {f : ℂ → A} {i : A} {z : 𝕊} :
   · simp only [rec_coe, Function.comp]
 
 -- ∞ is not 0 or finite
-theorem inf_ne_coe {z : ℂ} : (∞ : 𝕊) ≠ ↑z := by
+@[simp] theorem inf_ne_coe {z : ℂ} : (∞ : 𝕊) ≠ ↑z := by
   simp only [Ne, OnePoint.infty_ne_coe, not_false_iff]
-theorem inf_ne_zero : (∞ : 𝕊) ≠ (0 : 𝕊) := by
+@[simp] theorem inf_ne_zero : (∞ : 𝕊) ≠ (0 : 𝕊) := by
   have e : (0 : 𝕊) = ((0 : ℂ) : 𝕊) := rfl; rw [e]; exact inf_ne_coe
-theorem coe_ne_inf {z : ℂ} : (z : 𝕊) ≠ ∞ := inf_ne_coe.symm
-theorem coe_eq_inf_iff {z : ℂ} : (z : 𝕊) = ∞ ↔ False := ⟨coe_ne_inf, False.elim⟩
+@[simp] theorem zero_ne_inf : (0 : 𝕊) ≠ (∞ : 𝕊) := inf_ne_zero.symm
+@[simp] theorem coe_ne_inf {z : ℂ} : (z : 𝕊) ≠ ∞ := inf_ne_coe.symm
+@[simp] theorem coe_eq_inf_iff {z : ℂ} : (z : 𝕊) = ∞ ↔ False := ⟨coe_ne_inf, False.elim⟩
 
 -- Conversion to ℂ, sending ∞ to 0
 @[simp] theorem toComplex_coe {z : ℂ} : (z : 𝕊).toComplex = z := rfl
@@ -78,6 +79,10 @@ theorem coe_toComplex {z : 𝕊} (h : z ≠ ∞) : ↑z.toComplex = z := by
   · simp only [ne_eq, not_true_eq_false] at h
   · simp only [toComplex_coe]
 @[simp] theorem toComplex_zero : (0 : 𝕊).toComplex = 0 := by rw [← coe_zero, toComplex_coe]
+@[simp] lemma toComplex_eq_zero {z : 𝕊} : z.toComplex = 0 ↔ z = 0 ∨ z = ∞ := by
+  induction z using OnePoint.rec
+  · simp only [toComplex_inf, or_true]
+  · simp only [toComplex_coe, coe_eq_zero, OnePoint.coe_ne_infty, or_false]
 theorem continuousAt_toComplex {z : ℂ} : ContinuousAt OnePoint.toComplex z := by
   simp only [OnePoint.continuousAt_coe]; exact continuousAt_id
 theorem continuousOn_toComplex : ContinuousOn OnePoint.toComplex ({∞}ᶜ) := by
@@ -394,6 +399,13 @@ theorem mAnalyticAt_toComplex {z : ℂ} : ContMDiffAt I I ⊤ (OnePoint.toComple
   simp only [toComplex_coe, extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_coe,
     PartialEquiv.symm_symm, coePartialEquiv_symm_apply]
   apply analyticAt_id
+
+/-- `OnePoint.toComplex : 𝕊 → ℂ` is analytic except at `∞` -/
+theorem mAnalyticAt_toComplex' {z : 𝕊} (ne : z ≠ ∞) :
+    ContMDiffAt I I ⊤ (OnePoint.toComplex : 𝕊 → ℂ) z := by
+  induction z using OnePoint.rec
+  · simp only [ne_eq, not_true_eq_false] at ne
+  · apply mAnalyticAt_toComplex
 
 /-- Inversion is analytic -/
 theorem mAnalytic_inv : ContMDiff I I ⊤ (fun z : 𝕊 ↦ z⁻¹) := by
