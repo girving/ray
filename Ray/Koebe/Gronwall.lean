@@ -5,6 +5,7 @@ import Ray.Analytic.Holomorphic
 import Ray.Analytic.Integral
 import Ray.Analytic.Series
 import Ray.Koebe.WindArea
+import Ray.Koebe.WindInj
 import Ray.Misc.Deriv
 import Ray.Misc.Linear
 import Ray.Misc.MonotoneSeries
@@ -51,7 +52,6 @@ noncomputable section
 structure Gronwall (f : ℂ → ℂ) : Prop where
   fa : AnalyticOnNhd ℂ f (ball 0 1)
   f0 : f 0 = 1
-  df0 : HasDerivAt f 0 0
   inj' : InjOn (fun w ↦ w * f w⁻¹) (norm_Ioi 1)
 
 namespace Gronwall
@@ -79,7 +79,7 @@ def coeff (_ : Gronwall f) (n : ℕ) : ℂ :=
 
 -- The first two `coeffs` are known
 @[simp] lemma coeff_zero (i : Gronwall f) : i.coeff 0 = 1 := by simp [coeff, i.f0]
-@[simp] lemma coeff_one (i : Gronwall f) : i.coeff 1 = 0 := by simp [coeff, i.df0.deriv]
+@[simp] lemma coeff_one (i : Gronwall f) : i.coeff 1 = deriv f 0 := by simp [coeff]
 
 /-- The power series of `f` over the whole unit ball -/
 lemma hasFPowerSeriesOnBall (i : Gronwall f) :
@@ -120,19 +120,15 @@ lemma ac_prop (i : Gronwall f) (r1 : 1 < r) : i.a r ∈ Ioo 0 1 ∧ 0 < i.C r �
 
 /-!
 ### Injectivity of `z ↦ snap (g z)` on large circles
-
-We derive injectivity via
-
-  `snap (g z) = snap (g w)`
-  `snap (z * f z⁻¹) = snap (w * f w⁻¹)`
-  `z / w = snap (f w⁻¹ / f z⁻¹)`
-
-and use flatness of `ff (w,z) = snap (f w / f z)` near `0` to deduce `z = w`.
 -/
 
-/-- `f⁻¹` is flat at `0` -/
-lemma f_inv_flat (i : Gronwall f) : HasDerivAt (fun z ↦ (f z)⁻¹) 0 0 := by
-  have e : 0 = -0 / f 0 ^ 2 := by simp
+/-- `f' 0` is unknown, but will cancel out in everything below -/
+lemma df0 (i : Gronwall f) : HasDerivAt f (deriv f 0) 0 :=
+  (i.fa 0 (by simp)).differentiableAt.hasDerivAt
+
+/-- The derivative of `f⁻¹` at `0` -/
+lemma df0_inv (i : Gronwall f) : HasDerivAt (fun z ↦ (f z)⁻¹) (-deriv f 0) 0 := by
+  have e : -deriv f 0 = -deriv f 0 / f 0 ^ 2 := by simp [i.f0]
   nth_rw 1 [e]
   exact i.df0.inv (by simp [i.f0])
 
@@ -141,63 +137,6 @@ lemma f0' (i : Gronwall f) : ∀ᶠ z in 𝓝 0, f z ≠ 0 := by
   apply ContinuousAt.eventually_ne
   · exact (i.fa _ (by simp)).continuousAt
   · simp only [i.f0, ne_eq, one_ne_zero, not_false_eq_true]
-
-/-- `snap (f w / f z)` is useful in proving injectivity of `g` -/
-def ff (_ : Gronwall f) (p : ℂ × ℂ) : ℂ := (snap (f p.2 / f p.1)).val
-
-@[simp] lemma ff_self (i : Gronwall f) (z : ℂ) : i.ff (z,z) = 1 := by
-  by_cases n : f z = 0
-  all_goals simp [ff, n]
-
-lemma analyticAt_ff (i : Gronwall f) : AnalyticAt ℝ i.ff 0 := by
-  apply AnalyticAt.snap
-  · refine AnalyticAt.div ?_ ?_ ?_
-    · exact ((i.fa _ (by simp)).comp analyticAt_snd).restrictScalars
-    · exact ((i.fa _ (by simp)).comp analyticAt_fst).restrictScalars
-    · simp [i.f0]
-  · simp [i.f0]
-
--- Cache this since inferring it is timing out
-instance Gromwall.fderiv_smul_zero_class : SMulZeroClass ℂ (ℂ × ℂ →L[ℂ] ℂ) := by infer_instance
-
-/-- `f w / f z` is flat at `0` -/
-lemma ff_flat (i : Gronwall f) : HasFDerivAt i.ff (0 : ℂ × ℂ →L[ℝ] ℂ) (0 : ℂ × ℂ) := by
-  unfold ff
-  refine hasFDeriv_zero_of_comp_right (f := fun z ↦ (snap z).val) (y := 1)
-    (analyticAt_snap (by simp)).differentiableAt ?_ (by simp [i.f0])
-  simp only [div_eq_inv_mul]
-  have e : (0 : ℂ × ℂ →L[ℝ] ℂ) = (f (0 : ℂ × ℂ).1)⁻¹ • ((0 : ℂ →L[ℝ] ℂ).comp
-      (ContinuousLinearMap.snd ℝ ℂ ℂ)) + (f (0 : ℂ × ℂ).2) • ((0 : ℂ →L[ℝ] ℂ).comp
-      (ContinuousLinearMap.fst ℝ ℂ ℂ)) := by
-    simp only [Prod.fst_zero, i.f0, inv_one, ContinuousLinearMap.zero_comp, one_smul, Prod.snd_zero,
-      add_zero]
-  rw [e]
-  have df := i.df0.hasFDerivAt.restrictScalars ℝ
-  have dfi := i.f_inv_flat.hasFDerivAt.restrictScalars ℝ
-  simp only [ContinuousLinearMap.smulRight_zero, ContinuousLinearMap.restrictScalars_zero] at df dfi
-  refine HasFDerivAt.mul (c := fun p : ℂ × ℂ ↦ (f p.1)⁻¹) (d := fun p : ℂ × ℂ ↦ f p.2)
-    (𝕜 := ℝ) (E := ℂ × ℂ) (𝔸' := ℂ)
-    ?_ ?_
-  · exact dfi.comp_of_eq _ hasFDerivAt_fst (by simp)
-  · exact df.comp_of_eq _ hasFDerivAt_snd (by simp)
-
-/-- `f w / f z` is arbitrarily Lipschitz near `0` -/
-lemma ff_lipschitz (i : Gronwall f) {L : ℝ≥0} (L0 : 0 < L) :
-    ∀ᶠ r in 𝓝[>] 0, LipschitzOnWith L i.ff (closedBall 0 r) := by
-  have df : ∀ᶠ p in 𝓝 0, DifferentiableAt ℝ i.ff p := by
-    filter_upwards [i.analyticAt_ff.eventually_analyticAt]
-    intro p a
-    exact a.differentiableAt
-  have dL : ∀ᶠ p in 𝓝 0, ‖fderiv ℝ i.ff p‖₊ ≤ L := by
-    refine .mono ?_ (fun _ ↦ le_of_lt)
-    apply ContinuousAt.eventually_lt
-    · apply ContinuousAt.nnnorm
-      exact ((i.analyticAt_ff.contDiffAt (n := ω)).fderiv_right (m := ω) (by simp)).continuousAt
-    · exact continuousAt_const
-    · simpa only [i.ff_flat.fderiv, nnnorm_zero]
-  simp only [← eventually_nhdsGT_zero_closedBall_iff_nhds] at df dL
-  filter_upwards [df, dL] with r df dL
-  exact Convex.lipschitzOnWith_of_nnnorm_fderiv_le df dL (convex_closedBall _ _)
 
 /-- `g` is nonzero for large `r` -/
 lemma g0 (i : Gronwall f) : ∀ᶠ r in atTop, ∀ z ∈ sphere 0 r, i.g z ≠ 0 := by
@@ -210,47 +149,66 @@ lemma g0 (i : Gronwall f) : ∀ᶠ r in atTop, ∀ z ∈ sphere 0 r, i.g z ≠ 0
   apply f0
   simp only [mem_sphere_iff_norm, sub_zero, norm_inv, zr, inv_inv]
 
+/-- The derative of `g` in terms of `f` -/
+lemma deriv_g (i : Gronwall f) {z : ℂ} (z1 : 1 < ‖z‖) : deriv i.g z = f z⁻¹ - deriv f z⁻¹ / z := by
+  have z0 : z ≠ 0 := by rw [← norm_pos_iff]; linarith
+  suffices h : HasDerivAt i.g (1 * f z⁻¹ + z * (deriv f z⁻¹ * (-(z ^ 2)⁻¹))) z by
+    simp only [one_mul, pow_two, mul_inv_rev, mul_comm _ z⁻¹, mul_neg, ← mul_assoc,
+      inv_mul_cancel₀ z0, mul_one] at h
+    simp only [← div_eq_inv_mul, ← sub_eq_add_neg] at h
+    exact h.deriv
+  refine (hasDerivAt_id _).mul (HasDerivAt.comp _ ?_ (hasDerivAt_inv z0))
+  exact (i.fa (z⁻¹) (by simp [inv_lt_one_of_one_lt₀ z1])).differentiableAt.hasDerivAt
+
+/-- `deriv f z⁻¹ / f z⁻¹` is bounded for sufficiently large `r` -/
+lemma deriv_div_bound (i : Gronwall f) :
+    ∃ m > 0, ∀ᶠ r in atTop, ∀ z, ‖z‖ = r → ‖(f z⁻¹)⁻¹ * deriv f z⁻¹‖ ≤ m := by
+  have fa := i.fa 0 (by simp)
+  have dc : ContinuousAt (fun z ↦ (f z)⁻¹ * deriv f z) 0 :=
+    ContinuousAt.mul (fa.continuousAt.inv₀ (by simp [i.f0])) fa.deriv.continuousAt
+  obtain ⟨e,e0,dc⟩ := Metric.continuousAt_iff.mp dc 1 (by norm_num)
+  refine ⟨1 + ‖deriv f 0‖, by positivity, ?_⟩
+  filter_upwards [Filter.eventually_gt_atTop e⁻¹] with r er z zr
+  specialize @dc z⁻¹ (by simp [zr, inv_lt_of_inv_lt₀ e0 er])
+  simp only [i.f0, inv_one, one_mul, dist_eq_norm] at dc
+  calc ‖(f z⁻¹)⁻¹ * deriv f z⁻¹‖
+    _ = ‖(f z⁻¹)⁻¹ * deriv f z⁻¹ - deriv f 0 + deriv f 0‖ := by ring_nf
+    _ ≤ ‖(f z⁻¹)⁻¹ * deriv f z⁻¹ - deriv f 0‖ + ‖deriv f 0‖ := by bound
+    _ ≤ 1 + ‖deriv f 0‖ := by bound
+
 /-- `z ↦ snap (i.g z)` is injective for large `r` -/
 lemma g_inj (i : Gronwall f) : ∀ᶠ r in atTop, InjOn (fun z ↦ snap (i.g z)) (sphere 0 r) := by
-  rw [eventually_atTop_iff_nhdsGT_zero]
-  have f0 := eventually_nhdsGT_zero_sphere_of_nhds i.f0'
-  filter_upwards [i.ff_lipschitz (L := 1) (by norm_num), eventually_mem_nhdsWithin, f0,
-    eventually_nhdsWithin_of_eventually_nhds (eventually_lt_nhds (b := 1) (by norm_num))]
-    with r L r0 f0 r1 z zr w wr e
-  simp only [mem_sphere_iff_norm, sub_zero, mem_Ioi] at zr wr r0 f0
-  have ri0 : 0 < r⁻¹ := by bound
-  have z0 : z ≠ 0 := by rw [ne_eq, ← norm_eq_zero]; linarith
-  have w0 : w ≠ 0 := by rw [ne_eq, ← norm_eq_zero]; linarith
-  have fz0 : f z⁻¹ ≠ 0 := by apply f0; simp only [norm_inv, zr, inv_inv]
-  have fw0 : f w⁻¹ ≠ 0 := by apply f0; simp only [norm_inv, wr, inv_inv]
-  simp only [g, ne_eq, z0, not_false_eq_true, fz0, snap_mul, w0, fw0] at e
-  have wz : (snap (w / z)).val = z⁻¹ / w⁻¹ := by
-    simp only [ne_eq, w0, not_false_eq_true, z0, snap_div, Circle.coe_div, coe_snap, wr,
-      Complex.ofReal_inv, div_inv_eq_mul, zr]
-    field_simp [r0.ne']
-  rw [mul_comm, ← div_eq_div_iff_mul_eq_mul, ← snap_div fz0 fw0, ← snap_div w0 z0, Circle.ext_iff,
-    wz] at e
-  generalize ha : z⁻¹ = a at e fz0
-  generalize hb : w⁻¹ = b at e fw0
-  have ar : ‖a‖ = r := by simp only [← ha, norm_inv, zr, inv_inv]
-  have br : ‖b‖ = r := by simp only [← hb, norm_inv, wr, inv_inv]
-  suffices a = b by rwa [← inv_inj, ha, hb]
-  clear z w zr wr z0 w0 wz ha hb
-  have b0 : b ≠ 0 := by rw [ne_eq, ← norm_eq_zero]; linarith
-  rw [(by rfl : (snap (f a / f b)).val = i.ff (b,a))] at e
-  -- The rest follows from
-  --   `‖i.ff (b,a) - 1‖ ≤ ‖b - a‖`
-  --   `‖a / b - 1‖ = ‖a - b‖ / ‖b‖ = ‖a - b‖ / r > ‖a - b‖`
-  have le : ‖a - b‖ / r ≤ ‖b - a‖ := by
-    calc ‖a - b‖ / r
-      _ = ‖a / b - 1‖ := by simp only [br, norm_div, div_sub_one b0]
-      _ = ‖i.ff (b,a) - i.ff (a,a)‖ := by rw [e, ff_self]
-      _ ≤ 1 * ‖(b,a) - (a,a)‖ := by apply L.norm_sub_le; all_goals simp [ar, br]
-      _ = ‖b - a‖ := by simp
-  contrapose le
-  simp only [norm_sub_rev b, not_le]
-  rw [lt_div_iff₀ r0]
-  exact mul_lt_of_lt_one_right (norm_sub_pos_iff.mpr le) r1
+  -- Keep f near 1
+  have fa := i.fa 0 (by simp)
+  have fc := Metric.continuousAt_iff.mp fa.continuousAt 20⁻¹ (by norm_num)
+  obtain ⟨a,a0,fs⟩ := fc
+  simp only [dist_eq_norm, sub_zero, i.f0] at fs
+  -- Prove injectivity via `WindInj`
+  obtain ⟨m,m0,em⟩ := i.deriv_div_bound
+  filter_upwards [Filter.eventually_gt_atTop 1, Filter.eventually_gt_atTop a⁻¹,
+    Filter.eventually_gt_atTop m, em] with r r1 ar mr em
+  have r0 : 0 < r := by linarith
+  exact WindInj.inj {
+    r0 := r0
+    fa := fun z zr ↦ i.ga (by simpa [zr])
+    close := by
+      intro z zr
+      simp only [g, ← mul_sub_one, Complex.norm_mul, zr, div_eq_mul_inv, mul_le_mul_iff_right₀ r0]
+      exact (fs (by simp only [norm_inv, zr, inv_lt_of_inv_lt₀ a0 ar])).le
+    mono := by
+      intro z zr
+      have z1 : 1 < ‖z‖ := by simp only [zr, r1]
+      have z0 : z ≠ 0 := by rw [← norm_pos_iff]; linarith
+      have f0 : f z⁻¹ ≠ 0 := by
+        specialize @fs z⁻¹ (by simp only [norm_inv, zr, inv_lt_of_inv_lt₀ a0 ar])
+        contrapose fs
+        simp only [ne_eq, Decidable.not_not] at fs
+        norm_num [fs]
+      simp only [g, i.deriv_g z1, mul_inv, ← mul_assoc, mul_inv_cancel₀ z0, one_mul, mul_sub,
+        inv_mul_cancel₀ f0, ← mul_div_assoc, Complex.sub_re, Complex.one_re, sub_pos]
+      refine lt_of_le_of_lt (Complex.re_le_norm _) ?_
+      simp only [norm_div, zr, div_lt_one r0, lt_of_le_of_lt (em z zr) mr]
+  }
 
 /-!
 ### Topology of the inner and outer regions
@@ -568,19 +526,12 @@ lemma hasSum_dfe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r)
 /-- `inner ℝ (w.fe t * I) (w.dfe t)` is eventually nonnegative -/
 lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc r), ∀ t,
     0 ≤ inner ℝ (w.fe t * I) (w.dfe t) := by
-  -- `deriv f 0 = 0`, and thus `‖deriv f z / f z‖ < 1` is small near `0`
-  have dfc : ContinuousAt (fun z ↦ deriv f z / f z) 0 := by
-    have a0 := i.fa 0 (by simp)
-    have d0 := a0.deriv.div a0 (by simp [i.f0])
-    exact d0.continuousAt
-  obtain ⟨s,s0,dfs⟩ := Metric.continuousAt_iff.mp dfc 1 (by simp)
-  simp only [dist_zero_right, i.df0.deriv, zero_div] at dfs
-  -- Now choose sufficiently large `r`
-  filter_upwards [Filter.eventually_gt_atTop (max 1 s⁻¹), i.g0, i.gc_exp] with r r1s g0 gc_exp w t
-  simp only [sup_lt_iff] at r1s
+  -- Choose sufficiently large `r`
+  obtain ⟨m,m0,em⟩ := i.deriv_div_bound
+  filter_upwards [Filter.eventually_gt_atTop 1, Filter.eventually_ge_atTop m, em, i.g0,
+    i.gc_exp] with r r1 rm em g0 gc_exp w t
   have r0 : 0 < r := by linarith
   have ri1 : r⁻¹ < 1 := by bound
-  have rs : r⁻¹ < s := (inv_lt_comm₀ s0 r0).mp r1s.2
   simp only [WindDiff.fe, WindDiff.dfe]
   unfold WindDiff.fe
   -- Various derivatives
@@ -623,9 +574,9 @@ lemma inner_nonneg (i : Gronwall f) : ∀ᶠ r in atTop, ∀ w : WindDiff (i.gc 
   simp only [Complex.norm_mul, RCLike.norm_conj, norm_inv, nw, pow_two]
   refine mul_le_mul_of_nonneg_left ?_ (by positivity)
   rw [← div_eq_mul_inv, div_le_iff₀ r0, mul_comm _ r, ← div_le_iff₀ f0]
-  specialize @dfs w⁻¹ (by simp [nw, rs])
-  simp only [hd, hf, Complex.norm_div] at dfs
-  linarith
+  specialize em w nw
+  simp only [hd, hf, norm_div, ← div_eq_inv_mul] at em
+  exact le_trans em rm
 
 /-- Terms for our 2D sum -/
 def term (i : Gronwall f) (r : ℝ) (n m : ℕ) (t : ℝ) : ℂ :=
@@ -1176,26 +1127,26 @@ variable {f : ℂ → ℂ}
 
 /-- The Grönwall area is finite -/
 theorem gronwall_volume_ne_top (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
-    (df : HasDerivAt f 0 0) (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
+    (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     volume ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≠ ⊤ :=
-  Gronwall.volume_disk_finite ⟨fa, f0, df, inj⟩
+  Gronwall.volume_disk_finite ⟨fa, f0, inj⟩
 
 /-- The Grönwall area has a nice series-/
 theorem gronwall_volume_sum (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
-    (df : HasDerivAt f 0 0) (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
+    (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     HasSum (fun n ↦ π * n * ‖iteratedDeriv (n + 1) f 0 / (n + 1).factorial‖ ^ 2)
       (π - volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ) :=
-  Gronwall.volume_one_sum ⟨fa, f0, df, inj⟩
+  Gronwall.volume_one_sum ⟨fa, f0, inj⟩
 
 /-- Upper bound on Grönwall's area due to a finite set of terms -/
 theorem gronwall_volume_le (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
-    (df : HasDerivAt f 0 0) (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) (s : Finset ℕ) :
+    (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) (s : Finset ℕ) :
     volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≤
       π - ∑ n ∈ s, π * n * ‖iteratedDeriv (n + 1) f 0 / (n + 1).factorial‖ ^ 2 := by
-  linarith [sum_le_hasSum s (by bound) (gronwall_volume_sum fa f0 df inj)]
+  linarith [sum_le_hasSum s (by bound) (gronwall_volume_sum fa f0 inj)]
 
 /-- Upper bound on Grönwall's area using second derivative and lower -/
 theorem gronwall_volume_le_two (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
-    (df : HasDerivAt f 0 0) (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
+    (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≤ π - π * ‖iteratedDeriv 2 f 0 / 2‖ ^ 2 := by
-  simpa using gronwall_volume_le fa f0 df inj {1}
+  simpa using gronwall_volume_le fa f0 inj {1}

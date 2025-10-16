@@ -1,8 +1,6 @@
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
-import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
-import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import Mathlib.Topology.GDelta.MetrizableSpace
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
+import Ray.Misc.Bound
 import Ray.Misc.Complex
 
 /-!
@@ -11,6 +9,7 @@ import Ray.Misc.Complex
 
 open Classical
 open Complex (arg exp I slitPlane)
+open Metric (sphere)
 open Set
 open scoped Real ComplexConjugate
 noncomputable section
@@ -166,3 +165,33 @@ lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
     HasDerivAt (fun r ↦ circleMap c r t) (circleMap 0 1 t) r := by
   simp only [circleMap, zero_add]
   exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _
+
+/-- `circleMap` is surjective from `|t| ≤ π` -/
+lemma exists_circleMap_le {r : ℝ} {z : ℂ} (m : ‖z‖ = r) : ∃ t, |t| ≤ π ∧ circleMap 0 r t = z := by
+  replace m : z ∈ sphere 0 |r| := by simp [← m]
+  simp only [← image_circleMap_Ioc, mem_image, mem_Ioc] at m
+  obtain ⟨t,⟨t0,t1⟩,tz⟩ := m
+  by_cases t0 : t ≤ π
+  · exact ⟨t, abs_le.mpr ⟨by linarith, by linarith⟩, tz⟩
+  · refine ⟨t - 2 * π, abs_le.mpr ⟨by linarith, by linarith⟩, ?_⟩
+    simp only [circleMap, Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_ofNat, sub_mul,
+      Complex.exp_sub, Complex.exp_two_pi_mul_I, div_one, zero_add, ← tz]
+
+lemma abs_le_mul_norm_circleMap {t : ℝ} (m : |t| ≤ π) : |t| ≤ π/2 * ‖circleMap 0 1 t - 1‖ := by
+  suffices h : t ^ 2 ≤ π ^ 2 / 2 ^ 2 * Complex.normSq (circleMap 0 1 t - 1) by
+    rw [← sq_le_sq₀ (by bound) (by bound)]
+    simp only [sq_abs, Complex.norm_def, mul_pow, div_pow]
+    rwa [Real.sq_sqrt (by bound)]
+  rw [mul_comm, ← div_le_iff₀ (by bound)]
+  simp only [circleMap, Complex.exp_mul_I, Complex.normSq_apply, Complex.sub_re,
+    Complex.add_re, Complex.mul_re, Complex.I_re, mul_zero, Complex.I_im, mul_one, sub_self,
+    add_zero, Complex.one_re, Complex.sub_im, Complex.add_im, Complex.mul_im, zero_add, one_mul,
+    Complex.one_im, sub_zero, Complex.ofReal_re, Complex.ofReal_im, ← pow_two, zero_mul,
+    Complex.cos_ofReal_re, Complex.sin_ofReal_im, Complex.cos_ofReal_im, Complex.sin_ofReal_re,
+    zero_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero]
+  simp only [sub_sq, mul_one, one_pow, Real.cos_sq']
+  ring_nf
+  have b := Real.cos_le_one_sub_mul_cos_sq m
+  rw [inv_pow, ← div_eq_mul_inv, div_mul_eq_mul_div, mul_div_assoc, mul_comm (t^2)]
+  rw [div_mul_eq_mul_div, mul_div_assoc] at b ⊢
+  linarith [b]

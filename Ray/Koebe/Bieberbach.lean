@@ -144,7 +144,6 @@ lemma h_inj (b : Bier f) : InjOn (fun z ↦ z * b.h z⁻¹) (norm_Ioi 1) := by
 lemma gronwall (b : Bier f) : Gronwall b.h where
   fa := b.analytic_h
   f0 := b.h0
-  df0 := by simpa only [b.dh0] using (b.analytic_h 0 m0).differentiableAt.hasDerivAt
   inj' := b.h_inj
 
 end Bier
@@ -154,7 +153,7 @@ theorem bieberbach (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 
   have b : Bier f := ⟨fa, inj, f0, d0⟩
   have g := b.gronwall
   have le := le_trans MeasureTheory.measureReal_nonneg
-    (gronwall_volume_le_two g.fa g.f0 g.df0 g.inj)
+    (gronwall_volume_le_two g.fa g.f0 g.inj)
   simp only [Complex.norm_div, Complex.norm_ofNat, div_pow, sub_nonneg] at le
   nth_rw 2 [← mul_one π] at le
   rw [mul_le_mul_iff_right₀ Real.pi_pos] at le
