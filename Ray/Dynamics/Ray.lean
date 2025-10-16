@@ -133,7 +133,7 @@ theorem Super.ray_eqn_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
   (s.ray_spec (le_refl _) (s.p_pos c)).start
 
 /-- `s.ray` inverts `s.bottcherNear` after iteration -/
-theorem Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+theorem Super.ray_eqn_iter' (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x),
       s.bottcherNearIter (s.np c ‖x‖) y.1 (s.ray y.1 y.2) = y.2 ^ d ^ s.np c ‖x‖ :=
   ((s.ray_spec (norm_nonneg _) post).eqn.filter_mono (nhds_le_nhdsSet mem_domain_self)).mp
@@ -171,7 +171,7 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
   set n := s.np c ‖x‖
   have h : mfderiv I I (s.bottcherNearIter n c ∘ s.ray c) x ≠ 0 := by
     have e : s.bottcherNearIter n c ∘ s.ray c =ᶠ[𝓝 x] fun x ↦ x ^ d ^ n :=
-      (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter post)
+      (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter' post)
     rw [e.mfderiv_eq]; contrapose x0; simp only [not_not] at x0 ⊢
     rw [mfderiv_eq_fderiv] at x0
     have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv

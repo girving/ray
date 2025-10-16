@@ -242,3 +242,20 @@ theorem Super.bottcher_lt_one (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ 
   replace m := s.bottcher_ext m
   simp only [Super.ext, mem_setOf] at m
   exact lt_of_lt_of_le m s.p_le_one
+
+/-- Functional equation for `s.ray` -/
+lemma Super.ray_eqn (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+    f c (s.ray c x) = s.ray c (x ^ d) := by
+  generalize hz : s.ray c x = z
+  rw [← s.bottcher_ray post, ← s.bottcher_eqn, s.ray_bottcher, hz]
+  exact s.stays_post (s.ray_post post)
+
+/-- Functional equation for `s.ray`, iterated -/
+lemma Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
+    (f c)^[n] (s.ray c x) = s.ray c (x ^ d ^ n) := by
+  induction' n with n h
+  · simp only [Function.iterate_zero_apply, pow_zero, pow_one]
+  · rw [Function.iterate_succ_apply', h, pow_succ, pow_mul, s.ray_eqn]
+    simp only [ext, mem_setOf_eq, norm_pow] at post ⊢
+    refine lt_of_le_of_lt (pow_le_of_le_one (by bound) ?_ (by simp [s.d0])) post
+    exact le_trans post.le s.p_le_one

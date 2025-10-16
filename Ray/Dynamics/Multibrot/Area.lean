@@ -4,14 +4,11 @@ import Ray.Koebe.Gronwall
 /-!
 ## Multibrot area via Grönwall's area theorem
 
-We construct the `z ↦ z⁻¹ / ray d z` map needed to plug into Grönwall's area theorem, and derive
-its functional equation.
+We construct the `z ↦ z⁻¹ / ray d z` map needed to plug into Grönwall's area theorem.
 -/
 
 open MeasureTheory (volume)
-open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
-open RiemannSphere
-open OneDimension
+open Metric (ball isOpen_ball mem_ball)
 open Set
 open scoped OnePoint Real RiemannSphere Topology
 noncomputable section
