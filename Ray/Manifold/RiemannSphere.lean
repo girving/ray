@@ -453,6 +453,11 @@ variable {y : 𝕊} {x : α} {z : ℂ}
 @[simp] lemma lift_inf : lift f y ∞ = y := rfl
 @[simp] lemma lift_inf' : lift' g y x ∞ = y := rfl
 
+lemma toComplex_lift' {w : 𝕊} (ne : w ≠ ∞) : (lift' g y x w).toComplex = g x w.toComplex := by
+  induction w using OnePoint.rec
+  · simp only [ne_eq, not_true_eq_false] at ne
+  · simp only [lift', rec_coe, toComplex_coe]
+
 end Fill
 
 variable {f : ℂ → ℂ}

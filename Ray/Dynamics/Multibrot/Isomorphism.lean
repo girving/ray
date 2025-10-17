@@ -206,6 +206,10 @@ lemma ray_inj : InjOn (ray d) (ball (0 : ℂ) 1) :=
   simp only [ne_eq, not_not] at h
   simp [bottcherHomeomorph, h]
 
+@[simp] lemma ray_eq_inf {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z = ∞ ↔ z = 0 := by
+  rw [← ray_zero (d := d)]
+  exact ray_inj.eq_iff m (by simp)
+
 @[simp] lemma norm_bottcher_lt_one {z : 𝕊} (m : z ∈ multibrotExt d) : ‖bottcher d z‖ < 1 := by
   simpa [bottcherHomeomorph] using (bottcherHomeomorph d).map_source m
 

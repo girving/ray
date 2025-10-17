@@ -287,6 +287,16 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
         (Complex.continuous_ofReal.continuousAt.mul continuousAt_const) rfl
     exact tendsto_nhds_unique_of_frequently_eq (rc p0) (rc p1) e
 
+/-- Special case of injectivity: `s.ray c x = a` iff `x = 0` -/
+lemma Super.ray_eq_a_iff (s : Super f d a) [OnePreimage s] {x : ℂ} (m : (c, x) ∈ s.ext) :
+    s.ray c x = a ↔ x = 0 := by
+  constructor
+  · intro e
+    nth_rw 2 [← s.ray_zero (c := c)] at e
+    exact s.ray_inj m (s.mem_ext c) e
+  · intro e
+    simp only [e, s.ray_zero]
+
 /-- `s.ray` surjects from `s.ext` to `s.post`
 
     We prove this by continuous induction on potential, but phrased in terms of explicit sets.

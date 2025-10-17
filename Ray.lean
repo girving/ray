@@ -10,6 +10,7 @@ import Ray.Dynamics.Multibrot.Iterates
 import Ray.Dynamics.Multibrot.Potential
 import Ray.Dynamics.Multibrot.PotentialLower
 import Ray.Dynamics.Multibrot.Postcritical
+import Ray.Dynamics.Multibrot.RayEqn
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
