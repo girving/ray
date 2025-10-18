@@ -18,7 +18,7 @@ open MeasureTheory (volume)
 open scoped ContDiff Topology NNReal
 noncomputable section
 
-variable {f : ℂ → ℂ}
+variable {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
 
 /-- The Koebe quarter theorem, `f 0 = 0, f' 0 = 1` case -/
 theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1))
@@ -95,7 +95,7 @@ theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn
     _ = 4 := by norm_num
 
 /-- Affine image of a ball -/
-lemma affine_image_ball {a s c : ℂ} {r : ℝ} (s0 : s ≠ 0) :
+lemma affine_image_ball {a s c : ℂ} (s0 : s ≠ 0) :
     (fun z ↦ a + s * z) '' ball c r = ball (a + s * c) (r * ‖s‖) := by
   have s0' : 0 < ‖s‖ := by positivity
   ext z
@@ -110,22 +110,41 @@ lemma affine_image_ball {a s c : ℂ} {r : ℝ} (s0 : s ≠ 0) :
       simpa only [← norm_mul, mul_sub, mul_div_cancel₀ _ s0, mul_comm, sub_add_eq_sub_sub] using lt
     · simp only [mul_div_cancel₀ _ s0, add_sub_cancel]
 
-/-- The Koebe quarter theorem -/
-theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1)) :
-    ball (f 0) (‖deriv f 0‖ / 4) ⊆ f '' (ball 0 1) := by
-  have d0 : deriv f 0 ≠ 0 := inj.deriv_ne_zero isOpen_ball (by simp) (fa 0 (by simp))
-  set g : ℂ → ℂ := fun z ↦ (f z - f 0) / deriv f 0
-  have ga : AnalyticOnNhd ℂ g (ball 0 1) :=
-    (fa.sub analyticOnNhd_const).div analyticOnNhd_const (fun _ _ ↦ d0)
+/-- The Koebe quarter theorem, general affine case -/
+lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball c r)) (r0 : 0 < r) :
+    ball (f c) (r * ‖deriv f c‖ / 4) ⊆ f '' (ball c r) := by
+  have cr : c ∈ ball c r := by simp only [Metric.mem_ball, dist_self, r0]
+  have d0 : deriv f c ≠ 0 := inj.deriv_ne_zero isOpen_ball cr (fa c cr)
+  have rd0 : r * deriv f c ≠ 0 := by simp [d0, r0.ne']
+  set g : ℂ → ℂ := fun z ↦ (f (c + r * z) - f c) / (r * deriv f c)
+  have ga : AnalyticOnNhd ℂ g (ball 0 1) := by
+    intro z m
+    refine AnalyticAt.div (((fa (c + r * z) ?_).comp_of_eq (by fun_prop) (by rfl)).sub
+      analyticAt_const) analyticAt_const rd0
+    simpa [abs_of_pos r0] using mul_lt_of_lt_one_right r0 m
   have ginj : InjOn g (ball 0 1) := by
     intro z zm w wm e
+    simp only [Metric.mem_ball, dist_zero_right] at zm wm
+    have zm' : c + r * z ∈ ball c r := by simpa [abs_of_pos r0] using mul_lt_of_lt_one_right r0 zm
+    have wm' : c + r * w ∈ ball c r := by simpa [abs_of_pos r0] using mul_lt_of_lt_one_right r0 wm
     simp only [g] at e
-    field_simp [d0] at e
+    field_simp [d0, r0.ne'] at e
     simp only [sub_left_inj] at e
-    exact (inj.eq_iff zm wm).mp e
+    simpa [r0.ne'] using (inj.eq_iff zm' wm').mp e
   have g0 : g 0 = 0 := by simp [g]
-  have dg0 : deriv g 0 = 1 := by simp [g, div_self d0]
+  have dg0 : deriv g 0 = 1 := by
+    simp only [deriv_div_const, deriv_sub_const_fun, div_eq_one_iff_eq rd0, g]
+    rw [deriv_comp_mul_left (c := (r : ℂ)) (f := fun z ↦ f (c + z)), deriv_comp_const_add]
+    simp only [mul_zero, add_zero, smul_eq_mul]
   have k := koebe_quarter_special ga ginj g0 dg0
-  have ik := image_mono (f := fun z ↦ f 0 + deriv f 0 * z) k
-  simpa only [image_image, g, mul_div_cancel₀ _ d0, add_sub_cancel, affine_image_ball d0, mul_zero,
-    add_zero, ← div_eq_inv_mul] using ik
+  have ik := image_mono (f := fun z ↦ f c + r * deriv f c * z) k
+  simp only [image_image, g, mul_div_cancel₀ _ rd0, add_sub_cancel, affine_image_ball rd0, mul_zero,
+    add_zero, ← div_eq_inv_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos r0] at ik
+  rw [← image_image (g := f), affine_image_ball (by simp [r0.ne'])] at ik
+  simp only [mul_zero, add_zero, Complex.norm_real, Real.norm_eq_abs, abs_of_pos r0, one_mul] at ik
+  exact ik
+
+/-- The Koebe quarter theorem, unit ball case -/
+theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1)) :
+    ball (f 0) (‖deriv f 0‖ / 4) ⊆ f '' (ball 0 1) := by
+  simpa only [one_mul] using koebe_quarter' fa inj (by simp)
