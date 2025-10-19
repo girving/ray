@@ -176,8 +176,8 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     intro c z m
     suffices e : ∀ᶠ w in 𝓝 a, s.bottcher c (f c w) = s.bottcher c w ^ d by
       refine (ContMDiffOnNhd.eq_of_locally_eq ?_ (fun z m ↦
-        ((contMDiff_pow _).contMDiffAt.comp _ (s.bottcher_mAnalyticOn (c, z) m).along_snd)) (s.post_slice_connected c).isPreconnected
-        ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
+        ((contMDiff_pow _).contMDiffAt.comp _ (s.bottcher_mAnalyticOn (c, z) m).along_snd))
+        (s.post_slice_connected c).isPreconnected ⟨a, s.post_a c, e⟩).self_of_nhdsSet m
       intro z m
       exact (s.bottcher_mAnalyticOn _ (s.stays_post m)).along_snd.comp _ (s.fa _).along_snd
     have e := s.bottcher_eq_bottcherNear c
@@ -264,3 +264,18 @@ lemma Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.
   induction' n with n h
   · simp only [Function.iterate_zero_apply, pow_zero, pow_one]
   · rw [Function.iterate_succ_apply', h, pow_succ, pow_mul, s.ray_eqn (s.pow_ext post n)]
+
+/-- `s.bottcher c` is injective (pulling it out of `s.homeomorphSlice c`) -/
+lemma Super.bottcher_inj (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    InjOn (s.bottcher c) {z | (c, z) ∈ s.post} :=
+  (s.homeomorphSlice c).symm.injOn
+
+/-- `s.bottcher c` sends the fixpoint to 0 -/
+@[simp] lemma Super.bottcher_a (s : Super f d a) [OnePreimage s] (c : ℂ) : s.bottcher c a = 0 := by
+  rw [← norm_eq_zero]
+  have lt : ‖s.bottcher c a‖ < 1 := s.bottcher_lt_one (s.post_a c)
+  have e := s.f0 _ ▸ s.bottcher_eqn (c := c) (z := a)
+  replace e : ‖s.bottcher c a‖ ^ d = ‖s.bottcher c a‖ := by rw [← norm_pow, ← e]
+  contrapose e
+  simp only [norm_eq_zero, ne_eq, ← norm_pos_iff] at e
+  exact (pow_lt_self_of_lt_one₀ e lt s.d1).ne

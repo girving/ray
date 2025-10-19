@@ -1,4 +1,4 @@
-import Ray.Dynamics.Multibrot.Isomorphism
+import Ray.Dynamics.Multibrot.InvRay
 import Ray.Koebe.Gronwall
 
 /-!

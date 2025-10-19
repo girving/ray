@@ -414,7 +414,7 @@ theorem bottcherNear_monic (s : SuperNear f d t) : HasDerivAt (bottcherNear f d)
   rw [term_prod_at_zero s] at db; exact db
 
 /-- `bottcherNear 0 = 0` -/
-theorem bottcherNear_zero : bottcherNear f d 0 = 0 := by
+@[simp] lemma bottcherNear_zero : bottcherNear f d 0 = 0 := by
   simp only [bottcherNear, MulZeroClass.zero_mul]
 
 /-- `z ≠ 0 → bottcherNear z ≠ 0` -/

@@ -111,8 +111,13 @@ lemma affine_image_ball {a s c : ℂ} (s0 : s ≠ 0) :
     · simp only [mul_div_cancel₀ _ s0, add_sub_cancel]
 
 /-- The Koebe quarter theorem, general affine case -/
-lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball c r)) (r0 : 0 < r) :
+lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball c r)) :
     ball (f c) (r * ‖deriv f c‖ / 4) ⊆ f '' (ball c r) := by
+  by_cases r0 : r ≤ 0
+  · simp only [Metric.ball_eq_empty.mpr r0, image_empty, subset_empty_iff, Metric.ball_eq_empty]
+    simp only [mul_div_assoc]
+    exact mul_nonpos_of_nonpos_of_nonneg r0 (by bound)
+  replace r0 : 0 < r := by linarith
   have cr : c ∈ ball c r := by simp only [Metric.mem_ball, dist_self, r0]
   have d0 : deriv f c ≠ 0 := inj.deriv_ne_zero isOpen_ball cr (fa c cr)
   have rd0 : r * deriv f c ≠ 0 := by simp [d0, r0.ne']
@@ -147,4 +152,4 @@ lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball 
 /-- The Koebe quarter theorem, unit ball case -/
 theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1)) :
     ball (f 0) (‖deriv f 0‖ / 4) ⊆ f '' (ball 0 1) := by
-  simpa only [one_mul] using koebe_quarter' fa inj (by simp)
+  simpa only [one_mul] using koebe_quarter' fa inj

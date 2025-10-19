@@ -114,7 +114,7 @@ theorem Super.ray_mAnalyticOn (s : Super f d a) [OnePreimage s] :
     ContMDiffOnNhd II I (uncurry s.ray) s.ext := by intro ⟨c, x⟩ m; exact s.ray_mAnalytic m
 
 /-- Rays start at `a`: `s.ray c 0 = a` -/
-theorem Super.ray_zero (s : Super f d a) [OnePreimage s] (c : ℂ) : s.ray c 0 = a :=
+@[simp] theorem Super.ray_zero (s : Super f d a) [OnePreimage s] (c : ℂ) : s.ray c 0 = a :=
   (s.ray_spec (le_refl _) (s.p_pos c)).zero
 
 /-- `s.ray` maps `s.ext` into `s.basin` -/
@@ -288,7 +288,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     exact tendsto_nhds_unique_of_frequently_eq (rc p0) (rc p1) e
 
 /-- Special case of injectivity: `s.ray c x = a` iff `x = 0` -/
-lemma Super.ray_eq_a_iff (s : Super f d a) [OnePreimage s] {x : ℂ} (m : (c, x) ∈ s.ext) :
+@[simp] lemma Super.ray_eq_a_iff (s : Super f d a) [OnePreimage s] {x : ℂ} (m : (c, x) ∈ s.ext) :
     s.ray c x = a ↔ x = 0 := by
   constructor
   · intro e

@@ -20,16 +20,17 @@ Our main results are:
 -/
 
 open Complex
+open Function (uncurry)
 open Filter (Tendsto)
 open Metric (closedBall mem_closedBall mem_closedBall_self)
 open Real (exp log)
 open RiemannSphere
 open OneDimension
 open Set
-open scoped OnePoint RiemannSphere Topology
+open scoped OneDimension OnePoint RiemannSphere Topology
 noncomputable section
 
-variable {c : ℂ}
+variable {c z : ℂ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
@@ -37,7 +38,7 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 /-- `s.bottcher = bottcherNear` for large `c,z`.
     This means that `s.bottcher` is given by the infinite product formula from `BottcherNear.lean`
     for large `c,z`. -/
-theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+theorem bottcher_eq_bottcherNear_z (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     (superF d).bottcher c z = bottcherNear (fl (f d) ∞ c) d z⁻¹ := by
   have c0 : 0 < ‖c‖ := lt_trans (by norm_num) c16
   have z0 : 0 < ‖z‖ := lt_of_lt_of_le c0 cz
@@ -74,20 +75,20 @@ theorem bottcher_eq_bottcherNear_z {c z : ℂ} (c16 : 16 < ‖c‖) (cz : ‖c�
   exact i.eventually (s.bottcher_eq_bottcherNear c)
 
 /-- `bottcher' = bottcherNear` for large `c` -/
-theorem bottcher_eq_bottcherNear {c : ℂ} (c16 : 16 < ‖c‖) :
+theorem bottcher_eq_bottcherNear (c16 : 16 < ‖c‖) :
     bottcher' d c = bottcherNear (fl (f d) ∞ c) d c⁻¹ :=
   bottcher_eq_bottcherNear_z c16 (le_refl _)
 
 /-- `z⁻¹` is in the `superNearC` region for large `c,z` -/
-theorem inv_mem_t {c z : ℂ} (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+theorem inv_mem_t (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     z⁻¹ ∈ {z : ℂ | ‖z‖ < (max 16 (‖c‖ / 2))⁻¹} := by
   simp only [mem_setOf, norm_inv]
   refine inv_strictAnti₀ (lt_of_lt_of_le (by norm_num) (le_max_left _ _)) ?_
   exact lt_of_lt_of_le (max_lt c16 (half_lt_self (lt_trans (by norm_num) c16))) cz
 
 /-- Terms in the `bottcherNear` product are close to 1 -/
-theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖)
-    (n : ℕ) : ‖term (fl (f d) ∞ c) d n z⁻¹ - 1‖ ≤ 2 * (1 / 2 : ℝ) ^ n * ‖z‖⁻¹ := by
+theorem term_approx (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) (n : ℕ) :
+    ‖term (fl (f d) ∞ c) d n z⁻¹ - 1‖ ≤ 2 * (1 / 2 : ℝ) ^ n * ‖z‖⁻¹ := by
   set s := superF d
   have z0 : ‖z‖ ≠ 0 := (lt_of_lt_of_le (lt_trans (by norm_num) c16) cz).ne'
   have i8 : ‖z‖⁻¹ ≤ 1 / 8 := by
@@ -131,7 +132,7 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < ‖c‖) 
           rfl
 
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹^2)` -/
-theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖(superF d).bottcher c z - z⁻¹‖ ≤ (16:ℝ) * ‖z‖⁻¹ ^ 2 := by
   set s := superF d
   have i8 : ‖z‖⁻¹ ≤ 1 / 8 := by
@@ -153,7 +154,7 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c16 : 16 < ‖
     _ = ‖z‖⁻¹ * 4 := by ring
 
 /-- `bottcher' d c = c⁻¹ + O(c⁻¹^2)` -/
-theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] {c : ℂ} (c16 : 16 < ‖c‖) :
+theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) :
     ‖bottcher' d c - c⁻¹‖ ≤ 16 * ‖c‖⁻¹ ^ 2 :=
   bottcher_approx_z d c16 (le_refl _)
 

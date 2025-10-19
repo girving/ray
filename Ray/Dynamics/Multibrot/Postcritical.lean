@@ -12,7 +12,7 @@ open Set
 open scoped OnePoint RiemannSphere Topology
 noncomputable section
 
-variable {c : ℂ}
+variable {c z : ℂ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
@@ -63,7 +63,7 @@ lemma log_ratio_mono : MonotoneOn (fun x ↦ log (x-1) / log x) (Ici 2) := by
     · exact inv_nonneg.mpr (by linarith)
 
 /-- One iterate increases `log (log (abs z))` by `Ω(1)` for large `z` -/
-lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+lemma log_log_iter (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     log (log ‖z‖) + 0.548 ≤ log (log ‖f' d c z‖) := by
   have zw : (‖z‖ - 1)^1 * ‖z‖ ≤ ‖f' d c z‖ := by
     refine iter_large (d := d) (n := 1) ?_ ?_ ?_ cz
@@ -71,7 +71,7 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     · exact le_refl _
   generalize ‖f' d c z‖ = w at zw
   generalize ‖z‖ = x at zw cz z4
-  clear z c cz
+  clear cz
   simp only [pow_one] at zw
   have lx1 : 1 < log (x-1) :=
     lt_trans (by norm_num) (lt_of_lt_of_le lt_log_3 (Real.log_le_log (by norm_num) (by linarith)))
@@ -97,8 +97,7 @@ lemma log_log_iter {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     _ ≥ log (log x) + 0.548 := by bound
 
 /-- For large `c`, large `z`'s are postcritical -/
-theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
-    Postcritical (superF d) c z := by
+theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) : Postcritical (superF d) c z := by
   -- Record a variety of inequalities
   have d0 : 0 < d := d_pos d
   have lcz : log (log ‖c‖) ≤ log (log ‖z‖) := log_log_mono (by linarith) cz
@@ -137,3 +136,12 @@ theorem postcritical_large {c z : ℂ} (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ �
   have iew := ie w (by linarith) cw
   refine lt_of_lt_of_le (lt_of_le_of_lt (add_le_add iec lcz) ?_) (add_le_add (neg_le_neg iew) lzw)
   ring_nf; simp only [add_lt_add_iff_right]; norm_num
+
+/-- For large `c` and small `z`, `(c,z⁻¹)` is postcritical -/
+lemma postcritical_small (c4 : 4 ≤ ‖c‖) (z1 : ‖z‖ ≤ ‖c‖⁻¹) : (c, (z : 𝕊)⁻¹) ∈ (superF d).post := by
+  set s := superF d
+  by_cases z0 : z = 0
+  · simp only [z0, coe_zero, inv_zero', s.post_a]
+  · rw [inv_coe z0]
+    apply postcritical_large c4
+    rwa [norm_inv, le_inv_comm₀ (by linarith) (by simpa)]
