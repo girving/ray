@@ -1,9 +1,12 @@
 import Ray.Dynamics.Multibrot.Area
+import Ray.Dynamics.Multibrot.BottcherInv
+import Ray.Dynamics.Multibrot.RayBound
 
 /-!
 ## Functional equations for `ray` and `pray`
 -/
 
+open Asymptotics
 open MeasureTheory (volume)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
 open RiemannSphere
@@ -12,7 +15,7 @@ open Set
 open scoped OnePoint Real RiemannSphere Topology
 noncomputable section
 
-variable {z : ℂ} {n : ℕ}
+variable {c x z : ℂ} {n : ℕ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
@@ -89,3 +92,68 @@ lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
       div_eq_inv_mul, ← mul_assoc, pow_sub₀ _ z0 (by bound), pow_one, pow_mul]
     rw [ne_eq, s.ray_eq_a_iff em]
     simp only [pow_eq_zero_iff', z0, ne_eq, not_and, not_not, false_and, not_false_eq_true]
+
+/-- The whole `cascade` is analytic -/
+lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (cascade d n) z := by
+  induction' n with n h
+  · refine (pray_analytic (d := d) m).congr_of_eventuallyEq ?_
+    filter_upwards [isOpen_ball.eventually_mem m] with w m
+    simp only [cascade_zero m]
+  · have e : cascade d (n + 1) =ᶠ[𝓝 z]
+        fun z ↦ cascade d n z ^ d + z ^ (d ^ (n + 1) - 1) * pray d z := by
+      filter_upwards [isOpen_ball.eventually_mem m] with w m
+      simp only [cascade_succ m]
+    refine ContDiffAt.congr_of_eventuallyEq ?_ e
+    exact (h.pow _).add ((contDiffAt_id.pow _).mul (pray_analytic m))
+
+/-- `cascade ≈ 1` for large `n` -/
+lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦ z ^ d ^ n) := by
+  by_cases n0 : n = 0
+  · simpa only [n0, pow_zero, pow_one, cascade_z0, sub_zero] using
+      ((cascade_analytic (d := d) (n := 0) (z := 0) (by simp)).differentiableAt le_top).isBigO_sub
+  set s := superF d
+  have cz := Asymptotics.isLittleO_iff.mp (hasDerivAt_iff_isLittleO_nhds_zero.mp
+    ((inv_ray_analytic (d := d) (z := 0) (by simp)).differentiableAt le_top).hasDerivAt)
+    (c := 2⁻¹) (by norm_num)
+  simp only [inv_ray_zero, sub_zero, zero_add, deriv_inv_ray_zero, smul_eq_mul, mul_one] at cz
+  simp only [cascade]
+  refine Asymptotics.isBigO_iff.mpr ⟨64, ?_⟩
+  filter_upwards [cz, eventually_norm_sub_lt 0 (ε := 32) (by norm_num),
+    eventually_norm_sub_lt 0 (ε := 80⁻¹) (by bound)] with z cz lt_c z_lt
+  by_cases z0 : z = 0
+  · simp [z0]
+  set c := ray' d z
+  have hc : (ray d z).toComplex = c := rfl
+  simp only [z0, ↓reduceIte, sub_zero, inv_ray, hc, toComplex_inv] at cz lt_c z_lt ⊢
+  have cb := hc ▸ ray_le (d := d) (by linarith)
+  have lt_zi : 80 < ‖z‖⁻¹ := by rwa [lt_inv_comm₀ (by norm_num) (norm_pos_iff.mpr z0)]
+  have lt_c : 16 < ‖c‖ := by
+    calc ‖c‖
+      _ = ‖z⁻¹ + (c - z⁻¹)‖ := by ring_nf
+      _ ≥ ‖z⁻¹‖ - ‖c - z⁻¹‖ := by bound
+      _ > 80 - 64 := by rw [norm_inv]; bound
+      _ = 16 := by norm_num
+  have le_ci : ‖z‖ ≤ 2 * ‖c‖⁻¹ := by
+    calc 2 * ‖c‖⁻¹
+      _ = 2 * ‖z + (c⁻¹ - z)‖ := by rw [← norm_inv c]; ring_nf
+      _ ≥ 2 * (‖z‖ - ‖c⁻¹ - z‖) := by bound
+      _ ≥ 2 * (‖z‖ - 2⁻¹ * ‖z‖) := by bound
+      _ = ‖z‖ := by ring
+  have small : ‖z ^ d ^ n‖ < ‖c‖⁻¹ / 4 := by
+    have le_p : 2 ≤ d ^ n := by
+      calc d ^ n
+        _ ≥ 2 ^ n := by bound
+        _ ≥ 2 := Nat.le_self_pow n0 2
+    calc ‖z ^ d ^ n‖
+      _ = ‖z‖ * ‖z‖ * ‖z‖ ^ (d ^ n - 2) := by
+          rw [← pow_two, ← pow_add, Nat.add_sub_cancel' le_p, norm_pow]
+      _ ≤ 2 * ‖c‖⁻¹ * 80⁻¹ * 1 := by bound
+      _ = 40⁻¹ * ‖c‖⁻¹ := by ring_nf
+      _ < 4⁻¹ * ‖c‖⁻¹ := by bound
+      _ = ‖c‖⁻¹ / 4 := by ring_nf
+  generalize hw : z ^ d ^ n = w at small
+  have w0 : w ≠ 0 := by simp [← hw, n0, z0]
+  calc ‖w * (s.ray c w).toComplex - 1‖
+    _ = ‖(s.ray c w).toComplex - w⁻¹‖ * ‖w‖ := by
+        rw [← norm_mul, sub_mul, inv_mul_cancel₀ w0, mul_comm w]
+    _ ≤ 64 * ‖w‖ := by bound [sray_le (d := d) lt_c (x := w) (by linarith)]

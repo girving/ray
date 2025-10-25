@@ -1,4 +1,6 @@
+import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.Isomorphism
+import Ray.Dynamics.Multibrot.KoebeInf
 
 /-!
 ## `inv_ray`: The external ray map as an analytic function
@@ -14,7 +16,7 @@ noncomputable section
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
-variable {c z : ℂ}
+variable {c x z : ℂ}
 
 /-!
 ### Parameter space `inv_ray`
@@ -56,10 +58,26 @@ lemma ray_hasDerivAt_one : HasDerivAt (inv_ray d) 1 0 := by
   simp only [Function.comp_def, dc.deriv, bottcher_hasDerivAt_one.deriv, one_mul, inv_ray_zero] at c
   exact c ▸ dr.hasDerivAt
 
+@[simp] lemma deriv_inv_ray_zero : deriv (inv_ray d) 0 = 1 := ray_hasDerivAt_one.deriv
+
 /-!
-### Dynamical space `s.inv_ray` and `s.bottcher_inv`
+### Dynamical space `s.inv_ray`
 -/
 
 /-- `s.inv_ray` as an analytic `ℂ → ℂ` function -/
 def sinv_ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ → ℂ :=
   fun c z ↦ ((superF d).ray c z)⁻¹.toComplex
+
+/-- `sinv_ray` is analytic for large `c`, small `x` -/
+lemma sinv_ray_analytic (c16 : 16 < ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+    AnalyticAt ℂ (uncurry (sinv_ray d)) (c, x) := by
+  set s := superF d
+  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c16 xc
+  have xe := small_mem_ext (d := d) c16 xc
+  refine ContMDiffAt.analyticAt (I := II) (J := I) ?_
+  have e : uncurry (sinv_ray d) = (fun z : 𝕊 ↦ z⁻¹.toComplex) ∘ uncurry (superF d).ray := rfl
+  rw [e]
+  refine ContMDiffAt.comp _ ?_ (s.ray_mAnalytic xe)
+  apply ContMDiffAt.comp _ ?_ (mAnalytic_inv _)
+  apply mAnalyticAt_toComplex'
+  simp [← zx, sbottcher_inv, s.ray_bottcher zp]

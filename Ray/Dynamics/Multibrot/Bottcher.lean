@@ -133,7 +133,7 @@ theorem term_approx (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (cz : ‖c�
 
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹^2)` -/
 theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
-    ‖(superF d).bottcher c z - z⁻¹‖ ≤ (16:ℝ) * ‖z‖⁻¹ ^ 2 := by
+    ‖(superF d).bottcher c z - z⁻¹‖ ≤ 16 * ‖z‖⁻¹ ^ 2 := by
   set s := superF d
   have i8 : ‖z‖⁻¹ ≤ 1 / 8 := by
     rw [one_div]; apply inv_anti₀; norm_num
@@ -163,6 +163,9 @@ def bottcher_inv (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ :=
   fun z ↦ bottcher d (↑z)⁻¹
 
 lemma bottcher_inv_def : bottcher_inv d = fun z : ℂ ↦ bottcher d (↑z)⁻¹ := rfl
+
+@[simp] lemma bottcher_inv_zero : bottcher_inv d 0 = 0 := by
+  simp only [bottcher_inv, coe_zero, inv_zero', bottcher_inf]
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
 theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by

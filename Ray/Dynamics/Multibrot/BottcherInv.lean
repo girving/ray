@@ -1,6 +1,6 @@
 import Ray.Dynamics.Multibrot.Bottcher
+import Ray.Dynamics.Multibrot.Isomorphism
 import Ray.Dynamics.Multibrot.Postcritical
-import Ray.Koebe.Koebe
 
 /-!
 ## `s.bottcher_inv` as an analytic function
@@ -20,10 +20,14 @@ open Set
 open scoped OneDimension OnePoint RiemannSphere Topology
 noncomputable section
 
-variable {c z : ℂ} {r : ℝ}
+variable {c x z : ℂ} {r : ℝ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
+
+/-!
+### Dynamical space facts about `sbottcher_inv`
+-/
 
 /-- `s.bottcher` is analytic for large `c, z` -/
 lemma contDiffAt_bottcher_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
@@ -84,18 +88,36 @@ lemma sbottcher_inv_monic (c16 : 16 < ‖c‖) : HasDerivAt (sbottcher_inv d c) 
       exact zc.le
   exact (bottcherNear_monic (superNearF d c)).congr_of_eventuallyEq e
 
+/-- `sbottcher_inv d c z = z + O(z^2)` -/
+theorem sbottcher_inv_approx_z (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (zc : ‖z‖ ≤ ‖c‖⁻¹) :
+    ‖sbottcher_inv d c z - z‖ ≤ 16 * ‖z‖ ^ 2 := by
+  by_cases z0 : z = 0
+  · simp [z0]
+  · have czi : ‖c‖ ≤ ‖z⁻¹‖ := by rwa [norm_inv, le_inv_comm₀ (by linarith) (norm_pos_iff.mpr z0)]
+    have b := bottcher_approx_z d c16 czi
+    rwa [inv_inv, norm_inv, inv_inv, ← inv_coe z0] at b
+
 /-!
-### Koebe quarter theorem at infinity applied to `sbottcher_inv`
+### Parameter space facts about `bottcher_inv`
 -/
 
-/-- `sbottcher_inv` covers a large disk around the origin, by the Koebe quarter theorem -/
-lemma sbottcher_inv_koebe (c16 : 16 < ‖c‖) (rc : r ≤ ‖c‖⁻¹) :
-    ball 0 (r / 4) ⊆ sbottcher_inv d c '' (ball 0 r) := by
-  have c4 : 4 ≤ ‖c‖ := by linarith
-  have k := koebe_quarter' (f := sbottcher_inv d c) (c := 0) (r := r) ?_ ?_
-  · simpa [(sbottcher_inv_monic c16).deriv] using k
-  · intro z zr
-    refine (analyticAt_sbottcher_inv c4 ?_).along_snd
-    simp only [Metric.mem_ball, dist_zero_right] at zr
-    linarith
-  · exact (sbottcher_inv_inj c4).mono (Metric.ball_subset_ball rc)
+/-- Small `z`s invert into `multibrotExt d` -/
+lemma inv_mem_multibrotExt (m : ‖z‖ < 2⁻¹) : (z : 𝕊)⁻¹ ∈ multibrotExt d := by
+  by_cases z0 : z = 0
+  · simp only [z0, coe_zero, inv_zero', multibrotExt_inf]
+  · rw [inv_coe z0, multibrotExt_coe]
+    apply multibrot_two_lt
+    rwa [norm_inv, lt_inv_comm₀ (by norm_num) (norm_pos_iff.mpr z0)]
+
+/-- `bottcher_inv d` is analytic for small `z` -/
+lemma analyticAt_bottcher_inv (m : ‖z‖ < 2⁻¹) : AnalyticAt ℂ (bottcher_inv d) z := by
+  apply ContMDiffAt.analyticAt (I := I) (J := I)
+  refine (bottcherMAnalytic d (z : 𝕊)⁻¹ (inv_mem_multibrotExt m)).comp_of_eq ?_ (by rfl)
+  apply mAnalytic_inv.comp mAnalytic_coe
+
+/-- `bottcher_inv d` is injective for small `z` -/
+lemma bottcher_inv_inj : InjOn (bottcher_inv d) (ball 0 2⁻¹) := by
+  intro z0 m0 z1 m1 e
+  simp only [Metric.mem_ball, dist_zero_right] at m0 m1
+  simpa [bottcher_inj.eq_iff (inv_mem_multibrotExt m0) (inv_mem_multibrotExt m1),
+    bottcher_inv] using e

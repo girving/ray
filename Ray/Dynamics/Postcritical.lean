@@ -168,7 +168,8 @@ theorem Super.postPostcritical (s : Super f d a) {p : ℂ × S} (m : p ∈ s.pos
     Postcritical s p.1 p.2 := m
 
 /-- `a` is postcritical -/
-theorem Super.post_a (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) : (c, a) ∈ s.post := by
+@[simp] lemma Super.post_a (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) :
+    (c, a) ∈ s.post := by
   simp only [Super.post, Postcritical, s.potential_a, mem_setOf]; exact s.p_pos c
 
 /-- `f` maps `s.post` into itself -/

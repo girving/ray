@@ -64,7 +64,7 @@ theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
   rw [e]; exact fc.isOpen_preimage _
 
 /-- `(c,0) ∈ s.ext` -/
-theorem Super.mem_ext (s : Super f d a) [OnePreimage s] (c : ℂ) : (c, (0 : ℂ)) ∈ s.ext := by
+@[simp] theorem Super.mem_ext (s : Super f d a) [OnePreimage s] (c : ℂ) : (c, (0 : ℂ)) ∈ s.ext := by
   simp only [Super.ext, mem_setOf, norm_zero, s.p_pos c]
 
 /-- `c`-slices of `s.ext` are connected -/
