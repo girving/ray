@@ -471,7 +471,7 @@ theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
   have lb : ∀ n : ℕ, Real.log ((1 : ℝ) + 1 / 2 * (1 / 2 : ℝ) ^ n) ≤ 1 / 2 * (1 / 2 : ℝ) ^ n :=
     fun n ↦ le_trans (Real.log_le_sub_one_of_pos (p n)) (le_of_eq (by ring))
   refine le_trans (Finset.prod_le_prod (fun _ _ ↦ norm_nonneg _) fun n _ ↦ tb n) ?_
-  rw [← Real.exp_log (Finset.prod_pos fun n _ ↦ p n), Real.log_prod _ _ fun n _ ↦ (p n).ne']
+  rw [← Real.exp_log (Finset.prod_pos fun n _ ↦ p n), Real.log_prod fun n _ ↦ (p n).ne']
   refine le_trans (Real.exp_le_exp.mpr (Finset.sum_le_sum fun n _ ↦ lb n)) ?_
   refine le_trans (Real.exp_le_exp.mpr ?_) Real.exp_one_lt_3.le
   have geom := partial_scaled_geometric_bound (1 / 2) A one_half_pos.le one_half_lt_one

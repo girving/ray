@@ -140,7 +140,8 @@ theorem product_drop {f : ℕ → ℂ} {g : ℂ} (f0 : f 0 ≠ 0) (h : HasProd f
     HasProd (fun n ↦ f (n + 1)) (g / f 0) := by
   have c := @product_cons (f 0)⁻¹ _ _ h
   rw [HasProd]
-  rw [inv_mul_eq_div, HasProd, ← tendsto_comp_push, ← tendsto_comp_push] at c
+  rw [inv_mul_eq_div, HasProd, SummationFilter.unconditional_filter, ← tendsto_comp_push,
+    ← tendsto_comp_push] at c
   have s : ((fun N : Finset ℕ ↦ N.prod fun n ↦ (Stream'.cons (f 0)⁻¹ f) n) ∘ push) ∘ push =
       fun N : Finset ℕ ↦ N.prod fun n ↦ f (n + 1) := by
     clear c h g; apply funext; intro N; simp
@@ -156,7 +157,7 @@ theorem product_drop' {f : ℕ → ℂ} (f0 : f 0 ≠ 0) (h : ProdExists f) :
 
 /-- Products that start with zero are zero -/
 theorem product_head_zero {f : ℕ → ℂ} (f0 : f 0 = 0) : HasProd f 0 := by
-  rw [HasProd]; rw [Metric.tendsto_atTop]; intro e ep
+  rw [HasProd, SummationFilter.unconditional_filter, Metric.tendsto_atTop]; intro e ep
   use Finset.range 1; intro N N1
   simp at N1; rw [Finset.prod_eq_zero N1 f0]; simpa
 

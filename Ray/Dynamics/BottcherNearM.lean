@@ -87,19 +87,20 @@ theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c
   rw [analyticAt_iff_mAnalyticAt II I]
   refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp _ ?_
   refine (contMDiffAt_extChartAt' ?_).comp _ ?_
-  · simp only [s.f0, extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
-    ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
-    PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_coe_symm,
-    ModelWithCorners.toPartialEquiv_coe_symm, ModelWithCorners.left_inv, PartialHomeomorph.left_inv,
-    mem_chart_source]
+  · simp only [s.f0, extChartAt, OpenPartialHomeomorph.extend, PartialEquiv.coe_trans, zero_add,
+      ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_coe, Function.comp_apply,
+      PartialEquiv.coe_trans_symm, OpenPartialHomeomorph.coe_coe_symm,
+      ModelWithCorners.toPartialEquiv_coe_symm, ModelWithCorners.left_inv,
+      OpenPartialHomeomorph.left_inv, mem_chart_source]
   · refine (s.fa _).comp₂ contMDiffAt_fst ?_
     refine ((contMDiffOn_extChartAt_symm _).contMDiffAt
       (extChartAt_target_mem_nhds' ?_)).comp _ ?_
-    · simp only [extChartAt, PartialHomeomorph.extend, PartialEquiv.coe_trans,
-        ModelWithCorners.toPartialEquiv_coe, PartialHomeomorph.coe_coe, Function.comp_apply, zero_add,
-        PartialEquiv.trans_target, ModelWithCorners.target_eq, ModelWithCorners.toPartialEquiv_coe_symm,
-        Set.mem_inter_iff, Set.mem_range_self, Set.mem_preimage, ModelWithCorners.left_inv,
-        PartialHomeomorph.map_source, mem_chart_source, and_self_iff]
+    · simp only [extChartAt, OpenPartialHomeomorph.extend, PartialEquiv.coe_trans, zero_add,
+        ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_coe, Function.comp_apply,
+        PartialEquiv.trans_target, ModelWithCorners.target_eq,
+        ModelWithCorners.toPartialEquiv_coe_symm, Set.mem_inter_iff, Set.mem_range_self,
+        Set.mem_preimage, ModelWithCorners.left_inv, OpenPartialHomeomorph.map_source,
+        mem_chart_source, and_self_iff]
     · exact (analyticAt_snd.add analyticAt_const).mAnalyticAt _ _
 
 /-- `(f c)^[k]` is analytic -/

@@ -106,7 +106,7 @@ lemma affine_image_ball {a s c : ℂ} (s0 : s ≠ 0) :
     bound
   · intro lt
     refine ⟨(z - a) / s, ?_, ?_⟩
-    · rw [← mul_lt_mul_left s0']
+    · rw [← mul_lt_mul_iff_right₀ s0']
       simpa only [← norm_mul, mul_sub, mul_div_cancel₀ _ s0, mul_comm, sub_add_eq_sub_sub] using lt
     · simp only [mul_div_cancel₀ _ s0, add_sub_cancel]
 

@@ -67,7 +67,7 @@ lemma AddCircle.isConnected_compl_singleton {T : ℝ} [h : Fact (0 < T)]
   have := isConnected_iff_connectedSpace.mp
     (isConnected_Ioo <| show s < s + T by linarith [h.out])
   have : Set.Ioo s (s + T) ≃ₜ _ :=
-    (AddCircle.partialHomeomorphCoe T s).toHomeomorphSourceTarget
+    (AddCircle.openPartialHomeomorphCoe T s).toHomeomorphSourceTarget
   exact isConnected_iff_connectedSpace.mpr <|
     this.surjective.connectedSpace this.continuous
 

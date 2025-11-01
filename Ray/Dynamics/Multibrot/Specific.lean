@@ -10,6 +10,9 @@ open Real (exp log)
 open Set
 noncomputable section
 
+-- We do big `norm_num` calculations in this file
+set_option exponentiation.threshold 2000
+
 /-- `exp a < b` in terms `norm_num` can handle `-/
 lemma exp_ofNat_lt {a : ℕ} {b : ℝ} (a0 : a ≠ 0 := by norm_num)
     (h0 : 2.7182818286 ^ a < b := by norm_num) : exp a < b := by

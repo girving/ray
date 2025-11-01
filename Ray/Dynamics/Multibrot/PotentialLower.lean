@@ -60,7 +60,6 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
     simp only [div_eq_mul_inv, one_mul]
     refine (hasDerivAt_inv (by positivity)).sub (HasDerivAt.const_mul _ ?_)
     exact (Real.hasDerivAt_rpow_const (Or.inl (by positivity))).inv (by positivity)
-  simp only [ge_iff_le] at kp hp
   have d : DifferentiableOn ℝ (fun x ↦ 1 / x - k / x^p) (Ici 4) :=
     fun x m ↦ (hd x m).differentiableAt.differentiableWithinAt
   apply antitoneOn_of_deriv_nonpos (convex_Ici _)

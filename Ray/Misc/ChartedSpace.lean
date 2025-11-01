@@ -26,7 +26,7 @@ theorem ChartedSpace.regularSpace [T2Space M] [LocallyCompactSpace A] : RegularS
   refine ⟨(chartAt A x).symm '' u, ?_, ?_, ?_⟩
   · convert (chartAt A x).symm.image_mem_nhds _ un
     rw [(chartAt A x).left_inv (mem_chart_source _ _)]
-    rw [PartialHomeomorph.symm_source]; exact mem_chart_target _ _
+    rw [OpenPartialHomeomorph.symm_source]; exact mem_chart_target _ _
   · have c : IsCompact ((chartAt A x).symm '' u) :=
       uc.image_of_continuousOn ((chartAt A x).continuousOn_symm.mono
         (_root_.trans ut inter_subset_left))

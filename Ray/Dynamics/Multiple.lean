@@ -117,7 +117,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
       nth_rw 1 [← neg_zero] at o0; exact continuousAt_neg.eventually o0
     refine o0.mp (e0.mp (.of_forall fun z f0' f0 z0 ↦ ?_))
     simp only [mem_compl_singleton_iff] at z0; rw [Pi.zero_apply] at f0
-    rwa [f0, f0', eq_self_iff_true, and_true, neg_ne_self ℂ]
+    rwa [f0, f0', eq_self_iff_true, and_true, neg_ne_self]
   have o1 : orderAt f 0 ≠ 1 := by
     have d := df.deriv; contrapose d; simp only [not_not] at d
     exact deriv_ne_zero_of_orderAt_eq_one d

@@ -53,9 +53,9 @@ theorem extChartAt_eq_refl [e : ExtChartEqRefl I] (x : E) : extChartAt I x = Par
 
 /-- `extChartAt = refl` for `I = modelWithCornersSelf 𝕜 E` -/
 instance extChartEqReflSelf : ExtChartEqRefl (modelWithCornersSelf 𝕜 E) := ⟨by
-  simp only [PartialHomeomorph.singletonChartedSpace_chartAt_eq, PartialHomeomorph.refl_partialEquiv,
-    PartialEquiv.refl_source, forall_const, extChartAt, PartialHomeomorph.extend,
-    modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
+  simp only [OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq,
+    OpenPartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source, forall_const, extChartAt,
+    OpenPartialHomeomorph.extend, modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
 
 /-- `extChartAt = refl` extends to products -/
 instance extChartEqReflProd (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
@@ -74,7 +74,7 @@ section Nhds
 
 /-- `extChartAt` as a `PartialHomeomorph` -/
 def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [TopologicalSpace M]
-    [ChartedSpace A M] (x : M) : PartialHomeomorph M E where
+    [ChartedSpace A M] (x : M) : OpenPartialHomeomorph M E where
   toPartialEquiv := extChartAt I x
   open_source := isOpen_extChartAt_source x
   open_target := isOpen_extChartAt_target x

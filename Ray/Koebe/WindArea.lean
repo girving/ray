@@ -63,7 +63,7 @@ def dgs (i : WindDiff f) (x : ℝ × ℝ) : ℝ × ℝ →L[ℝ] ℝ × ℝ :=
 lemma fderiv (i : WindDiff f) {x : ℝ × ℝ} :
     HasFDerivAt i.gs (i.dgs x) x := by
   apply (ContinuousLinearMap.hasFDerivAt _).comp
-  exact hasFDerivAt_fst.smul (i.hasFDerivAt_fe.comp _ hasFDerivAt_snd)
+  exact hasFDerivAt_fst.smul (𝕜' := ℝ) (i.hasFDerivAt_fe.comp _ hasFDerivAt_snd)
 
 /-- The Jacobian matrix of `i.gs` -/
 def gsm (i : WindDiff f) (x : ℝ × ℝ) :=

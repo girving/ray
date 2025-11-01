@@ -1048,9 +1048,9 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   calc d
     _ = e * (ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹) := by rw [rde]
     _ = e * ENNReal.ofReal (π * r1 ^ 2) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ := by rw [mul_assoc]
-    _ ≤ (∫⁻ v in closedBall z r1, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ := (mul_right_mono fn)
+    _ ≤ (∫⁻ v in closedBall z r1, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ := (mul_left_mono fn)
     _ ≤ (∫⁻ v in closedBall w r2, f n v) * ENNReal.ofReal (π * r2 ^ 2)⁻¹ :=
-      (mul_right_mono (lintegral_mono_set (s12 w ws)))
+      (mul_left_mono (lintegral_mono_set (s12 w ws)))
     _ = ENNReal.ofReal (π * r2 ^ 2)⁻¹ * ∫⁻ v in closedBall w r2, f n v := by rw [mul_comm]
     _ ≤ f n w := (fs n).supmean w r2 r2p (r2s w ws)
 

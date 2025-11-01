@@ -3,6 +3,7 @@ import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Normed.Module.Completion
 import Mathlib.Analysis.NormedSpace.Multilinear.Basic
 import Mathlib.Tactic.Bound
+import Mathlib.Tactic.Cases
 
 /-!
 ## Continuous multilinear map constructors

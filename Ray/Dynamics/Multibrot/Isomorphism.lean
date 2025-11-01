@@ -180,7 +180,7 @@ theorem ray_surj (d : ℕ) [Fact (2 ≤ d)] : ray d '' ball 0 1 = multibrotExt d
   · intro m; use c, m, ray_bottcher m
 
 /-- `bottcher d` as an (analytic) homeomorphism from `multibrotExt d` to `ball 0 1` -/
-def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : PartialHomeomorph 𝕊 ℂ where
+def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : OpenPartialHomeomorph 𝕊 ℂ where
   toFun := bottcher d
   invFun := ray d
   source := multibrotExt d

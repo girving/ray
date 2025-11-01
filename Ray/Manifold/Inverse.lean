@@ -194,7 +194,7 @@ lemma Cinv.has_dhe (i : Cinv f c z) : HasFDerivAt i.h (i.dhe : ℂ × ℂ →L[�
 
 /-- `h` as a `PartialHomeomorph` -/
 def Cinv.he (i : Cinv f c z) :=
-  ContDiffAt.toPartialHomeomorph i.h i.ha.contDiffAt i.has_dhe le_top
+  ContDiffAt.toOpenPartialHomeomorph i.h i.ha.contDiffAt i.has_dhe le_top
 
 /-- `h` inverts at the point -/
 theorem Cinv.inv_at (i : Cinv f c z) :
@@ -219,7 +219,7 @@ theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g
       i.he.open_source
   have m : (c, z) ∈ t := by
     simp only [mem_inter_iff, mem_preimage, mem_extChartAt_source, true_and, ← ht]
-    exact ContDiffAt.mem_toPartialHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
+    exact ContDiffAt.mem_toOpenPartialHomeomorph_source i.ha.contDiffAt i.has_dhe le_top
   apply Filter.eventuallyEq_of_mem (o.mem_nhds m); intro x m
   simp only [mem_inter_iff, mem_preimage, extChartAt_prod, extChartAt_eq_refl, ← ht,
     PartialEquiv.prod_source, PartialEquiv.refl_source, mem_prod_eq, mem_univ, true_and,
@@ -227,7 +227,7 @@ theorem Cinv.left_inv (i : Cinv f c z) : ∀ᶠ x : ℂ × S in 𝓝 (c, z), i.g
   have inv := i.he.left_inv m.2
   simp only [Cinv.g]
   generalize hq : i.he.symm = q; rw [hq] at inv
-  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
+  rw [Cinv.he, ContDiffAt.toOpenPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
   simp only [Cinv.h, Cinv.f', PartialEquiv.left_inv _ m.1] at inv
   simp only [inv, PartialEquiv.left_inv _ m.1]
 
@@ -236,7 +236,7 @@ theorem Cinv.inv_fst (i : Cinv f c z) : ∀ x, x ∈ i.he.target → (i.he.symm 
   intro x m
   have e : i.he (i.he.symm x) = x := i.he.right_inv m
   generalize hq : i.he.symm x = q; rw [hq] at e
-  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top, Cinv.h] at e
+  rw [Cinv.he, ContDiffAt.toOpenPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top, Cinv.h] at e
   rw [← e]
 
 /-- `g` is a local right inverse -/
@@ -249,7 +249,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
     exact (continuousOn_extChartAt _).isOpen_inter_preimage (isOpen_extChartAt_source _)
       i.he.open_target
   have m' : (c, extChartAt I (f c z) (f c z)) ∈ i.he.toPartialEquiv.target := by
-    have m := ContDiffAt.image_mem_toPartialHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
+    have m := ContDiffAt.image_mem_toOpenPartialHomeomorph_target i.ha.contDiffAt i.has_dhe le_top
     have e : i.h (c, i.z') = (c, extChartAt I (f c z) (f c z)) := by
       simp only [Cinv.h, Cinv.z', Cinv.f', PartialEquiv.left_inv _ (mem_extChartAt_source _)]
     rw [e] at m; exact m
@@ -265,7 +265,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
       · refine ContinuousAt.comp ?_ ?_
         · simp only [i.inv_at]; exact continuousAt_extChartAt_symm _
         · apply continuousAt_snd.comp
-          · refine (PartialHomeomorph.continuousAt i.he.symm ?_).comp ?_
+          · refine (OpenPartialHomeomorph.continuousAt i.he.symm ?_).comp ?_
             · simp only [m', (he i).symm_source]
             · apply continuousAt_fst.prodMk
               apply (continuousAt_extChartAt _).comp_of_eq
@@ -282,7 +282,7 @@ theorem Cinv.right_inv (i : Cinv f c z) :
   have inv := i.he.right_inv m.2
   simp only [Cinv.g]
   generalize hq : i.he.symm = q; rw [hq] at inv mf
-  rw [Cinv.he, ContDiffAt.toPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
+  rw [Cinv.he, ContDiffAt.toOpenPartialHomeomorph_coe i.ha.contDiffAt i.has_dhe le_top] at inv
   have q1 : (q (x.1, extChartAt I (f c z) x.2)).1 = x.1 := by simp only [← hq, i.inv_fst _ m.2]
   simp only [Cinv.h, Cinv.f', Prod.eq_iff_fst_eq_snd_eq, q1] at inv
   nth_rw 2 [← PartialEquiv.left_inv _ m.1]; nth_rw 2 [← inv.2]

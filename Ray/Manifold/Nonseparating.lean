@@ -93,7 +93,7 @@ theorem Nonseparating.complexManifold {t : Set S}
       · rw [e]; convert Filter.image_mem_map cn
         have ee : ⇑(extChartAt I z).symm = (extChartAt' I z).symm := rfl
         rw [ee, (extChartAt' I z).symm.map_nhdsWithin_eq (mem_extChartAt_target z), ← ee]
-        simp only [extChartAt', PartialHomeomorph.symm_source,
+        simp only [extChartAt', OpenPartialHomeomorph.symm_source,
           PartialEquiv.left_inv _ (mem_extChartAt_source z), compl_inter, inter_union_distrib_left,
           inter_compl_self, empty_union]
         apply nhdsWithin_eq_nhdsWithin (mem_extChartAt_source z)

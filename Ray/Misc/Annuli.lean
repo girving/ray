@@ -75,7 +75,7 @@ lemma isPathConnected_norm_Ici {r : ℝ} : IsPathConnected (norm_Ici r) := by
   simp only [norm_Ici, ← Set.preimage_setOf_eq, Ici_def]
   refine IsPathConnected.of_frontier ?_ continuous_norm isClosed_Ici
   simp only [nonempty_Iio, frontier_Ici']
-  convert isPathConnected_sphere (z := 0) r0
+  convert Complex.isPathConnected_sphere (z := 0) r0
   ext z
   simp only [mem_preimage, mem_singleton_iff, mem_sphere_iff_norm, sub_zero]
 
@@ -150,4 +150,11 @@ lemma symmDiff_annulus_oc_annulus_cc {c : ℂ} {r s : ℝ} (rs : r ≤ s) :
   ext z
   simp only [annulus_oc, annulus_cc, mem_symmDiff, mem_diff, Metric.mem_closedBall, dist_eq_norm,
     not_le, Metric.mem_ball, not_lt, not_and, mem_sphere_iff_norm]
-  grind
+  -- `grind` used to close the goal at this point, but doesn't anymore due to a bug
+  constructor
+  · intro h
+    rcases h with h | ⟨⟨zs,rz⟩,zr⟩
+    · grind
+    · linarith [zr zs]
+  · intro e
+    simp [e, rs]

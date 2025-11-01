@@ -95,7 +95,8 @@ theorem Entire.nontrivialAnalyticOn (fa : AnalyticOnNhd ℂ f univ) (ne : ∃ a 
 /-- The roots of a nontrivial analytic function form a discrete topology -/
 theorem NontrivialAnalyticOn.discreteTopology (n : NontrivialAnalyticOn f s) (a : ℂ) :
     DiscreteTopology (↥(s ∩ f ⁻¹' {a})) := by
-  rw [← singletons_open_iff_discrete]; intro ⟨z, m⟩
+  rw [discreteTopology_iff_isOpen_singleton]
+  intro ⟨z, m⟩
   simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff] at m
   by_cases h : ∃ᶠ z in 𝓝[{z}ᶜ] z, f z = a
   · have i := (n.isolated' m.1 a).and_frequently h

@@ -85,7 +85,8 @@ lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
     HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
   have c := sum_cons (a := -f 0) h
   rw [HasSum]
-  rw [neg_add_eq_sub, HasSum, ← tendsto_comp_push, ← tendsto_comp_push] at c
+  rw [neg_add_eq_sub, HasSum, SummationFilter.unconditional_filter, ← tendsto_comp_push,
+    ← tendsto_comp_push] at c
   have s : ((fun N : Finset ℕ ↦ N.sum fun n ↦ (Stream'.cons (-f 0) f) n) ∘ push) ∘ push =
       fun N : Finset ℕ ↦ N.sum fun n ↦ f (n + 1) := by
     clear c h g; apply funext; intro N; simp
@@ -125,8 +126,7 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → G} {s : Se
   have S : Summable (fun n ↦ f n z) := uniformVanishing_to_summable zs h
   have GS : HasSum (fun n ↦ f n z) g := by rw [← G]; exact Summable.hasSum S
   clear S
-  rw [HasSum] at GS
-  rw [Metric.tendsto_atTop] at GS
+  rw [HasSum, SummationFilter.unconditional_filter, Metric.tendsto_atTop] at GS
   rcases GS (e / 4) (by linarith) with ⟨M, HM⟩; clear GS G h
   set A := N ∪ M \ N
   have AM : M ⊆ A := subset_union_sdiff _ _

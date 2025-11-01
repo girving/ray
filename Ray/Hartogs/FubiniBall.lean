@@ -178,7 +178,7 @@ theorem rcm_inj {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) : InjOn (realCircleMap 
   have hn : (nx : ℝ) - ny = ↑(nx - ny) := by simp only [Int.cast_sub]
   have hn1 : (-1 : ℝ) = ↑(-1 : ℤ) := by norm_num
   have h1 : (1 : ℝ) = ↑(1 : ℤ) := by norm_num
-  rw [mul_lt_mul_left Real.two_pi_pos, hn] at n0 n1
+  rw [mul_lt_mul_iff_right₀ Real.two_pi_pos, hn] at n0 n1
   rw [hn1] at n1; rw [h1] at n0; rw [Int.cast_lt] at n0 n1
   have n : nx = ny := by linarith
   rw [n] at h

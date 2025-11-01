@@ -23,6 +23,9 @@ variable {c z : ℂ}
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
 
+-- We use large `norm_num`s in this file. Let them all through.
+set_option exponentiation.threshold 10000
+
 /-!
 ## `potential` is the limit of roots of iterates
 -/
@@ -118,7 +121,7 @@ lemma log_neg_log_potential_approx (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z�
   rw [add_comm]
   calc |p - y|
       _ = |(p - (x - n * log d)) + (x - y - n * log d)| := by ring_nf
-      _ ≤ |p - (x - n * log d)| + |x - y - n * log d| := abs_add _ _
+      _ ≤ |p - (x - n * log d)| + |x - y - n * log d| := abs_add_le _ _
       _ < e + _ := add_lt_add_of_lt_of_le t ie
 
 /-!

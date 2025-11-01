@@ -52,7 +52,7 @@ theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : 
     _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by field_simp; norm_cast; field_simp; simp 
+    _ = wr := by field_simp; norm_cast; field_simp; simp
 
 theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :
@@ -203,7 +203,7 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
   have a0 : a ≥ 0 := by bound
   have a1 : a < 1 := (div_lt_one (NNReal.coe_pos.mpr rp)).mpr yr
   have a1p : 1 - a > 0 := by bound
-  rw [HasSum, Metric.tendsto_atTop]
+  rw [HasSum, SummationFilter.unconditional_filter, Metric.tendsto_atTop]
   intro e ep
   generalize d4 : (1 - a) * (e / 4) = d
   have dp : d > 0 := by rw [← d4]; bound
@@ -214,7 +214,8 @@ theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ 
     refine hn (c + y) ?_
     apply cb
     simp; exact yr.le
-  set hs := (hpf n).hasSum yb; rw [HasSum, Metric.tendsto_atTop] at hs
+  set hs := (hpf n).hasSum yb
+  rw [HasSum, SummationFilter.unconditional_filter, Metric.tendsto_atTop] at hs
   rcases hs d dp with ⟨N, NM⟩; clear hs
   exists N; intro M NlM
   have dpf := (NM M NlM).le; clear NM NlM N yb

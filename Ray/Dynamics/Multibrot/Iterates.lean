@@ -32,6 +32,9 @@ variable {c : ℂ}
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
 
+-- We use large `norm_num`s in this file. Let them all through.
+set_option exponentiation.threshold 10000
+
 /-!
 ## Warmup bounds on iterates
 
@@ -481,5 +484,5 @@ theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) 
       ring
     rw [e, iter_error_peel z3 cz]
     have le : ‖z‖ ≤ ‖f' d c z‖ := le_self_iter d z3 cz 1
-    exact le_trans (abs_add _ _) (add_le_add (f_approx z3 cz)
+    exact le_trans (abs_add_le _ _) (add_le_add (f_approx z3 cz)
       (h (le_trans z3 le) (le_trans cz le)))

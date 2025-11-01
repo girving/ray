@@ -1,4 +1,5 @@
 import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.Tactic.Cases
 import Ray.Misc.Set
 import Ray.Misc.Topology
 
@@ -206,7 +207,8 @@ theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] 
   rw [e]; exact uc.image (continuousOn_iff_continuous_restrict.mp fc)
 
 /-- Circles are path connected -/
-theorem isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) : IsPathConnected (sphere z r) := by
+theorem Complex.isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) :
+    IsPathConnected (sphere z r) := by
   rw [← abs_of_nonneg r0, ← image_circleMap_Ioc z r]
   refine IsPathConnected.image ?_ (continuous_circleMap _ _)
   exact (convex_Ioc 0 (2 * π)).isPathConnected (nonempty_Ioc.mpr Real.two_pi_pos)

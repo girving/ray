@@ -2,6 +2,7 @@ import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Analysis.Complex.Norm
+import Mathlib.Tactic.Cases
 
 /-!
 ## `Finset ℕ` machinery for use in sums and products

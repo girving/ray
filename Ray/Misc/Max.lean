@@ -4,6 +4,7 @@ import Mathlib.Order.PartialSups
 import Mathlib.Topology.Basic
 import Mathlib.Topology.ContinuousOn
 import Mathlib.Topology.MetricSpace.Basic
+import Mathlib.Tactic.Cases
 
 /-!
 ## Lemmas about `max` and `partialSups`

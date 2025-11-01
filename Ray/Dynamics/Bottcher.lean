@@ -118,7 +118,7 @@ def Super.equiv (s : Super f d a) [OnePreimage s] : PartialEquiv (ℂ × ℂ) (�
   right_inv' := by intro ⟨c, z⟩ m; simp only [s.ray_bottcher m]
 
 /-- `s.ext` and `s.post` are (analytically) homeomorphic -/
-def Super.homeomorph (s : Super f d a) [OnePreimage s] : PartialHomeomorph (ℂ × ℂ) (ℂ × S) where
+def Super.homeomorph (s : Super f d a) [OnePreimage s] : OpenPartialHomeomorph (ℂ × ℂ) (ℂ × S) where
   toPartialEquiv := s.equiv
   open_source := s.isOpen_ext
   open_target := s.isOpen_post
@@ -137,7 +137,8 @@ def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialEquiv 
   right_inv' _ m := by simp only [s.ray_bottcher m]
 
 /-- `c`-slices of `s.ext` and `s.post` are (analytically) homeomorphic -/
-def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialHomeomorph ℂ S where
+def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    OpenPartialHomeomorph ℂ S where
   toPartialEquiv := s.equivSlice c
   open_source := s.isOpen_ext.snd_preimage c
   open_target := s.isOpen_post.snd_preimage c
