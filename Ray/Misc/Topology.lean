@@ -150,19 +150,6 @@ theorem local_connected_nhdsSet {X : Type} [TopologicalSpace X] [LocallyConnecte
   let ⟨c, hco, htc, hcs, hc⟩ := local_preconnected_nhdsSet tc.2 st
   ⟨c, hco, htc, hcs, tc.1.mono htc, hc⟩
 
-/-- Lower semicontinuity composes with continuity -/
-theorem LowerSemicontinuousAt.comp {X Y Z : Type} [TopologicalSpace X] [TopologicalSpace Y]
-    [LinearOrder Z] {f : Y → Z} {g : X → Y} {x : X}
-    (fc : LowerSemicontinuousAt f (g x)) (gc : ContinuousAt g x) :
-    LowerSemicontinuousAt (fun x ↦ f (g x)) x :=
-  fun _ lt ↦ gc.eventually (fc _ lt)
-
-/-- Lower semicontinuity composes with continuity -/
-theorem LowerSemicontinuous.comp {X Y Z : Type} [TopologicalSpace X] [TopologicalSpace Y]
-    [LinearOrder Z] {f : Y → Z} {g : X → Y}
-    (fc : LowerSemicontinuous f) (gc : Continuous g) : LowerSemicontinuous fun x ↦ f (g x) :=
-  fun x ↦ (fc (g x)).comp gc.continuousAt
-
 open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product
     filter -/
