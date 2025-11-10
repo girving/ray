@@ -116,3 +116,10 @@ theorem multibrot_volume_sum :
       (π - volume.real (multibrot d)) := by
   rw [← compl_compl (multibrot d), multibrot_eq_pray]
   exact gronwall_volume_sum pray_analyticOnNhd pray_zero pray_inj
+
+/-- Upper bound on the `multibrot d` area using a finite set of Grönwall's terms -/
+theorem multibrot_volume_le (s : Finset ℕ) :
+    volume.real (multibrot d) ≤
+      π - ∑ n ∈ s, π * n * ‖iteratedDeriv (n + 1) (pray d) 0 / (n + 1).factorial‖ ^ 2 := by
+  rw [← compl_compl (multibrot d), multibrot_eq_pray]
+  exact gronwall_volume_le pray_analyticOnNhd pray_zero pray_inj s
