@@ -1,4 +1,4 @@
-import Mathlib.Analysis.NormedSpace.HahnBanach.Extension
+import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.Topology.Basic
 import Ray.Hartogs.MaxLog
 import Ray.Misc.Topology

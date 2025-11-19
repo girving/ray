@@ -98,7 +98,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   by_cases xy : x ≠ y
   · -- Case 1: If x ≠ y, we can move a bit downwards in potential
     have p0 : p ≠ 0 := by
-      contrapose xy; simp only [not_not] at xy ⊢; rcases p0i xy with ⟨xi, yi⟩; rw [xi, yi]
+      contrapose xy; rcases p0i xy with ⟨xi, yi⟩; rw [xi, yi]
     have f : ∃ᶠ q : ℂ × ℂ in Filter.map
         (fun q : 𝕊 × 𝕊 ↦ (bottcher d q.1, bottcher d q.2)) (𝓝 (x, y)),
         q.1 = q.2 ∧ ‖q.1‖ < p := by
@@ -131,7 +131,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     have m : ∃ᶠ z in 𝓝 x, potential d z < p ∧ (z, r z) ∈ t2 := by
       refine h.mp (e.mp (.of_forall fun z e lt ↦ ?_))
       have zx : z ≠ x := by
-        contrapose lt; simp only [not_not, not_lt] at lt ⊢; simp only [lt, le_refl]
+        contrapose lt; simp only [not_lt] at lt ⊢; simp only [lt, le_refl]
       rw [norm_bottcher, norm_bottcher, xp] at lt
       rcases e zx with ⟨rz, e⟩
       refine ⟨lt, rz.symm, e.symm, le_trans lt.le pb, ?_⟩
@@ -203,7 +203,6 @@ lemma ray_inj : InjOn (ray d) (ball (0 : ℂ) 1) :=
 @[simp] lemma ray_ne_zero {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z ≠ 0 := by
   have h := (bottcherHomeomorph d).map_target m
   contrapose h
-  simp only [ne_eq, not_not] at h
   simp [bottcherHomeomorph, h]
 
 @[simp] lemma ray_eq_inf {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z = ∞ ↔ z = 0 := by

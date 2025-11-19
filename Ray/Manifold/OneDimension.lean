@@ -146,7 +146,7 @@ theorem mderiv_comp_ne_zero {x : S} {y : T} {z : U} (f : TangentSpace I y →L[�
 theorem has_mfderiv_at_of_mderiv_ne_zero {f : S → T} {x : S} (d0 : mfderiv I I f x ≠ 0) :
     MDifferentiableAt I I f x := by
   contrapose d0
-  simp only [mfderiv, d0, if_false, Ne, not_true, not_false_iff]
+  simp only [mfderiv, d0, if_false]
 
 /-- If two functions have nonzero derivative, their composition has nonzero derivative -/
 theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
@@ -233,7 +233,7 @@ variable [IsManifold I ω S] [IsManifold I ω T] [IsManifold I ω U]
 theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source) :
     mfderiv I I (extChartAt I z) w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I z) with ⟨t, t0⟩
-  rw [← mderiv_ne_zero_iff' t0]; contrapose t0; simp only [not_not] at t0 ⊢
+  rw [← mderiv_ne_zero_iff' t0]; contrapose t0
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse m) t
   simp only [ContinuousLinearMap.comp_apply] at h
   rw [←h.trans (ContinuousLinearMap.id_apply _), ContinuousLinearMap.apply_eq_zero_of_eq_zero]
@@ -243,7 +243,7 @@ theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source)
 theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt I z).target) :
     mfderiv I I (extChartAt I z).symm w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I (extChartAt I z z)) with ⟨t, t0⟩
-  rw [← mderiv_ne_zero_iff' t0]; contrapose t0; simp only [not_not] at t0 ⊢
+  rw [← mderiv_ne_zero_iff' t0]; contrapose t0
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse m) t
   simp only [ContinuousLinearMap.comp_apply] at h
   rw [←h.trans (ContinuousLinearMap.id_apply _), ContinuousLinearMap.apply_eq_zero_of_eq_zero]
@@ -273,7 +273,7 @@ theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
           MulZeroClass.mul_zero, ContinuousLinearMap.zero_apply, forall_const]
       have p := h.hasFDerivAt.hasMFDerivAt; rw [s0] at p; exact p.mfderiv
   · have d' : ¬MDifferentiableAt I I f z := by
-      contrapose d; simp only [not_not] at d ⊢; exact d.differentiableAt
+      contrapose d; exact d.differentiableAt
     simp only [deriv_zero_of_not_differentiableAt d, mfderiv_zero_of_not_mdifferentiableAt d']
 
 /-- `mfderiv ≠ 0` iff `deriv ≠ 0` -/
@@ -351,7 +351,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
       exact fa.inChart.deriv2.continuousAt.comp_of_eq
         (continuousAt_fst.prodMk ((continuousAt_extChartAt z).comp_of_eq continuousAt_snd rfl))
         rfl
-    · contrapose f0; simp only [not_not] at f0 ⊢; rw [g0.self_of_nhds]; exact f0
+    · contrapose f0; rw [g0.self_of_nhds]; exact f0
   refine g0.mp (g0n.mp (.of_forall fun w g0 e ↦ ?_))
   rw [Ne, e]; exact g0
 

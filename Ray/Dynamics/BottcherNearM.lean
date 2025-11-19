@@ -617,7 +617,7 @@ theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
     (b0 : mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0) (f0 : ¬Precritical (f c) z) :
     mfderiv I I (s.bottcherNearIter n c) z ≠ 0 := by
   apply mderiv_comp_ne_zero' b0; contrapose f0
-  simp only [not_not] at f0 ⊢; exact critical_iter s.fa.along_snd f0
+  exact critical_iter s.fa.along_snd f0
 
 /-- `f c^[n]` is nontrivial at `a` -/
 theorem Super.iter_nontrivial_a [T2Space S] (s : Super f d a) :

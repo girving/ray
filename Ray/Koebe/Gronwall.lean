@@ -202,7 +202,6 @@ lemma g_inj (i : Gronwall f) : ∀ᶠ r in atTop, InjOn (fun z ↦ snap (i.g z))
       have f0 : f z⁻¹ ≠ 0 := by
         specialize @fs z⁻¹ (by simp only [norm_inv, zr, inv_lt_of_inv_lt₀ a0 ar])
         contrapose fs
-        simp only [ne_eq, Decidable.not_not] at fs
         norm_num [fs]
       simp only [g, i.deriv_g z1, mul_inv, ← mul_assoc, mul_inv_cancel₀ z0, one_mul, mul_sub,
         inv_mul_cancel₀ f0, ← mul_div_assoc, Complex.sub_re, Complex.one_re, sub_pos]
@@ -311,7 +310,7 @@ lemma closure_outer (i : Gronwall f) : ∀ᶠ r in atTop, closure (i.outer r) = 
       obtain ⟨n,le,lt⟩ := (large.and small).exists
       use n
       contrapose lt
-      simp only [Decidable.not_not, not_lt] at lt le ⊢
+      simp only [not_lt] at lt le ⊢
       simp only [lt] at le
       calc ‖s n - w‖
         _ ≥ ‖s n‖ - ‖w‖ := by bound

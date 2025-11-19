@@ -135,7 +135,7 @@ theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} 
       use w; refine ⟨?_, ?_, wz⟩
       · exact Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_right _ _) (half_lt_self rp))
           (Metric.sphere_subset_closedBall ws)
-      · contrapose ws; simp only [not_not] at ws
+      · contrapose ws
         simp only [ws, Metric.mem_sphere, dist_self]
         exact ne_of_lt (by bound)
   rcases er with ⟨r, rp, rs, fr⟩

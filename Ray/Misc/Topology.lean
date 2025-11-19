@@ -213,7 +213,7 @@ lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X
   obtain ⟨y, ⟨yr, ys⟩, h⟩ := c.exists_isMinOn n d.continuousOn
   refine ⟨dist x y, ?_, ?_⟩
   · contrapose ys
-    simp only [not_lt, Decidable.not_not] at ys ⊢
+    simp only [not_lt] at ys ⊢
     apply sub
     simpa only [Metric.mem_closedBall, dist_comm]
   · intro z m

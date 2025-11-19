@@ -39,8 +39,7 @@ lemma pass_through (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) (m : (c,↑z) ∈ (
   have k4 : p k := by rw [←hk]; exact Nat.find_spec (p := p) ⟨_,h⟩
   have k0 : k ≠ 0 := by
     contrapose k4
-    simp only [not_not] at k4
-    simp only [k4, ←hp, not_lt, Function.iterate_zero_apply, z4]
+    simp only [k4, ← hp, not_lt, Function.iterate_zero_apply, z4]
   have k1 : 1 ≤ k := Nat.pos_iff_ne_zero.mpr k0
   use k-1
   have lt : ¬p (k-1) := by apply Nat.find_min; rw [hk]; omega

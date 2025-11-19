@@ -75,8 +75,8 @@ theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f
   by_cases fp : AnalyticAt 𝕜 f c
   · rcases fp with ⟨p, fp⟩; rw [fp.orderAt_unique]; rw [← fp.coeff_zero 1] at f0
     rw [FormalMultilinearSeries.order_eq_zero_iff']; right
-    contrapose f0; simp only [not_not] at f0
-    simp only [f0, ContinuousMultilinearMap.zero_apply, Ne, not_true, not_false_iff]
+    contrapose f0
+    simp only [f0, ContinuousMultilinearMap.zero_apply]
   · simp [orderAt, fp]
 
 /-- `orderAt = 0` means either `f = 0` or `f c ≠ 0` -/
@@ -246,8 +246,8 @@ theorem HasFPowerSeriesAt.unshiftIter {f : 𝕜 → E} {p : FormalMultilinearSer
 theorem FormalMultilinearSeries.ne_zero_iff_coeff_ne_zero (p : FormalMultilinearSeries 𝕜 𝕜 E)
     {n : ℕ} : p n ≠ 0 ↔ p.coeff n ≠ 0 := by
   constructor
-  · intro h; contrapose h; simp only [not_not] at h ⊢; exact coeff_eq_zero.mp h
-  · intro h; contrapose h; simp only [not_not] at h ⊢; exact coeff_eq_zero.mpr h
+  · intro h; contrapose h; exact coeff_eq_zero.mp h
+  · intro h; contrapose h; exact coeff_eq_zero.mpr h
 
 /-- The order of `(z - n)^n • f z` is `n` greater than `f`'s -/
 theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
@@ -255,7 +255,7 @@ theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : Analyt
     orderAt (fun z ↦ (z - c) ^ n • f z) c = n + orderAt f c := by
   rcases fa with ⟨p, fp⟩
   have pnz : p ≠ 0 := by
-    contrapose fnz; simp only [ne_eq, not_not] at fnz
+    contrapose fnz
     simpa only [HasFPowerSeriesAt.locally_zero_iff fp, Filter.not_frequently, not_not]
   have pe : ∃ i, p i ≠ 0 := by rw [Function.ne_iff] at pnz; exact pnz
   have pne : ∃ i, (p.unshiftIter n) i ≠ 0 := by

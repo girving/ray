@@ -80,8 +80,8 @@ instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHaarMeasu
 instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
   measure_singleton := by
     intro z
-    rw [←(MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod).measure_preimage]
-    · rw [←MeasurableEquiv.image_eq_preimage, Set.image_singleton,
+    rw [← (MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod).measure_preimage]
+    · rw [← MeasurableEquiv.image_eq_preimage_symm, Set.image_singleton,
         MeasureTheory.NoAtoms.measure_singleton]
     · apply MeasurableSet.singleton
 
@@ -250,15 +250,15 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
     have i0 : ∫ x in s \ t, f x ≤ (vs - vt) * b := by
       have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono Set.diff_subset) sn.finite
       have dm : MeasurableSet (s \ t) := MeasurableSet.diff sn.measurable tm
-      have fb := @setIntegral_mono_on _ _ volume f (fun _ ↦ b) (s \ t)
+      have fb := setIntegral_mono_on (μ := volume) (f := f) (g := fun _ ↦ b) (s := s \ t)
         (fi.mono Set.diff_subset (le_refl _)) (integrableOn_const df.ne_top) dm ?_
       · simp only [integral_const, MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter,
           MeasureTheory.measureReal_diff ts tm sn.ne_top, smul_eq_mul] at fb
         exact fb
       · intro y yd; simp at yd; exact hi y yd.left
     have i1 : ∫ x in t, f x ≤ vt * m := by
-      have fm := @setIntegral_mono_on _ _ volume f (fun _ ↦ m) t (fi.mono ts (le_refl _))
-        (integrableOn_const tf.ne_top) tm ?_
+      have fm := setIntegral_mono_on (μ := volume) (f := f) (g := fun _ ↦ m) (s := t)
+        (fi.mono ts (le_refl _)) (integrableOn_const tf.ne_top) tm ?_
       simp at fm; exact fm
       intro y yt
       rw [← ht] at yt; simp at ht yt

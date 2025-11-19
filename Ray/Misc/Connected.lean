@@ -88,7 +88,7 @@ theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I]
     intro a; exact ((c a).diff (uo.union vo)).isClosed
   rcases e with ⟨a, auv⟩
   use a, u, v, uo, vo, auv, uv
-  contrapose no; simp only [not_not] at no ⊢
+  contrapose no
   cases' no with su sv
   left; exact _root_.trans (iInter_subset _ _) su
   right; exact _root_.trans (iInter_subset _ _) sv
@@ -231,7 +231,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
   have bdd : BddAbove u := by rw [← hu, bddAbove_def]; use 1; intro t ⟨m, _⟩; exact m.2
   have un : u.Nonempty := by
     rw [← hu]; use 0, left_mem_Icc.mpr zero_le_one; simp only [mem_iInter₂, mem_Iic]; intro a m
-    contrapose m; simp only [not_not, p.extend_of_le_zero (not_le.mp m).le, fx]
+    contrapose m; simp only [p.extend_of_le_zero (not_le.mp m).le, fx]
   have uc : IsClosed u := by
     rw [← hu]; apply isClosed_Icc.inter; apply isClosed_iInter; intro a; apply isClosed_iInter
     intro _; exact isClosed_Iic
@@ -252,7 +252,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
   have ft : f (p ⟨t, m⟩) ∈ frontier s := by
     simp only [frontier, mem_diff, sc.closure_eq]; constructor
     · convert lo t (le_refl _)
-      simp only [Path.extend_extends _ m]
+      simp only [Path.extend_apply _ m]
     · have e : p ⟨t, m⟩ = p.extend t := by
         simp only [Path.extend, IccExtend, ContinuousMap.coe_mk, Function.comp_apply, projIcc,
           min_eq_right m.2, max_eq_right m.1]
@@ -267,7 +267,7 @@ theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [Topologic
       suffices h : z ∈ u by linarith [le_csSup bdd h]
       rw [← hu]; refine ⟨⟨_root_.trans m.1 tz.le, z1.le⟩, ?_⟩
       simp only [mem_iInter₂, mem_Iic]; intro w ws
-      contrapose ws; simp only [not_not, not_le] at ws ⊢
+      contrapose ws; simp only [not_le] at ws ⊢
       by_cases xw : x < w; refine interior_subset (h _ xw (_root_.trans ws zy))
       simp only [not_lt] at xw; exact lo _ (_root_.trans xw xt.le)
   -- Walk from b to p t

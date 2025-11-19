@@ -156,7 +156,7 @@ theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
     have e : s.bottcherNear c ∘ s.ray c =ᶠ[𝓝 0] id :=
       (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_zero c)
     rw [e.mfderiv_eq]; exact id_mderiv_ne_zero
-  contrapose h; simp only [not_not] at h ⊢
+  contrapose h
   have hb : MDifferentiableAt I I (s.bottcherNear c) (s.ray c 0) := by
     rw [s.ray_zero]
     exact (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd.mdifferentiableAt le_top
@@ -172,7 +172,7 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
   have h : mfderiv I I (s.bottcherNearIter n c ∘ s.ray c) x ≠ 0 := by
     have e : s.bottcherNearIter n c ∘ s.ray c =ᶠ[𝓝 x] fun x ↦ x ^ d ^ n :=
       (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter' post)
-    rw [e.mfderiv_eq]; contrapose x0; simp only [not_not] at x0 ⊢
+    rw [e.mfderiv_eq]; contrapose x0
     rw [mfderiv_eq_fderiv] at x0
     have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
     apply_fun (fun x ↦ x 1) at x0

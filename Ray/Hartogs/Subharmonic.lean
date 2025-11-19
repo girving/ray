@@ -338,7 +338,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
   generalize hu : ‖g - c‖ = u
   have u0 : u > 0 := by
     simp only [← hu, gt_iff_lt, norm_pos_iff, Ne]
-    contrapose gc; simp only [not_not, sub_eq_zero] at gc ⊢; exact gc
+    contrapose gc; simp only [sub_eq_zero] at gc ⊢; exact gc
   have ur : u ≤ r := by
     simp only [Complex.dist_eq, Metric.mem_closedBall] at gs; simp only [←hu, gs]
   generalize hy : (g - c) / u = y

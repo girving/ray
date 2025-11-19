@@ -257,7 +257,7 @@ theorem Super.no_jump (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) (n
   rcases(Set.mem_image _ _ _).mp m with ⟨p, m, pa⟩
   simp only [Super.fp, Prod.mk_inj] at pa
   simp only [not_forall]; use p, pa.2
-  contrapose m; simp only [not_not] at m ⊢
+  contrapose m
   rw [← @Prod.mk.eta _ _ p, pa.1, m]
   simp only [Set.mem_inter_iff, Set.prodMk_mem_set_prod_eq, Metric.mem_closedBall, dist_self,
     zero_le_one, Set.mem_univ, Set.mem_compl_iff, true_and, not_not, na]
@@ -300,8 +300,6 @@ theorem Super.barrier (s : Super f d a) [OnePreimage s] [T2Space S] (n : Set (�
   have ni1 : (f e)^[n] z ∈ i1 := Nat.find_spec en
   have n0 : n ≠ 0 := by
     contrapose zm
-    simp only [Set.not_notMem]
-    simp only [Ne, not_not] at zm
     simp only [zm, Function.iterate_zero, id_eq] at ni1
     exact us.1 (ii.1 (Set.mk_mem_prod em ni1))
   have nt : (f e)^[n-1] z ∉ i1 := Nat.find_min en (Nat.pred_lt n0)
@@ -310,7 +308,7 @@ theorem Super.barrier (s : Super f d a) [OnePreimage s] [T2Space S] (n : Set (�
     simp only [Super.fp]; rw [← Function.iterate_succ_apply' (f e) (n - 1)]
     simp only [Nat.succ_eq_add_one, Nat.sub_add_cancel (Nat.one_le_of_lt (Nat.pos_of_ne_zero n0))]
   · contrapose nt
-    simp only [Set.prodMk_mem_set_prod_eq, not_and, not_forall, Set.not_notMem, exists_prop] at nt ⊢
+    simp only [Set.prodMk_mem_set_prod_eq] at nt ⊢
     exact nt.2
 
 /-- `s.potential` is large on barriers (because they are compact) -/
@@ -329,7 +327,7 @@ theorem Barrier.potential_large {s : Super f d a} [OnePreimage s] {n t : Set (�
   · have h := b.hole e; contrapose h; simp only [not_lt] at h
     have h' := le_antisymm h s.potential_nonneg
     simp only [s.potential_eq_zero, s.preimage_eq, exists_const] at h'
-    simp only [not_not, ← h', ps]
+    simp only [← h', ps]
   · intro e z m; simp only [isMinOn_iff, uncurry] at pm ⊢; exact pm _ m
 
 /-- The first `n` preimages of a barrier -/
@@ -383,7 +381,7 @@ theorem Continuous.potential (s : Super f d a) [OnePreimage s] [T2Space S] :
   have en : ∃ n, ∀ᶠ e in 𝓝 c, ∀ z, (e, z) ∈ u → s.potential e z ≤ y → (e, z) ∈ b.fast n := by
     -- Find n s.t. y ^ (d^n) < r
     rcases exists_pow_lt_of_lt_one rp y1 with ⟨k, ky⟩
-    rcases Filter.exists_le_of_tendsto_atTop (Nat.tendsto_pow_atTop_atTop_of_one_lt s.d1) 0 k
+    rcases Filter.exists_le_of_tendsto_atTop (tendsto_pow_atTop_atTop_of_one_lt s.d1) 0 k
       with ⟨n, _, nk⟩
     use n
     -- Our upper bound on `potential e z`, plus on our lower bound on `t`,

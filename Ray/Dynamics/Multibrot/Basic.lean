@@ -153,8 +153,8 @@ theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
       sub_self, div_zero]
   rw [inv_coe h, toComplex_coe, eq_div_iff, inv_mul_eq_iff_eq_mul₀ h, right_distrib,
     inv_mul_cancel₀ zd]
-  contrapose h; rw [not_not]
-  rw [not_not, add_comm, add_eq_zero_iff_eq_neg, ← eq_div_iff zd, neg_div, ←
+  contrapose h
+  rw [add_comm, add_eq_zero_iff_eq_neg, ← eq_div_iff zd, neg_div, ←
     inv_eq_one_div, ← add_eq_zero_iff_eq_neg, add_comm] at h
   exact h
 
@@ -399,7 +399,7 @@ theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) : (
 /-- Closed Julia sets are inside radius `max 2 (abs c)` -/
 theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : ‖c‖ ≤ ‖z‖) : ‖z‖ ≤ 2 := by
   contrapose m
-  simp only [not_le, not_not] at m ⊢
+  simp only [not_le] at m ⊢
   exact julia_two_lt m cz
 
 /-- `0 < s.potential` at finite values -/
@@ -422,7 +422,7 @@ theorem multibrot_subset_closedBall : multibrot d ⊆ closedBall 0 2 := by
 
 /-- Points with absolute value `> 2` are not in the Multibrot set -/
 theorem multibrot_two_lt (a : 2 < ‖c‖) : c ∉ multibrot d := by
-  contrapose a; simp only [not_lt, not_not] at a ⊢; exact multibrot_le_two a
+  contrapose a; simp only [not_lt] at a ⊢; exact multibrot_le_two a
 
 /-- If the iteration repeats, we're in the Multibrot set -/
 theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c = (f d c)^[b] c) :
@@ -527,7 +527,7 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < ‖c‖) : ‖bottcher' d c‖ ≤ 3
     apply inv_strictAnti₀; bound; refine max_lt lo (half_lt_self (lt_trans (by norm_num) lo))
   have mem : c ∉ multibrot d := multibrot_two_lt (lt_trans (by norm_num) lo)
   have nz : ∀ n, (f d c)^[n] c ≠ 0 := by
-    intro n; contrapose mem; simp only [not_not] at mem ⊢; exact multibrot_of_zero mem
+    intro n; contrapose mem; exact multibrot_of_zero mem
   have iter : ∀ n, ((f d c)^[n] ↑c)⁻¹ = ↑(g^[n] c⁻¹) := by
     intro n; induction' n with n h
     have cp : c ≠ 0 := norm_ne_zero_iff.mp (lt_trans (by norm_num) lo).ne'
@@ -667,8 +667,8 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
       have e' : ∃ᶠ y in 𝓝[{x}ᶜ] x, y ∈ t := by
         simp only [frequently_nhdsWithin_iff, mem_compl_singleton_iff]
         refine e.mp (.of_forall fun z zt ↦ ⟨zt, ?_⟩)
-        contrapose xt; simp only [not_not] at xt ⊢; rwa [← xt]
-      contrapose xt; clear xt; simp only [not_not]; use b1
+        contrapose xt; rwa [← xt]
+      contrapose xt; clear xt; use b1
       cases' ContMDiffAt.eventually_eq_or_eventually_ne (bottcherMAnalytic d _ b1)
         contMDiffAt_const with h h
       use h; contrapose h; simp only [Filter.not_eventually, not_not] at h ⊢

@@ -161,7 +161,7 @@ theorem Super.post_slice_connected (s : Super f d a) [OnePreimage s] (c : ℂ) :
 theorem Super.bottcher_not_basin (s : Super f d a) [OnePreimage s] (m : (c, z) ∉ s.basin) :
     s.bottcher c z = 1 := by
   have p : ¬∃ n, (c, (f c)^[n] z) ∈ s.post := by
-    contrapose m; simp only [not_not] at m ⊢; rcases m with ⟨n, m⟩
+    contrapose m; rcases m with ⟨n, m⟩
     rcases s.post_basin m with ⟨k, m⟩
     simp only [← Function.iterate_add_apply] at m; exact ⟨k + n, m⟩
   simp only [Super.bottcher, p]; rw [dif_neg]; exact not_false
@@ -202,9 +202,9 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
       · apply Nat.find_le; simp only [Function.iterate_succ_apply]
         exact Nat.find_spec e1
       · rw [Nat.succ_le_iff, Nat.lt_find_iff]; intro n n1
-        contrapose n1; simp only [not_not, not_le] at n1 ⊢
+        contrapose n1; simp only [not_le] at n1 ⊢
         have n0 : n ≠ 0 := by
-          contrapose p; simp only [not_not] at p ⊢
+          contrapose p
           simp only [p, Function.iterate_zero_apply] at n1; exact n1
         rw [← Nat.succ_le_iff, Nat.succ_eq_add_one, ← Nat.sub_add_cancel (Nat.pos_of_ne_zero n0)]
         apply Nat.succ_le_succ; apply Nat.find_le
@@ -213,7 +213,7 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     simp only [kk, ← Function.iterate_succ_apply, Function.iterate_succ_apply']
     rw [Complex.cpow_nat_inv_pow _ s.d0]
   have m1 : (c, f c z) ∉ s.basin := by
-    contrapose m; simp only [not_not] at m ⊢
+    contrapose m
     rcases m with ⟨n, m⟩; use n + 1; simp only at m ⊢; rwa [Function.iterate_succ_apply]
   simp only [s.bottcher_not_basin m, s.bottcher_not_basin m1, one_pow]
 

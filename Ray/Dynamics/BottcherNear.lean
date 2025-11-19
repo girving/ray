@@ -206,7 +206,7 @@ theorem SuperNear.gs (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : ‖g f d z
 
 /-- `g` is nonzero -/
 theorem SuperNear.g_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : g f d z ≠ 0 := by
-  have h := s.gs zt; contrapose h; simp only [not_not] at h; simp only [h]; norm_num
+  have h := s.gs zt; contrapose h; simp only [h]; norm_num
 
 /-- `f` is zero only at zero -/
 theorem SuperNear.f_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) (z0 : z ≠ 0) : f z ≠ 0 := by

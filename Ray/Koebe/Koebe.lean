@@ -29,8 +29,7 @@ theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn
   have m0 : 0 ∈ ball (0 : ℂ) 1 := by simp only [Metric.mem_ball, dist_self, zero_lt_one]
   have w0 : w ≠ 0 := by
     contrapose wm
-    simp only [Decidable.not_not] at wm
-    simp only [wm, Decidable.not_not]
+    simp only [wm]
     exact ⟨0, m0, f0⟩
   -- If `w` is not an output of `f`, we construct an auxiliary `h` using the missed value
   set h : ℂ → ℂ := fun z ↦ w * f z / (w - f z)

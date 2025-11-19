@@ -93,7 +93,7 @@ theorem Measurable.square {r0 r1 : ℝ} : MeasurableSet (square r0 r1) := by
 theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     Complex.measurableEquivRealProd.symm ⁻¹' (annulus_oc c r0 r1) =
       realCircleMap c '' square r0 r1 := by
-  rw [← MeasurableEquiv.image_eq_preimage]
+  rw [← MeasurableEquiv.image_eq_preimage_symm]
   have e : realCircleMap c =
       fun x : ℝ × ℝ ↦ Complex.measurableEquivRealProd (circleMap c x.1 x.2) := by
     funext

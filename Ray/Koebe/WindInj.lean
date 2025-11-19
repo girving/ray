@@ -167,10 +167,10 @@ lemma WindInj.inj (i : WindInj f r) : InjOn (fun z ↦ snap (f z)) (sphere 0 r) 
     rw [← xa, yb]
     apply i.inj_near'
     · contrapose e
-      simp only [ne_eq, left_eq_add, not_not] at e
+      simp only [left_eq_add] at e
       simp only [circleMap, Complex.ofReal_one, e, Complex.ofReal_zero, zero_mul, Complex.exp_zero,
         mul_one, zero_add, eq_div_iff x0, one_mul] at rt
-      simp only [rt, not_true_eq_false, not_false_eq_true]
+      simp only [rt]
     · simp only [add_sub_cancel_left]
       refine le_trans (abs_le_mul_norm_circleMap tm) ?_
       rw [← div_le_div_iff_of_pos_right (c := ‖x‖) (by positivity), ← norm_div, sub_div,

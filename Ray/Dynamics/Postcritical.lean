@@ -127,7 +127,7 @@ theorem Postscritical.mono (p : Postcritical s c z1) (z01 : s.potential c z0 ≤
 /-- Postcritical points are not precritical, since iteration decreases potential (except for `a`) -/
 theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential c z ≠ 0) :
     ¬Precritical (f c) z := by
-  contrapose p; simp only [Postcritical, not_not, not_lt] at p ⊢
+  contrapose p; simp only [Postcritical, not_lt] at p ⊢
   rcases p with ⟨n, p⟩; trans s.potential c ((f c)^[n] z)
   · refine csInf_le s.bddBelow_ps (Or.inr ⟨?_, (f c)^[n] z, rfl, p⟩)
     simp only [s.potential_eqn_iter]; exact pow_ne_zero _ p0
@@ -227,7 +227,7 @@ theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space
         (s.bottcherNearIter_mfderiv_ne_zero (nc _ (le_refl _))
           (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
   have e : ∃ᶠ x : ℂ in 𝓝 (f z), ‖x‖ < ‖f z‖ := by
-    apply frequently_smaller; contrapose m; simp only [not_not] at m ⊢
+    apply frequently_smaller; contrapose m
     replace m := (s.bottcherNear_eq_zero near).mp m
     rw [s.preimage_eq] at m; exact m
   rw [o, Filter.frequently_map] at e

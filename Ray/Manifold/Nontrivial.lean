@@ -122,7 +122,7 @@ def allRootsOfUnity :=
 
 /-- Roots of unity are nonzero -/
 theorem allRootsOfUnity.ne_zero {z : ℂ} (m : z ∈ allRootsOfUnity) : z ≠ 0 := by
-  rcases m with ⟨n, n0, z1⟩; contrapose z1; simp only [not_not] at z1
+  rcases m with ⟨n, n0, z1⟩; contrapose z1
   simp only [z1, zero_pow n0]; exact zero_ne_one
 
 /-- Roots of unity are totally disconnected -/
@@ -194,7 +194,7 @@ theorem ContMDiffAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def] at fa ga
   rcases fa with ⟨fc, fa⟩; rcases ga with ⟨gc, ga⟩
   by_cases fg : f z ≠ g z
-  · right; contrapose fg; simp only [not_not]
+  · right; contrapose fg
     simp only [Filter.not_eventually, not_not] at fg
     exact tendsto_nhds_unique_of_frequently_eq fc gc (fg.filter_mono nhdsWithin_le_nhds)
   simp only [not_not] at fg
@@ -242,7 +242,7 @@ theorem ContMDiffOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
       have m' := m.1; contrapose m'; simp only [Filter.not_frequently]
       refine h.mp (.of_forall ?_); intro x i
       by_cases xz : x = z; rwa [xz]; specialize i xz; contrapose i
-      simp only [not_not, ← ht] at i ⊢; exact i.2.self_of_nhds
+      simp only [← ht] at i ⊢; exact i.2.self_of_nhds
 
 /-- If `S` is locally connected, we don't need the open assumption in
     `ContMDiffOn.const_of_locally_const` -/

@@ -133,7 +133,7 @@ theorem domain_open' {p : ℝ} {t : Set ℂ} (sub : closedBall (0 : ℂ) p ⊆ t
     (((isCompact_closedBall _ _).diff ot).image continuous_norm).isClosed
   have up : ∀ x : ℝ, x ∈ u → p < x := by
     intro x m; rcases m with ⟨z, ⟨_, mt⟩, e⟩; rw [← e]; contrapose mt
-    simp only [not_not, not_lt] at mt ⊢
+    simp only [not_lt] at mt ⊢
     apply sub; simp only [mem_closedBall, Complex.dist_eq, sub_zero, mt]
   have ub : BddBelow u := ⟨p, fun _ m ↦ (up _ m).le⟩
   have iu : sInf u ∈ u := IsClosed.csInf_mem uc ne ub
@@ -178,7 +178,7 @@ theorem Eqn.potential {x : ℂ × ℂ} (e : Eqn s n r x) : s.potential x.1 (r x.
 /-- `Eqn` implies that `s.bottcherNearIter` is noncritical -/
 theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (x0 : x.2 ≠ 0) :
     mfderiv I I (s.bottcherNearIter n x.1) (r x.1 x.2) ≠ 0 := by
-  rcases x with ⟨c, x⟩; contrapose x0; simp only [not_not] at x0 ⊢
+  rcases x with ⟨c, x⟩; contrapose x0
   replace x0 : mfderiv I I (fun y ↦ s.bottcherNearIter n c (r c y)) x = 0 := by
     rw [←Function.comp_def,
       mfderiv_comp x

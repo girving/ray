@@ -125,7 +125,7 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     by_cases xt : x ∉ t
     · contrapose xu; clear xu
       simp only [mem_union, mem_setOf, xt, false_and, and_false, or_false, ← hf] at m
-      simp only [not_not]; exact m
+      exact m
     simp only [not_not] at xt
     have n := m
     simp only [mem_union, xt, xu, false_or, true_and, mem_setOf,
@@ -225,7 +225,7 @@ theorem AnalyticManifold.nonseparating_singleton (a : S) : Nonseparating ({a} : 
     intro x ⟨m, e⟩; simp only [← e, PartialEquiv.right_inv _ m]
   · convert Nonseparating.empty
     simp only [eq_empty_iff_forall_notMem, mem_inter_iff, mem_preimage, mem_singleton_iff, not_and]
-    intro x m; contrapose az; simp only [not_not] at az ⊢; rw [← az]
+    intro x m; contrapose az; rw [← az]
     exact PartialEquiv.map_target _ m
 
 /-- Removing a point in a complex manifold `S` leaves it locally connected -/

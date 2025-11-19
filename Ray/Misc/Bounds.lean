@@ -379,7 +379,8 @@ theorem pow_small {z w : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) (ws : ‖w‖ ≤ 1) 
 /-- `a + b ≠ 0` from `abs b < abs a` -/
 theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : ‖b‖ < ‖a‖) : a + b ≠ 0 := by
   have e : a + b = a - -b := by abel
-  rw [e, sub_ne_zero]; contrapose h; simp only [not_not] at h
+  rw [e, sub_ne_zero]
+  contrapose h
   simp only [h, not_lt, norm_neg, le_refl]
 
 /-- `e < 3` -/
@@ -413,7 +414,7 @@ theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
     intro n m; refine _root_.trans ?_ le
     exact Finset.single_le_sum (f := fun n ↦ ‖f n - 1‖) (fun _ _ ↦ norm_nonneg _) m
   have f0 : ∀ n, n ∈ s → f n ≠ 0 := by
-    intro n m; specialize b n m; contrapose b; simp only [not_not] at b
+    intro n m; specialize b n m; contrapose b
     simp only [b, not_le]; norm_num; linarith
   have sg : ‖s.sum g‖ ≤ 2 * c := by
     refine le_trans (norm_sum_le _ _) ?_

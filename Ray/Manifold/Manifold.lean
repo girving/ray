@@ -105,7 +105,7 @@ theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I
   apply p.mp
   apply ((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target x)).mp
   refine .of_forall fun y m h ↦ ?_
-  contrapose h; simp only [not_not] at m h ⊢; nth_rw 2 [← h]
+  contrapose h; nth_rw 2 [← h]
   rw [PartialEquiv.right_inv _ m]
 
 end Nhds

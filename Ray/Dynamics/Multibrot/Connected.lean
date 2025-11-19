@@ -10,7 +10,7 @@ connected: it's a ball.  But also the Multibrot set itself is connected, since i
 intersection of compact, connected sets (the levelsets of `potential d`).
 -/
 
-open Complex 
+open Complex
 open Filter (Tendsto atTop)
 open Function (uncurry)
 open Metric (ball sphere closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall
@@ -80,14 +80,14 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
     intro m; use z
     simp only [multibrotExt_coe, not_not, m, toComplex_coe, true_and]
     intro ⟨w, m, wz⟩; induction w using OnePoint.rec
-    · contrapose m; clear m; simp only [not_not, multibrotExt_inf]
+    · contrapose m; clear m; simp only [multibrotExt_inf]
     · simp only [multibrotExt_coe, not_not, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply (isConnected_compl_multibrotExt d).image
   refine continuousOn_toComplex.mono ?_; intro z m
   contrapose m; simp only [mem_compl_iff, mem_singleton_iff, not_not] at m
   simp only [m, notMem_compl_iff, multibrotExt_inf]
 
-/-- `multibrot d)ᶜ` is connected -/
+/-- `(multibrot d)ᶜ` is connected -/
 theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_root_.multibrot d)ᶜ := by
   have dc : IsConnected (multibrotExt d \ {∞}) := by
     refine ⟨⟨(((3 : ℝ) : ℂ) : 𝕊),?_⟩,?_⟩
@@ -103,7 +103,7 @@ theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_r
       simp only [multibrotExt_coe, m, toComplex_coe, not_false_iff, mem_diff, and_true,
         mem_singleton_iff, coe_ne_inf]
     · intro ⟨w, ⟨m, wi⟩, wz⟩; induction w using OnePoint.rec
-      · contrapose wi; clear wi; simp only [mem_singleton_iff, not_not]
+      · contrapose wi; clear wi; simp only [mem_singleton_iff]
       · simp only [multibrotExt_coe, toComplex_coe] at m wz; rwa [← wz]
   rw [e]; apply dc.image
   refine continuousOn_toComplex.mono ?_; intro z ⟨_, i⟩

@@ -95,9 +95,9 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     refine ib.mp (bi.mp ((t1.eventually ib).mp
       ((t0.eventually bi).mp ((t2.eventually ib).mp (m0.mp (m1.mp ?_))))))
     refine .of_forall fun z m1 m0 t2 t0 t1 _ ib tp z0 ↦ ⟨?_, ?_⟩
-    · contrapose tp; simp only [ne_eq, Decidable.not_not, Classical.not_imp] at tp ⊢
+    · contrapose tp; simp only [Classical.not_imp] at tp ⊢
       rw [ib]; use tp
-      contrapose a1; simp only [not_not] at a1 ⊢
+      contrapose a1
       have b0 := bottcherNear_ne_zero s m1 z0
       calc a
         _ = a * bottcherNear f d z / bottcherNear f d z := by field_simp [b0]
@@ -119,7 +119,7 @@ theorem not_local_inj_of_deriv_zero' {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0)
     simp only [mem_compl_singleton_iff] at z0; rw [Pi.zero_apply] at f0
     rwa [f0, f0', eq_self_iff_true, and_true, neg_ne_self]
   have o1 : orderAt f 0 ≠ 1 := by
-    have d := df.deriv; contrapose d; simp only [not_not] at d
+    have d := df.deriv; contrapose d
     exact deriv_ne_zero_of_orderAt_eq_one d
   have d2 : 2 ≤ orderAt f 0 := by rw [Nat.two_le_iff]; use o0, o1
   clear o1 df f0
@@ -165,7 +165,7 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
     refine (sc.eventually h).mp (.of_forall ?_)
     simp only [mem_compl_singleton_iff, sub_ne_zero]
     intro z h zc; rcases h zc with ⟨gz, ff⟩; constructor
-    contrapose gz; simp only [not_not] at gz ⊢; nth_rw 2 [← gz]; ring
+    contrapose gz; nth_rw 2 [← gz]; ring
     simp only [sub_left_inj, sub_add_cancel, f'] at ff; exact ff
 
 /-- If `f' z = 0`, then every value near `f z` is achieved at least twice (manifold version).
@@ -237,7 +237,7 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I 
 theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s) (so : IsOpen s) {c : ℂ}
     (m : c ∈ s) (fa : AnalyticAt ℂ f c) : deriv f c ≠ 0 := by
   contrapose inj
-  simp only [not_not, InjOn, not_forall] at inj ⊢
+  simp only [InjOn, not_forall] at inj ⊢
   have d := inj ▸ fa.differentiableAt.hasDerivAt
   rcases not_local_inj_of_deriv_zero fa d with ⟨g, ga, gc, fg⟩
   have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=
@@ -251,7 +251,7 @@ theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s
 theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s) {c : S}
     (m : c ∈ s) (fa : ContMDiffAt I I ω f c) : mfderiv I I f c ≠ 0 := by
   contrapose inj
-  simp only [not_not, InjOn, not_forall] at inj ⊢
+  simp only [InjOn, not_forall] at inj ⊢
   rcases not_local_inj_of_mfderiv_zero fa inj with ⟨g, ga, gc, fg⟩
   have gm : ∀ᶠ z in 𝓝 c, g z ∈ s :=
     ga.continuousAt.eventually_mem (so.mem_nhds (by simp only [gc, m]))

@@ -8,7 +8,6 @@ import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
-import Ray.Analytic.Within
 import Ray.Manifold.Manifold
 
 /-!
