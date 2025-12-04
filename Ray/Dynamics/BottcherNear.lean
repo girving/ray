@@ -45,6 +45,7 @@ variable {f : ℂ → ℂ}
 variable {d : ℕ}
 variable {z : ℂ}
 variable {t : Set ℂ}
+variable {a b : ℝ}
 
 /-- `f` has a monic, superattracting fixed point of order `d ≥ 2` at the origin.
     This is a simplified version of `SuperNear` with no smallest requirements. -/
@@ -56,13 +57,17 @@ structure SuperAt (f : ℂ → ℂ) (d : ℕ) : Prop where
 
 /-- `f` has a monic, superattracting fixed point of order `d ≥ 2` at the origin.
     We impose some smallness requirements to make bounds easier later. -/
-structure SuperNear (f : ℂ → ℂ) (d : ℕ) (t : Set ℂ) : Prop extends SuperAt f d where
+structure SuperNear (f : ℂ → ℂ) (d : ℕ) (t : Set ℂ) (a b : ℝ) : Prop extends SuperAt f d where
   o : IsOpen t
   t0 : (0 : ℂ) ∈ t
-  t2 : ∀ {z}, z ∈ t → ‖z‖ ≤ 1 / 2
+  t2 : ∀ {z}, z ∈ t → ‖z‖ ≤ a
   fa : AnalyticOnNhd ℂ f t
   ft : MapsTo f t t
-  gs' : ∀ {z : ℂ}, z ≠ 0 → z ∈ t → ‖f z / z ^ d - 1‖ ≤ 1 / 4
+  gs' : ∀ {z : ℂ}, z ≠ 0 → z ∈ t → ‖f z / z ^ d - 1‖ ≤ b
+  a1 : a < 1
+  b0 : 0 ≤ b
+  b1 : b < 1
+  c1' : a * (1 + b) < 1
 
 -- Facts about d
 theorem SuperAt.d0 (s : SuperAt f d) : d ≠ 0 := by have h := s.d2; omega
@@ -73,7 +78,22 @@ theorem SuperAt.dz (s : SuperAt f d) : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr s
 theorem SuperAt.dr2 (s : SuperAt f d) : 2 ≤ (d : ℝ) := le_trans (by norm_num) (Nat.cast_le.mpr s.d2)
 
 -- Teach `bound` that `0 < d` and `2 ≤ d`
-attribute [bound_forward] SuperAt.d2 SuperAt.dp SuperAt.dr2 SuperNear.toSuperAt
+attribute [bound_forward] SuperAt.d2 SuperAt.dp SuperAt.dr2 SuperNear.toSuperAt SuperNear.b0
+  SuperNear.b1
+
+-- More basic inequalities
+@[bound_forward] lemma SuperNear.a0 (s : SuperNear f d t a b) : 0 ≤ a := by
+  simpa only [norm_zero] using s.t2 s.t0
+
+/-- A scale factor that appears below -/
+def SuperNear.c (_ : SuperNear f d t a b) := a * (1 + b)
+
+/-- `c` is nonnegative -/
+@[bound] lemma SuperNear.c0 (s : SuperNear f d t a b) : 0 ≤ s.c := by
+  simp only [SuperNear.c]
+  bound
+@[bound_forward, bound] lemma SuperNear.c1 (s : SuperNear f d t a b) : s.c < 1 := s.c1'
+@[bound] lemma SuperNear.c_le_one (s : SuperNear f d t a b) : s.c ≤ 1 := by bound
 
 /-- `g` such that `f z = z^d * g z` -/
 def g (f : ℂ → ℂ) (d : ℕ) : ℂ → ℂ := fun z ↦ if z = 0 then 1 else f z / z ^ d
@@ -139,15 +159,16 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
   exact (Complex.differentiableOn_compl_singleton_and_continuousAt_iff (o.mem_nhds t0)).mp ⟨ga, gc⟩
 
 /-- `g` is analytic -/
-theorem SuperNear.ga (s : SuperNear f d t) : AnalyticOnNhd ℂ (g f d) t := fun z m ↦
+theorem SuperNear.ga (s : SuperNear f d t a b) : AnalyticOnNhd ℂ (g f d) t := fun z m ↦
   s.ga_of_fa (s.fa z m)
 
 /-- `SuperAt → SuperNear`, manual radius version: if we know a ball where `f` is analytic and
     the resulting `g` is small, then `SuperAt` becomes `SuperNear` -/
-theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r ≤ 1 / 2)
-    (fa : AnalyticOnNhd ℂ f (ball 0 r)) (gs : ∀ {z : ℂ}, ‖z‖ < r → ‖g f d z - 1‖ < 1 / 4) :
-    SuperNear f d (ball 0 r) :=
-  haveI gs : ∀ {z : ℂ}, z ≠ 0 → z ∈ ball (0 : ℂ) r → ‖f z / z ^ d - 1‖ ≤ 1 / 4 := by
+theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r ≤ a) (a0 : 0 < a)
+    (a1 : a < 1) (b0 : 0 ≤ b) (b1 : b < 1) (c1 : a * (1 + b) < 1)
+    (fa : AnalyticOnNhd ℂ f (ball 0 r)) (gs : ∀ {z : ℂ}, ‖z‖ < r → ‖g f d z - 1‖ < b) :
+    SuperNear f d (ball 0 r) a b :=
+  haveI gs : ∀ {z : ℂ}, z ≠ 0 → z ∈ ball (0 : ℂ) r → ‖f z / z ^ d - 1‖ ≤ b := by
     intro z z0 zs
     simp only [mem_ball_zero_iff] at zs
     specialize gs zs
@@ -160,7 +181,11 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
     o := isOpen_ball
     t0 := mem_ball_self rp
     gs' := fun z0 ↦ gs z0
-    fa
+    a1 := a1
+    b0 := b0
+    b1 := b1
+    c1' := c1
+    fa := fa
     t2 := by
       intro z zs
       simp only [mem_ball_zero_iff] at zs
@@ -168,22 +193,30 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
     ft := by
       intro z zs; simp only [mem_ball_zero_iff] at zs gs ⊢
       by_cases z0 : z = 0; · simp only [z0, s.f0, rp, norm_zero]
-      calc ‖f z‖
-        _ = ‖f z / z ^ d * z ^ d‖ := by rw [div_mul_cancel₀ _ (pow_ne_zero d z0)]
-        _ = ‖f z / z ^ d - 1 + 1‖ * ‖z‖ ^ d := by
-          simp only [Complex.norm_mul, Complex.norm_div, norm_pow, sub_add_cancel]
-        _ ≤ (‖f z / z ^ d - 1‖ + ‖(1 : ℂ)‖) * r ^ d := by bound
-        _ ≤ (1 / 4 + ‖(1 : ℂ)‖) * r ^ d := by bound [gs z0 zs]
-        _ ≤ 5 / 4 * r ^ (d - 1) * r := by
-          rw [mul_assoc, ← pow_succ, Nat.sub_add_cancel (le_trans one_le_two s.d2)]; norm_num
-        _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (d - 1) * r := by bound
-        _ ≤ 5 / 4 * (1 / 2 : ℝ) ^ (2 - 1) * r := by bound
-        _ = 5 / 8 * r := by norm_num
-        _ < r := by linarith }
+      by_cases f0 : f z = 0
+      · simp only [f0, norm_zero, rp]
+      · calc ‖f z‖
+          _ = ‖f z / z ^ d‖ * ‖z‖ ^ d := by
+            rw [← norm_pow, ← norm_mul, div_mul_cancel₀ _ (pow_ne_zero d z0)]
+          _ < ‖f z / z ^ d‖ * r ^ d := by
+            apply mul_lt_mul_of_pos_left (by bound)
+            simp only [Complex.norm_div, norm_pow]
+            positivity
+          _ = ‖f z / z ^ d - 1 + 1‖ * r ^ d := by
+            simp only [Complex.norm_div, norm_pow, sub_add_cancel]
+          _ ≤ (‖f z / z ^ d - 1‖ + ‖(1 : ℂ)‖) * r ^ d := by bound
+          _ ≤ (b + ‖(1 : ℂ)‖) * r ^ d := by bound [gs z0 zs]
+          _ ≤ (1 + b) * r ^ (d - 1) * r := by
+            simp only [mul_assoc, ← pow_succ, Nat.sub_add_cancel (le_trans one_le_two s.d2), norm_one,
+              add_comm b, le_refl]
+          _ ≤ (1 + b) * a ^ (d - 1) * r := by bound
+          _ ≤ (1 + b) * a ^ (2 - 1) * r := by bound
+          _ = a * (1 + b) * r := by ring
+          _ ≤ r := by bound }
 
 /-- `SuperAt → SuperNear`, automatic radius version: given `SuperAt`, we can find a ball where the
     smallness conditions needed for `SuperNear` hold. -/
-theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t := by
+theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t (1 / 2) (1 / 4) := by
   rcases s.fa0.exists_ball_analyticOnNhd with ⟨r0, r0p, fa⟩
   rcases Metric.continuousAt_iff.mp (s.ga_of_fa (fa 0 (mem_ball_self r0p))).continuousAt (1 / 4)
       (by norm_num) with
@@ -194,22 +227,23 @@ theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t := by
   have r2 : r ≤ 1 / 2 := le_trans (min_le_right _ _) (min_le_right _ _)
   have rr1 : r ≤ r1 := le_trans (min_le_right r0 _) (min_le_left r1 _)
   simp only [g0, dist_zero_right, Complex.dist_eq] at gs
-  exact s.super_on_ball rp r2 (fa.mono (Metric.ball_subset_ball (min_le_left r0 _))) (fun {z} zr ↦
+  exact s.super_on_ball rp r2 (b := 1 / 4) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+    (by norm_num) (fa.mono (Metric.ball_subset_ball (min_le_left r0 _))) (fun {z} zr ↦
     gs (lt_of_lt_of_le zr rr1))
 
 /-- `g` is small near 0 -/
-theorem SuperNear.gs (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : ‖g f d z - 1‖ ≤ 1 / 4 := by
+theorem SuperNear.gs (s : SuperNear f d t a b) {z : ℂ} (zt : z ∈ t) : ‖g f d z - 1‖ ≤ b := by
   by_cases z0 : z = 0
-  · simp only [z0, g0, sub_self, norm_zero, one_div, inv_nonneg]
-    norm_num
+  · simp only [z0, g0, sub_self, norm_zero, s.b0]
   · simp only [g, z0, if_false, s.gs' z0 zt]
 
 /-- `g` is nonzero -/
-theorem SuperNear.g_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) : g f d z ≠ 0 := by
-  have h := s.gs zt; contrapose h; simp only [h]; norm_num
+theorem SuperNear.g_ne_zero (s : SuperNear f d t a b) {z : ℂ} (zt : z ∈ t) : g f d z ≠ 0 := by
+  have h := s.gs zt; contrapose h; simp only [h]; norm_num [s.b1]
 
 /-- `f` is zero only at zero -/
-theorem SuperNear.f_ne_zero (s : SuperNear f d t) {z : ℂ} (zt : z ∈ t) (z0 : z ≠ 0) : f z ≠ 0 := by
+theorem SuperNear.f_ne_zero (s : SuperNear f d t a b) {z : ℂ} (zt : z ∈ t) (z0 : z ≠ 0) :
+    f z ≠ 0 := by
   simp only [s.fg, mul_ne_zero (pow_ne_zero _ z0) (s.g_ne_zero zt), Ne, not_false_iff]
 
 /-!
@@ -245,7 +279,7 @@ def bottcherNear (f : ℂ → ℂ) (d : ℕ) (z : ℂ) :=
     `(term n z)^d = (g (f^[n] z) ^ 1/d^(n+1))^d`
     `             = (g (f^[n-1] (f z)) ^ 1/d^n)`
     `             = term (n-1) (f z)` -/
-theorem term_eqn (s : SuperNear f d t) : ∀ n, term f d n (f z) = term f d (n + 1) z ^ d := by
+theorem term_eqn (s : SuperNear f d t a b) : ∀ n, term f d n (f z) = term f d (n + 1) z ^ d := by
   intro n
   simp only [term, ← Function.iterate_succ_apply, pow_mul_nat, div_mul, pow_succ' _ (n + 1),
     mul_div_cancel_left₀ _ s.dz, Nat.succ_eq_add_one, Nat.cast_mul]
@@ -255,7 +289,7 @@ theorem term_eqn (s : SuperNear f d t) : ∀ n, term f d n (f z) = term f d (n +
     `(z * term 0 z)^d = (z * g z ^ 1/d)^d`
     `                 = z^d * g z`
     `                 = f z` -/
-theorem term_base (s : SuperNear f d t) : f z = (z * term f d 0 z) ^ d := by
+theorem term_base (s : SuperNear f d t a b) : f z = (z * term f d 0 z) ^ d := by
   rw [term]; simp only [Function.iterate_zero, id, one_div]
   rw [mul_pow, pow_mul_nat, zero_add, pow_one, inv_mul_cancel₀]
   · rw [s.fg]; simp only [Complex.cpow_one]
@@ -263,121 +297,105 @@ theorem term_base (s : SuperNear f d t) : f z = (z * term f d 0 z) ^ d := by
     have := s.d2
     omega
 
-/-- `abs (f z) = abs (z^d * g z) ≤ 5/4 * (abs z)^d ≤ 5/8 * abs z` -/
-theorem f_converges (s : SuperNear f d t) : z ∈ t → ‖f z‖ ≤ 5 / 8 * ‖z‖ := by
+/-- `abs (f z) = abs (z^d * g z) ≤ c * (abs z)^d ≤ c * abs z` -/
+theorem f_converges (s : SuperNear f d t a b) : z ∈ t → ‖f z‖ ≤ s.c * ‖z‖ := by
   intro zt
-  rw [s.fg]; simp
-  have gs : ‖g f d z‖ ≤ 5 / 4 := by
+  simp only [s.fg, Complex.norm_mul, norm_pow]
+  have gs : ‖g f d z‖ ≤ 1 + b := by
     calc ‖g f d z‖
       _ = ‖g f d z - 1 + 1‖ := by ring_nf
       _ ≤ ‖g f d z - 1‖ + ‖(1 : ℂ)‖ := by bound
-      _ ≤ 1 / 4 + ‖(1 : ℂ)‖ := by linarith [s.gs zt]
-      _ ≤ 5 / 4 := by norm_num
-  have az1 : ‖z‖ ≤ 1 := le_trans (s.t2 zt) (by norm_num)
+      _ ≤ b + ‖(1 : ℂ)‖ := by linarith [s.gs zt]
+      _ ≤ (1 + b) := by simp only [norm_one, add_comm, le_refl]
+  have az1 : ‖z‖ ≤ 1 := le_trans (s.t2 zt) s.a1.le
   calc ‖z‖ ^ d * ‖g f d z‖
-    _ ≤ ‖z‖ ^ 2 * (5 / 4) := by bound
-    _ = ‖z‖ * ‖z‖ * (5 / 4) := by ring_nf
-    _ ≤ 1 / 2 * ‖z‖ * (5 / 4) := by bound [s.t2 zt]
-    _ = 5 / 8 * ‖z‖ := by ring
-
-theorem five_eights_pow_le {n : ℕ} {r : ℝ} : r > 0 → (5/8 : ℝ) ^ n * r ≤ r := by
-  intro rp; trans (1:ℝ) ^ n * r; bound; simp only [one_pow, one_mul, le_refl]
-
-theorem five_eights_pow_lt {n : ℕ} {r : ℝ} : r > 0 → n ≠ 0 → (5/8 : ℝ) ^ n * r < r := by
-  intro rp np
-  have h : (5 / 8 : ℝ) ^ n < 1 := pow_lt_one₀ (by norm_num) (by norm_num) np
-  exact lt_of_lt_of_le (mul_lt_mul_of_pos_right h rp) (by simp only [one_mul, le_refl])
+    _ ≤ ‖z‖ ^ 2 * (1 + b) := by bound
+    _ = ‖z‖ * ‖z‖ * (1 + b) := by ring_nf
+    _ ≤ a * ‖z‖ * (1 + b) := by bound [s.t2 zt]
+    _ = a * (1 + b) * ‖z‖ := by ring
 
 /-- Iterating f remains in t -/
-theorem SuperNear.mapsTo (s : SuperNear f d t) (n : ℕ) : MapsTo f^[n] t t := by
+theorem SuperNear.mapsTo (s : SuperNear f d t a b) (n : ℕ) : MapsTo f^[n] t t := by
   induction' n with n h; simp only [Set.mapsTo_id, Function.iterate_zero]
   rw [Function.iterate_succ']; exact s.ft.comp h
 
-/-- `abs (f^(n) z) ≤ (5/8)^n * abs z`, which `≤ 1/2 * (5/8)^n` from above -/
-theorem iterates_converge (s : SuperNear f d t) :
-    ∀ n, z ∈ t → ‖f^[n] z‖ ≤ (5/8 : ℝ) ^ n * ‖z‖ := by
+/-- `‖f^[n] z‖ ≤ s.c ^ n * ‖z‖` -/
+theorem iterates_converge (s : SuperNear f d t a b) : ∀ n, z ∈ t → ‖f^[n] z‖ ≤ s.c ^ n * ‖z‖ := by
   intro n zt
   induction' n with n nh
   · simp only [Function.iterate_zero, id, pow_zero, one_mul, le_refl]
   · rw [Function.iterate_succ']
-    trans (5/8 : ℝ) * ‖f^[n] z‖
+    trans s.c * ‖f^[n] z‖
     · exact f_converges s (s.mapsTo n zt)
-    · calc (5/8 : ℝ) * ‖f^[n] z‖
-        _ ≤ (5/8 : ℝ) * ((5/8 : ℝ) ^ n * ‖z‖) := by bound
-        _ = 5/8 * (5/8 : ℝ) ^ n * ‖z‖ := by ring
-        _ = (5/8 : ℝ) ^ (n + 1) * ‖z‖ := by rw [← pow_succ']
-        _ = (5/8 : ℝ) ^ n.succ * ‖z‖ := rfl
+    · calc s.c * ‖f^[n] z‖
+        _ ≤ s.c * (s.c ^ n * ‖z‖) := by bound
+        _ = s.c * s.c ^ n * ‖z‖ := by ring
+        _ = s.c ^ (n + 1) * ‖z‖ := by rw [← pow_succ']
+        _ = s.c ^ n.succ * ‖z‖ := rfl
 
 /-- Iterates are analytic -/
-theorem iterates_analytic (s : SuperNear f d t) : ∀ n, AnalyticOnNhd ℂ f^[n] t := by
-  intro n; induction' n with n h; · simp only [Function.iterate_zero]; exact analyticOnNhd_id
-  · rw [Function.iterate_succ']; intro z zt; exact (s.fa _ (s.mapsTo n zt)).comp (h z zt)
+theorem iterates_analytic (s : SuperNear f d t a b) : ∀ n, AnalyticOnNhd ℂ f^[n] t := by
+  intro n; induction' n with n h
+  · simp only [Function.iterate_zero]
+    exact analyticOnNhd_id
+  · rw [Function.iterate_succ']
+    intro z zt
+    exact (s.fa _ (s.mapsTo n zt)).comp (h z zt)
 
 /-- `term` is analytic close to 0 -/
-theorem term_analytic (s : SuperNear f d t) : ∀ n, AnalyticOnNhd ℂ (term f d n) t := by
+theorem term_analytic (s : SuperNear f d t a b) : ∀ n, AnalyticOnNhd ℂ (term f d n) t := by
   intro n z zt
   refine AnalyticAt.cpow ?_ analyticAt_const ?_
   · exact (s.ga _ (s.mapsTo n zt)).comp (iterates_analytic s n z zt)
-  · exact mem_slitPlane_of_near_one (lt_of_le_of_lt (s.gs (s.mapsTo n zt)) (by norm_num))
+  · exact mem_slitPlane_of_near_one (lt_of_le_of_lt (s.gs (s.mapsTo n zt)) s.b1)
 
-/-- term converges to 1 exponentially, sufficiently close to 0:
+def SuperNear.kt (_ : SuperNear f d t a b) : ℝ := psg b 2⁻¹ * b / 2
+@[bound] lemma SuperNear.kt_nonneg (s : SuperNear f d t a b) : 0 ≤ s.kt := by unfold kt; bound
 
-    `abs (term s n z - 1) ≤ 4 * 1/d^(n+1) * 1/4 ≤ 1/2 * (1/d)^n` -/
-theorem term_converges (s : SuperNear f d t) :
-    ∀ n, z ∈ t → ‖term f d n z - 1‖ ≤ 1/2 * (1/2 : ℝ) ^ n := by
-  intro n zt; rw [term]
-  trans 4 * ‖g f d (f^[n] z) - 1‖ * ‖(1 / (d ^ (n + 1) : ℕ) : ℂ)‖
-  · apply pow_small; · exact le_trans (s.gs (s.mapsTo n zt)) (by norm_num)
-    · simp only [one_div, norm_inv, norm_pow, Complex.norm_natCast, Nat.cast_pow]
-      apply inv_le_one_of_one_le₀
-      have hd : 1 ≤ (d : ℝ) := le_trans (by norm_num) s.dr2
-      exact one_le_pow₀ hd
-  · have gs : ‖g f d (f^[n] z) - 1‖ ≤ 1 / 4 := s.gs (s.mapsTo n zt)
-    have ps : ‖(1 / (d:ℂ) ^ (n + 1) : ℂ)‖ ≤ 1/2 * (1/2 : ℝ) ^ n := by
-      have nn : (1/2:ℝ) * (1/2 : ℝ) ^ n = (1/2 : ℝ) ^ (n + 1) := (pow_succ' _ _).symm
-      rw [nn]
-      simp only [one_div, norm_inv, norm_pow, Complex.norm_natCast, inv_pow]
-      bound
-    calc (4:ℝ) * ‖g f d (f^[n] z) - 1‖ * ‖(1:ℂ) / ((d ^ (n + 1) : ℕ) : ℂ)‖
-      _ = (4:ℝ) * ‖g f d (f^[n] z) - 1‖ * ‖(1:ℂ) / (d:ℂ) ^ (n + 1)‖ := by
-        rw [Nat.cast_pow]
-      _ ≤ 4 * (1 / 4) * (1 / 2 * (1 / 2 : ℝ) ^ n) := by bound
-      _ = 1 / 2 * (1 / 2 : ℝ) ^ n := by ring
+/-- term converges to 1 exponentially: `‖term s n z - 1‖ = O((1 / 2) ^ n)` -/
+theorem term_converges (s : SuperNear f d t a b) (n : ℕ) (zt : z ∈ t) :
+    ‖term f d n z - 1‖ ≤ s.kt * (2⁻¹ : ℝ) ^ n := by
+  rw [term]
+  trans psg b 2⁻¹ * ‖g f d (f^[n] z) - 1‖ * ‖(1 / (d ^ (n + 1) : ℕ) : ℂ)‖
+  · refine pow_small_general ?_ ?_ s.b1
+    · exact s.gs (s.mapsTo n zt)
+    · simp only [Nat.cast_pow, one_div, norm_inv, norm_pow, RCLike.norm_natCast]
+      calc (d ^ (n + 1) : ℝ)⁻¹
+        _ ≤ (2 ^ (n + 1))⁻¹ := by bound
+        _ ≤ 2⁻¹ := by bound
+  · simp only [Nat.cast_pow, one_div, ← div_eq_mul_inv, norm_inv, norm_pow, norm_natCast, inv_pow]
+    calc psg b 2⁻¹ * ‖g f d (f^[n] z) - 1‖ / d ^ (n + 1)
+      _ ≤ psg b 2⁻¹ * b / 2 ^ (n + 1) := by bound [s.gs (s.mapsTo n zt)]
+      _ = s.kt / 2 ^ n := by simp only [SuperNear.kt, pow_succ']; ring
 
 /-- `term` is nonzero, sufficiently close to 0 -/
-theorem term_nonzero (s : SuperNear f d t) : ∀ n, z ∈ t → term f d n z ≠ 0 := by
+theorem term_nonzero (s : SuperNear f d t a b) : ∀ n, z ∈ t → term f d n z ≠ 0 := by
   intro n zt
-  have h := term_converges s n zt
-  have o : 1 / 2 * (1 / 2 : ℝ) ^ n < 1 := by
-    have p : (1 / 2 : ℝ) ^ n ≤ 1 := pow_le_one₀ (by norm_num) (by linarith)
-    calc 1 / 2 * (1 / 2 : ℝ) ^ n
-      _ ≤ 1 / 2 * 1 := by linarith
-      _ < 1 := by norm_num
-  exact near_one_avoids_zero (lt_of_le_of_lt h o)
+  simp [term, s.g_ne_zero (s.mapsTo n zt)]
 
 /-- The `term` product exists and is analytic -/
-theorem term_prod (s : SuperNear f d t) :
-    ProdExistsOn (term f d) t ∧
-      AnalyticOnNhd ℂ (tprodOn (term f d)) t ∧ ∀ z, z ∈ t → tprodOn (term f d) z ≠ 0 := by
-  have c12 : (1 / 2 : ℝ) ≤ 1 / 2 := by norm_num
-  have a0 : 0 ≤ (1 / 2 : ℝ) := by norm_num
-  exact fast_products_converge' s.o c12 a0 (by linarith) (term_analytic s)
-    fun n z ↦ term_converges s n
+theorem term_prod (s : SuperNear f d t a b) :
+    ProdExistsOn (term f d) t ∧ AnalyticOnNhd ℂ (tprodOn (term f d)) t ∧
+      ∀ z ∈ t, tprodOn (term f d) z ≠ 0 := by
+  have a0 : 0 ≤ (2⁻¹ : ℝ) := by norm_num
+  obtain ⟨p, a, nz⟩ := fast_products_converge_eventually' s.o a0 (by linarith) (term_analytic s)
+    (.of_forall fun n z zt ↦ term_converges s n zt)
+  exact ⟨p, a, fun z zt ↦ nz z zt (fun n ↦ term_nonzero s n zt)⟩
 
 /-- The `term` product exists -/
-theorem term_prod_exists (s : SuperNear f d t) : ProdExistsOn (term f d) t :=
+theorem term_prod_exists (s : SuperNear f d t a b) : ProdExistsOn (term f d) t :=
   (term_prod s).1
 
 /-- The `term` product is analytic in `z` -/
-theorem term_prod_analytic_z (s : SuperNear f d t) : AnalyticOnNhd ℂ (tprodOn (term f d)) t :=
+theorem term_prod_analytic_z (s : SuperNear f d t a b) : AnalyticOnNhd ℂ (tprodOn (term f d)) t :=
   (term_prod s).2.1
 
 /-- The `term` product is nonzero -/
-theorem term_prod_ne_zero (s : SuperNear f d t) (zt : z ∈ t) : tprodOn (term f d) z ≠ 0 :=
+theorem term_prod_ne_zero (s : SuperNear f d t a b) (zt : z ∈ t) : tprodOn (term f d) z ≠ 0 :=
   (term_prod s).2.2 _ zt
 
 /-- `bottcherNear` satisfies `b (f z) = (b z)^d` near 0 -/
-theorem bottcherNear_eqn (s : SuperNear f d t) (zt : z ∈ t) :
+theorem bottcherNear_eqn (s : SuperNear f d t a b) (zt : z ∈ t) :
     bottcherNear f d (f z) = bottcherNear f d z ^ d := by
   simp_rw [bottcherNear]
   have pe := (term_prod_exists s) z zt
@@ -387,27 +405,27 @@ theorem bottcherNear_eqn (s : SuperNear f d t) (zt : z ∈ t) :
   simp only [product_split pe, ← term_eqn s, ← mul_assoc, ← mul_pow, ← term_base s]
 
 /-- `bottcherNear_eqn`, iterated -/
-theorem bottcherNear_eqn_iter (s : SuperNear f d t) (zt : z ∈ t) (n : ℕ) :
+theorem bottcherNear_eqn_iter (s : SuperNear f d t a b) (zt : z ∈ t) (n : ℕ) :
     bottcherNear f d (f^[n] z) = bottcherNear f d z ^ d ^ n := by
   induction' n with n h; simp only [Function.iterate_zero, id, pow_zero, pow_one]
   simp only [Function.comp, Function.iterate_succ', pow_succ, pow_mul,
     bottcherNear_eqn s (s.mapsTo n zt), h]
 
 /-- `f^[n] 0 = 0` -/
-theorem iterates_at_zero (s : SuperNear f d t) : ∀ n, f^[n] 0 = 0 := by
+theorem iterates_at_zero (s : SuperNear f d t a b) : ∀ n, f^[n] 0 = 0 := by
   intro n; induction' n with n h; simp only [Function.iterate_zero, id]
   simp only [Function.iterate_succ', Function.comp_apply, h, s.f0]
 
 /-- `term s n 0 = 1` -/
-theorem term_at_zero (s : SuperNear f d t) (n : ℕ) : term f d n 0 = 1 := by
+theorem term_at_zero (s : SuperNear f d t a b) (n : ℕ) : term f d n 0 = 1 := by
   simp only [term, iterates_at_zero s, g0, Complex.one_cpow]
 
 /-- `prod (term s _ 0) = 1` -/
-theorem term_prod_at_zero (s : SuperNear f d t) : tprodOn (term f d) 0 = 1 := by
+theorem term_prod_at_zero (s : SuperNear f d t a b) : tprodOn (term f d) 0 = 1 := by
   simp_rw [tprodOn, term_at_zero s, tprod_one]
 
 /-- `bottcherNear' 0 = 1` (so in particular `bottcherNear` is a local isomorphism) -/
-theorem bottcherNear_monic (s : SuperNear f d t) : HasDerivAt (bottcherNear f d) 1 0 := by
+theorem bottcherNear_monic (s : SuperNear f d t a b) : HasDerivAt (bottcherNear f d) 1 0 := by
   have dz : HasDerivAt (fun z : ℂ ↦ z) 1 0 := hasDerivAt_id 0
   have db := HasDerivAt.mul dz (term_prod_analytic_z s 0 s.t0).differentiableAt.hasDerivAt
   simp only [one_mul, MulZeroClass.zero_mul, add_zero] at db
@@ -418,28 +436,28 @@ theorem bottcherNear_monic (s : SuperNear f d t) : HasDerivAt (bottcherNear f d)
   simp only [bottcherNear, MulZeroClass.zero_mul]
 
 /-- `z ≠ 0 → bottcherNear z ≠ 0` -/
-theorem bottcherNear_ne_zero (s : SuperNear f d t) : z ∈ t → z ≠ 0 → bottcherNear f d z ≠ 0 :=
+theorem bottcherNear_ne_zero (s : SuperNear f d t a b) : z ∈ t → z ≠ 0 → bottcherNear f d z ≠ 0 :=
   fun zt z0 ↦ mul_ne_zero z0 (term_prod_ne_zero s zt)
 
 /-- `bottcherNear` is analytic in `z` -/
-theorem bottcherNear_analytic_z (s : SuperNear f d t) : AnalyticOnNhd ℂ (bottcherNear f d) t :=
+theorem bottcherNear_analytic_z (s : SuperNear f d t a b) : AnalyticOnNhd ℂ (bottcherNear f d) t :=
   analyticOnNhd_id.mul (term_prod_analytic_z s)
 
 /-- `f^[n] z → 0` -/
-theorem iterates_tendsto (s : SuperNear f d t) (zt : z ∈ t) :
+theorem iterates_tendsto (s : SuperNear f d t a b) (zt : z ∈ t) :
     Tendsto (fun n ↦ f^[n] z) atTop (𝓝 0) := by
   by_cases z0 : z = 0; simp only [z0, iterates_at_zero s, tendsto_const_nhds]
   rw [Metric.tendsto_atTop]; intro e ep
   simp only [Complex.dist_eq, sub_zero]
   have xp : e / ‖z‖ > 0 := div_pos ep (norm_pos_iff.mpr z0)
-  rcases exists_pow_lt_of_lt_one xp (by norm_num : (5 / 8 : ℝ) < 1) with ⟨N, Nb⟩
+  rcases exists_pow_lt_of_lt_one xp s.c1 with ⟨N, Nb⟩
   simp only [lt_div_iff₀ (norm_pos_iff.mpr z0)] at Nb
   use N; intro n nN
   refine lt_of_le_of_lt (iterates_converge s n zt) (lt_of_le_of_lt ?_ Nb)
   bound
 
 /-- `bottcherNear < 1` -/
-theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : ‖bottcherNear f d z‖ < 1 := by
+theorem bottcherNear_lt_one (s : SuperNear f d t a b) (zt : z ∈ t) : ‖bottcherNear f d z‖ < 1 := by
   rcases Metric.continuousAt_iff.mp (bottcherNear_analytic_z s _ s.t0).continuousAt 1 zero_lt_one
     with ⟨r, rp, rs⟩
   simp only [Complex.dist_eq, sub_zero, bottcherNear_zero] at rs
@@ -450,9 +468,12 @@ theorem bottcherNear_lt_one (s : SuperNear f d t) (zt : z ∈ t) : ‖bottcherNe
   contrapose b; simp only [not_lt] at b ⊢
   simp only [bottcherNear_eqn_iter s zt n, norm_pow, one_le_pow₀ b]
 
-/-- Linear bound on `abs bottcherNear` -/
-theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
-    ‖bottcherNear f d z‖ ≤ 3 * ‖z‖ := by
+/-- The constant in the linear bound on `bottcherNear` -/
+def SuperNear.k (s : SuperNear f d t a b) : ℝ := Real.exp (2 * s.kt)
+
+/-- Linear bound on `bottcherNear` -/
+theorem bottcherNear_le (s : SuperNear f d t a b) (zt : z ∈ t) :
+    ‖bottcherNear f d z‖ ≤ s.k * ‖z‖ := by
   simp only [bottcherNear, norm_mul]; rw [mul_comm]
   refine mul_le_mul_of_nonneg_right ?_ (norm_nonneg _)
   rcases term_prod_exists s _ zt with ⟨p, h⟩; rw [h.tprod_eq]; simp only [HasProd] at h
@@ -460,23 +481,26 @@ theorem bottcherNear_le (s : SuperNear f d t) (zt : z ∈ t) :
   intro A
   clear h
   simp only [Function.comp, norm_prod]
-  have tb : ∀ n, ‖term f d n z‖ ≤ 1 + 1 / 2 * (1 / 2 : ℝ) ^ n := by
+  have tb : ∀ n, ‖term f d n z‖ ≤ 1 + s.kt * (1 / 2 : ℝ) ^ n := by
     intro n
     calc ‖term f d n z‖
       _ = ‖1 + (term f d n z - 1)‖ := by ring_nf
       _ ≤ ‖(1 : ℂ)‖ + ‖term f d n z - 1‖ := by bound
       _ = 1 + ‖term f d n z - 1‖ := by norm_num
-      _ ≤ 1 + 1 / 2 * (1 / 2 : ℝ) ^ n := by bound [term_converges s n zt]
-  have p : ∀ n : ℕ, 0 < (1 : ℝ) + 1 / 2 * (1 / 2 : ℝ) ^ n := fun _ ↦ add_pos (by bound) (by bound)
-  have lb : ∀ n : ℕ, Real.log ((1 : ℝ) + 1 / 2 * (1 / 2 : ℝ) ^ n) ≤ 1 / 2 * (1 / 2 : ℝ) ^ n :=
+      _ ≤ 1 + s.kt * (1 / 2 : ℝ) ^ n := by bound [term_converges s n zt]
+  have p : ∀ n : ℕ, 0 < (1 : ℝ) + s.kt * (1 / 2 : ℝ) ^ n :=
+    fun _ ↦ by apply add_pos_of_pos_of_nonneg <;> bound
+  have lb : ∀ n : ℕ, Real.log ((1 : ℝ) + s.kt * (1 / 2 : ℝ) ^ n) ≤ s.kt * (1 / 2 : ℝ) ^ n :=
     fun n ↦ le_trans (Real.log_le_sub_one_of_pos (p n)) (le_of_eq (by ring))
   refine le_trans (Finset.prod_le_prod (fun _ _ ↦ norm_nonneg _) fun n _ ↦ tb n) ?_
   rw [← Real.exp_log (Finset.prod_pos fun n _ ↦ p n), Real.log_prod fun n _ ↦ (p n).ne']
   refine le_trans (Real.exp_le_exp.mpr (Finset.sum_le_sum fun n _ ↦ lb n)) ?_
-  refine le_trans (Real.exp_le_exp.mpr ?_) Real.exp_one_lt_3.le
-  have geom := partial_scaled_geometric_bound (1 / 2) A one_half_pos.le one_half_lt_one
-  simp only [NNReal.coe_div, NNReal.coe_one, NNReal.coe_two] at geom
-  exact le_trans geom (by norm_num)
+  have geom := partial_scaled_geometric_bound (s.kt).toNNReal A one_half_pos.le
+    one_half_lt_one
+  simp only [Real.coe_toNNReal', s.kt_nonneg, sup_of_le_left,
+    (by norm_num : (1 - 1 / 2 : ℝ)⁻¹ = 2)] at geom
+  refine le_trans (Real.exp_le_exp.mpr geom) (le_of_eq ?_)
+  simp only [SuperNear.k, mul_comm]
 
 end Bottcher
 
@@ -487,6 +511,7 @@ variable {f : ℂ → ℂ → ℂ}
 variable {d : ℕ}
 variable {u : Set ℂ}
 variable {t : Set (ℂ × ℂ)}
+variable {a b : ℝ}
 
 /-- `SuperAt` everywhere on a parameter set `u`, at `z = 0` -/
 structure SuperAtC (f : ℂ → ℂ → ℂ) (d : ℕ) (u : Set ℂ) : Prop where
@@ -495,26 +520,26 @@ structure SuperAtC (f : ℂ → ℂ → ℂ) (d : ℕ) (u : Set ℂ) : Prop wher
   fa : ∀ {c}, c ∈ u → AnalyticAt ℂ (uncurry f) (c, 0)
 
 /-- `SuperNear` everywhere on a parameter set -/
-structure SuperNearC (f : ℂ → ℂ → ℂ) (d : ℕ) (u : Set ℂ) (t : Set (ℂ × ℂ)) : Prop where
+structure SuperNearC (f : ℂ → ℂ → ℂ) (d : ℕ) (u : Set ℂ) (t : Set (ℂ × ℂ)) (a b : ℝ) : Prop where
   o : IsOpen t
   tc : ∀ {p : ℂ × ℂ}, p ∈ t → p.1 ∈ u
-  s : ∀ {c}, c ∈ u → SuperNear (f c) d {z | (c, z) ∈ t}
+  s : ∀ {c}, c ∈ u → SuperNear (f c) d {z | (c, z) ∈ t} a b
   fa : AnalyticOnNhd ℂ (uncurry f) t
 
 /-- `SuperNearC → SuperNear` at `p ∈ t` -/
-theorem SuperNearC.ts (s : SuperNearC f d u t) {p : ℂ × ℂ} (m : p ∈ t) :
-    SuperNear (f p.1) d {z | (p.1, z) ∈ t} :=
+theorem SuperNearC.ts (s : SuperNearC f d u t a b) {p : ℂ × ℂ} (m : p ∈ t) :
+    SuperNear (f p.1) d {z | (p.1, z) ∈ t} a b :=
   s.s (s.tc m)
 
 /-- The parameter set `u` is open -/
-theorem SuperNearC.ou (s : SuperNearC f d u t) : IsOpen u := by
+theorem SuperNearC.ou (s : SuperNearC f d u t a b) : IsOpen u := by
   have e : u = Prod.fst '' t := by
     ext c; simp only [Set.mem_image, Prod.exists, exists_and_right, exists_eq_right]
     exact ⟨fun m ↦ ⟨0, (s.s m).t0⟩, fun h ↦ Exists.elim h fun z m ↦ s.tc m⟩
   rw [e]; exact isOpenMap_fst _ s.o
 
 /-- `SuperNearC → SuperAtC` -/
-theorem SuperNearC.superAtC (s : SuperNearC f d u t) : SuperAtC f d u :=
+theorem SuperNearC.superAtC (s : SuperNearC f d u t a b) : SuperAtC f d u :=
   { o := s.ou
     s := by
       intro c m; have s := s.s m
@@ -542,16 +567,16 @@ theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpe
     refine (fa _ ?_).comp₂ analyticAt_const analyticAt_id; exact m
 
 /-- `g2` is jointly analytic -/
-theorem SuperNearC.ga (s : SuperNearC f d u t) : AnalyticOnNhd ℂ (g2 f d) t :=
+theorem SuperNearC.ga (s : SuperNearC f d u t a b) : AnalyticOnNhd ℂ (g2 f d) t :=
   s.superAtC.ga_of_fa s.o s.fa fun {_} m ↦ s.tc m
 
 /-- `SuperNearC` commutes with unions -/
 theorem SuperNearC.union {I : Type} {u : I → Set ℂ} {t : I → Set (ℂ × ℂ)}
-    (s : ∀ i, SuperNearC f d (u i) (t i)) : SuperNearC f d (⋃ i, u i) (⋃ i, t i) := by
+    (s : ∀ i, SuperNearC f d (u i) (t i) a b) : SuperNearC f d (⋃ i, u i) (⋃ i, t i) a b := by
   set tu := ⋃ i, t i
   have o : IsOpen tu := isOpen_iUnion fun i ↦ (s i).o
   have sm : ∀ {c z : ℂ},
-      (c, z) ∈ tu → ∃ u, z ∈ u ∧ u ⊆ {z | (c, z) ∈ tu} ∧ SuperNear (f c) d u := by
+      (c, z) ∈ tu → ∃ u, z ∈ u ∧ u ⊆ {z | (c, z) ∈ tu} ∧ SuperNear (f c) d u a b := by
     intro c z m; rcases Set.mem_iUnion.mp m with ⟨i, m⟩; use{z | (c, z) ∈ t i}
     simp only [Set.mem_setOf_eq, m, Set.mem_iUnion, Set.setOf_subset_setOf, true_and, tu]
     constructor
@@ -571,6 +596,10 @@ theorem SuperNearC.union {I : Type} {u : I → Set ℂ} {t : I → Set (ℂ × �
             fd := s.fd
             fc := s.fc
             o := o.snd_preimage c
+            a1 := s.a1
+            b0 := s.b0
+            b1 := s.b1
+            c1' := s.c1'
             t0 := Set.subset_iUnion _ i s.t0
             t2 := by intro z m; rcases sm m with ⟨u, m, _, s⟩; exact s.t2 m
             fa := by intro z m; rcases sm m with ⟨u, m, _, s⟩; exact s.fa _ m
@@ -579,10 +608,10 @@ theorem SuperNearC.union {I : Type} {u : I → Set ℂ} {t : I → Set (ℂ × �
 
 /-- `SuperAtC → SuperNearC`, staying inside `w` -/
 theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : IsOpen w)
-    (wc : ∀ c, c ∈ u → (c, (0 : ℂ)) ∈ w) : ∃ t, t ⊆ w ∧ SuperNearC f d u t := by
+    (wc : ∀ c, c ∈ u → (c, (0 : ℂ)) ∈ w) : ∃ t, t ⊆ w ∧ SuperNearC f d u t (1 / 2) (1 / 4) := by
   have h : ∀ c, c ∈ u →
       ∃ r, r > 0 ∧ ball c r ⊆ u ∧ ball (c, 0) r ⊆ w ∧
-        SuperNearC f d (ball c r) (ball (c, 0) r) := by
+        SuperNearC f d (ball c r) (ball (c, 0) r) (1 / 2) (1 / 4) := by
     intro c m
     rcases(s.fa m).exists_ball_analyticOnNhd with ⟨r0, r0p, fa⟩
     rcases Metric.isOpen_iff.mp s.o c m with ⟨r1, r1p, rc⟩
@@ -609,7 +638,8 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
           exact Metric.ball_subset_ball (by linarith) m.1
         s := by
           intro c' m; simp only [← ball_prod_same, Set.mem_prod, m, true_and]
-          apply (s.s (rc m)).super_on_ball rp rh
+          apply (s.s (rc m)).super_on_ball rp rh (by norm_num) (by norm_num) (by norm_num)
+              (by norm_num) (by norm_num)
           · apply fa.comp₂ analyticOnNhd_const analyticOnNhd_id
             intro z zm; apply Metric.ball_subset_ball (by bound : r ≤ r2)
             simp only [← ball_prod_same, Set.mem_prod, m, true_and]; exact zm
@@ -629,23 +659,23 @@ theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} (wo : I
       exact us m
   have tw : (⋃ c : u, t c) ⊆ w := by
     apply Set.iUnion_subset; intro i; rcases choose_spec (h _ i.mem) with ⟨_, _, rw, _⟩; exact rw
-  have si : ∀ c : u, SuperNearC f d (v c) (t c) := by
+  have si : ∀ c : u, SuperNearC f d (v c) (t c) (1 / 2) (1 / 4) := by
     intro i; rcases choose_spec (h _ i.mem) with ⟨_, _, _, s⟩; exact s
   have s := SuperNearC.union si; simp only at s; rw [← e] at s
   exact ⟨tw, s⟩
 
 /-- `SuperAtC → SuperNearC` -/
-theorem SuperAtC.superNearC (s : SuperAtC f d u) : ∃ t, SuperNearC f d u t := by
+theorem SuperAtC.superNearC (s : SuperAtC f d u) : ∃ t, SuperNearC f d u t (1 / 2) (1 / 4) := by
   rcases s.superNearC' isOpen_univ fun _ _ ↦ Set.mem_univ _ with ⟨t, _, s⟩; exact ⟨t, s⟩
 
-theorem iterates_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
+theorem iterates_analytic_c (s : SuperNearC f d u t a b) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ (f c)^[n] z) c := by
   induction' n with n nh; · simp only [Function.iterate_zero, id]; exact analyticAt_const
   · simp_rw [Function.iterate_succ']; simp only [Function.comp_apply]
     refine (s.fa _ ?_).comp (analyticAt_id.prod nh)
     exact (s.ts m).mapsTo n m
 
-theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
+theorem term_analytic_c (s : SuperNearC f d u t a b) {c z : ℂ} (n : ℕ) (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ term (f c) d n z) c := by
   refine AnalyticAt.cpow ?_ analyticAt_const ?_
   · have e : (fun c ↦ g (f c) d ((f c)^[n] z)) = fun c ↦ g2 f d (c, (f c)^[n] z) := rfl
@@ -654,38 +684,37 @@ theorem term_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (n : ℕ) (m : (c, 
     · exact (s.ts m).mapsTo n m
     · apply analyticAt_id.prod (iterates_analytic_c s n m)
   · refine mem_slitPlane_of_near_one ?_
-    exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (by norm_num)
+    exact lt_of_le_of_lt ((s.ts m).gs ((s.ts m).mapsTo n m)) (s.ts m).b1
 
 /-- `term` prod is analytic in `c` -/
-theorem term_prod_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z) ∈ t) :
+theorem term_prod_analytic_c (s : SuperNearC f d u t a b) {c z : ℂ} (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ tprod fun n ↦ term (f c) d n z) c := by
-  have c12 : (1 / 2 : ℝ) ≤ 1 / 2 := by norm_num
-  have a0 : 0 ≤ (1 / 2 : ℝ) := by norm_num
+  have a0 : 0 ≤ (2⁻¹ : ℝ) := by norm_num
   set t' := {c | (c, z) ∈ t}
   have o' : IsOpen t' := s.o.preimage (by continuity)
-  refine (fast_products_converge' o' c12 a0 (by linarith) ?_
-    fun n c m ↦ term_converges (s.ts m) n m).2.1 _ m
+  refine (fast_products_converge_eventually' o' a0 (by linarith) ?_
+    (.of_forall fun n c m ↦ term_converges (s.ts m) n m)).2.1 _ m
   exact fun n c m ↦ term_analytic_c s n m
 
 /-- `term` prod is jointly analytic (using Hartogs's theorem for simplicity) -/
-theorem term_prod_analytic (s : SuperNearC f d u t) :
+theorem term_prod_analytic (s : SuperNearC f d u t a b) :
     AnalyticOnNhd ℂ (fun p : ℂ × ℂ ↦ tprod fun n ↦ term (f p.1) d n p.2) t := by
   refine Pair.hartogs s.o ?_ ?_
   · intro c z m; simp only; exact term_prod_analytic_c s m
   · intro c z m; simp only; exact term_prod_analytic_z (s.ts m) _ m
 
 /-- `bottcherNear` is analytic in `c` -/
-theorem bottcherNear_analytic_c (s : SuperNearC f d u t) {c z : ℂ} (m : (c, z) ∈ t) :
+theorem bottcherNear_analytic_c (s : SuperNearC f d u t a b) {c z : ℂ} (m : (c, z) ∈ t) :
     AnalyticAt ℂ (fun c ↦ bottcherNear (f c) d z) c :=
   analyticAt_const.mul (term_prod_analytic_c s m)
 
 /-- `bottcherNear` is jointly analytic -/
-theorem bottcherNear_analytic (s : SuperNearC f d u t) :
+theorem bottcherNear_analytic (s : SuperNearC f d u t a b) :
     AnalyticOnNhd ℂ (fun p : ℂ × ℂ ↦ bottcherNear (f p.1) d p.2) t := fun _ m ↦
   analyticAt_snd.mul (term_prod_analytic s _ m)
 
 /-- `deriv f` is nonzero away from 0 -/
-theorem df_ne_zero (s : SuperNearC f d u t) {c : ℂ} (m : c ∈ u) :
+theorem df_ne_zero (s : SuperNearC f d u t a b) {c : ℂ} (m : c ∈ u) :
     ∀ᶠ p : ℂ × ℂ in 𝓝 (c, 0), deriv (f p.1) p.2 = 0 ↔ p.2 = 0 := by
   have df : ∀ e z, (e, z) ∈ t →
       deriv (f e) z = ↑d * z ^ (d - 1) * g (f e) d z + z ^ d * deriv (g (f e) d) z := by

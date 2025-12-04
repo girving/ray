@@ -69,11 +69,11 @@ def sinv_ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ → ℂ :=
   fun c z ↦ ((superF d).ray c z)⁻¹.toComplex
 
 /-- `sinv_ray` is analytic for large `c`, small `x` -/
-lemma sinv_ray_analytic (c16 : 16 < ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+lemma sinv_ray_analytic (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
     AnalyticAt ℂ (uncurry (sinv_ray d)) (c, x) := by
   set s := superF d
-  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c16 xc
-  have xe := small_mem_ext (d := d) c16 xc
+  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c4 xc
+  have xe := small_mem_ext (d := d) c4 xc
   refine ContMDiffAt.analyticAt (I := II) (J := I) ?_
   have e : uncurry (sinv_ray d) = (fun z : 𝕊 ↦ z⁻¹.toComplex) ∘ uncurry (superF d).ray := rfl
   rw [e]

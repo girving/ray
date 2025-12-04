@@ -275,7 +275,8 @@ theorem Super.superAtC (s : Super f d a) : SuperAtC s.fl d univ :=
         fa0 := (s.fla c).along_snd } }
 
 /-- `Super → SuperNearC` in charts for a suitable set -/
-theorem Super.exists_superNearC (s : Super f d a) : ∃ t, t ⊆ s.fls ∧ SuperNearC s.fl d univ t := by
+theorem Super.exists_superNearC (s : Super f d a) :
+    ∃ t, t ⊆ s.fls ∧ SuperNearC s.fl d univ t (1 / 2) (1 / 4) := by
   refine s.superAtC.superNearC' s.fls_open fun c _ ↦ ?_
   rw [Super.fls, Set.mem_iUnion]; use c; exact mem_ball_self (s.frp c)
 
@@ -292,7 +293,7 @@ def Super.near (s : Super f d a) : Set (ℂ × S) :=
   (extChartAt II ((0 : ℂ), a)).source ∩
     extChartAt II ((0 : ℂ), a) ⁻¹' {p : ℂ × ℂ | (p.1, p.2 - extChartAt I a a) ∈ s.near'}
 
-theorem Super.superNearC (s : Super f d a) : SuperNearC s.fl d univ s.near' :=
+theorem Super.superNearC (s : Super f d a) : SuperNearC s.fl d univ s.near' (1 / 2) (1 / 4) :=
   (choose_spec s.exists_superNearC).2
 
 theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by

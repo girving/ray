@@ -1,5 +1,6 @@
 import Ray.Dynamics.Bottcher
 import Ray.Manifold.RiemannSphere
+import Ray.Dynamics.Multibrot.D
 
 /-!
 ## The Multibrot sets and their basic properties
@@ -38,19 +39,6 @@ variable {c : ℂ}
 
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
-lemma two_le_d (d : ℕ) [h : Fact (2 ≤ d)] : 2 ≤ d := h.elim
-lemma d_pos (d : ℕ) [Fact (2 ≤ d)] : 0 < d := by linarith [two_le_d d]
-lemma d_ne_zero (d : ℕ) [Fact (2 ≤ d)] : d ≠ 0 := (d_pos d).ne'
-lemma d_gt_one (d : ℕ) [Fact (2 ≤ d)] : 1 < d := by linarith [two_le_d d]
-lemma d_ge_one (d : ℕ) [Fact (2 ≤ d)] : 1 ≤ d := (d_gt_one _).le
-lemma d_minus_one_pos (d : ℕ) [Fact (2 ≤ d)] : 0 < d - 1 := by have h := two_le_d d; omega
-lemma one_le_d_minus_one (d : ℕ) [Fact (2 ≤ d)] : 1 ≤ d - 1 := by have h := two_le_d d; omega
-lemma two_le_cast_d (d : ℕ) [Fact (2 ≤ d)] : (2 : ℝ) ≤ d :=
-  le_trans (by norm_num) (Nat.cast_le.mpr (two_le_d d))
-
--- Teach `bound` about `d`
-attribute [bound] two_le_d d_gt_one d_ge_one d_pos two_le_cast_d one_le_d_minus_one
-attribute [aesop norm apply (rule_sets := [Bound])] d_ne_zero  -- TODO: Make `@[bound]` work here
 
 /-!
 ## The defining iteration, the Multibrot set, and its complement
@@ -203,62 +191,90 @@ theorem superF (d : ℕ) [Fact (2 ≤ d)] : Super (f d) d ∞ :=
     fd := fun _ ↦ fd_f
     f0 := fun _ ↦ f_inf }
 
+/-- Bound on `(1 + z)⁻¹ - 1` used in `superNearF` -/
+lemma inv_sub_one_le {z : ℂ} {b : ℝ} (zb : ‖z‖ ≤ b / (1 + b)) (b0 : 0 ≤ b) :
+    ‖(1 + z)⁻¹ - 1‖ ≤ b := by
+  have z1 : ‖z‖ < 1 := lt_of_le_of_lt zb (by bound)
+  have a0 : 1 + z ≠ 0 := by contrapose z1; simp [(by grind : z = -1)]
+  nth_rw 2 [← div_self a0]
+  simp only [← one_div, ← sub_div, sub_add_cancel_left, Complex.norm_div, norm_neg,
+    div_le_iff₀ (norm_pos_iff.mpr a0), ge_iff_le]
+  trans b * (‖(1 : ℂ)‖ - ‖z‖)
+  · simp only [norm_one]
+    suffices h : ‖z‖ * (1 + b) ≤ b by grind
+    rwa [← le_div_iff₀ (by linarith)]
+  · bound
+
+/-- The set of `z`s for which `superNearF` holds -/
+def superNearT (d : ℕ) (c : ℂ) : Set ℂ :=
+  {z | ‖z‖ < 1 / 3 ∧ ‖c‖ * ‖z‖ ^ d < 2 / 5}
+
 /-- An explicit bound on the near region near `∞`, giving an explicit region where the
     infinite product formula for `s.bottcher` will hold -/
 theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
-    SuperNear (fl (f d) ∞ c) d {z | ‖z‖ < (max 16 (‖c‖ / 2))⁻¹} := by
+    SuperNear (fl (f d) ∞ c) d (superNearT d c) (1 / 3) (2 / 3) := by
   set s := superF d
-  generalize ht : {z : ℂ | ‖z‖ < (max 16 (‖c‖ / 2))⁻¹} = t
-  have cz : ∀ {z}, z ∈ t → ‖c * z ^ d‖ ≤ 1 / 8 := by
-    intro z m; simp only [← ht, mem_setOf] at m
-    simp only [norm_mul, norm_pow]
-    trans ‖c‖ * (max 16 (‖c‖ / 2))⁻¹ ^ d; bound
-    rw [inv_pow, mul_inv_le_iff₀]; swap; bound
-    rw [one_div_mul_eq_div]; rw [le_div_iff₀, mul_comm]; swap; norm_num
-    refine le_trans ?_ (pow_le_pow_right₀ (le_max_of_le_left (by norm_num)) (two_le_d d))
-    by_cases cb : ‖c‖ / 2 ≤ 16
-    rw [max_eq_left cb, pow_two]; linarith
-    rw [max_eq_right (not_le.mp cb).le, pow_two]; nlinarith
-  have cz1 : ∀ {z}, z ∈ t → 7 / 8 ≤ ‖1 + c * z ^ d‖ := by
+  have zb : ∀ {z}, z ∈ superNearT d c → ‖z‖ < 1 / 3 := by
+    intro z m; simp [superNearT] at m ⊢; linarith
+  have cz : ∀ {z}, z ∈ superNearT d c → ‖c * z ^ d‖ ≤ 2 / 5 := by
+    intro z m; simp [superNearT] at m ⊢; linarith
+  have cz1 : ∀ {z}, z ∈ superNearT d c → 3 / 5 ≤ ‖1 + c * z ^ d‖ := by
     intro z m
-    calc ‖1 + c * z ^ d‖
-      _ ≥ ‖(1 : ℂ)‖ - ‖c * z ^ d‖ := by bound
-      _ ≥ 1 - 1 / 8 := by rw [norm_one]; linarith [cz m]
-      _ = 7 / 8 := by norm_num
-  have zb : ∀ {z}, z ∈ t → ‖z‖ ≤ 1 / 8 := by
-    intro z m; rw [← ht] at m; refine le_trans (le_of_lt m) ?_
-    rw [one_div]; exact inv_anti₀ (by norm_num) (le_trans (by norm_num) (le_max_left _ _))
+    trans ‖(1 : ℂ)‖ - ‖c * z ^ d‖
+    · specialize cz m
+      simp only [norm_one] at cz ⊢
+      linarith
+    · bound
   exact
     { d2 := two_le_d d
+      a1 := by norm_num
+      b0 := by norm_num
+      b1 := by norm_num
+      c1' := by norm_num
       fa0 := (s.fla c).along_snd
       fd := fd_f
       fc := fc_f
-      o := by rw [← ht]; exact isOpen_lt continuous_norm continuous_const
-      t0 := by simp only [← ht, mem_setOf, norm_zero]; bound
-      t2 := fun {z} m ↦ le_trans (zb m) (by norm_num)
+      o := by
+        simp only [← norm_pow, ← norm_mul, superNearT]
+        apply IsOpen.inter
+        · exact isOpen_lt continuous_norm continuous_const
+        · exact isOpen_lt (continuous_norm.comp (by continuity)) continuous_const
+      t0 := by
+        simp only [superNearT, one_div, mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+          zero_pow (d_ne_zero d), mul_zero, div_pos_iff_of_pos_left, and_self]
+      t2 := fun {z} m ↦ le_trans (zb m).le (by norm_num)
       fa := by
-        intro z m; rw [fl_f]
+        intro z m
+        rw [fl_f]
         refine (analyticAt_id.pow _).div (analyticAt_const.add
           (analyticAt_const.mul (analyticAt_id.pow _))) ?_
-        rw [← norm_ne_zero_iff]; exact (lt_of_lt_of_le (by norm_num) (cz1 m)).ne'
+        specialize cz m
+        contrapose cz
+        norm_num [(by grind : c * z ^ d = -1)]
       ft := by
-        intro z m; specialize cz1 m; specialize zb m
-        simp only [fl_f, mem_setOf, norm_div, norm_pow, ← ht] at m ⊢
-        refine lt_of_le_of_lt ?_ m; rw [div_le_iff₀ (lt_of_lt_of_le (by norm_num) cz1)]
-        refine le_trans (pow_le_pow_of_le_one (norm_nonneg _)
-          (le_trans zb (by norm_num)) (two_le_d d)) ?_
-        rw [pow_two]; refine mul_le_mul_of_nonneg_left ?_ (norm_nonneg _)
-        exact le_trans zb (le_trans (by norm_num) cz1)
-      gs' := by
-        intro z z0 m; simp only [fl_f, div_div_cancel_left' (pow_ne_zero d z0)]
+        intro z m
         specialize cz1 m
-        have czp : 0 < ‖1 + c * z ^ d‖ := lt_of_lt_of_le (by norm_num) cz1
-        refine le_of_mul_le_mul_right ?_ czp
-        rw [← norm_mul, mul_sub_right_distrib, one_mul,
-          inv_mul_cancel₀ (norm_ne_zero_iff.mp czp.ne'), ← sub_sub, sub_self, zero_sub,
-          norm_neg]
-        exact le_trans (cz m) (le_trans (by norm_num)
-          (mul_le_mul_of_nonneg_left cz1 (by norm_num))) }
+        specialize zb m
+        simp only [fl_f, mem_setOf, norm_div, norm_pow, superNearT] at m ⊢
+        have le : ‖z‖ ^ d / ‖1 + c * z ^ d‖ ≤ 5 / 27 := by
+          calc ‖z‖ ^ d / ‖1 + c * z ^ d‖
+            _ ≤ (1 / 3) ^ d / (3 / 5) := by bound
+            _ ≤ (1 / 3) ^ 2 / (3 / 5) := by bound
+            _ = 5 / 27 := by norm_num
+        refine ⟨by linarith, ?_⟩
+        have le1 : ‖z‖ ^ d / ‖1 + c * z ^ d‖ ≤ 1 := by linarith
+        calc ‖c‖ * (‖z‖ ^ d / ‖1 + c * z ^ d‖) ^ d
+          _ ≤ ‖c‖ * (‖z‖ ^ d / ‖1 + c * z ^ d‖) ^ 2 := by bound
+          _ = ‖c‖ * ‖z‖ ^ d * (‖z‖ ^ d / ‖1 + c * z ^ d‖ / ‖1 + c * z ^ d‖) := by ring
+          _ ≤ ‖c‖ * ‖z‖ ^ d * (5 / 27 / (3 / 5)) := by bound
+          _ ≤ ‖c‖ * ‖z‖ ^ d := mul_le_of_le_one_right (by bound) (by norm_num)
+          _ < 2 / 5 := by bound
+      gs' := by
+        intro z z0 m
+        simp only [fl_f, div_div_cancel_left' (pow_ne_zero d z0)]
+        refine inv_sub_one_le ?_ (by norm_num)
+        norm_num
+        simpa using cz m }
 
 /-- `f` has one preimage of `∞` -/
 instance onePreimageF : OnePreimage (superF d) where
@@ -517,14 +533,24 @@ theorem isOpen_multibrotExt : IsOpen (multibrotExt d) := by
 ## Analyticity of our Böttcher coordinates
 -/
 
+lemma mem_superNearT {c : ℂ} (lo : 3 < ‖c‖) : c⁻¹ ∈ superNearT d c := by
+  simp only [superNearT, one_div, mem_setOf_eq, norm_inv, inv_pow]
+  refine ⟨by bound, ?_⟩
+  calc ‖c‖ * (‖c‖ ^ d)⁻¹
+    _ ≤ ‖c‖ * (‖c‖ ^ 2)⁻¹ := by bound
+    _ = ‖c‖⁻¹ := by grind
+    _ < 3⁻¹ := by bound
+    _ < 2 / 5 := by norm_num
+
+def superK : ℝ :=
+  Real.exp (2 * (psg (2 / 3) 2⁻¹ * (2 / 3) / 2))
+
 /-- `bottcher' d c` is small for large `c` -/
-theorem bottcher_bound {c : ℂ} (lo : 16 < ‖c‖) : ‖bottcher' d c‖ ≤ 3 * ‖c⁻¹‖ := by
+theorem bottcher_bound {c : ℂ} (lo : 3 < ‖c‖) : ‖bottcher' d c‖ ≤ superK * ‖c⁻¹‖ := by
   set s := superF d
   generalize hg : fl (f d) ∞ c = g
   -- Facts about c and f
-  have ct : c⁻¹ ∈ {z : ℂ | ‖z‖ < (max 16 (‖c‖ / 2))⁻¹} := by
-    simp only [mem_setOf, norm_inv]
-    apply inv_strictAnti₀; bound; refine max_lt lo (half_lt_self (lt_trans (by norm_num) lo))
+  have ct : c⁻¹ ∈ superNearT d c := mem_superNearT lo
   have mem : c ∉ multibrot d := multibrot_two_lt (lt_trans (by norm_num) lo)
   have nz : ∀ n, (f d c)^[n] c ≠ 0 := by
     intro n; contrapose mem; exact multibrot_of_zero mem
@@ -559,14 +585,14 @@ theorem bottcher_bound {c : ℂ} (lo : 16 < ‖c‖) : ‖bottcher' d c‖ ≤ 3
     apply (pow_left_inj₀ (norm_nonneg _) (norm_nonneg _)
       (pow_ne_zero n (d_ne_zero d))).mp
     simp only [← norm_pow, eq]
-  rw [ae, ← hg]; exact bottcherNear_le (superNearF d c) ct
+  simpa only [ae, ← hg, SuperNear.k, SuperNear.kt, superK] using bottcherNear_le (superNearF d c) ct
 
 /-- `bottcher' d c → 0` as `c → ∞` -/
 theorem bottcher_tendsto_zero : Tendsto (bottcher' d) (cobounded ℂ) (𝓝 0) := by
   rw [Metric.tendsto_nhds]
   intro r rp
   rw [hasBasis_cobounded_norm_lt.eventually_iff]
-  use max 16 (3 / r)
+  use max 3 (superK / r)
   simp only [true_and, mem_setOf, Complex.dist_eq, sub_zero, max_lt_iff]
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
   rw [div_lt_iff₀ rp] at rz

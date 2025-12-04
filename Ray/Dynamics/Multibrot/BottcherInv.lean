@@ -74,7 +74,7 @@ lemma sbottcher_inv_inj (c4 : 4 ≤ ‖c‖) : InjOn (sbottcher_inv d c) (ball 0
   · exact postcritical_small c4 m1.le
 
 /-- `sbottcher_inv` is monic at `z = 0`, for large `c` -/
-lemma sbottcher_inv_monic (c16 : 16 < ‖c‖) : HasDerivAt (sbottcher_inv d c) 1 0 := by
+lemma sbottcher_inv_monic (c4 : 4 ≤ ‖c‖) : HasDerivAt (sbottcher_inv d c) 1 0 := by
   have c0 : 0 < ‖c‖ := by linarith
   have ci0 : 0 < ‖c‖⁻¹ := by bound
   have e : sbottcher_inv d c =ᶠ[𝓝 0] bottcherNear (fl (f d) ∞ c) d := by
@@ -83,18 +83,18 @@ lemma sbottcher_inv_monic (c16 : 16 < ‖c‖) : HasDerivAt (sbottcher_inv d c) 
     by_cases z0 : z = 0
     · simp only [z0, sbottcher_inv_zero, bottcherNear_zero]
     · nth_rw 2 [← inv_inv z]
-      rw [← bottcher_eq_bottcherNear_z c16, sbottcher_inv, inv_coe z0]
+      rw [← bottcher_eq_bottcherNear_z c4, sbottcher_inv, inv_coe z0]
       rw [norm_inv, le_inv_comm₀ c0 (by simpa)]
       exact zc.le
   exact (bottcherNear_monic (superNearF d c)).congr_of_eventuallyEq e
 
 /-- `sbottcher_inv d c z = z + O(z^2)` -/
-theorem sbottcher_inv_approx_z (d : ℕ) [Fact (2 ≤ d)] (c16 : 16 < ‖c‖) (zc : ‖z‖ ≤ ‖c‖⁻¹) :
-    ‖sbottcher_inv d c z - z‖ ≤ 16 * ‖z‖ ^ 2 := by
+theorem sbottcher_inv_approx_z (d : ℕ) [Fact (2 ≤ d)] (c4 : 4 ≤ ‖c‖) (zc : ‖z‖ ≤ ‖c‖⁻¹) :
+    ‖sbottcher_inv d c z - z‖ ≤ 0.943 * ‖z‖ ^ 2 := by
   by_cases z0 : z = 0
   · simp [z0]
   · have czi : ‖c‖ ≤ ‖z⁻¹‖ := by rwa [norm_inv, le_inv_comm₀ (by linarith) (norm_pos_iff.mpr z0)]
-    have b := bottcher_approx_z d c16 czi
+    have b := bottcher_approx_z d c4 czi
     rwa [inv_inv, norm_inv, inv_inv, ← inv_coe z0] at b
 
 /-!

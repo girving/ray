@@ -117,7 +117,7 @@ lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦
     (c := 2⁻¹) (by norm_num)
   simp only [inv_ray_zero, sub_zero, zero_add, deriv_inv_ray_zero, smul_eq_mul, mul_one] at cz
   simp only [cascade]
-  refine Asymptotics.isBigO_iff.mpr ⟨64, ?_⟩
+  refine Asymptotics.isBigO_iff.mpr ⟨4, ?_⟩
   filter_upwards [cz, eventually_norm_sub_lt 0 (ε := 32) (by norm_num),
     eventually_norm_sub_lt 0 (ε := 80⁻¹) (by bound)] with z cz lt_c z_lt
   by_cases z0 : z = 0
@@ -156,4 +156,4 @@ lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦
   calc ‖w * (s.ray c w).toComplex - 1‖
     _ = ‖(s.ray c w).toComplex - w⁻¹‖ * ‖w‖ := by
         rw [← norm_mul, sub_mul, inv_mul_cancel₀ w0, mul_comm w]
-    _ ≤ 64 * ‖w‖ := by bound [sray_le (d := d) lt_c (x := w) (by linarith)]
+    _ ≤ 4 * ‖w‖ := by bound [sray_le (d := d) (c := c) (x := w) (by linarith) (by linarith)]

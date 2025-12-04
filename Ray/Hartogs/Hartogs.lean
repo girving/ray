@@ -660,8 +660,8 @@ theorem unevenLog_uniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) {s 
   simp only [mul_pow]
   gcongr
   · bound
-  · trans max 1 c ^ 1
-    · simp only [pow_one, le_max_iff, le_refl, or_true]
+  · trans max 1 c
+    · bound
     · bound
   · bound
 

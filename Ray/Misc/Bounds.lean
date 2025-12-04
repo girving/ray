@@ -9,6 +9,7 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Tactic.Bound
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Topology.MetricSpace.Basic
+import Ray.Misc.Bound
 import Ray.Misc.Finset
 
 /-!
@@ -153,16 +154,23 @@ theorem add_near (a z : ℂ) : |‖a + z‖ - ‖a‖| ≤ ‖z‖ := by
   simp only [sub_neg_eq_add, norm_neg] at h
   assumption
 
-theorem mem_slitPlane_of_near_one {z : ℂ} : ‖z - 1‖ < 1 → z ∈ slitPlane := by
-  intro h; apply Or.inl
-  have hr : (1 - z).re < 1 := by
-    calc
-      (1 - z).re ≤ |(1 - z).re| := le_abs_self (1 - z).re
-      _ ≤ ‖1 - z‖ := Complex.abs_re_le_norm _
-      _ = ‖z - 1‖ := by rw [←norm_neg (1 - z)]; simp only [neg_sub]
-      _ < 1 := h
-  simp only [Complex.sub_re, Complex.one_re, sub_lt_self_iff] at hr
-  assumption
+theorem mem_slitPlane_of_near_one' {z : ℂ} (z1 : ‖z - 1‖ ≤ 1) (z0 : z ≠ 0) : z ∈ slitPlane := by
+  rw [← sq_le_sq₀ (by bound) (by norm_num)] at z1
+  simp only [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re, Complex.one_re, ← pow_two,
+    Complex.sub_im, Complex.one_im, sub_zero, one_pow] at z1
+  by_cases i0 : z.im ≠ 0
+  · right
+    exact i0
+  · simp only [ne_eq, Decidable.not_not] at i0
+    left
+    contrapose z0
+    simp [i0, abs_sub_le_iff, Complex.ext_iff] at z0 z1 ⊢
+    grind
+
+theorem mem_slitPlane_of_near_one {z : ℂ} (z1 : ‖z - 1‖ < 1) : z ∈ slitPlane := by
+  by_cases z0 : z = 0
+  · simp [z0] at z1
+  · exact mem_slitPlane_of_near_one' z1.le z0
 
 theorem near_one_avoids_zero {z : ℂ} : ‖z - 1‖ < 1 → z ≠ 0 := by
   intro h; exact Complex.slitPlane_ne_zero (mem_slitPlane_of_near_one h)
@@ -281,7 +289,7 @@ theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, 
     Complex.dist_eq, not_and]
   intro r rp; rcases slightly_smaller z0 rp with ⟨w, b, lt⟩; use w, b, lt
 
-theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0) (cp : c > 0)
+theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : 0 < r) (cp : 0 < c)
     (zr : ‖z‖ ≤ r) (fc : ContinuousAt f z) (h : ∀ z : ℂ, ‖z‖ < r → ‖f z‖ ≤ c * ‖z‖) :
     ‖f z‖ ≤ c * ‖z‖ := by
   by_cases nz : z = 0; · refine h z ?_; rw [nz]; simpa
@@ -296,7 +304,7 @@ theorem weak_to_strong_small {f : ℂ → ℂ} {z : ℂ} {r c : ℝ} (rp : r > 0
     _ ≤ c * ‖z‖ + e := by bound
 
 theorem log1p_small' {z : ℂ} {r : ℝ} (r1 : r < 1) (zr : ‖z‖ ≤ r) :
-    ‖log (1 + z)‖ ≤ 1/(1 - r) * ‖z‖ := by
+    ‖log (1 + z)‖ ≤ 1 / (1 - r) * ‖z‖ := by
   by_cases r0 : r ≤ 0
   · have z0 := le_antisymm (le_trans zr r0) (norm_nonneg z)
     simp only [norm_eq_zero] at z0
@@ -331,50 +339,131 @@ theorem log_small {z : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) : ‖log z‖ ≤ 2 * �
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
   rw [wz]; refine log1p_small ?_; rw [← zw]; assumption
 
+theorem weak_exp_small' {z : ℂ} {r : ℝ} (zr : ‖z‖ < r) (r1 : r ≤ 1) :
+    ‖exp z - 1‖ ≤ (1 + r) * ‖z‖ := by
+  have r0 : 0 ≤ r := le_trans (norm_nonneg _) zr.le
+  have L := Complex.locally_lipschitz_exp r0 r1 0 z (by simpa only [sub_zero])
+  simpa only [Complex.exp_zero, norm_one, mul_one, sub_zero] using L
+
 theorem weak_exp_small {z : ℂ} (h : ‖z‖ < 1) : ‖exp z - 1‖ ≤ 2 * ‖z‖ := by
-  have hr : 0 ≤ (1 : ℝ) := by norm_num
-  have L := Complex.locally_lipschitz_exp hr (by bound) 0 z
-    (by simpa only [sub_zero])
-  simp only [Complex.exp_zero, norm_one, mul_one, sub_zero] at L
-  have t : 1 + 1 = (2 : ℝ) := by norm_num
-  rw [t] at L; assumption
+  have L := weak_exp_small' h (by norm_num)
+  norm_num at L
+  exact L
 
 /-- `exp z ≈ 1` for `z ≈ 0` -/
-theorem exp_small {z : ℂ} (zs : ‖z‖ ≤ 1) : ‖exp z - 1‖ ≤ 2 * ‖z‖ := by
-  have rp : (1 : ℝ) > 0 := by norm_num
-  have cp : (2 : ℝ) > 0 := by norm_num
+theorem exp_small' {z : ℂ} {r : ℝ} (zs : ‖z‖ ≤ r) (r1 : r ≤ 1) : ‖exp z - 1‖ ≤ (1 + r) * ‖z‖ := by
+  by_cases z0 : z = 0
+  · simp [z0]
+  have r0 : 0 < r := lt_of_lt_of_le (norm_pos_iff.mpr z0) zs
+  have cp : 0 < 1 + r := by linarith
   have fc : ContinuousAt (fun z ↦ exp z - 1) z := by
     apply ContinuousAt.sub; apply ContinuousAt.cexp
     exact continuousAt_id; exact continuousAt_const
-  apply weak_to_strong_small rp cp zs fc
-  intro w wr; exact weak_exp_small wr
+  apply weak_to_strong_small r0 cp zs fc
+  intro w wr
+  exact weak_exp_small' wr r1
 
-theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
-    ‖(1 + z) ^ w - 1‖ ≤ 4 * ‖z‖ * ‖w‖ := by
+/-- `exp z ≈ 1` for `z ≈ 0` -/
+theorem exp_small {z : ℂ} (zs : ‖z‖ ≤ 1) : ‖exp z - 1‖ ≤ 2 * ‖z‖ := by
+  have s := exp_small' zs (by norm_num)
+  norm_num at s
+  exact s
+
+/-- `exp_small'`, but for any ball -/
+lemma exp_small_general {z : ℂ} {r : ℝ} (zs : ‖z‖ ≤ r) : ‖exp z - 1‖ ≤ Real.exp r * ‖z‖ := by
+  have b := Complex.norm_exp_sub_sum_le_norm_mul_exp z 1
+  simp only [Finset.range_one, Finset.sum_singleton, pow_zero, Nat.factorial_zero, Nat.cast_one,
+    ne_eq, one_ne_zero, not_false_eq_true, div_self, pow_one, mul_comm ‖z‖] at b
+  exact le_trans b (by bound)
+
+/-- Lipschitz coefficient for `pow1p_small_general` -/
+noncomputable def psg (r s : ℝ) : ℝ :=
+  rexp (r * s / (1 - r)) / (1 - r)
+
+@[bound] lemma psg_nonzero {r s : ℝ} (r1 : r ≤ 1) : 0 ≤ psg r s := by
+  unfold psg
+  bound
+
+theorem pow1p_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1)  :
+    ‖(1 + z) ^ w - 1‖ ≤ psg r s * ‖z‖ * ‖w‖ := by
+  by_cases z0 : z = 0
+  · simp [z0]
+  have r0 : 0 < r := lt_of_lt_of_le (norm_pos_iff.mpr z0) zr
+  have s0 : 0 ≤ s := le_trans (norm_nonneg _) ws
   have z1 : 1 + z ≠ 0 := by
     rw [← norm_pos_iff]
     calc ‖1 + z‖ ≥ ‖(1 : ℂ)‖ - ‖z‖ := by bound
-      _ ≥ ‖(1 : ℂ)‖ - 1/2 := by bound
-      _ > 0 := by norm_num
+      _ ≥ ‖(1 : ℂ)‖ - r := by bound
+      _ > 0 := by simp only [norm_one, sub_pos, r1]
   rw [Complex.cpow_def_of_ne_zero z1]
-  have ls := log1p_small zs
-  have eas : ‖log (1 + z) * w‖ ≤ 1 := by
+  have ls := log1p_small' r1 zr
+  have eas : ‖log (1 + z) * w‖ ≤ r * s / (1 - r) := by
     rw [Complex.norm_mul]
-    calc ‖log (1 + z)‖ * ‖w‖ ≤ 2 * ‖z‖ * ‖w‖ := by bound
-      _ ≤ 2 * (1/2) * 1 := by bound
-      _ = 1 := by norm_num
-  have es := exp_small eas
-  rw [Complex.norm_mul, ←mul_assoc] at es
-  trans 2 * ‖log (1 + z)‖ * ‖w‖
-  exact es
-  calc 2 * ‖log (1 + z)‖ * ‖w‖ ≤ 2 * (2 * ‖z‖) * ‖w‖ := by bound
-    _ = 4 * ‖z‖ * ‖w‖ := by ring
+    calc ‖log (1 + z)‖ * ‖w‖ ≤ 1 / (1 - r) * ‖z‖ * s := by bound
+      _ ≤ 1 / (1 - r) * r * s := by bound
+      _ = _ := by ring
+  have es := exp_small_general eas
+  rw [Complex.norm_mul, ← mul_assoc] at es
+  refine le_trans es ?_
+  grw [ls]
+  simp only [psg]
+  apply le_of_eq
+  grind
 
-/-- `abs (z^w - 1) ≤ 2 * abs ((z-1)w)` for `z ≈ 1`, `w` small -/
+theorem pow1p_small' {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1)
+    (rs1 : r * s ≤ 1 - r) :
+    ‖(1 + z) ^ w - 1‖ ≤ (1 - r + r * s) / (1 - r) ^ 2 * ‖z‖ * ‖w‖ := by
+  by_cases z0 : z = 0
+  · simp [z0]
+  have r0 : 0 < r := lt_of_lt_of_le (norm_pos_iff.mpr z0) zr
+  have s0 : 0 ≤ s := le_trans (norm_nonneg _) ws
+  have z1 : 1 + z ≠ 0 := by
+    rw [← norm_pos_iff]
+    calc ‖1 + z‖ ≥ ‖(1 : ℂ)‖ - ‖z‖ := by bound
+      _ ≥ ‖(1 : ℂ)‖ - r := by bound
+      _ > 0 := by simp only [norm_one, sub_pos, r1]
+  rw [Complex.cpow_def_of_ne_zero z1]
+  have ls := log1p_small' r1 zr
+  have eas : ‖log (1 + z) * w‖ ≤ r * s / (1 - r) := by
+    rw [Complex.norm_mul]
+    calc ‖log (1 + z)‖ * ‖w‖ ≤ 1 / (1 - r) * ‖z‖ * s := by bound
+      _ ≤ 1 / (1 - r) * r * s := by bound
+      _ = _ := by ring
+  have es := exp_small' eas (by rw [div_le_iff₀ (by bound)]; linarith)
+  rw [Complex.norm_mul, ← mul_assoc] at es
+  refine le_trans es ?_
+  grw [ls]
+  · apply le_of_eq
+    grind
+  · bound
+
+theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
+    ‖(1 + z) ^ w - 1‖ ≤ 4 * ‖z‖ * ‖w‖ := by
+  have L := pow1p_small' zs ws (by norm_num) (by bound)
+  norm_num at L
+  exact L
+
+/-- `‖z^w - 1‖ = O(‖z - 1‖ * ‖w‖)` for `z ≈ 1`, `w` small -/
+theorem pow_small' {z w : ℂ} {r s : ℝ} (zr : ‖z - 1‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1)
+    (rs1 : r * s ≤ 1 - r) :
+    ‖z ^ w - 1‖ ≤ (1 - r + r * s) / (1 - r) ^ 2 * ‖z - 1‖ * ‖w‖ := by
+  generalize zw : z - 1 = z1
+  have wz : z = 1 + z1 := by rw [← zw]; ring
+  exact wz ▸ pow1p_small' (by rwa [← zw]) ws r1 rs1
+
+/-- `‖z^w - 1‖ = O(‖z - 1‖ * ‖w‖)` for `z ≈ 1`, `w` small -/
+theorem pow_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z - 1‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1) :
+    ‖z ^ w - 1‖ ≤ psg r s * ‖z - 1‖ * ‖w‖ := by
+  generalize zw : z - 1 = z1
+  have wz : z = 1 + z1 := by rw [← zw]; ring
+  exact wz ▸ pow1p_small_general (by rwa [← zw]) ws r1
+
+/-- `‖z^w - 1‖ ≤ 4 * ‖z - 1‖ * ‖w‖` for `z ≈ 1`, `w` small -/
 theorem pow_small {z w : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) (ws : ‖w‖ ≤ 1) :
     ‖z ^ w - 1‖ ≤ 4 * ‖z - 1‖ * ‖w‖ := by
-  generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
-  rw [wz]; refine pow1p_small ?_ ws; rw [← zw]; assumption
+  generalize zw : z - 1 = z1
+  have wz : z = 1 + z1 := by rw [← zw]; ring
+  exact wz ▸ pow1p_small (by rwa [← zw]) ws
 
 /-- `a + b ≠ 0` from `abs b < abs a` -/
 theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : ‖b‖ < ‖a‖) : a + b ≠ 0 := by
