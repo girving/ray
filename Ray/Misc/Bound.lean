@@ -16,6 +16,10 @@ attribute [bound] norm_add_le mul_lt_of_lt_one_left Complex.normSq_nonneg norm_i
 
 @[bound] private alias ⟨_, Bound.ennreal_coe_pos⟩ := ENNReal.coe_pos
 
+@[bound] private alias ⟨_, Bound.sq_lt_one₀⟩ := sq_lt_one_iff₀
+
+@[bound] private alias ⟨_, Bound.sq_le_one₀⟩ := sq_le_one_iff₀
+
 @[bound] private lemma Bound.lt_mul_of_one_lt_left [MulOneClass α] [Zero α] {a b : α} [Preorder α]
     [MulPosStrictMono α] [MulPosReflectLT α] (a0 : 0 < a) (b1 : 1 < b) : a < b * a :=
   (lt_mul_iff_one_lt_left a0).mpr b1
