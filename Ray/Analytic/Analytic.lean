@@ -22,12 +22,34 @@ open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere isOpen_ball)
 open Set (univ)
-open scoped Real NNReal ENNReal Topology
+open scoped ContDiff Real NNReal ENNReal Topology
 noncomputable section
 
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+
+/-- Drop 'Within' from `AnalyticWithinAt` if we have a neighborhood -/
+lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E} (fa : AnalyticWithinAt 𝕜 f s x)
+    (xs : s ∈ 𝓝 x) : AnalyticAt 𝕜 f x := by
+  obtain ⟨p, r, fp⟩ := fa
+  obtain ⟨e, e0, es⟩ := Metric.mem_nhds_iff.mp xs
+  refine ⟨p, min r (.ofReal e),
+    {r_le := by simp [fp.r_le], r_pos := by simp [fp.r_pos, e0], hasSum := fun {y} yr ↦ ?_}⟩
+  simp only [EMetric.mem_ball, edist_zero_right, lt_inf_iff] at yr
+  obtain ⟨yr, ye⟩ := yr
+  simp only [← ofReal_norm, ENNReal.ofReal_lt_ofReal_iff e0] at ye
+  exact fp.hasSum (.inr (es (by simp [ye]))) (by simp [yr])
+
+/-- Extract `AnalyticAt` from `ContDiffOn 𝕜 ω` if we have a neighborhood -/
+lemma ContDiffOn.analyticAt {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) {x : E}
+    (xs : s ∈ 𝓝 x) : AnalyticAt 𝕜 f x :=
+  (fa x (mem_of_mem_nhds xs)).analyticWithinAt.analyticAt xs
+
+/-- Extract `AnalyticOnNhd` from `ContDiffOn 𝕜 ω` if we're open -/
+lemma ContDiffOn.analyticOnNhd {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) (os : IsOpen s) :
+    AnalyticOnNhd 𝕜 f s :=
+  fun x xs ↦ (fa x xs).analyticWithinAt.analyticAt (os.mem_nhds xs)
 
 lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
     AnalyticAt 𝕜 (fun z ↦ f z / w) c := by

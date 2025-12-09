@@ -13,7 +13,7 @@ open Set
 open scoped ComplexConjugate ContDiff Topology
 noncomputable section
 
-variable {w z : ℂ}
+variable {w z a : ℂ} {r : ℝ}
 
 /-- The particular Möbius transform we need for Schwarz-Pick -/
 def mobius (w z : ℂ) : ℂ :=
@@ -79,3 +79,11 @@ lemma mobius_mobius (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) : mobius w (mobius w z
 
 @[simp] lemma mobius_zero : mobius w 0 = w := by simp [mobius]
 @[simp] lemma mobius_self : mobius w w = 0 := by simp [mobius]
+
+/-- Convenience lemma to pull a inverse scale out of a Möbius denominator -/
+lemma mobius_denom_inv_mul (r0 : r ≠ 0) (w z : ℂ) :
+    (1 - conj (r⁻¹ * w) * (r⁻¹ * z)) = r⁻¹ ^ 2 * (r ^ 2 - conj w * z) := by
+  rw [Complex.ofReal_inv, inv_pow, ← div_eq_inv_mul _ (_ ^ 2), eq_div_iff (by simpa)]
+  simp only [map_mul, map_inv₀, Complex.conj_ofReal, sub_mul, one_mul]
+  have r0' : (r : ℂ) ≠ 0 := by simp [r0]
+  field_simp
