@@ -1,13 +1,20 @@
+module
+public import Ray.Dynamics.Multibrot.Isomorphism
+import Mathlib.Tactic.Cases
+import Ray.Dynamics.Bottcher
+import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Multibrot.Area
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.BottcherInv
+import Ray.Dynamics.Multibrot.InvRay
 import Ray.Dynamics.Multibrot.RayBound
+import Ray.Dynamics.Ray
 
 /-!
 ## Functional equations for `ray` and `pray`
 -/
 
 open Asymptotics
-open MeasureTheory (volume)
 open Metric (ball closedBall isOpen_ball mem_ball_self mem_ball mem_closedBall mem_closedBall_self)
 open RiemannSphere
 open OneDimension
@@ -21,7 +28,7 @@ variable {c x z : ℂ} {n : ℕ}
 variable {d : ℕ} [Fact (2 ≤ d)]
 
 /-- `ray d` with the zero value cut out -/
-def ray' (d : ℕ) [Fact (2 ≤ d)] (z : ℂ) : ℂ :=
+@[expose] public def ray' (d : ℕ) [Fact (2 ≤ d)] (z : ℂ) : ℂ :=
   (ray d z).toComplex
 
 @[simp] lemma coe_ray' (z0 : z ≠ 0) (z1 : z ∈ ball (0 : ℂ) 1) : (ray' d z : 𝕊) = ray d z := by
@@ -38,7 +45,7 @@ lemma ray'_mem_ext (z0 : z ≠ 0) (z1 : z ∈ ball (0 : ℂ) 1) :
   simp only [e, bottcher, fill_coe, bottcher']
   refine s.bottcher_ext (multibrotPost ?_)
   simp only [← multibrotExt_coe, ce]
-  exact (bottcherHomeomorph d).map_target z1
+  exact ray_mem_multibrotExt z1
 
 /-- `ray'` in terms of `pray` -/
 lemma ray'_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray' d z = pray d z / z := by
@@ -49,7 +56,7 @@ lemma ray'_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray' d z = pray d z / z := by
 
 /-- Conjugacy identity for the parameter external map `ray`. This is the key functional equation
 relating the dynamical-space ray map `s.ray` to the parameter-space ray map `ray d`. -/
-lemma ray_conjugacy (z0 : z ≠ 0) (z1 : z ∈ ball (0 : ℂ) 1) :
+public lemma ray_conjugacy (z0 : z ≠ 0) (z1 : z ∈ ball (0 : ℂ) 1) :
     ray d z = (superF d).ray (ray' d z) z := by
   set s := superF d
   set c := ray' d z
@@ -59,18 +66,18 @@ lemma ray_conjugacy (z0 : z ≠ 0) (z1 : z ∈ ball (0 : ℂ) 1) :
   rw [bottcher, fill_coe, bottcher', s.ray_bottcher, ce]
   apply multibrotPost
   simp only [← multibrotExt_coe, ce]
-  exact (bottcherHomeomorph d).map_target z1
+  exact ray_mem_multibrotExt z1
 
 /-- The cascaded version of `pray d`, using higher powers for the second argument to `s.ray`. We'll
 start with power s.t. `cascade d n z ≈ 1` and descend to `cascade d 0 z = pray d z`. -/
-def cascade (d : ℕ) [Fact (2 ≤ d)] (n : ℕ) (z : ℂ) : ℂ :=
+@[expose] public def cascade (d : ℕ) [Fact (2 ≤ d)] (n : ℕ) (z : ℂ) : ℂ :=
   if z = 0 then 1 else z ^ d ^ n * ((superF d).ray (ray' d z) (z ^ d ^ n)).toComplex
 
-@[simp] lemma cascade_z0 : cascade d n 0 = 1 := by
+@[simp] public lemma cascade_z0 : cascade d n 0 = 1 := by
   simp only [cascade, ↓reduceIte]
 
 /-- At the bottom of the cascade, we get `pray d` -/
-lemma cascade_zero (m : z ∈ ball (0 : ℂ) 1) : cascade d 0 z = pray d z := by
+public lemma cascade_zero (m : z ∈ ball (0 : ℂ) 1) : cascade d 0 z = pray d z := by
   by_cases z0 : z = 0
   · simp only [z0, cascade_z0, pray_zero]
   · simp only [cascade, z0, ↓reduceIte, pow_zero, pow_one, ← ray_conjugacy z0 m, ray_eq_pray m]
@@ -79,7 +86,7 @@ lemma cascade_zero (m : z ∈ ball (0 : ℂ) 1) : cascade d 0 z = pray d z := by
     · simp only [ne_eq, div_eq_zero_iff, z0, m, pray_ne_zero, or_self, not_false_eq_true]
 
 /-- One step down the cascade -/
-lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
+public lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
     cascade d (n + 1) z = cascade d n z ^ d + z ^ (d ^ (n + 1) - 1) * pray d z := by
   set s := superF d
   by_cases z0 : z = 0
@@ -94,7 +101,7 @@ lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
     simp only [pow_eq_zero_iff', z0, ne_eq, not_and, not_not, false_and, not_false_eq_true]
 
 /-- The whole `cascade` is analytic -/
-lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (cascade d n) z := by
+public lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (cascade d n) z := by
   induction' n with n h
   · refine (pray_analytic (d := d) m).congr_of_eventuallyEq ?_
     filter_upwards [isOpen_ball.eventually_mem m] with w m
@@ -107,7 +114,7 @@ lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (cascad
     exact (h.pow _).add ((contDiffAt_id.pow _).mul (pray_analytic m))
 
 /-- `cascade ≈ 1` for large `n` -/
-lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦ z ^ d ^ n) := by
+public lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦ z ^ d ^ n) := by
   by_cases n0 : n = 0
   · simpa only [n0, pow_zero, pow_one, cascade_z0, sub_zero] using
       ((cascade_analytic (d := d) (n := 0) (z := 0) (by simp)).differentiableAt le_top).isBigO_sub

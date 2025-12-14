@@ -1,4 +1,14 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
+import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Mandelbrot
+import Ray.Dynamics.Multibrot.Basic
+import Ray.Dynamics.Multibrot.Potential
+import Ray.Dynamics.Potential
+import Ray.Misc.Cobounded
 
 /-!
 ## A lower bounds `potential c z` for small `z`
@@ -81,7 +91,7 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
     norm_num; exact x4.le
 
 /-- If `abs c, abs z ≤ 4`, `0.216 ≤ s.potential c z` (for `d = 2`) -/
-lemma le_potential (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) : 0.216 ≤ (superF 2).potential c z := by
+public lemma le_potential (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) : 0.216 ≤ (superF 2).potential c z := by
   set s := superF 2
   by_cases m : (c,↑z) ∈ s.basin
   · rcases pass_through c4 z4 m with ⟨n,w4,w20⟩
@@ -112,5 +122,5 @@ lemma le_potential (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) : 0.216 ≤ (superF
     refine le_trans (pow_le_pow_of_le_one (by norm_num) (by norm_num)
       (pow_le_pow_right₀ (by norm_num) (Nat.le_add_left 1 n))) ?_
     norm_num
-  · rw [s.potential_eq_one (not_exists.mp m)]
+  · rw [s.potential_eq_one m]
     norm_num

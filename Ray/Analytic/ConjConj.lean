@@ -1,3 +1,6 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Ray.Misc.Bound
@@ -49,7 +52,7 @@ lemma HasFPowerSeriesAt.conj_conj (fa : HasFPowerSeriesAt f p (conj z)) :
   exact ⟨r, h.conj_conj⟩
 
 /-- Conjugation respects analyticity -/
- lemma AnalyticAt.conj_conj (fa : AnalyticAt ℂ f (conj z)) :
+public lemma AnalyticAt.conj_conj (fa : AnalyticAt ℂ f (conj z)) :
     AnalyticAt ℂ (fun z ↦ conj (f (conj z))) z := by
   obtain ⟨p, h⟩ := fa
   exact ⟨_, h.conj_conj⟩

@@ -1,3 +1,7 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Ray.Analytic.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
@@ -7,9 +11,11 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Stream.Init
+import Mathlib.Tactic.Cases
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
+import Ray.Misc.Bound
 import Ray.Misc.Bounds
 import Ray.Misc.Finset
 import Ray.Analytic.Holomorphic
@@ -32,44 +38,17 @@ noncomputable section
 variable {ι : Type}
 
 /-!
-### Definitions
--/
-
-/-- For all z, `Πₙ f n z` converges absolutely to `g z` (analogous to `HasSumOn`) -/
-def HasProdOn (f : ℕ → ℂ → ℂ) (g : ℂ → ℂ) (s : Set ℂ) :=
-  ∀ z, z ∈ s → HasProd (fun n ↦ f n z) (g z)
-
-/-- The product of `f` converges absolutely to something (analogous to `Summable`) -/
-def ProdExists (f : ℕ → ℂ) : Prop :=
-  ∃ g, HasProd f g
-
-/-- The limit of an infinite product if it exists, or `0` -/
-noncomputable def tprodOn (f : ℕ → ℂ → ℂ) := fun z ↦ tprod fun n ↦ f n z
-
-/-- The limit of a parameterized infinite product if it exists, or `0` -/
-def ProdExistsOn (f : ℕ → ℂ → ℂ) (s : Set ℂ) :=
-  ∀ z, z ∈ s → ProdExists fun n ↦ f n z
-
-/-- If a product has a particular limit, it has some limit -/
-theorem HasProd.prodExists {f : ℕ → ℂ} {g : ℂ} (h : HasProd f g) : ProdExists f :=
-  ⟨g, h⟩
-
-/-- `tprodOn` is the product on `s` if it exists on `s` -/
-theorem HasProdOn.tprodOn_eq {f : ℕ → ℂ → ℂ} {g : ℂ → ℂ} {s : Set ℂ} :
-    HasProdOn f g s → ∀ z, z ∈ s → tprodOn f z = g z := fun h z zs ↦ (h z zs).tprod_eq
-
-/-!
 ### Basics about products of sequences
 -/
 
 /-- Powers commute with products -/
-theorem product_pow {f : ℕ → ℂ} {g : ℂ} (p : ℕ) (h : HasProd f g) :
+public theorem product_pow {f : ℕ → ℂ} {g : ℂ} (p : ℕ) (h : HasProd f g) :
     HasProd (fun n ↦ f n ^ p) (g ^ p) := by
   rw [HasProd]; simp_rw [Finset.prod_pow]
   exact Filter.Tendsto.comp (Continuous.tendsto (continuous_pow p) g) h
 
 /-- Powers commute with products (`tprod` version) -/
-theorem product_pow' {f : ℕ → ℂ} {p : ℕ} (h : ProdExists f) :
+public theorem product_pow' {f : ℕ → ℂ} {p : ℕ} (h : ProdExists f) :
     tprod f ^ p = tprod fun n ↦ f n ^ p := by
   rcases h with ⟨g, h⟩; rw [HasProd.tprod_eq h]; rw [HasProd.tprod_eq _]; exact product_pow p h
 
@@ -116,10 +95,10 @@ theorem product_head_zero {f : ℕ → ℂ} (f0 : f 0 = 0) : HasProd f 0 := by
   simp at N1; rw [Finset.prod_eq_zero N1 f0]; simpa
 
 /-- Separate out head and tail in a product -/
-theorem product_split {f : ℕ → ℂ} (h : ProdExists f) : tprod f = f 0 * tprod fun n ↦ f (n + 1) := by
+public theorem product_split {f : ℕ → ℂ} (h : ProdExists f) :
+    tprod f = f 0 * tprod fun n ↦ f (n + 1) := by
   by_cases f0 : f 0 = 0; · rw [f0, (product_head_zero f0).tprod_eq]; simp
   rw [product_drop' f0 h]; field_simp
-
 
 /-!
 ### Infinite products of analytic functions
@@ -128,7 +107,7 @@ theorem product_split {f : ℕ → ℂ} (h : ProdExists f) : tprod f = f 0 * tpr
 /-- Analytic products that converge exponentially converge to analytic functions.
     For now, we require the constant to be `≤ 1/2` so that we can take logs without
     care, and get nonzero results. -/
-theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : ℝ} (o : IsOpen s)
+public theorem fast_products_converge {f : ℕ → ℂ → ℂ} {s : Set ℂ} {a c : ℝ} (o : IsOpen s)
     (c12 : c ≤ 1 / 2) (a0 : a ≥ 0) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ n z, z ∈ s → ‖f n z - 1‖ ≤ c * a ^ n) :
     ∃ g : ℂ → ℂ, HasProdOn f g s ∧ AnalyticOnNhd ℂ g s ∧ ∀ z, z ∈ s → g z ≠ 0 := by
@@ -213,7 +192,7 @@ theorem fast_products_converge_eventually {f : ℕ → ℂ → ℂ} {s : Set ℂ
     simp [g0 z zs, Finset.prod_eq_zero_iff, f0]
 
 /-- Same as `fast_products_converge`, but converge to `tprodOn` -/
-theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+public theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
     (c12 : c ≤ 1 / 2) (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ n z, z ∈ s → ‖f n z - 1‖ ≤ c * a ^ n) :
     ProdExistsOn f s ∧ AnalyticOnNhd ℂ (tprodOn f) s ∧ ∀ z, z ∈ s → tprodOn f z ≠ 0 := by
@@ -224,7 +203,7 @@ theorem fast_products_converge' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : �
   · intro z zs; rw [gp.tprodOn_eq z zs]; exact g0 z zs
 
 /-- Same as `fast_products_converge_eventually`, but converge to `tprodOn` -/
-theorem fast_products_converge_eventually' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+public theorem fast_products_converge_eventually' {f : ℕ → ℂ → ℂ} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
     (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ᶠ n in atTop, ∀ z ∈ s, ‖f n z - 1‖ ≤ c * a ^ n) :
     ProdExistsOn f s ∧ AnalyticOnNhd ℂ (tprodOn f) s ∧
@@ -260,7 +239,7 @@ lemma Finset.norm_prod_sub_one_le {f : ι → ℂ} {s : Finset ι} :
     exact le_trans norm_mul_sub_one_le (by bound)
 
 /-- Bound a product in terms of bounds on the first few terms, and a geometric tail bound -/
-lemma HasProd.norm_sub_one_le {f : ℕ → ℂ} {g : ℂ} (fg : HasProd f g)
+public lemma HasProd.norm_sub_one_le {f : ℕ → ℂ} {g : ℂ} (fg : HasProd f g)
     {n : ℕ} {b : Fin n → ℝ} (lo : ∀ k : Fin n, ‖f k - 1‖ ≤ b k)
     {c a : ℝ} (hi : ∀ k ≥ n, ‖f k - 1‖ ≤ c * a ^ k)
     (b0 : ∀ k, 0 ≤ b k) (c0 : 0 ≤ c) (a0 : 0 ≤ a) (a1 : a < 1) (ca : c * a ^ n / (1 - a) ≤ 1 / 2) :

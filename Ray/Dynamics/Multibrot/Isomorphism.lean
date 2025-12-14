@@ -1,4 +1,13 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Ray.Dynamics.Multiple
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Bottcher
+import Ray.Manifold.GlobalInverse
+import Ray.Manifold.LocalInj
+import Ray.Manifold.OpenMapping
+import Ray.Misc.Bounds
+import Ray.Misc.Topology
 
 /-!
 ## Böttcher coordinates form an isomorphism between the exterior Multibrot set and the unit disk
@@ -49,7 +58,7 @@ variable {d : ℕ} [Fact (2 ≤ d)]
        is critical at the limit.
     4. But every value is repeated near critical points of analytic functions, so in particular
        smaller values are repeated, which gives us a smaller potential counterexample. -/
-theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
+public theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   -- We operate by induction on potential down to 0, expressed using closed sets of pairs.
   -- Preliminaries first:
   by_contra bad
@@ -142,7 +151,7 @@ theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     simp only [not_not] at p0; rw [(p0i p0).1] at db
     exact bottcher_mfderiv_inf_ne_zero db
 
-@[simp] lemma bottcher_coe_ne_zero {c : ℂ} (m : ↑c ∈ multibrotExt d) : bottcher d c ≠ 0 := by
+@[simp] public lemma bottcher_coe_ne_zero {c : ℂ} (m : ↑c ∈ multibrotExt d) : bottcher d c ≠ 0 := by
   rw [← bottcher_inf (d := d)]
   exact bottcher_inj.ne m (by simp) (by simp)
 
@@ -157,30 +166,38 @@ lemma ray_exists (d : ℕ) [Fact (2 ≤ d)] :
     isOpen_multibrotExt
 
 /-- The inverse to `bottcher d`, defining external rays throughout the exterior -/
-def ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → 𝕊 :=
+public def ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → 𝕊 :=
   Classical.choose (ray_exists d)
 
+/-- `ray` as an analytic `ℂ → ℂ` function -/
+@[expose] public def inv_ray (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ :=
+  fun z ↦ (ray d z)⁻¹.toComplex
+
+/-- The function we need to plug into Grönwall's area theorem: `z / inv_ray d` -/
+@[expose] public def pray (d : ℕ) [Fact (2 ≤ d)] (z : ℂ) : ℂ :=
+  (dslope (inv_ray d) 0 z)⁻¹
+
 /-- `ray d` is analytic on `ball 0 1` -/
-theorem rayMAnalytic (d : ℕ) [Fact (2 ≤ d)] : ContMDiffOnNhd I I (ray d) (ball 0 1) := by
+public theorem rayMAnalytic (d : ℕ) [Fact (2 ≤ d)] : ContMDiffOnNhd I I (ray d) (ball 0 1) := by
   rw [← bottcher_surj d]; exact (Classical.choose_spec (ray_exists d)).1
 
 /-- `ray d` is the left inverse to `bottcher d` -/
-theorem ray_bottcher {c : 𝕊} (m : c ∈ multibrotExt d) : ray d (bottcher d c) = c :=
+public theorem ray_bottcher {c : 𝕊} (m : c ∈ multibrotExt d) : ray d (bottcher d c) = c :=
   (Classical.choose_spec (ray_exists d)).2 _ m
 
 /-- `ray d` is the right inverse to `bottcher d` -/
-theorem bottcher_ray {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : bottcher d (ray d z) = z := by
+public theorem bottcher_ray {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : bottcher d (ray d z) = z := by
   rw [← bottcher_surj d] at m; rcases m with ⟨c, m, cz⟩
   nth_rw 1 [← cz]; rw [ray_bottcher m]; exact cz
 
 /-- `ray d` surjects from `ball 0 1` to the exterior of the Multibrot set -/
-theorem ray_surj (d : ℕ) [Fact (2 ≤ d)] : ray d '' ball 0 1 = multibrotExt d := by
+public theorem ray_surj (d : ℕ) [Fact (2 ≤ d)] : ray d '' ball 0 1 = multibrotExt d := by
   rw [← bottcher_surj d]; apply Set.ext; intro c; simp only [← image_comp, mem_image]; constructor
   · intro ⟨e, m, ec⟩; simp only [Function.comp, ray_bottcher m] at ec; rwa [← ec]
   · intro m; use c, m, ray_bottcher m
 
 /-- `bottcher d` as an (analytic) homeomorphism from `multibrotExt d` to `ball 0 1` -/
-def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : OpenPartialHomeomorph 𝕊 ℂ where
+public def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : OpenPartialHomeomorph 𝕊 ℂ where
   toFun := bottcher d
   invFun := ray d
   source := multibrotExt d
@@ -194,20 +211,23 @@ def bottcherHomeomorph (d : ℕ) [Fact (2 ≤ d)] : OpenPartialHomeomorph 𝕊 �
   continuousOn_toFun := (bottcherMAnalytic d).continuousOn
   continuousOn_invFun := (rayMAnalytic d).continuousOn
 
-lemma ray_inj : InjOn (ray d) (ball (0 : ℂ) 1) :=
+public lemma ray_inj : InjOn (ray d) (ball (0 : ℂ) 1) :=
   (bottcherHomeomorph d).symm.injOn
 
-@[simp] lemma ray_zero : ray d 0 = ∞ := by
+public lemma ray_mem_multibrotExt {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z ∈ multibrotExt d :=
+  (bottcherHomeomorph d).map_target m
+
+@[simp] public lemma ray_zero : ray d 0 = ∞ := by
   simpa only [bottcher_inf] using ray_bottcher (d := d) (c := ∞) (by simp)
 
-@[simp] lemma ray_ne_zero {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z ≠ 0 := by
+@[simp] public lemma ray_ne_zero {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z ≠ 0 := by
   have h := (bottcherHomeomorph d).map_target m
   contrapose h
   simp [bottcherHomeomorph, h]
 
-@[simp] lemma ray_eq_inf {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z = ∞ ↔ z = 0 := by
+@[simp] public lemma ray_eq_inf {z : ℂ} (m : z ∈ ball (0 : ℂ) 1) : ray d z = ∞ ↔ z = 0 := by
   rw [← ray_zero (d := d)]
   exact ray_inj.eq_iff m (by simp)
 
-@[simp] lemma norm_bottcher_lt_one {z : 𝕊} (m : z ∈ multibrotExt d) : ‖bottcher d z‖ < 1 := by
+@[simp] public lemma norm_bottcher_lt_one {z : 𝕊} (m : z ∈ multibrotExt d) : ‖bottcher d z‖ < 1 := by
   simpa [bottcherHomeomorph] using (bottcherHomeomorph d).map_source m

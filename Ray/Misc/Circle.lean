@@ -1,5 +1,12 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Complex.Circle
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
+import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Ray.Misc.Bound
 import Ray.Misc.Complex
 
@@ -117,18 +124,18 @@ lemma Circle.surjective_of_injective {f : Circle → Circle} (cont : Continuous 
   exact Circle.not_continuous_or_not_injective gc gi
 
 /-- If `f : Circle → Circle` is continuous and injective, it is a homeomorphism -/
-lemma Circle.isHomeomorph_of_injective {f : Circle → Circle} (cont : Continuous f)
+public lemma Circle.isHomeomorph_of_injective {f : Circle → Circle} (cont : Continuous f)
     (inj : f.Injective) : IsHomeomorph f := by
   rw [isHomeomorph_iff_continuous_bijective]
   exact ⟨cont, inj, surjective_of_injective cont inj⟩
 
-@[simp] lemma Complex.conj_circleMap {c : ℂ} {r : ℝ} {t : ℝ} :
+@[simp] public lemma Complex.conj_circleMap {c : ℂ} {r : ℝ} {t : ℝ} :
     conj (circleMap c r t) = circleMap (conj c) r (-t) := by
   simp only [circleMap, map_add, map_mul, Complex.conj_ofReal, Complex.ofReal_neg,
     neg_mul, ← Complex.exp_conj, Complex.conj_I, mul_neg]
 
 /-- Only diagonal expoential integrals survive -/
-lemma integral_exp_mul_I (n : ℤ) :
+public lemma integral_exp_mul_I (n : ℤ) :
     ∫ t in -π..π, exp (n * t * I) = if n = 0 then 2 * π else 0 := by
   by_cases n0 : n = 0
   · simp [n0, two_mul]
@@ -150,7 +157,7 @@ lemma integral_exp_mul_I (n : ℤ) :
     · fun_prop
 
 /-- `circleMap` is continuous on `ℝ × ℝ` -/
-@[fun_prop] theorem continuous_circleMap_full {c : ℂ} :
+@[fun_prop] public theorem continuous_circleMap_full {c : ℂ} :
     Continuous fun x : ℝ × ℝ ↦ circleMap c x.1 x.2 := by
   continuity
 
@@ -167,7 +174,8 @@ lemma HasDerivAt.circleMap_radius {c : ℂ} {r t : ℝ} :
   exact ((hasDerivAt_id _).ofReal_comp.mul_const _).const_add _
 
 /-- `circleMap` is surjective from `|t| ≤ π` -/
-lemma exists_circleMap_le {r : ℝ} {z : ℂ} (m : ‖z‖ = r) : ∃ t, |t| ≤ π ∧ circleMap 0 r t = z := by
+public lemma exists_circleMap_le {r : ℝ} {z : ℂ} (m : ‖z‖ = r) :
+    ∃ t, |t| ≤ π ∧ circleMap 0 r t = z := by
   replace m : z ∈ sphere 0 |r| := by simp [← m]
   simp only [← image_circleMap_Ioc, mem_image, mem_Ioc] at m
   obtain ⟨t,⟨t0,t1⟩,tz⟩ := m
@@ -177,7 +185,8 @@ lemma exists_circleMap_le {r : ℝ} {z : ℂ} (m : ‖z‖ = r) : ∃ t, |t| ≤
     simp only [circleMap, Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_ofNat, sub_mul,
       Complex.exp_sub, Complex.exp_two_pi_mul_I, div_one, zero_add, ← tz]
 
-lemma abs_le_mul_norm_circleMap {t : ℝ} (m : |t| ≤ π) : |t| ≤ π/2 * ‖circleMap 0 1 t - 1‖ := by
+public lemma abs_le_mul_norm_circleMap {t : ℝ} (m : |t| ≤ π) :
+    |t| ≤ π/2 * ‖circleMap 0 1 t - 1‖ := by
   suffices h : t ^ 2 ≤ π ^ 2 / 2 ^ 2 * Complex.normSq (circleMap 0 1 t - 1) by
     rw [← sq_le_sq₀ (by bound) (by bound)]
     simp only [sq_abs, Complex.norm_def, mul_pow, div_pow]

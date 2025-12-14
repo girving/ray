@@ -1,3 +1,8 @@
+module
+public import Mathlib.Analysis.Normed.Field.Basic
+public import Mathlib.Analysis.Normed.Module.Basic
+public import Mathlib.Geometry.Manifold.Algebra.Structures
+public import Ray.Manifold.Defs
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
@@ -34,37 +39,6 @@ lemma ModelWithCorners.prod_apply' {E H E' H' : Type*} [NormedAddCommGroup E] [N
     (I.prod I') x = (I x.1, I' x.2) :=
   ModelWithCorners.prod_apply _ _ _
 
-section ReflChart
-
-variable {I : ModelWithCorners 𝕜 E A} [ChartedSpace A E]
-variable {J : ModelWithCorners 𝕜 F B} [ChartedSpace B F]
-variable {K : ModelWithCorners 𝕜 G C} [ChartedSpace C G]
-variable {L : ModelWithCorners 𝕜 H D} [ChartedSpace D H]
-
-/-- A typeclass for trivial manifolds where `extChartAt` is the identity.
-    In this case, `extChartAt I : E → E`, but the intermediate space `H` might be different.
-    This is necessary to handle product spaces, where the intermediate space may be `ModelProd`. -/
-class ExtChartEqRefl (I : ModelWithCorners 𝕜 E A) [ChartedSpace A E] : Prop where
-  eq_refl : ∀ x, extChartAt I x = PartialEquiv.refl E
-
-/-- `extChartAt I x = refl` given [ExtChartEqRefl] -/
-theorem extChartAt_eq_refl [e : ExtChartEqRefl I] (x : E) : extChartAt I x = PartialEquiv.refl E :=
-  e.eq_refl x
-
-/-- `extChartAt = refl` for `I = modelWithCornersSelf 𝕜 E` -/
-instance extChartEqReflSelf : ExtChartEqRefl (modelWithCornersSelf 𝕜 E) := ⟨by
-  simp only [OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq,
-    OpenPartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source, forall_const, extChartAt,
-    OpenPartialHomeomorph.extend, modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
-
-/-- `extChartAt = refl` extends to products -/
-instance extChartEqReflProd (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
-    [ChartedSpace A E] [ExtChartEqRefl I] [ChartedSpace B F] [ExtChartEqRefl J] :
-    ExtChartEqRefl (I.prod J) :=
-  ⟨fun x ↦ by simp_rw [extChartAt_prod, extChartAt_eq_refl, PartialEquiv.refl_prod_refl]⟩
-
-end ReflChart
-
 variable {I : ModelWithCorners 𝕜 E A} [ChartedSpace A M]
 variable {J : ModelWithCorners 𝕜 F B} [ChartedSpace B N]
 variable {K : ModelWithCorners 𝕜 G C} [ChartedSpace C O]
@@ -73,8 +47,8 @@ variable {L : ModelWithCorners 𝕜 H D} [ChartedSpace D P]
 section Nhds
 
 /-- `extChartAt` as a `PartialHomeomorph` -/
-def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [TopologicalSpace M]
-    [ChartedSpace A M] (x : M) : OpenPartialHomeomorph M E where
+@[expose] public def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
+    [TopologicalSpace M] [ChartedSpace A M] (x : M) : OpenPartialHomeomorph M E where
   toPartialEquiv := extChartAt I x
   open_source := isOpen_extChartAt_source x
   open_target := isOpen_extChartAt_target x
@@ -82,12 +56,13 @@ def extChartAt' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type} [Top
   continuousOn_invFun := continuousOn_extChartAt_symm x
 
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
-theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E} (m : y ∈ (extChartAt I x).target) :
+public theorem extChartAt_symm_map_nhds [I.Boundaryless] {x : M} {y : E}
+    (m : y ∈ (extChartAt I x).target) :
     Filter.map (extChartAt I x).symm (𝓝 y) = 𝓝 ((extChartAt I x).symm y) :=
   (extChartAt' I x).symm.map_nhds_eq m
 
 /-- `extChartAt.symm` maps `𝓝` to `𝓝` -/
-theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
+public theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryless] {M : Type}
     [TopologicalSpace M] [ChartedSpace A M] (x : M) :
     Filter.map (extChartAt I x).symm (𝓝 (extChartAt I x x)) = 𝓝 x := by
   convert extChartAt_symm_map_nhds (mem_extChartAt_target x)
@@ -96,7 +71,7 @@ theorem extChartAt_symm_map_nhds' (I : ModelWithCorners 𝕜 E A) [I.Boundaryles
 
 /-- Nontrivial manifolds have no isolated points.
     Unfortunately, making this an instance gives "cannot find synthesization order for instance" -/
-theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I.Boundaryless]
+public theorem AnalyticManifold.punctured_nhds_neBot (I : ModelWithCorners 𝕜 E A) [I.Boundaryless]
     [Nontrivial E] (x : M) : (𝓝[{x}ᶜ] x).NeBot := by
   have p := Module.punctured_nhds_neBot 𝕜 E (extChartAt I x x)
   simp only [← Filter.frequently_true_iff_neBot, frequently_nhdsWithin_iff, ←
@@ -163,7 +138,7 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
   exact congr_arg₂ _ (hu u) (hv v)
 
 /-- `HasMFDerivAt` composition for curried functions -/
-theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}
+public theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}
     (fd : MDifferentiableAt (J.prod K) L (uncurry f) (g x, h x))
     {dg : TangentSpace I x →L[𝕜] TangentSpace J (g x)} (gh : HasMFDerivAt I J g x dg)
     {dh : TangentSpace I x →L[𝕜] TangentSpace K (h x)} (hh : HasMFDerivAt I K h x dh)
@@ -178,7 +153,7 @@ theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {
 
 /-- More general version of `hasMFDerivAt_iff_hasDerivAt`.
     The mathlib version doesn't handle product spaces. -/
-theorem hasMFDerivAt_iff_hasFDerivAt' {I : ModelWithCorners 𝕜 E A} [I.Boundaryless]
+public theorem hasMFDerivAt_iff_hasFDerivAt' {I : ModelWithCorners 𝕜 E A} [I.Boundaryless]
     [ChartedSpace A E] [IsManifold I ⊤ E] [ExtChartEqRefl I]
     {J : ModelWithCorners 𝕜 F B} [J.Boundaryless] [ChartedSpace B F] [IsManifold J ⊤ F]
     [ExtChartEqRefl J] {f : E → F} {x : E} {f' : E →L[𝕜] F} :
@@ -197,7 +172,7 @@ theorem mfderiv_comp' {f : M → N} (x : M) {g : N → O} (hg : MDifferentiableA
 variable [IsManifold I ⊤ M] [IsManifold J ⊤ N] [IsManifold K ⊤ O] [IsManifold L ⊤ P]
 
 /-- Chart derivatives are invertible (left inverse) -/
-theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
+public theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
     (m : y ∈ (extChartAt I x).source) :
     (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)).comp
         (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y) =
@@ -218,7 +193,7 @@ theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
   simp only [Function.comp, id, PartialEquiv.left_inv _ zm]
 
 /-- Chart derivatives are invertible (right inverse) -/
-theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
+public theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
     (m : y ∈ (extChartAt I x).target) :
     (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) ((extChartAt I x).symm y)).comp
         (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm y) =
@@ -239,7 +214,7 @@ theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
   simp only [Function.comp, id, PartialEquiv.right_inv _ zm, Function.comp]
 
 /-- Chart derivatives are invertible (right inverse) -/
-theorem extChartAt_mderiv_right_inverse' [I.Boundaryless] {x y : M}
+public theorem extChartAt_mderiv_right_inverse' [I.Boundaryless] {x y : M}
     (m : y ∈ (extChartAt I x).source) :
     (mfderiv I (modelWithCornersSelf 𝕜 E) (extChartAt I x) y).comp
         (mfderiv (modelWithCornersSelf 𝕜 E) I (extChartAt I x).symm (extChartAt I x y)) =

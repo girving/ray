@@ -1,6 +1,14 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Mathlib.Tactic.Cases
+import Ray.Analytic.Series
 import Ray.Dynamics.Multibrot.Basic
+import Ray.Dynamics.Multibrot.D
 import Ray.Dynamics.Multibrot.Log1p
 import Ray.Dynamics.Multibrot.Specific
+import Ray.Misc.Bound
+import Ray.Misc.Bounds
+import Ray.Misc.Cobounded
 
 /-!
 ## Effective bounds on Multibrot iterates
@@ -55,14 +63,14 @@ lemma iter_large_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) 
   exact iter_large d 4 (by norm_num) z4 cz n
 
 /-- Iteration increases `abs z` -/
-lemma le_self_iter (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) (n : ℕ) :
+public lemma le_self_iter (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) (n : ℕ) :
     ‖z‖ ≤ ‖((f' d c)^[n] z)‖ := by
   refine le_trans ?_ (iter_large_z3 d z3 cz n)
   exact le_mul_of_one_le_left (norm_nonneg _) (one_le_pow₀ (by norm_num))
 
 /-- Iterates tend to infinity for large `z` -/
-theorem tendsto_iter_cobounded (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
-    Tendsto (fun n ↦ (f' d c)^[n] z) atTop (cobounded ℂ) := by
+public theorem tendsto_iter_cobounded (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖)
+    (cz : ‖c‖ ≤ ‖z‖) : Tendsto (fun n ↦ (f' d c)^[n] z) atTop (cobounded ℂ) := by
   simp only [tendsto_cobounded_iff_norm_tendsto_atTop]
   refine Filter.tendsto_atTop_mono (iter_large_z3 d z3 cz) ?_
   exact Filter.Tendsto.atTop_mul_const (by linarith) (tendsto_pow_atTop_atTop_of_one_lt one_lt_two)
@@ -85,10 +93,6 @@ lemma f_ne_zero {c z : ℂ} (cz : ‖c‖ ≤ ‖z‖) (z3 : 3 ≤ ‖z‖) : z^
 In the desire to be reasonably tight, our bounds are quite complicated.  We record them as functions
 so that we can state the bounds simply.
 -/
-
-/-- Weird bound that we use below to be reasonably tight -/
-def f_error (d : ℕ) (z : ℂ) :=
-  -log (1 - -log (1 - 1/‖z‖) / (d * log (‖z‖)))
 
 /-- Bounds on `log (abs z)` -/
 lemma le_log_abs_z {z : ℂ} (z3 : 3 ≤ ‖z‖) : 1.0986 ≤ log (‖z‖) := by
@@ -204,12 +208,8 @@ lemma f_error_le_of_z140 (d : ℕ) [Fact (2 ≤ d)] {z : ℂ} (z140 : 140 ≤ �
 def iter_error_sum (d : ℕ) (c z : ℂ) (N : Finset ℕ) :=
   N.sum (fun k ↦ f_error d ((f' d c)^[k] z))
 
-/-- The infinite sum of `f_error` -/
-def iter_error (d : ℕ) (c z : ℂ) :=
-  ∑' n, f_error d ((f' d c)^[n] z)
-
 /-- `0 ≤ iter_error` -/
-lemma iter_error_nonneg (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public lemma iter_error_nonneg (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     0 ≤ iter_error d c z :=
   tsum_nonneg (fun n ↦ f_error_nonneg (le_trans z3 (le_self_iter d z3 cz n)))
 
@@ -238,7 +238,8 @@ lemma iter_error_sum_weak (d : ℕ) [Fact (2 ≤ d)] {b s : ℝ} {c : ℂ} (b3 :
   have t0 : 0 ≤ t := by rw [←ht]; positivity
   apply le_trans (Finset.sum_le_sum (fun k _ ↦ fb k))
   simp only [mul_comm _ t, ←Finset.mul_sum, ←inv_pow] at fb ⊢
-  exact mul_le_mul_of_nonneg_left (partial_geometric_bound _ (by positivity) (inv_lt_one_of_one_lt₀ b1)) t0
+  exact mul_le_mul_of_nonneg_left (partial_geometric_bound _ (by positivity)
+    (inv_lt_one_of_one_lt₀ b1)) t0
 
 /-- `iter_error` converges -/
 lemma iter_error_summable (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖)
@@ -382,7 +383,7 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b10)) (by norm_num)
 
 /-- `iter_error_string` for `4 ≤ abs z` -/
-lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     iter_error d c z ≤ 0.8095 / (‖z‖ * log (‖z‖)) := by
   have b3 : (4:ℝ) ≤ 4^(d-1) := by
     calc (4:ℝ)^(d-1)
@@ -472,8 +473,8 @@ theorem f_approx {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
   rw [f_error]
 
 /-- Absolute values of iterates grow roughly as `z^d^n` for large `z` -/
-theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) (n : ℕ) :
-    |log (log (‖(f' d c)^[n] z‖)) - log (log (‖z‖)) - n * log d| ≤ iter_error d c z := by
+public theorem iter_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖)
+    (n : ℕ) : |log (log (‖(f' d c)^[n] z‖)) - log (log (‖z‖)) - n * log d| ≤ iter_error d c z := by
   induction' n with n h generalizing z
   · simp only [Function.iterate_zero, id_eq, sub_self, CharP.cast_eq_zero, zero_mul, abs_zero,
     iter_error_nonneg d z3 cz]

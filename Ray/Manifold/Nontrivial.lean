@@ -1,9 +1,21 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Geometry.Manifold.ChartedSpace
+public import Mathlib.Geometry.Manifold.ContMDiff.Defs
+public import Ray.Analytic.Defs
+public import Ray.Manifold.Defs
+import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
-import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.Geometry.Manifold.Algebra.Structures
+import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
+import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.Tactic.Cases
+import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
-import Ray.Manifold.OneDimension
+import Ray.Manifold.Analytic
 import Ray.Misc.Connected
+import Ray.Misc.Topology
 import Ray.Misc.TotallyDisconnected
 
 /-!
@@ -36,14 +48,13 @@ From these, we have a variety of consequences, such as:
 -/
 
 open Classical
-open Complex
 open Filter (Tendsto)
 open Function (curry uncurry)
 open Metric (ball closedBall isOpen_ball mem_ball mem_closedBall mem_ball_self
   mem_closedBall_self mem_sphere sphere)
 open OneDimension
 open Set
-open scoped ContDiff Real Topology Manifold
+open scoped ContDiff OneDimension Real Topology Manifold
 noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
@@ -54,11 +65,6 @@ variable {U : Type} [TopologicalSpace U] [ChartedSpace ℂ U]
 section Nontrivial
 
 variable {f : ℂ → ℂ} {s : Set ℂ}
-
-/-- A nontrivial analytic function is one which is not locally constant -/
-structure NontrivialAnalyticOn (f : ℂ → ℂ) (s : Set ℂ) : Prop where
-  analyticOn : AnalyticOnNhd ℂ f s
-  nonconst : ∀ x, x ∈ s → ∃ᶠ y in 𝓝 x, f y ≠ f x
 
 /-- Nontrivial analytic functions have isolated values -/
 theorem NontrivialAnalyticOn.isolated (n : NontrivialAnalyticOn f s) {z : ℂ} (zs : z ∈ s) :
@@ -188,7 +194,7 @@ theorem eq_of_pow_eq {p q : X → ℂ} {t : Set X} {d : ℕ} (pc : ContinuousOn 
 /-- At a point, a analytic function is either locally constant or locally different from its
     value at the point.  This is the `ContMDiffAt` version of
     `AnalyticAt.eventuallyEq_or_eventually_ne` -/
-theorem ContMDiffAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
+public theorem ContMDiffAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {z : S}
     (fa : ContMDiffAt I I ω f z) (ga : ContMDiffAt I I ω g z) :
     (∀ᶠ w in 𝓝 z, f w = g w) ∨ ∀ᶠ w in 𝓝[{z}ᶜ] z, f w ≠ g w := by
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def] at fa ga
@@ -223,7 +229,7 @@ theorem ContMDiffAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S → T} {
     rwa [← (PartialEquiv.injOn _).ne_iff fm gm]
 
 /-- Locally constant functions are constant on preconnected sets -/
-theorem ContMDiffOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
+public theorem ContMDiffOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
     (fa : ContMDiffOn I I ω f s) {z : S} {a : T} (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
   generalize ht : {z | z ∈ s ∧ ∀ᶠ w in 𝓝 z, f w = a} = t
@@ -246,7 +252,7 @@ theorem ContMDiffOn.const_of_locally_const [T2Space T] {f : S → T} {s : Set S}
 
 /-- If `S` is locally connected, we don't need the open assumption in
     `ContMDiffOn.const_of_locally_const` -/
-theorem ContMDiffOnNhd.const_of_locally_const [LocallyConnectedSpace S] [T2Space T]
+public theorem ContMDiffOnNhd.const_of_locally_const [LocallyConnectedSpace S] [T2Space T]
     [IsManifold I ω S] [IsManifold I ω T] {f : S → T}
     {s : Set S} (fa : ContMDiffOnNhd I I f s) {z : S} {a : T} (zs : z ∈ s) (p : IsPreconnected s)
     (c : ∀ᶠ w in 𝓝 z, f w = a) : ∀ w, w ∈ s → f w = a := by
@@ -255,13 +261,8 @@ theorem ContMDiffOnNhd.const_of_locally_const [LocallyConnectedSpace S] [T2Space
   exact fun w ws ↦ ContMDiffOn.const_of_locally_const
     (fun _ m ↦ (ua m).contMDiffWithinAt) (su zs) uo uc c w (su ws)
 
-/-- A analytic function that is nonconstant near a point -/
-structure NontrivialMAnalyticAt (f : S → T) (z : S) : Prop where
-  mAnalyticAt : ContMDiffAt I I ω f z
-  nonconst : ∃ᶠ w in 𝓝 z, f w ≠ f z
-
 /-- `NontrivialMAnalyticAt f z` implies `f z` is never locally repeated -/
-theorem NontrivialMAnalyticAt.eventually_ne [T2Space T] {f : S → T} {z : S}
+public theorem NontrivialMAnalyticAt.eventually_ne [T2Space T] {f : S → T} {z : S}
     (n : NontrivialMAnalyticAt f z) : ∀ᶠ w in 𝓝 z, w ≠ z → f w ≠ f z := by
   have ca : ContMDiffAt I I ω (fun _ ↦ f z) z := contMDiffAt_const
   cases' n.mAnalyticAt.eventually_eq_or_eventually_ne ca with h h
@@ -269,12 +270,8 @@ theorem NontrivialMAnalyticAt.eventually_ne [T2Space T] {f : S → T} {z : S}
     simp only [and_not_self_iff, Filter.frequently_false] at b
   · simp only [eventually_nhdsWithin_iff, mem_compl_singleton_iff] at h; convert h
 
-/-- `f` is nontrivial analytic everyone in `s` -/
-def NontrivialMAnalyticOn (f : S → T) (s : Set S) : Prop :=
-  ∀ z, z ∈ s → NontrivialMAnalyticAt f z
-
 /-- Nontrivially at a point of a preconnected set implies nontriviality throughout the set -/
-theorem NontrivialMAnalyticAt.on_preconnected [T2Space T] {f : S → T} {s : Set S} {z : S}
+public theorem NontrivialMAnalyticAt.on_preconnected [T2Space T] {f : S → T} {s : Set S} {z : S}
     (fa : ContMDiffOn I I ω f s) (zs : z ∈ s) (o : IsOpen s) (p : IsPreconnected s)
     (n : NontrivialMAnalyticAt f z) : NontrivialMAnalyticOn f s := by
   intro w ws
@@ -299,7 +296,7 @@ theorem NontrivialMAnalyticAt.eventually [T2Space T] [IsManifold I ω S] [IsMani
   exact fun x m ↦ (fa x m).contMDiffWithinAt
 
 /-- If the derivative isn't zero, we're nontrivial -/
-theorem nontrivialMAnalyticAt_of_mfderiv_ne_zero [IsManifold I ω S] [IsManifold I ω T]
+public theorem nontrivialMAnalyticAt_of_mfderiv_ne_zero [IsManifold I ω S] [IsManifold I ω T]
     {f : S → T} {z : S} (fa : ContMDiffAt I I ω f z) (d : mfderiv I I f z ≠ 0) :
     NontrivialMAnalyticAt f z := by
   refine ⟨fa, ?_⟩; contrapose d; simp only [Filter.not_frequently, not_not] at d ⊢
@@ -307,7 +304,7 @@ theorem nontrivialMAnalyticAt_of_mfderiv_ne_zero [IsManifold I ω S] [IsManifold
   exact (hasMFDerivAt_const a _).congr_of_eventuallyEq d
 
 /-- If `f` and `g` are nontrivial, `f ∘ g` is nontrivial -/
-theorem NontrivialMAnalyticAt.comp [T2Space U] {f : T → U} {g : S → T} {z : S}
+public theorem NontrivialMAnalyticAt.comp [T2Space U] {f : T → U} {g : S → T} {z : S}
     (fn : NontrivialMAnalyticAt f (g z)) (gn : NontrivialMAnalyticAt g z) :
     NontrivialMAnalyticAt (fun z ↦ f (g z)) z := by
   use fn.mAnalyticAt.comp _ gn.mAnalyticAt
@@ -315,7 +312,7 @@ theorem NontrivialMAnalyticAt.comp [T2Space U] {f : T → U} {g : S → T} {z : 
   tauto
 
 /-- If `f ∘ g` is nontrivial, and `f, g` are analytic, `f, g` are nontrivial -/
-theorem NontrivialMAnalyticAt.anti {f : T → U} {g : S → T} {z : S}
+public theorem NontrivialMAnalyticAt.anti {f : T → U} {g : S → T} {z : S}
     (h : NontrivialMAnalyticAt (fun z ↦ f (g z)) z) (fa : ContMDiffAt I I ω f (g z))
     (ga : ContMDiffAt I I ω g z) :
     NontrivialMAnalyticAt f (g z) ∧ NontrivialMAnalyticAt g z := by
@@ -327,7 +324,7 @@ theorem NontrivialMAnalyticAt.anti {f : T → U} {g : S → T} {z : S}
 
 /-- `id` is nontrivial -/
 -- There's definitely a better way to prove this, but I'm blanking at the moment.
-theorem nontrivialMAnalyticAt_id [IsManifold I ω S] (z : S) :
+public theorem nontrivialMAnalyticAt_id [IsManifold I ω S] (z : S) :
     NontrivialMAnalyticAt (fun w ↦ w) z := by
   use contMDiffAt_id
   rw [Filter.frequently_iff]; intro s sz
@@ -353,7 +350,7 @@ theorem nontrivialMAnalyticAt_id [IsManifold I ω S] (z : S) :
   simp only [Ne, add_eq_left, div_eq_zero_iff, Complex.ofReal_eq_zero, rp.ne']; norm_num
 
 /-- If `orderAt f z ≠ 0` (`f` has a zero of positive order), then `f` is nontrivial at `z` -/
-theorem nontrivialMAnalyticAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z)
+public theorem nontrivialMAnalyticAt_of_order {f : ℂ → ℂ} {z : ℂ} (fa : AnalyticAt ℂ f z)
     (h : orderAt f z ≠ 0) : NontrivialMAnalyticAt f z := by
   use fa.mAnalyticAt I I; contrapose h
   simp only [Filter.not_frequently, not_not] at h ⊢
@@ -382,7 +379,7 @@ theorem NontrivialMAnalyticAt.pow_iff {f : S → ℂ} {z : S} {d : ℕ} (fa : Co
   intro h; refine (NontrivialMAnalyticAt.anti ?_ pa fa).2; exact h
 
 /-- Nontriviality depends only locally on `f` -/
-theorem NontrivialMAnalyticAt.congr {f g : S → T} {z : S} (n : NontrivialMAnalyticAt f z)
+public theorem NontrivialMAnalyticAt.congr {f g : S → T} {z : S} (n : NontrivialMAnalyticAt f z)
     (e : f =ᶠ[𝓝 z] g) : NontrivialMAnalyticAt g z := by
   use n.mAnalyticAt.congr_of_eventuallyEq e.symm
   refine n.nonconst.mp (e.mp (.of_forall fun w ew n ↦ ?_))
@@ -403,8 +400,8 @@ variable {N : Type} [TopologicalSpace N] [ChartedSpace B N]
     This is the one higher dimension result in this file, which shows up in that `e`
     requires `f =ᶠ[𝓝 x] g` everywhere near a point rather than only frequent equality
     as would be required in 1D. -/
-theorem ContMDiffOnNhd.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space N] {s : Set M}
-    (fa : ContMDiffOnNhd J K f s) (ga : ContMDiffOnNhd J K g s) (sp : IsPreconnected s)
+public theorem ContMDiffOnNhd.eq_of_locally_eq [CompleteSpace F] {f g : M → N} [T2Space N]
+   {s : Set M} (fa : ContMDiffOnNhd J K f s) (ga : ContMDiffOnNhd J K g s) (sp : IsPreconnected s)
     (e : ∃ x, x ∈ s ∧ f =ᶠ[𝓝 x] g) : f =ᶠ[𝓝ˢ s] g := by
   generalize ht :  {x | f =ᶠ[𝓝 x] g} = t
   suffices h : s ⊆ interior t by

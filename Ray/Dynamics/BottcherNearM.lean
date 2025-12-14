@@ -1,10 +1,18 @@
-import Mathlib.Topology.AlexandrovDiscrete
+module
+public import Ray.Dynamics.Defs
 import Mathlib.Geometry.Manifold.Algebra.LieGroup
+import Mathlib.Geometry.Manifold.ContMDiff.Atlas
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
+import Mathlib.Topology.AlexandrovDiscrete
+import Mathlib.Tactic.Cases
+import Ray.Analytic.Analytic
 import Ray.Dynamics.BottcherNear
 import Ray.Manifold.Analytic
 import Ray.Manifold.Inverse
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
+import Ray.Misc.Multilinear
 import Ray.Misc.Topology
 
 /-!
@@ -39,51 +47,29 @@ variable {c : ℂ}
 variable {a z : S}
 variable {d n : ℕ}
 
-/-- `z` tends to `a` under `f`-iteration -/
-def Attracts (f : S → S) (z a : S) :=
-  Tendsto (fun n ↦ f^[n] z) atTop (𝓝 a)
-
 /-- `f^[n] z` attracts iff `z` does -/
 theorem attracts_shift {f : S → S} {z a : S} (k : ℕ) : Attracts f (f^[k] z) a ↔ Attracts f z a := by
   simp only [Attracts, ← Function.iterate_add_apply]
   apply @Filter.tendsto_add_atTop_iff_nat _ fun n ↦ f^[n] z
 
-/-- `f` as `ℂ → ℂ → ℂ` in charts, with the attractor at `0` -/
-def fl {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] (f : ℂ → S → S) (a : S) : ℂ → ℂ → ℂ :=
-  fun c ↦
-  (fun z ↦ z - extChartAt I a a) ∘
-    (extChartAt I a ∘ f c ∘ (extChartAt I a).symm) ∘ fun z ↦ z + extChartAt I a a
-
-/-- `f c` has a monic superattracting fixpoint at `a`, for all `c` -/
-structure Super {S : Type} [TopologicalSpace S] [CompactSpace S] [ChartedSpace ℂ S]
-    [IsManifold I ω S] (f : ℂ → S → S) (d : ℕ) (a : S) : Prop where
-  d2 : 2 ≤ d
-  fa : ContMDiff II I ω (uncurry f)
-  f0 : ∀ c, f c a = a
-  fd : ∀ c, orderAt (fl f a c) 0 = d
-  fc : ∀ c, leadingCoeff (fl f a c) 0 = 1
-
 variable [CompactSpace S] [ChartedSpace ℂ S] [IsManifold I ω S]
 
 -- `d` facts
-theorem Super.dp (s : Super f d a) : 0 < d := lt_trans (by norm_num) s.d2
-theorem Super.dnp (s : Super f d a) {n : ℕ} : 0 < d ^ n := pow_pos s.dp _
-theorem Super.d1 (s : Super f d a) : 1 < d := lt_of_lt_of_le (by norm_num) s.d2
-theorem Super.d0 (s : Super f d a) : d ≠ 0 := s.dp.ne'
+public lemma Super.dp (s : Super f d a) : 0 < d := lt_trans (by norm_num) s.d2
+public lemma Super.dnp (s : Super f d a) {n : ℕ} : 0 < d ^ n := pow_pos s.dp _
+public lemma Super.d1 (s : Super f d a) : 1 < d := lt_of_lt_of_le (by norm_num) s.d2
+public lemma Super.d0 (s : Super f d a) : d ≠ 0 := s.dp.ne'
 
 -- Teach `bound` about `Super` and `d`
 attribute [bound_forward] Super.dp Super.d1
 
-/-- `s.fl` is `fl` with a few arguments filled in -/
-@[nolint unusedArguments] def Super.fl (_ : Super f d a) := _root_.fl f a
-
 /-- Iterating at `a` does nothing -/
-theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
+public theorem Super.iter_a (s : Super f d a) (n : ℕ) : (f c)^[n] a = a := by
   induction' n with n h; simp only [Function.iterate_zero_apply]
   simp only [Function.iterate_succ_apply', h, s.f0]
 
 /-- `fl` is analytic -/
-theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
+public theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s.fl) (c, 0) := by
   rw [analyticAt_iff_mAnalyticAt II I]
   refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp _ ?_
   refine (contMDiffAt_extChartAt' ?_).comp _ ?_
@@ -127,7 +113,7 @@ theorem Super.continuousOn_iter (s : Super f d a) {T : Type} [TopologicalSpace T
   simp_rw [Function.iterate_succ']; exact s.fa.continuous.comp_continuousOn (gc.prodMk h)
 
 /-- `(f c)^[k] z` is continuous when `c,z` vary continuously -/
-theorem Super.continuousAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
+public theorem Super.continuousAt_iter (s : Super f d a) {T : Type} [TopologicalSpace T] {g : T → ℂ}
     {h : T → S} {x : T} {n : ℕ} (gc : ContinuousAt g x) (hc : ContinuousAt h x) :
     ContinuousAt (fun x ↦ (f (g x))^[n] (h x)) x := by
   induction' n with n h; simp only [Function.iterate_zero, id]; exact hc
@@ -174,7 +160,7 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   intro z; exact (sub_zero _).symm
 
 /-- `a` is a critical point for `f` -/
-theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
+public theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a := by
   have h := s.critical_0 c
   have e := PartialEquiv.left_inv _ (mem_extChartAt_source (I := I) a)
   contrapose h; simp only [Critical, Super.fl, fl, ← ne_eq] at h ⊢
@@ -265,7 +251,7 @@ theorem prod_zero_mem_ball {c b : ℂ} {r : ℝ} (m : b ∈ ball c r) :
   simp only [Metric.mem_ball] at m; simpa only [Metric.mem_ball, dist_prod_same_right]
 
 /-- `Super → SuperAtC` in charts -/
-theorem Super.superAtC (s : Super f d a) : SuperAtC s.fl d univ :=
+public theorem Super.superAtC (s : Super f d a) : SuperAtC s.fl d univ :=
   { o := isOpen_univ
     fa := fun {_} _ ↦ s.fla _
     s := fun {c} _ ↦
@@ -281,7 +267,7 @@ theorem Super.exists_superNearC (s : Super f d a) :
   rw [Super.fls, Set.mem_iUnion]; use c; exact mem_ball_self (s.frp c)
 
 /-- The set of points on which `bottcherNear` is defined, in charts -/
-def Super.near' (s : Super f d a) : Set (ℂ × ℂ) :=
+public def Super.near' (s : Super f d a) : Set (ℂ × ℂ) :=
   choose s.exists_superNearC
 
 theorem Super.near_subset' (s : Super f d a) : s.near' ⊆ s.fls :=
@@ -289,20 +275,21 @@ theorem Super.near_subset' (s : Super f d a) : s.near' ⊆ s.fls :=
 
 /-- The set on which `bottcherNear` is defined, where we are both within the chart and close
     enough to `a` to satisfy the smallness conditions needed for `SuperNearC` -/
-def Super.near (s : Super f d a) : Set (ℂ × S) :=
+public def Super.near (s : Super f d a) : Set (ℂ × S) :=
   (extChartAt II ((0 : ℂ), a)).source ∩
     extChartAt II ((0 : ℂ), a) ⁻¹' {p : ℂ × ℂ | (p.1, p.2 - extChartAt I a a) ∈ s.near'}
 
-theorem Super.superNearC (s : Super f d a) : SuperNearC s.fl d univ s.near' (1 / 2) (1 / 4) :=
+public theorem Super.superNearC (s : Super f d a) :
+    SuperNearC s.fl d univ s.near' (1 / 2) (1 / 4) :=
   (choose_spec s.exists_superNearC).2
 
-theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
+public theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
   apply (continuousOn_extChartAt _).isOpen_inter_preimage (isOpen_extChartAt_source _)
   exact IsOpen.preimage (continuous_fst.prodMk (continuous_snd.sub continuous_const))
     s.superNearC.o
 
 /-- `(c,a)` is near -/
-theorem Super.mem_near (s : Super f d a) (c : ℂ) : (c, a) ∈ s.near := by
+@[simp] public theorem Super.mem_near (s : Super f d a) (c : ℂ) : (c, a) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
     mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and,
     Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq, sub_self]
@@ -323,7 +310,7 @@ theorem Super.mem_near_to_near' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.ne
   exact h
 
 /-- Once we're in `s.near`, we stay there -/
-theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) :
+public theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) :
     (c, f c z) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
     extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and, Set.mem_preimage,
@@ -344,13 +331,13 @@ theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.n
     exact h
 
 /-- Once we're in `s.near`, we stay there forever -/
-theorem Super.iter_stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near) (n : ℕ) :
-    (c, (f c)^[n] z) ∈ s.near := by
+public theorem Super.iter_stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) ∈ s.near)
+    (n : ℕ) : (c, (f c)^[n] z) ∈ s.near := by
   induction' n with n h; simp only [Function.iterate_zero, id, m]
   simp only [Nat.add_succ, Function.iterate_succ', s.stays_near h, Function.comp_def]
 
 /-- More iterations stay in `s.near` -/
-theorem Super.iter_stays_near' (s : Super f d a) {a b : ℕ} (m : (c, (f c)^[a] z) ∈ s.near)
+public theorem Super.iter_stays_near' (s : Super f d a) {a b : ℕ} (m : (c, (f c)^[a] z) ∈ s.near)
     (ab : a ≤ b) : (c, (f c)^[b] z) ∈ s.near := by
   rw [← Nat.sub_add_cancel ab, Function.iterate_add_apply]; exact s.iter_stays_near m _
 
@@ -362,7 +349,7 @@ theorem Super.reaches_near (s : Super f d a) {z : S} (a : Attracts (f c) z a) :
   apply IsOpen.mem_nhds; apply IsOpen.snd_preimage s.isOpen_near; exact s.mem_near c
 
 /-- If `z` reaches `s.near`, it attracts to `a` -/
-theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.near) :
+public theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.near) :
     Attracts (f c) z a := by
   have m := s.mem_near_to_near' r
   have t := iterates_tendsto (s.superNearC.s (Set.mem_univ c)) m
@@ -387,45 +374,60 @@ theorem Super.attracts (s : Super f d a) {n : ℕ} (r : (c, (f c)^[n] z) ∈ s.n
     ←Function.iterate_succ_apply' (f c)]
   apply PartialEquiv.left_inv _ (s.near_subset_chart (s.iter_stays_near r _))
 
-/-- The basin of points that attract to `a` -/
-def Super.basin (s : Super f d a) : Set (ℂ × S) :=
-  {p : ℂ × S | ∃ n, (p.1, (f p.1)^[n] p.2) ∈ s.near}
+/-- The basin is all points that reach `s.near` -/
+public lemma Super.basin_iff_near (s : Super f d a) {p : ℂ × S} :
+    p ∈ s.basin ↔ ∃ n, (p.1, (f p.1)^[n] p.2) ∈ s.near := by
+  constructor
+  · intro m
+    simp only [basin, mem_setOf_eq] at m
+    have e : ∀ᶠ n in atTop, (f p.1)^[n] p.2 ∈ {x : S | (p.1, x) ∈ s.near} :=
+      m.eventually_mem ((s.isOpen_near.snd_preimage p.1).mem_nhds (by simp))
+    exact e.exists
+  · intro ⟨n,  m⟩
+    exact s.attracts m
 
-theorem Super.isOpen_preimage (s : Super f d a) (n : ℕ) :
+/-- Anything in `s.basin` attracts -/
+public theorem Super.basin_attracts (s : Super f d a) (m : (c, z) ∈ s.basin) :
+    Attracts (f c) z a := by
+  rcases s.basin_iff_near.mp m with ⟨n, m⟩
+  exact s.attracts m
+
+public theorem Super.isOpen_preimage (s : Super f d a) (n : ℕ) :
     IsOpen {p : ℂ × S | (p.1, (f p.1)^[n] p.2) ∈ s.near} :=
   IsOpen.preimage (continuous_fst.prodMk (s.continuous_iter continuous_fst continuous_snd))
     s.isOpen_near
 
 /-- `s.basin` is open -/
-theorem Super.isOpen_basin (s : Super f d a) : IsOpen s.basin := by
-  simp only [Super.basin, setOf_exists]; exact isOpen_iUnion fun n ↦ s.isOpen_preimage n
+public theorem Super.isOpen_basin (s : Super f d a) : IsOpen s.basin := by
+  have e : s.basin = ⋃ n, {p : ℂ × S | (p.1, (f p.1)^[n] p.2) ∈ s.near} := by
+    ext p; simp [s.basin_iff_near]
+  rw [e]
+  exact isOpen_iUnion fun n ↦ s.isOpen_preimage n
 
 /-- Anything in `s.basin` is eventually in `s.near` -/
-theorem Super.basin_stays (s : Super f d a) (m : (c, z) ∈ s.basin) :
+public theorem Super.basin_stays (s : Super f d a) (m : (c, z) ∈ s.basin) :
     ∀ᶠ n in atTop, (c, (f c)^[n] z) ∈ s.near := by
-  simp only [Super.basin, Set.mem_setOf] at m
-  rcases m with ⟨n, m⟩
+  rcases s.basin_iff_near.mp m with ⟨n, m⟩
   rw [Filter.eventually_atTop]; use n; intro k kn
   rw [← Nat.sub_add_cancel kn, Function.iterate_add_apply]
   exact s.iter_stays_near m _
 
-/-- Anything in `s.basin` attracts -/
-theorem Super.basin_attracts (s : Super f d a) (m : (c, z) ∈ s.basin) : Attracts (f c) z a := by
-  rcases m with ⟨n, m⟩; exact s.attracts m
-
 /-- `s.basin` is exactly the set of attracting points -/
-theorem Super.basin_iff_attracts (s : Super f d a) : (c, z) ∈ s.basin ↔ Attracts (f c) z a := by
-  constructor; exact s.basin_attracts; intro h
-  rcases tendsto_atTop_nhds.mp h {z | (c, z) ∈ s.near} (s.mem_near c)
-    (s.isOpen_near.snd_preimage c) with ⟨n, h⟩
-  exact ⟨n, h _ (le_refl _)⟩
+public theorem Super.basin_iff_attracts (s : Super f d a) :
+    (c, z) ∈ s.basin ↔ Attracts (f c) z a := by
+  constructor
+  · exact s.basin_attracts
+  · intro h
+    rcases tendsto_atTop_nhds.mp h {z | (c, z) ∈ s.near} (s.mem_near c)
+      (s.isOpen_near.snd_preimage c) with ⟨n, h⟩
+    simp only [s.basin_iff_near]
+    exact ⟨n, h _ (le_refl _)⟩
 
 /-- `f` acting on and returning pairs -/
-@[nolint unusedArguments]
-def Super.fp (_ : Super f d a) : ℂ × S → ℂ × S := fun p : ℂ × S ↦ (p.1, f p.1 p.2)
+@[expose] public def Super.fp (_ : Super f d a) : ℂ × S → ℂ × S := fun p : ℂ × S ↦ (p.1, f p.1 p.2)
 
 /-- `s.fp` is analytic -/
-theorem Super.fpa (s : Super f d a) : ContMDiff II II ω s.fp := fun _ ↦
+public theorem Super.fpa (s : Super f d a) : ContMDiff II II ω s.fp := fun _ ↦
   contMDiffAt_fst.prodMk (s.fa _)
 
 theorem Super.fp1 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).1 = p.1 := by
@@ -437,14 +439,6 @@ theorem Super.fp2 (s : Super f d a) (n : ℕ) (p : ℂ × S) : (s.fp^[n] p).2 = 
   induction' n with n h
   · simp only [Function.iterate_zero_apply]
   · simp only [Function.iterate_succ_apply', s.fp1 n p, h, fp]
-
-/-- `bottcherNear` on the manifold -/
-def Super.bottcherNear (s : Super f d a) (c : ℂ) (z : S) : ℂ :=
-  _root_.bottcherNear (s.fl c) d (extChartAt I a z - extChartAt I a a)
-
-/-- `s.bottcherNear`, uncurried -/
-def Super.bottcherNearp (s : Super f d a) : ℂ × S → ℂ :=
-  uncurry s.bottcherNear
 
 /-- `s.bottcherNear` is analytic -/
 theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
@@ -464,15 +458,11 @@ theorem Super.bottcherNear_mAnalytic (s : Super f d a) :
   exact (h1.comp_of_eq h2 rfl).contMDiffWithinAt
 
 /-- `s.bottcherNear` is analytic -/
-theorem Super.bottcherNear_mAnalytic' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :
+public theorem Super.bottcherNear_mAnalytic' (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :
     ContMDiffAt II I ω (uncurry s.bottcherNear) p :=
   s.bottcherNear_mAnalytic.contMDiffAt (s.isOpen_near.mem_nhds m)
 
-/-- `s.bottcherNear` after some iterations of `f` -/
-def Super.bottcherNearIter (s : Super f d a) (n : ℕ) : ℂ → S → ℂ := fun c z ↦
-  s.bottcherNear c ((f c)^[n] z)
-
-theorem Super.bottcherNearIter_mAnalytic (s : Super f d a) {n : ℕ}
+public theorem Super.bottcherNearIter_mAnalytic (s : Super f d a) {n : ℕ}
     (r : (c, (f c)^[n] z) ∈ s.near) :
     ContMDiffAt II I ω (uncurry (s.bottcherNearIter n)) (c, z) := by
   -- For this reason this doesn't infer unless we give tons of type hints
@@ -482,7 +472,7 @@ theorem Super.bottcherNearIter_mAnalytic (s : Super f d a) {n : ℕ}
   · exact contMDiffAt_fst.prodMk (s.mAnalytic_iter _)
 
 /-- `s.bottcherNear` satisfies the defining equation -/
-theorem Super.bottcherNear_eqn (s : Super f d a) (m : (c, z) ∈ s.near) :
+public theorem Super.bottcherNear_eqn (s : Super f d a) (m : (c, z) ∈ s.near) :
     s.bottcherNear c (f c z) = s.bottcherNear c z ^ d := by
   simp only [Super.bottcherNear]
   have e : extChartAt I a (f c z) - extChartAt I a a =
@@ -492,7 +482,7 @@ theorem Super.bottcherNear_eqn (s : Super f d a) (m : (c, z) ∈ s.near) :
   rw [e, _root_.bottcherNear_eqn (s.superNearC.s (Set.mem_univ c)) (s.mem_near_to_near' m)]
 
 /-- `s.bottcherNear_eqn` iterated -/
-theorem Super.bottcherNear_eqn_iter (s : Super f d a) (m : (c, z) ∈ s.near) {n : ℕ} :
+public theorem Super.bottcherNear_eqn_iter (s : Super f d a) (m : (c, z) ∈ s.near) {n : ℕ} :
     s.bottcherNear c ((f c)^[n] z) = s.bottcherNear c z ^ d ^ n := by
   induction' n with n h; simp only [Function.iterate_zero_apply, pow_zero, pow_one]
   simp only [Function.iterate_succ_apply', s.bottcherNear_eqn (s.iter_stays_near m n), h, ←
@@ -501,16 +491,17 @@ theorem Super.bottcherNear_eqn_iter (s : Super f d a) (m : (c, z) ∈ s.near) {n
 /-- The defining equation in terms of `s.bottcherNearp` and `s.fp` -/
 theorem Super.bottcherNearp_eqn (s : Super f d a) {p : ℂ × S} (m : p ∈ s.near) :
     s.bottcherNearp (s.fp p) = s.bottcherNearp p ^ d := by
-  rcases p with ⟨c, z⟩; exact s.bottcherNear_eqn m
+  rcases p with ⟨c, z⟩
+  exact s.bottcherNear_eqn m
 
 /-- `abs (s.bottcherNear c z) < 1` -/
-theorem Super.bottcherNear_lt_one (s : Super f d a) (m : (c, z) ∈ s.near) :
+public theorem Super.bottcherNear_lt_one (s : Super f d a) (m : (c, z) ∈ s.near) :
     ‖s.bottcherNear c z‖ < 1 := by
   simp only [Super.bottcherNear]
   exact _root_.bottcherNear_lt_one (s.superNearC.s (Set.mem_univ c)) (s.mem_near_to_near' m)
 
 /-- `s.bottcherNear = 0` only at `a` -/
-theorem Super.bottcherNear_eq_zero (s : Super f d a) (m : (c, z) ∈ s.near) :
+public theorem Super.bottcherNear_eq_zero (s : Super f d a) (m : (c, z) ∈ s.near) :
     s.bottcherNear c z = 0 ↔ z = a := by
   simp only [Super.bottcherNear]; constructor
   · intro za; contrapose za
@@ -520,11 +511,11 @@ theorem Super.bottcherNear_eq_zero (s : Super f d a) (m : (c, z) ∈ s.near) :
   · intro za; simp only [za, sub_self, bottcherNear_zero]
 
 /-- `s.bottcherNear c a = 0` -/
-theorem Super.bottcherNear_a (s : Super f d a) : s.bottcherNear c a = 0 := by
+public theorem Super.bottcherNear_a (s : Super f d a) : s.bottcherNear c a = 0 := by
   simp only [Super.bottcherNear, sub_self, bottcherNear_zero]
 
 /-- `s.bottcherNear' ≠ 0` at `0` -/
-theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
+public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
     mfderiv I I (s.bottcherNear c) a ≠ 0 := by
   apply mderiv_comp_ne_zero' (f := _root_.bottcherNear (s.fl c) d)
   · simp only [sub_self, mfderiv_eq_fderiv,
@@ -596,7 +587,7 @@ theorem Super.f_noncritical_near_a (s : Super f d a) (c : ℂ) :
   · exact differentiableAt_id.add (differentiableAt_const _)
 
 /-- Critical points that are not `a` are closed, because `a` is an isolated critical point in `z` -/
-theorem Super.isClosed_critical_not_a (s : Super f d a) :
+public theorem Super.isClosed_critical_not_a (s : Super f d a) :
     IsClosed {p : ℂ × S | Critical (f p.1) p.2 ∧ p.2 ≠ a} := by
   rw [← isOpen_compl_iff]; rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m
   by_cases za : z = a
@@ -607,14 +598,14 @@ theorem Super.isClosed_critical_not_a (s : Super f d a) :
     refine (o (c, z) m).mp (.of_forall ?_); intro ⟨e, w⟩ a b; exfalso; exact a b
 
 /-- If `z ∈ s.basin`, iterating enough takes us to a noncritical point of `s.bottcherNear` -/
-theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
+public theorem Super.eventually_noncritical (s : Super f d a) (m : (c, z) ∈ s.basin) :
     ∀ᶠ n in atTop, mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0 :=
   (s.basin_attracts m).eventually
     (mfderiv_ne_zero_eventually (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd
       (s.bottcherNear_mfderiv_ne_zero c))
 
 /-- `s.bottcherNearIter` is noncritical given noncriticality of the two parts -/
-theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
+public theorem Super.bottcherNearIter_mfderiv_ne_zero (s : Super f d a)
     (b0 : mfderiv I I (s.bottcherNear c) ((f c)^[n] z) ≠ 0) (f0 : ¬Precritical (f c) z) :
     mfderiv I I (s.bottcherNearIter n c) z ≠ 0 := by
   apply mderiv_comp_ne_zero' b0; contrapose f0
@@ -628,7 +619,7 @@ theorem Super.iter_nontrivial_a [T2Space S] (s : Super f d a) :
   simp only [s.iter_a]; exact s.f_nontrivial c
 
 /-- `s.bottcherNearIter` is nontrivial at `a` -/
-theorem Super.bottcherNearIter_nontrivial_a [T2Space S] (s : Super f d a) :
+public theorem Super.bottcherNearIter_nontrivial_a [T2Space S] (s : Super f d a) :
     NontrivialMAnalyticAt (s.bottcherNearIter n c) a :=
   haveI b : NontrivialMAnalyticAt (s.bottcherNear c) ((f c)^[n] a) := by
     simp only [s.iter_a]

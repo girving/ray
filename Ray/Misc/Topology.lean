@@ -1,3 +1,11 @@
+module
+public import Mathlib.Analysis.Normed.Group.Basic
+public import Mathlib.Topology.Connected.LocallyConnected
+public import Mathlib.Topology.Defs.Basic
+public import Mathlib.Topology.Defs.Filter
+public import Mathlib.Topology.MetricSpace.Defs
+public import Mathlib.Topology.MetricSpace.ProperSpace
+public import Mathlib.Topology.Order.Real
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
@@ -18,7 +26,7 @@ open scoped Real NNReal Topology Filter ENNReal
 noncomputable section
 
 /-- Uniform cauchy sequences on compact sets are uniformly bounded -/
-theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
+public theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddCommGroup Y]
     {f : ℕ → X → Y} {s : Set X} (u : UniformCauchySeqOn f atTop s) (fc : ∀ n, ContinuousOn (f n) s)
     (sc : IsCompact s) : ∃ b : ℝ, 0 ≤ b ∧ ∀ n x, x ∈ s → ‖f n x‖ ≤ b := by
   generalize hc : (fun n ↦ Classical.choose ((sc.bddAbove_image (fc n).norm).exists_ge 0)) = c
@@ -49,12 +57,12 @@ theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [NormedAddC
         _ = b := by simp only [hb]
 
 /-- `{b | (a,b) ∈ s}` is open if `s` is open -/
-theorem IsOpen.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B] {s : Set (A × B)}
-    (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} :=
+public theorem IsOpen.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
+    {s : Set (A × B)} (o : IsOpen s) (a : A) : IsOpen {b | (a, b) ∈ s} :=
   o.preimage (Continuous.prodMk_right a)
 
 /-- `{b | (a,b) ∈ s}` is closed if `s` is closed -/
-theorem IsClosed.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
+public theorem IsClosed.snd_preimage {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
     {s : Set (A × B)} (c : IsClosed s) (a : A) : IsClosed {b | (a, b) ∈ s} :=
   c.preimage (Continuous.prodMk_right a)
 
@@ -67,8 +75,8 @@ theorem tendsto_inv_iff_tendsto {A B : Type} [NontriviallyNormedField B]
   field_simp [a0] at h; exact h
 
 /-- If `f x ∈ s` for `s ∈ 𝓝 (f x)` and `f` continuous at `z`, `∈` holds locally -/
-theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A] [TopologicalSpace B]
-    {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
+public theorem ContinuousAt.eventually_mem_nhd {A B : Type} [TopologicalSpace A]
+    [TopologicalSpace B] {f : A → B} {x : A} (fc : ContinuousAt f x) {s : Set B} (m : s ∈ 𝓝 (f x)) :
     ∀ᶠ y in 𝓝 x, f y ∈ s :=
   (eventually_mem_nhds_iff.2 (fc m)).mono fun _x hx ↦ mem_preimage.1 (mem_of_mem_nhds hx)
 
@@ -128,8 +136,8 @@ lemma IsPreconnected.iUnion_of_pairwise_exists_isPreconnected {ι X : Type*} [To
 
 /-- Open preconnected sets form a basis for `𝓝ˢ t` in any locally connected space,
     if `t` is preconnected -/
-theorem local_preconnected_nhdsSet {X : Type} [TopologicalSpace X] [lc : LocallyConnectedSpace X]
-    {s t : Set X} (tc : IsPreconnected t) (st : s ∈ 𝓝ˢ t) :
+public theorem local_preconnected_nhdsSet {X : Type} [TopologicalSpace X]
+    [lc : LocallyConnectedSpace X] {s t : Set X} (tc : IsPreconnected t) (st : s ∈ 𝓝ˢ t) :
     ∃ c, IsOpen c ∧ t ⊆ c ∧ c ⊆ s ∧ IsPreconnected c := by
   rw [← subset_interior_iff_mem_nhdsSet] at st
   have hsub : t ⊆ ⋃ x : t, connectedComponentIn (interior s) x := fun x hx ↦
@@ -153,13 +161,14 @@ theorem local_connected_nhdsSet {X : Type} [TopologicalSpace X] [LocallyConnecte
 open Filter in
 /-- `p` and `q` occur frequently along two filters iff `p ∧ q` occurs frequently in the product
     filter -/
-theorem Prod.frequently {A B : Type} {f : Filter A} {g : Filter B} {p : A → Prop} {q : B → Prop} :
+public theorem Prod.frequently {A B : Type} {f : Filter A} {g : Filter B} {p : A → Prop}
+    {q : B → Prop} :
     (∃ᶠ x : A × B in f ×ˢ g, p x.1 ∧ q x.2) ↔ (∃ᶠ a in f, p a) ∧ ∃ᶠ b in g, q b := by
   simp only [frequently_iff_neBot, ← prod_neBot, ← prod_inf_prod, prod_principal_principal]
   rfl
 
 /-- The product of `MapClusterPt` and `Tendsto` is `MapClusterPt` -/
-theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace C]
+public theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace C]
     {f : A → B} {g : A → C} {a : Filter A} {b : B} {c : C}
     (fa : MapClusterPt b a f) (ga : Tendsto g a (𝓝 c)) :
     MapClusterPt (b, c) a fun x ↦ (f x, g x) := by
@@ -170,18 +179,18 @@ theorem MapClusterPt.prod {A B C : Type} [TopologicalSpace B] [TopologicalSpace 
   exact .of_forall fun x gv fu ↦ sub (mk_mem_prod fu gv)
 
 /-- If we converge to `g`, we're eventually greater than anything less than `g` -/
-theorem Filter.Tendsto.exists_lt {X : Type} [LinearOrder X] [TopologicalSpace X]
+public theorem Filter.Tendsto.exists_lt {X : Type} [LinearOrder X] [TopologicalSpace X]
     [OrderClosedTopology X] {f : ℕ → X} {g : X} (tend : Tendsto f atTop (𝓝 g)) :
     ∀ {x}, x < g → ∃ n, x < f n := fun hx ↦
   (tend.eventually (eventually_gt_nhds hx)).exists
 
 /-- `≠ → eventual ≠` -/
-theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (h : x ≠ y) :
+public theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y : X} (h : x ≠ y) :
     ∀ᶠ q : X × X in 𝓝 (x, y), q.1 ≠ q.2 :=
   (isOpen_ne_fun continuous_fst continuous_snd).mem_nhds h
 
 /-- The `⊥` filter has no cluster_pts -/
-theorem ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := fun h ↦
+public lemma ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := fun h ↦
   (h.neBot.mono inf_le_right).ne rfl
 
 /-- Version of `nhdsWithin_eq_iff_eventuallyEq` that doesn't misuse eventual equality -/
@@ -202,8 +211,8 @@ lemma eventuallyEq_inter {X : Type} [TopologicalSpace X] {s t u : Set X} {x : X}
   simp only [mem_inter_iff, eq_iff_iff, and_congr_left_iff]
 
 /-- Given a closed ball in an open set, we can expand the ball to a larger open ball -/
-lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X} {x : X} {r : ℝ}
-    (sub : closedBall x r ⊆ s) (o : IsOpen s) : ∃ t, r < t ∧ ball x t ⊆ s := by
+public lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X} {x : X}
+    {r : ℝ} (sub : closedBall x r ⊆ s) (o : IsOpen s) : ∃ t, r < t ∧ ball x t ⊆ s := by
   by_cases n : closedBall x (r + 1) \ s = ∅
   · simp only [diff_eq_empty] at n
     exact ⟨r + 1, by linarith, subset_trans Metric.ball_subset_closedBall n⟩
@@ -247,7 +256,7 @@ lemma eventually_nhdsGT_zero_closedBall_iff_nhds {X : Type} [MetricSpace X] {c :
     linarith
 
 /-- Eventually in terms of radii and spheres -/
-lemma eventually_nhdsGT_zero_sphere_of_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop}
+public lemma eventually_nhdsGT_zero_sphere_of_nhds {X : Type} [MetricSpace X] {c : X} {p : X → Prop}
     (h : ∀ᶠ x in 𝓝 c, p x) : (∀ᶠ r in 𝓝[>] 0, ∀ x ∈ sphere c r, p x) := by
   simp only [(nhdsGT_basis (0 : ℝ)).eventually_iff,
     Metric.nhds_basis_closedBall.eventually_iff] at h ⊢
@@ -258,7 +267,7 @@ lemma eventually_nhdsGT_zero_sphere_of_nhds {X : Type} [MetricSpace X] {c : X} {
   exact sr.2.le
 
 /-- Flip `atTop` to `𝓝[>] 0` -/
-lemma eventually_atTop_iff_nhdsGT_zero {p : ℝ → Prop} :
+public lemma eventually_atTop_iff_nhdsGT_zero {p : ℝ → Prop} :
     (∀ᶠ r in atTop, p r) ↔ ∀ᶠ r in 𝓝[>] 0, p r⁻¹ := by
   simp only [Filter.eventually_atTop, (nhdsGT_basis (0 : ℝ)).eventually_iff]
   constructor
@@ -276,7 +285,7 @@ lemma eventually_atTop_iff_nhdsGT_zero {p : ℝ → Prop} :
     exact lt_of_lt_of_le (lt_mul_of_one_lt_left (by bound) (by norm_num)) m
 
 /-- Pull an `∃` out of an `∃ᶠ` via Skolemization -/
-lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : X → Y → Prop}
+public lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : X → Y → Prop}
     (f : Filter X) : (∃ᶠ x in f, ∃ y, p x y) ↔ ∃ s : X → Y, ∃ᶠ x in f, p x (s x) := by
   constructor
   · intro h
@@ -288,7 +297,7 @@ lemma frequently_skolem {X Y : Type} [TopologicalSpace X] [n : Nonempty Y] {p : 
     refine h.mp (.of_forall fun x e ↦ ?_)
     use s x
 
-lemma ENNReal.continuousAt_toNNReal {x : ℝ≥0∞} (h : x ≠ ⊤) :
+public lemma ENNReal.continuousAt_toNNReal {x : ℝ≥0∞} (h : x ≠ ⊤) :
     ContinuousAt (fun x ↦ x.toNNReal) x := by
   apply ENNReal.continuousOn_toNNReal.continuousAt
   apply ENNReal.isOpen_ne_top.mem_nhds

@@ -1,7 +1,9 @@
+module
+public import Mathlib.Topology.Connected.TotallyDisconnected
+public import Mathlib.Topology.MetricSpace.Defs
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Cardinality
 import Mathlib.SetTheory.Cardinal.Basic
-import Mathlib.Topology.Connected.TotallyDisconnected
 import Mathlib.Topology.MetricSpace.Basic
 
 /-!
@@ -64,7 +66,7 @@ theorem not_countable_Ioo {a b : ℝ} (h : a < b) : ¬(Ioo a b).Countable := by
   rw [← Cardinal.le_aleph0_iff_set_countable, not_le, Cardinal.mk_Ioo_real h]; apply Cardinal.cantor
 
 /-- Countable metric spaces are totally disconnected -/
-theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable X] :
+public theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable X] :
     TotallyDisconnectedSpace X := by
   generalize hR : {r | ∃ x y : X, dist x y = r} = R
   have rc : R.Countable := by
@@ -86,7 +88,7 @@ theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Countable
   exact rxy.le
 
 /-- Countable sets are totally disconnected -/
-theorem IsCountable.isTotallyDisconnected {X : Type} [MetricSpace X] {s : Set X} (h : s.Countable) :
-    IsTotallyDisconnected s := by
+public theorem IsCountable.isTotallyDisconnected {X : Type} [MetricSpace X] {s : Set X}
+    (h : s.Countable) : IsTotallyDisconnected s := by
   rw [← isTotallyDisconnected_iff_totally_disconnected_subtype]
   exact @Countable.totallyDisconnectedSpace _ _ (countable_coe_iff.mpr h)

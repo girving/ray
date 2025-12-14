@@ -1,5 +1,16 @@
-import Ray.Manifold.GlobalInverse
+module
+public import Ray.Dynamics.Defs
+public import Ray.Dynamics.Ray
+import Mathlib.Geometry.Manifold.Algebra.Structures
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
+import Mathlib.Tactic.Cases
+import Ray.Dynamics.BottcherNearM
+import Ray.Dynamics.Postcritical
+import Ray.Dynamics.Potential
 import Ray.Dynamics.Ray
+import Ray.Manifold.GlobalInverse
+import Ray.Manifold.OpenMapping
+import Ray.Misc.Topology
 
 /-!
 ## The Böttcher map for all postcritical points
@@ -56,7 +67,7 @@ def Super.bottcherPost (s : Super f d a) [OnePreimage s] : ℂ → S → ℂ :=
 
     On `s.post`, `s.bottcher` is analytic.  Otherwise, we iterate until we reach `s.post` and
     pull back the value using an arbitrary `d^n`th root (or use 1 outside `s.basin`). -/
-def Super.bottcher (s : Super f d a) [OnePreimage s] : ℂ → S → ℂ := fun c z ↦
+public def Super.bottcher (s : Super f d a) [OnePreimage s] : ℂ → S → ℂ := fun c z ↦
   if h : ∃ n, (c, (f c)^[n] z) ∈ s.post then
     let n := Nat.find h
     (fun w ↦ w ^ (d : ℂ)⁻¹)^[n] (s.bottcherPost c ((f c)^[n] z))
@@ -76,28 +87,28 @@ theorem Super.eqOn_bottcher_bottcherPost (s : Super f d a) [OnePreimage s] :
   s.bottcher_eq_bottcherPost m
 
 /-- `s.bottcher` is analytic on `s.post` -/
-theorem Super.bottcher_mAnalyticOn (s : Super f d a) [OnePreimage s] :
+public theorem Super.bottcher_mAnalyticOn (s : Super f d a) [OnePreimage s] :
     ContMDiffOnNhd II I (uncurry s.bottcher) s.post := by
   intro ⟨c, z⟩ m; apply ((choose_spec s.ray_inv).1 _ m).congr_of_eventuallyEq
   exact (s.eqOn_bottcher_bottcherPost.symm.eventuallyEq_of_mem (s.isOpen_post.mem_nhds m)).symm
 
 /-- `s.bottcher` is the left inverse of `s.ray` -/
-theorem Super.bottcher_ray (s : Super f d a) [OnePreimage s] (m : (c, x) ∈ s.ext) :
+public theorem Super.bottcher_ray (s : Super f d a) [OnePreimage s] (m : (c, x) ∈ s.ext) :
     s.bottcher c (s.ray c x) = x := by
   rw [s.bottcher_eq_bottcherPost (s.ray_post m)]; exact (choose_spec s.ray_inv).2 _ m
 
 /-- `s.bottcher` is the right inverse of `s.ray` -/
-theorem Super.ray_bottcher (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
+public theorem Super.ray_bottcher (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
     s.ray c (s.bottcher c z) = z := by
   rcases s.ray_surj m with ⟨x, m, e⟩; rw [← e, s.bottcher_ray m]
 
 /-- `s.bottcher` maps `s.post` to `s.ext` -/
-theorem Super.bottcher_ext (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
+public theorem Super.bottcher_ext (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
     (c, s.bottcher c z) ∈ s.ext := by
   rcases s.ray_surj m with ⟨x, m, e⟩; rw [← e, s.bottcher_ray m]; exact m
 
 /-- `s.bottcher` is `s.bottcherNear` near `a` -/
-theorem Super.bottcher_eq_bottcherNear (s : Super f d a) [OnePreimage s] (c : ℂ) :
+public theorem Super.bottcher_eq_bottcherNear (s : Super f d a) [OnePreimage s] (c : ℂ) :
     ∀ᶠ z in 𝓝 a, s.bottcher c z = s.bottcherNear c z := by
   have eq := (s.ray_nontrivial (s.mem_ext c)).nhds_eq_map_nhds; simp only [s.ray_zero] at eq
   simp only [eq, Filter.eventually_map]
@@ -137,7 +148,7 @@ def Super.equivSlice (s : Super f d a) [OnePreimage s] (c : ℂ) : PartialEquiv 
   right_inv' _ m := by simp only [s.ray_bottcher m]
 
 /-- `c`-slices of `s.ext` and `s.post` are (analytically) homeomorphic -/
-def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+public def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
     OpenPartialHomeomorph ℂ S where
   toPartialEquiv := s.equivSlice c
   open_source := s.isOpen_ext.snd_preimage c
@@ -145,8 +156,17 @@ def Super.homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
   continuousOn_toFun _ m := (s.ray_mAnalytic m).along_snd.continuousAt.continuousWithinAt
   continuousOn_invFun _ m := (s.bottcher_mAnalyticOn _ m).along_snd.continuousAt.continuousWithinAt
 
+@[simp] public lemma Super.toFun_homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    s.homeomorphSlice c = s.ray c := by rfl
+@[simp] public lemma Super.invFun_homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    (s.homeomorphSlice c).symm = s.bottcher c := by rfl
+@[simp] public lemma Super.source_homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    (s.homeomorphSlice c).source = {x | (c, x) ∈ s.ext} := by rfl
+@[simp] public lemma Super.target_homeomorphSlice (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    (s.homeomorphSlice c).target = {z | (c, z) ∈ s.post} := by rfl
+
 /-- `s.post` is connected -/
-theorem Super.post_connected (s : Super f d a) [OnePreimage s] : IsConnected s.post := by
+public theorem Super.post_connected (s : Super f d a) [OnePreimage s] : IsConnected s.post := by
   have e : s.post = s.homeomorph '' s.ext := s.homeomorph.image_source_eq_target.symm
   rw [e]; exact s.ext_connected.image _ s.homeomorph.continuousOn
 
@@ -162,8 +182,9 @@ theorem Super.bottcher_not_basin (s : Super f d a) [OnePreimage s] (m : (c, z) �
     s.bottcher c z = 1 := by
   have p : ¬∃ n, (c, (f c)^[n] z) ∈ s.post := by
     contrapose m; rcases m with ⟨n, m⟩
-    rcases s.post_basin m with ⟨k, m⟩
-    simp only [← Function.iterate_add_apply] at m; exact ⟨k + n, m⟩
+    rcases s.basin_iff_near.mp (s.post_basin m) with ⟨k, m⟩
+    simp only [← Function.iterate_add_apply] at m
+    exact s.basin_iff_near.mpr ⟨k + n, m⟩
   simp only [Super.bottcher, p]; rw [dif_neg]; exact not_false
 
 /-- `s.bottcher` satifies the Böttcher equation everywhere
@@ -171,7 +192,7 @@ theorem Super.bottcher_not_basin (s : Super f d a) [OnePreimage s] (m : (c, z) �
     1. It satisfies it near `a`, since it matches `s.bottcherNear` there
     2. It satisfies it throughout `s.post` since `s.post` is connected
     3. It satisfies it everywhere since we've defined it that way -/
-theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
+public theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     s.bottcher c (f c z) = s.bottcher c z ^ d := by
   have h0 : ∀ {c z}, (c, z) ∈ s.post → s.bottcher c (f c z) = s.bottcher c z ^ d := by
     intro c z m
@@ -214,17 +235,19 @@ theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     rw [Complex.cpow_nat_inv_pow _ s.d0]
   have m1 : (c, f c z) ∉ s.basin := by
     contrapose m
-    rcases m with ⟨n, m⟩; use n + 1; simp only at m ⊢; rwa [Function.iterate_succ_apply]
+    obtain ⟨n, m⟩ := s.basin_iff_near.mp m
+    refine s.basin_iff_near.mpr ⟨n + 1, ?_⟩
+    rwa [Function.iterate_succ_apply]
   simp only [s.bottcher_not_basin m, s.bottcher_not_basin m1, one_pow]
 
 /-- `s.bottcher` satisfies the iterated Böttcher equation -/
-theorem Super.bottcher_eqn_iter (s : Super f d a) [OnePreimage s] (n : ℕ) :
+public theorem Super.bottcher_eqn_iter (s : Super f d a) [OnePreimage s] (n : ℕ) :
     s.bottcher c ((f c)^[n] z) = s.bottcher c z ^ d ^ n := by
   induction' n with n h; simp only [Function.iterate_zero_apply, pow_zero, pow_one]
   simp only [Function.iterate_succ_apply', s.bottcher_eqn, h, ← pow_mul, pow_succ]
 
 /-- `abs (s.bottcher c z) = s.potential c z` -/
-theorem Super.norm_bottcher (s : Super f d a) [OnePreimage s] :
+public theorem Super.norm_bottcher (s : Super f d a) [OnePreimage s] :
     ‖s.bottcher c z‖ = s.potential c z := by
   have base : ∀ {c z}, (c, z) ∈ s.post → ‖s.bottcher c z‖ = s.potential c z := by
     intro c z m; rcases s.ray_surj m with ⟨x, m, e⟩; rw [← e, s.bottcher_ray m, s.ray_potential m]
@@ -233,19 +256,17 @@ theorem Super.norm_bottcher (s : Super f d a) [OnePreimage s] :
     rw [← Real.pow_rpow_inv_natCast (norm_nonneg _) (pow_ne_zero n s.d0), ←
       norm_pow, ← s.bottcher_eqn_iter n, base p, s.potential_eqn_iter,
       Real.pow_rpow_inv_natCast s.potential_nonneg (pow_ne_zero n s.d0)]
-  · have m' := m
-    simp only [Super.basin, not_exists, mem_setOf] at m'
-    simp only [s.bottcher_not_basin m, norm_one, s.potential_eq_one m']
+  · simp only [s.bottcher_not_basin m, norm_one, s.potential_eq_one m]
 
 /-- `abs (s.bottcher c z) < 1` on `s.post` -/
-theorem Super.bottcher_lt_one (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
+public theorem Super.bottcher_lt_one (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
     ‖s.bottcher c z‖ < 1 := by
   replace m := s.bottcher_ext m
   simp only [Super.ext, mem_setOf] at m
   exact lt_of_lt_of_le m s.p_le_one
 
 /-- Functional equation for `s.ray` -/
-lemma Super.ray_eqn (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public lemma Super.ray_eqn (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     f c (s.ray c x) = s.ray c (x ^ d) := by
   generalize hz : s.ray c x = z
   rw [← s.bottcher_ray post, ← s.bottcher_eqn, s.ray_bottcher, hz]
@@ -253,26 +274,27 @@ lemma Super.ray_eqn (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) 
 
 omit [T3Space S] in
 /-- Raising to powers stays in `s.ext` -/
-lemma Super.pow_ext (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
+public lemma Super.pow_ext (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
     (c, x ^ d ^ n) ∈ s.ext := by
   simp only [ext, mem_setOf_eq, norm_pow] at post ⊢
   refine lt_of_le_of_lt (pow_le_of_le_one (by bound) ?_ (by simp [s.d0])) post
   exact le_trans post.le s.p_le_one
 
 /-- Functional equation for `s.ray`, iterated -/
-lemma Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
+public lemma Super.ray_eqn_iter (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
     (f c)^[n] (s.ray c x) = s.ray c (x ^ d ^ n) := by
   induction' n with n h
   · simp only [Function.iterate_zero_apply, pow_zero, pow_one]
   · rw [Function.iterate_succ_apply', h, pow_succ, pow_mul, s.ray_eqn (s.pow_ext post n)]
 
 /-- `s.bottcher c` is injective (pulling it out of `s.homeomorphSlice c`) -/
-lemma Super.bottcher_inj (s : Super f d a) [OnePreimage s] (c : ℂ) :
+public lemma Super.bottcher_inj (s : Super f d a) [OnePreimage s] (c : ℂ) :
     InjOn (s.bottcher c) {z | (c, z) ∈ s.post} :=
   (s.homeomorphSlice c).symm.injOn
 
 /-- `s.bottcher c` sends the fixpoint to 0 -/
-@[simp] lemma Super.bottcher_a (s : Super f d a) [OnePreimage s] (c : ℂ) : s.bottcher c a = 0 := by
+@[simp] public lemma Super.bottcher_a (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    s.bottcher c a = 0 := by
   rw [← norm_eq_zero]
   have lt : ‖s.bottcher c a‖ < 1 := s.bottcher_lt_one (s.post_a c)
   have e := s.f0 _ ▸ s.bottcher_eqn (c := c) (z := a)

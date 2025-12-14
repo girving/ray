@@ -1,5 +1,10 @@
--- Sets that don't separate open sets when they are removed
+module
+public import Mathlib.Topology.Connected.Basic
+import Mathlib.Analysis.Complex.Exponential
+import Mathlib.Analysis.SpecialFunctions.Complex.Arg
+import Mathlib.Tactic.Cases
 import Ray.Analytic.Holomorphic
+import Ray.Manifold.Manifold
 import Ray.Manifold.OneDimension
 
 /-!
@@ -229,7 +234,7 @@ theorem AnalyticManifold.nonseparating_singleton (a : S) : Nonseparating ({a} : 
     exact PartialEquiv.map_target _ m
 
 /-- Removing a point in a complex manifold `S` leaves it locally connected -/
-theorem IsPreconnected.open_diff_singleton {s : Set S} (sc : IsPreconnected s) (so : IsOpen s)
+public theorem IsPreconnected.open_diff_singleton {s : Set S} (sc : IsPreconnected s) (so : IsOpen s)
     (a : S) : IsPreconnected (s \ {a}) :=
   IsPreconnected.open_diff sc so (AnalyticManifold.nonseparating_singleton a)
 

@@ -1,4 +1,7 @@
-import Mathlib.Analysis.Normed.Group.Basic
+module
+public import Mathlib.Data.Finset.Defs
+public import Mathlib.Data.Stream.Defs
+public import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Analysis.Complex.Norm
@@ -16,16 +19,16 @@ variable {G : Type} [NormedAddCommGroup G]
 variable {H : Type} [CommMonoid H]
 
 /-- Insert `0` into a `Finset ℕ`, adding `1` to existing elements -/
-def push (N : Finset ℕ) :=
+public def push (N : Finset ℕ) :=
   insert 0 (Finset.image (fun n ↦ n + 1) N)
 
 /-- Subtract `1` from everything in a `Finset ℕ`, discarding `0`.
     This is the left inverse of push. -/
-def pop (N : Finset ℕ) :=
+public def pop (N : Finset ℕ) :=
   Finset.image (fun n ↦ n - 1) (Finset.erase N 0)
 
 /-- `push` almost cancels `pop` -/
-theorem push_pop {N : Finset ℕ} : push (pop N) = insert 0 N := by
+public theorem push_pop {N : Finset ℕ} : push (pop N) = insert 0 N := by
   rw [push, pop]; apply Finset.ext; simp
   intro n; by_cases n0 : n = 0; · rw [n0]; simp
   simp_rw [or_iff_right n0]
@@ -46,12 +49,13 @@ theorem push_le_push {A B : Finset ℕ} : push A ≤ push B ↔ A ≤ B := by
   · intro AB; apply Finset.insert_subset_insert; apply Finset.image_mono; assumption
 
 /-- `push` and sums interact nicely -/
-theorem push_sum {X : Type} [AddCommGroup X] {a : X} {f : ℕ → X} {N : Finset ℕ} :
+public theorem push_sum {X : Type} [AddCommGroup X] {a : X} {f : ℕ → X} {N : Finset ℕ} :
     a + N.sum f = (push N).sum (cons a f) := by
   rw [push]; simp; rfl
 
 /-- `push` and products interact nicely -/
-theorem push_prod {a : H} {f : ℕ → H} {N : Finset ℕ} : a * N.prod f = (push N).prod (cons a f) := by
+public theorem push_prod {a : H} {f : ℕ → H} {N : Finset ℕ} :
+    a * N.prod f = (push N).prod (cons a f) := by
   rw [push]; simp; rfl
 
 /-- The range of `push` is `Finset`s containing 0 -/
@@ -66,7 +70,7 @@ theorem push_comap_atTop : Filter.comap push atTop = atTop := by
   intro N; exists pop N; rw [push_pop]; simp
 
 /-- `f ∘ push` converges `atTop` iff `f` does -/
-theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
+public theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
     Filter.Tendsto (f ∘ push) atTop l ↔ Filter.Tendsto f atTop l := by
   nth_rw 1 [← push_comap_atTop]; apply Filter.tendsto_comap'_iff
   rw [push_range]
@@ -74,7 +78,7 @@ theorem tendsto_comp_push {A : Type} {f : Finset ℕ → A} {l : Filter A} :
   rw [h]; exact Filter.mem_atTop _
 
 /-- Triangle inequality for finset sums -/
-theorem finset_norm_sum_le (N : Finset ℕ) (f : ℕ → G) :
+public theorem finset_norm_sum_le (N : Finset ℕ) (f : ℕ → G) :
     ‖N.sum fun n ↦ f n‖ ≤ N.sum fun n ↦ ‖f n‖ := by
   induction' N using Finset.induction with n N Nn h; · simp
   · rw [Finset.sum_insert Nn]
@@ -83,7 +87,7 @@ theorem finset_norm_sum_le (N : Finset ℕ) (f : ℕ → G) :
     · apply norm_add_le
     · apply add_le_add_left; assumption
 
-theorem subset_union_sdiff (A B : Finset ℕ) : B ⊆ A ∪ B \ A := by
+public theorem subset_union_sdiff (A B : Finset ℕ) : B ⊆ A ∪ B \ A := by
   rw [Finset.subset_iff]; intro x Bx
   rw [Finset.mem_union, Finset.mem_sdiff]
   by_cases Ax : x ∈ A

@@ -1,15 +1,31 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+public import Mathlib.Analysis.Complex.Basic
+public import Ray.Misc.Annuli
 import Mathlib.Analysis.Calculus.SmoothSeries
 import Mathlib.Analysis.Complex.OpenMapping
+import Mathlib.MeasureTheory.Function.Jacobian
+import Mathlib.RingTheory.Norm.Transitivity
+import Mathlib.Tactic.Cases
 import Ray.Analytic.ConjConj
 import Ray.Analytic.Holomorphic
 import Ray.Analytic.Integral
 import Ray.Analytic.Series
+import Ray.Koebe.Snap
+import Ray.Koebe.Wind
 import Ray.Koebe.WindArea
 import Ray.Koebe.WindInj
+import Ray.Misc.Bound
+import Ray.Misc.Circle
+import Ray.Misc.Cobounded
+import Ray.Misc.Complex
+import Ray.Misc.Connected
 import Ray.Misc.Deriv
 import Ray.Misc.Linear
 import Ray.Misc.MonotoneSeries
 import Ray.Misc.Subexp
+import Ray.Misc.Topology
 
 /-!
 ## Grönwall's area theorem
@@ -1125,27 +1141,27 @@ end Gronwall
 variable {f : ℂ → ℂ}
 
 /-- The Grönwall area is finite -/
-theorem gronwall_volume_ne_top (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
+public theorem gronwall_volume_ne_top (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
     (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     volume ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≠ ⊤ :=
   Gronwall.volume_disk_finite ⟨fa, f0, inj⟩
 
 /-- The Grönwall area has a nice series-/
-theorem gronwall_volume_sum (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
+public theorem gronwall_volume_sum (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
     (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     HasSum (fun n ↦ π * n * ‖iteratedDeriv (n + 1) f 0 / (n + 1).factorial‖ ^ 2)
       (π - volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ) :=
   Gronwall.volume_one_sum ⟨fa, f0, inj⟩
 
 /-- Upper bound on Grönwall's area due to a finite set of terms -/
-theorem gronwall_volume_le (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
+public theorem gronwall_volume_le (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
     (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) (s : Finset ℕ) :
     volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≤
       π - ∑ n ∈ s, π * n * ‖iteratedDeriv (n + 1) f 0 / (n + 1).factorial‖ ^ 2 := by
   linarith [sum_le_hasSum s (by bound) (gronwall_volume_sum fa f0 inj)]
 
 /-- Upper bound on Grönwall's area using second derivative and lower -/
-theorem gronwall_volume_le_two (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
+public theorem gronwall_volume_le_two (fa : AnalyticOnNhd ℂ f (ball 0 1)) (f0 : f 0 = 1)
     (inj : InjOn (fun z ↦ z * f z⁻¹) (norm_Ioi 1)) :
     volume.real ((fun z ↦ z * f z⁻¹) '' norm_Ioi 1)ᶜ ≤ π - π * ‖iteratedDeriv 2 f 0 / 2‖ ^ 2 := by
   simpa using gronwall_volume_le fa f0 inj {1}

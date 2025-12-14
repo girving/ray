@@ -1,8 +1,17 @@
+module
+public import Ray.Manifold.Defs
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.Geometry.Manifold.Algebra.Structures
+import Mathlib.Geometry.Manifold.ContMDiff.Atlas
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Ray.Analytic.Analytic
+import Ray.Dynamics.BottcherNear
+import Ray.Manifold.Analytic
 import Ray.Manifold.Inverse
 import Ray.Manifold.LocalInj
-import Ray.Dynamics.BottcherNear
+import Ray.Manifold.Manifold
+import Ray.Manifold.OneDimension
+import Ray.Misc.Multilinear
 
 /-!
 ## Non-injectivity near multiple roots
@@ -171,7 +180,7 @@ theorem not_local_inj_of_deriv_zero {f : ℂ → ℂ} {c : ℂ} (fa : AnalyticAt
 /-- If `f' z = 0`, then every value near `f z` is achieved at least twice (manifold version).
     We operationalize this statement via a nontrivial function `g : S → T` s.t. `f (g w) = f w`
     near `z`. -/
-theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I I ω f c)
+public theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I I ω f c)
     (df : mfderiv I I f c = 0) :
     ∃ g : S → S, ContMDiffAt I I ω g c ∧ g c = c ∧ ∀ᶠ z in 𝓝[{c}ᶜ] c, g z ≠ z ∧ f (g z) = f z := by
   generalize hg : (fun z ↦ extChartAt I (f c) (f ((extChartAt I c).symm z))) = g
@@ -234,8 +243,8 @@ theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDiffAt I 
       rw [(PartialEquiv.injOn _).eq_iff m3 m2] at gh; exact gh
 
 /-- Injectivity on an open set implies nonzero derivative (flat version) -/
-theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s) (so : IsOpen s) {c : ℂ}
-    (m : c ∈ s) (fa : AnalyticAt ℂ f c) : deriv f c ≠ 0 := by
+public theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s) (so : IsOpen s)
+    {c : ℂ} (m : c ∈ s) (fa : AnalyticAt ℂ f c) : deriv f c ≠ 0 := by
   contrapose inj
   simp only [InjOn, not_forall] at inj ⊢
   have d := inj ▸ fa.differentiableAt.hasDerivAt
@@ -248,8 +257,8 @@ theorem Set.InjOn.deriv_ne_zero {f : ℂ → ℂ} {s : Set ℂ} (inj : InjOn f s
   use g z, gs, z, zs, fg, gz
 
 /-- Injectivity on an open set implies nonzero derivative (manifold version) -/
-theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s) {c : S}
-    (m : c ∈ s) (fa : ContMDiffAt I I ω f c) : mfderiv I I f c ≠ 0 := by
+public theorem Set.InjOn.mfderiv_ne_zero {f : S → T} {s : Set S} (inj : InjOn f s) (so : IsOpen s)
+    {c : S} (m : c ∈ s) (fa : ContMDiffAt I I ω f c) : mfderiv I I f c ≠ 0 := by
   contrapose inj
   simp only [InjOn, not_forall] at inj ⊢
   rcases not_local_inj_of_mfderiv_zero fa inj with ⟨g, ga, gc, fg⟩

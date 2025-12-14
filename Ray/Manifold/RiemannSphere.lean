@@ -1,9 +1,16 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Geometry.Manifold.ChartedSpace
+public import Mathlib.Geometry.Manifold.IsManifold.ExtChartAt
+public import Mathlib.Topology.Compactification.OnePoint.Basic
+public import Ray.Manifold.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Data.Complex.Basic
 import Mathlib.Geometry.Manifold.Algebra.LieGroup
-import Mathlib.Topology.Compactification.OnePoint.Basic
+import Mathlib.Geometry.Manifold.ContMDiff.Atlas
+import Mathlib.Tactic.Cases
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
 import Ray.Manifold.OneDimension
@@ -30,7 +37,7 @@ variable {α : Type}
 
 /-- A left inverse to `coe : ℂ → 𝕊`.
     We put this outside the `RiemannSphere` namespace so that `z.toComplex` works. -/
-def OnePoint.toComplex (z : OnePoint ℂ) : ℂ := z.rec 0 id
+public def OnePoint.toComplex (z : OnePoint ℂ) : ℂ := z.rec 0 id
 
 namespace RiemannSphere
 
@@ -38,23 +45,23 @@ namespace RiemannSphere
 scoped notation "𝕊" => OnePoint ℂ
 
 -- Basic instances for 𝕊
-instance : Zero 𝕊 := ⟨((0 : ℂ) : 𝕊)⟩
-instance : Inhabited 𝕊 := ⟨0⟩
-@[simp] theorem coe_zero : ((0 : ℂ) : 𝕊) = (0 : 𝕊) := rfl
-@[simp] theorem coe_eq_coe {z w : ℂ} : (z : 𝕊) = w ↔ z = w := OnePoint.coe_eq_coe
-@[simp] theorem coe_eq_zero (z : ℂ) : (z : 𝕊) = (0 : 𝕊) ↔ z = 0 := by
+public instance : Zero 𝕊 := ⟨((0 : ℂ) : 𝕊)⟩
+public instance : Inhabited 𝕊 := ⟨0⟩
+@[simp] public theorem coe_zero : ((0 : ℂ) : 𝕊) = (0 : 𝕊) := rfl
+@[simp] public theorem coe_eq_coe {z w : ℂ} : (z : 𝕊) = w ↔ z = w := OnePoint.coe_eq_coe
+@[simp] public theorem coe_eq_zero (z : ℂ) : (z : 𝕊) = (0 : 𝕊) ↔ z = 0 := by
   simp only [← coe_zero, coe_eq_coe]
 
 /-- `coe : ℂ → 𝕊` is injective -/
-theorem injective_coe : Function.Injective (fun z : ℂ ↦ (z : 𝕊)) := OnePoint.coe_injective
+public theorem injective_coe : Function.Injective (fun z : ℂ ↦ (z : 𝕊)) := OnePoint.coe_injective
 
 /-- `coe : ℂ → 𝕊` is continuous -/
-theorem continuous_coe : Continuous (fun z : ℂ ↦ (z : 𝕊)) := OnePoint.continuous_coe
+public theorem continuous_coe : Continuous (fun z : ℂ ↦ (z : 𝕊)) := OnePoint.continuous_coe
 
 -- Recursion lemmas
-@[simp] theorem rec_coe {C : 𝕊 → Sort*} {i : C ∞} {f : ∀ z : ℂ, C (z : 𝕊)} (z : ℂ) :
+@[simp] public theorem rec_coe {C : 𝕊 → Sort*} {i : C ∞} {f : ∀ z : ℂ, C (z : 𝕊)} (z : ℂ) :
     (z : 𝕊).rec i f = f z := rfl
-@[simp] theorem rec_inf {C : 𝕊 → Sort*} {i : C ∞} {f : ∀ z : ℂ, C (z : 𝕊)} :
+@[simp] public theorem rec_inf {C : 𝕊 → Sort*} {i : C ∞} {f : ∀ z : ℂ, C (z : 𝕊)} :
     (∞ : 𝕊).rec i f = i := rfl
 theorem map_rec {A B : Sort*} (g : A → B) {f : ℂ → A} {i : A} {z : 𝕊} :
     g (z.rec i f) = (z.rec (g i) (g ∘ f)) := by
@@ -63,38 +70,38 @@ theorem map_rec {A B : Sort*} (g : A → B) {f : ℂ → A} {i : A} {z : 𝕊} :
   · simp only [rec_coe, Function.comp]
 
 -- ∞ is not 0 or finite
-@[simp] theorem inf_ne_coe {z : ℂ} : (∞ : 𝕊) ≠ ↑z := by
+@[simp] public theorem inf_ne_coe {z : ℂ} : (∞ : 𝕊) ≠ ↑z := by
   simp only [Ne, OnePoint.infty_ne_coe, not_false_iff]
-@[simp] theorem inf_ne_zero : (∞ : 𝕊) ≠ (0 : 𝕊) := by
+@[simp] public theorem inf_ne_zero : (∞ : 𝕊) ≠ (0 : 𝕊) := by
   have e : (0 : 𝕊) = ((0 : ℂ) : 𝕊) := rfl; rw [e]; exact inf_ne_coe
-@[simp] theorem zero_ne_inf : (0 : 𝕊) ≠ (∞ : 𝕊) := inf_ne_zero.symm
-@[simp] theorem coe_ne_inf {z : ℂ} : (z : 𝕊) ≠ ∞ := inf_ne_coe.symm
-@[simp] theorem coe_eq_inf_iff {z : ℂ} : (z : 𝕊) = ∞ ↔ False := ⟨coe_ne_inf, False.elim⟩
+@[simp] public theorem zero_ne_inf : (0 : 𝕊) ≠ (∞ : 𝕊) := inf_ne_zero.symm
+@[simp] public theorem coe_ne_inf {z : ℂ} : (z : 𝕊) ≠ ∞ := inf_ne_coe.symm
+@[simp] public theorem coe_eq_inf_iff {z : ℂ} : (z : 𝕊) = ∞ ↔ False := ⟨coe_ne_inf, False.elim⟩
 
 -- Conversion to ℂ, sending ∞ to 0
-@[simp] theorem toComplex_coe {z : ℂ} : (z : 𝕊).toComplex = z := rfl
-@[simp] theorem toComplex_inf : (∞ : 𝕊).toComplex = 0 := rfl
-theorem coe_toComplex {z : 𝕊} (h : z ≠ ∞) : ↑z.toComplex = z := by
+@[simp] public theorem toComplex_coe {z : ℂ} : (z : 𝕊).toComplex = z := by rfl
+@[simp] public theorem toComplex_inf : (∞ : 𝕊).toComplex = 0 := by rfl
+public theorem coe_toComplex {z : 𝕊} (h : z ≠ ∞) : ↑z.toComplex = z := by
   induction z using OnePoint.rec
   · simp only [ne_eq, not_true_eq_false] at h
   · simp only [toComplex_coe]
-@[simp] theorem toComplex_zero : (0 : 𝕊).toComplex = 0 := by rw [← coe_zero, toComplex_coe]
-@[simp] lemma toComplex_eq_zero {z : 𝕊} : z.toComplex = 0 ↔ z = 0 ∨ z = ∞ := by
+@[simp] public lemma  toComplex_zero : (0 : 𝕊).toComplex = 0 := by rw [← coe_zero, toComplex_coe]
+@[simp] public lemma toComplex_eq_zero {z : 𝕊} : z.toComplex = 0 ↔ z = 0 ∨ z = ∞ := by
   induction z using OnePoint.rec
   · simp only [toComplex_inf, or_true]
   · simp only [toComplex_coe, coe_eq_zero, OnePoint.coe_ne_infty, or_false]
-theorem continuousAt_toComplex {z : ℂ} : ContinuousAt OnePoint.toComplex z := by
+public theorem continuousAt_toComplex {z : ℂ} : ContinuousAt OnePoint.toComplex z := by
   simp only [OnePoint.continuousAt_coe]; exact continuousAt_id
-theorem continuousOn_toComplex : ContinuousOn OnePoint.toComplex ({∞}ᶜ) := by
+public theorem continuousOn_toComplex : ContinuousOn OnePoint.toComplex ({∞}ᶜ) := by
   intro z m; induction z using OnePoint.rec
   · simp only [mem_compl_iff, mem_singleton_iff, not_true] at m
   · exact continuousAt_toComplex.continuousWithinAt
 
 /-- Inversion in `𝕊`, interchanging `0` and `∞` -/
-def inv (z : 𝕊) : 𝕊 := if z = 0 then ∞ else ↑z.toComplex⁻¹
-instance : Inv 𝕊 := ⟨RiemannSphere.inv⟩
-theorem inv_def (z : 𝕊) : z⁻¹ = RiemannSphere.inv z := rfl
-instance : InvolutiveInv 𝕊 where
+public def inv (z : 𝕊) : 𝕊 := if z = 0 then ∞ else ↑z.toComplex⁻¹
+public instance : Inv 𝕊 := ⟨RiemannSphere.inv⟩
+theorem inv_def (z : 𝕊) : z⁻¹ = RiemannSphere.inv z := by rfl
+public instance : InvolutiveInv 𝕊 where
   inv := Inv.inv
   inv_inv := by
     simp_rw [inv_def, inv]; apply OnePoint.rec
@@ -104,23 +111,23 @@ instance : InvolutiveInv 𝕊 where
       · simp only [z0, coe_zero, toComplex_zero, inv_zero, ite_true, inf_ne_zero, toComplex_inf,
           ite_false]
       · simp only [coe_eq_zero, z0, toComplex_coe, ite_false, inv_eq_zero, inv_inv]
-@[simp] theorem inv_zero' : (0 : 𝕊)⁻¹ = ∞ := by simp only [inv_def, inv, if_true]
-@[simp] theorem inv_inf : ((∞ : 𝕊)⁻¹ : 𝕊) = 0 := by simp [inv_def, inv, inf_ne_zero]
+@[simp] public lemma inv_zero' : (0 : 𝕊)⁻¹ = ∞ := by simp only [inv_def, inv, if_true]
+@[simp] public lemma inv_inf : ((∞ : 𝕊)⁻¹ : 𝕊) = 0 := by simp [inv_def, inv, inf_ne_zero]
 
-theorem inv_coe {z : ℂ} (z0 : z ≠ 0) : (z : 𝕊)⁻¹ = ↑(z : ℂ)⁻¹ := by
+public theorem inv_coe {z : ℂ} (z0 : z ≠ 0) : (z : 𝕊)⁻¹ = ↑(z : ℂ)⁻¹ := by
   simp only [inv_def, inv, z0, toComplex_coe, if_false, coe_eq_zero]
-@[simp] theorem inv_eq_inf {z : 𝕊} : z⁻¹ = ∞ ↔ z = 0 := by
+@[simp] public lemma inv_eq_inf {z : 𝕊} : z⁻¹ = ∞ ↔ z = 0 := by
   induction z using OnePoint.rec
   · simp only [inv_inf]; exact ⟨Eq.symm, Eq.symm⟩
   · simp only [inv_def, inv, not_not, imp_false, ite_eq_left_iff, OnePoint.coe_ne_infty]
-@[simp] theorem inv_eq_zero {z : 𝕊} : z⁻¹ = 0 ↔ z = ∞ := by
+@[simp] public lemma inv_eq_zero {z : 𝕊} : z⁻¹ = 0 ↔ z = ∞ := by
   induction' z using OnePoint.rec with z
   · simp only [inv_inf]
   · simp only [inv_def, inv, toComplex_coe]
     by_cases z0 : (z : 𝕊) = 0; simp only [if_pos, z0, inf_ne_zero, inf_ne_zero.symm]
     simp only [if_neg z0, coe_ne_inf, iff_false]; rw [coe_eq_zero, _root_.inv_eq_zero]
     simpa only [coe_eq_zero] using z0
-theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
+public theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
   induction' z using OnePoint.rec with z
   · simp only [inv_inf, toComplex_zero, toComplex_inf, inv_zero]
   · by_cases z0 : z = 0
@@ -128,12 +135,12 @@ theorem toComplex_inv {z : 𝕊} : z⁻¹.toComplex = z.toComplex⁻¹ := by
     · simp only [z0, inv_coe, Ne, not_false_iff, toComplex_coe]
 
 /-- `coe` tends to `∞` `cobounded` -/
-theorem coe_tendsto_inf : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded ℂ) (𝓝 ∞) := by
+public theorem coe_tendsto_inf : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded ℂ) (𝓝 ∞) := by
   rw [Filter.tendsto_iff_comap, OnePoint.comap_coe_nhds_infty, Filter.coclosedCompact_eq_cocompact]
   exact Metric.cobounded_le_cocompact
 
 /-- `coe` tends to `∞` `cobounded`, but without touching `∞` -/
-theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded _) (𝓝[{∞}ᶜ] ∞) := by
+public theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded _) (𝓝[{∞}ᶜ] ∞) := by
   have e : {(∞ : 𝕊)}ᶜ = range (fun z : ℂ ↦ (z : 𝕊)) := by
     ext z; induction' z using OnePoint.rec with z
     · simp only [mem_compl_iff, mem_singleton_iff, not_true, mem_range, OnePoint.coe_ne_infty,
@@ -142,11 +149,11 @@ theorem coe_tendsto_inf' : Tendsto (fun z : ℂ ↦ (z : 𝕊)) (cobounded _) (�
         mem_range, coe_eq_coe, exists_eq]
   simp only [e, tendsto_nhdsWithin_range, coe_tendsto_inf]
 
-@[simp] lemma map_some_cobounded : Filter.map OnePoint.some (cobounded ℂ) = 𝓝[{∞}ᶜ] ∞ := by
+@[simp] public lemma map_some_cobounded : Filter.map OnePoint.some (cobounded ℂ) = 𝓝[{∞}ᶜ] ∞ := by
   rw [@OnePoint.nhdsNE_infty_eq, Metric.cobounded_eq_cocompact, Filter.coclosedCompact_eq_cocompact]
 
 /-- Inversion is continuous -/
-theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
+public theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
   rw [← continuousOn_univ]; intro z _; apply ContinuousAt.continuousWithinAt
   induction' z using OnePoint.rec with z
   · simp only [OnePoint.continuousAt_infty', Function.comp_def, Filter.coclosedCompact_eq_cocompact,
@@ -183,29 +190,29 @@ theorem continuous_inv : Continuous fun z : 𝕊 ↦ z⁻¹ := by
 instance : ContinuousInv 𝕊 := ⟨continuous_inv⟩
 
 /-- Inversion as an equivalence -/
-def invEquiv : 𝕊 ≃ 𝕊 where
+public def invEquiv : 𝕊 ≃ 𝕊 where
   toFun := Inv.inv
   invFun := Inv.inv
   left_inv := inv_inv
   right_inv := inv_inv
 
 /-- Inversion as a homeomorphism -/
-def invHomeomorph : 𝕊 ≃ₜ 𝕊 where
+public def invHomeomorph : 𝕊 ≃ₜ 𝕊 where
   toEquiv := invEquiv
   continuous_toFun := continuous_inv
   continuous_invFun := continuous_inv
-@[simp] theorem invEquiv_apply (z : 𝕊) : invEquiv z = z⁻¹ := by
+@[simp] public lemma invEquiv_apply (z : 𝕊) : invEquiv z = z⁻¹ := by
   simp only [invEquiv, Equiv.coe_fn_mk]
-@[simp] theorem invEquiv_symm : invEquiv.symm = invEquiv := by
+@[simp] public lemma invEquiv_symm : invEquiv.symm = invEquiv := by
   simp only [Equiv.ext_iff, invEquiv, Equiv.coe_fn_symm_mk, Equiv.coe_fn_mk, forall_const]
-@[simp] theorem invHomeomorph_apply (z : 𝕊) : invHomeomorph z = z⁻¹ := by
+@[simp] public lemma invHomeomorph_apply (z : 𝕊) : invHomeomorph z = z⁻¹ := by
   simp only [invHomeomorph, Homeomorph.homeomorph_mk_coe, invEquiv_apply]
-@[simp] theorem invHomeomorph_symm : invHomeomorph.symm = invHomeomorph := Homeomorph.ext (by
+@[simp] public lemma invHomeomorph_symm : invHomeomorph.symm = invHomeomorph := Homeomorph.ext (by
   simp only [invHomeomorph, Homeomorph.homeomorph_mk_coe_symm, invEquiv_symm,
     Homeomorph.homeomorph_mk_coe, forall_const])
 
 /-- `coe : ℂ → 𝕊` as an equivalence -/
-def coePartialEquiv : PartialEquiv ℂ 𝕊 where
+public def coePartialEquiv : PartialEquiv ℂ 𝕊 where
   toFun := fun x : ℂ ↦ x
   invFun := OnePoint.toComplex
   source := univ
@@ -217,7 +224,7 @@ def coePartialEquiv : PartialEquiv ℂ 𝕊 where
   right_inv' z m := coe_toComplex m
 
 /-- `coe : ℂ → 𝕊` as a partial homeomorphism.  This is the first chart of `𝕊`. -/
-def coeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 where
+public def coeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 where
   toPartialEquiv := coePartialEquiv
   open_source := isOpen_univ
   open_target := isOpen_compl_singleton
@@ -225,7 +232,7 @@ def coeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 where
   continuousOn_invFun := continuousOn_toComplex
 
 /-- `inv ∘ coe : ℂ → 𝕊` as a partial homeomorphism.  This is the second chart of `𝕊`. -/
-def invCoeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 :=
+public def invCoeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 :=
   coeOpenPartialHomeomorph.trans invHomeomorph.toOpenPartialHomeomorph
 
 @[simp] lemma coePartialEquiv_target : coePartialEquiv.target = {∞}ᶜ := rfl
@@ -237,15 +244,16 @@ def invCoeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 :=
     OpenPartialHomeomorph.coe_coe_symm, Homeomorph.toOpenPartialHomeomorph_symm_apply,
     invHomeomorph_symm, coeOpenPartialHomeomorph_target, preimage_compl, univ_inter, mem_compl_iff,
     mem_preimage, invHomeomorph_apply, mem_singleton_iff, inv_eq_inf]
-@[simp] lemma coePartialEquiv_apply (z : ℂ) : coePartialEquiv z = ↑z := rfl
-@[simp] lemma coePartialEquiv_symm_apply (z : 𝕊) : coePartialEquiv.symm z = z.toComplex := rfl
-@[simp] lemma invCoeOpenPartialHomeomorph_apply (z : ℂ) :
-    invCoeOpenPartialHomeomorph z = (z : 𝕊)⁻¹ := rfl
-@[simp] lemma invCoeOpenPartialHomeomorph_symm_apply (z : 𝕊) :
-    invCoeOpenPartialHomeomorph.symm z = (z⁻¹).toComplex := rfl
+@[simp] public lemma coePartialEquiv_apply (z : ℂ) : coePartialEquiv z = ↑z := by rfl
+@[simp] public lemma coePartialEquiv_symm_apply (z : 𝕊) : coePartialEquiv.symm z = z.toComplex := by
+  rfl
+@[simp] public lemma invCoeOpenPartialHomeomorph_apply (z : ℂ) :
+    invCoeOpenPartialHomeomorph z = (z : 𝕊)⁻¹ := by rfl
+@[simp] public lemma invCoeOpenPartialHomeomorph_symm_apply (z : 𝕊) :
+    invCoeOpenPartialHomeomorph.symm z = (z⁻¹).toComplex := by rfl
 
 /-- Chart structure for `𝕊` -/
-instance : ChartedSpace ℂ 𝕊 where
+public instance : ChartedSpace ℂ 𝕊 where
   atlas := {e | e = coeOpenPartialHomeomorph.symm ∨ e = invCoeOpenPartialHomeomorph.symm}
   chartAt z := z.rec invCoeOpenPartialHomeomorph.symm (fun _ ↦ coeOpenPartialHomeomorph.symm)
   mem_chart_source := by
@@ -266,15 +274,15 @@ theorem two_charts {e : OpenPartialHomeomorph 𝕊 ℂ} (m : e ∈ atlas ℂ �
     e = coeOpenPartialHomeomorph.symm ∨ e = invCoeOpenPartialHomeomorph.symm := m
 
 -- Chart simplification lemmas
-@[simp] theorem chartAt_coe {z : ℂ} : chartAt ℂ (z : 𝕊) = coeOpenPartialHomeomorph.symm := rfl
-@[simp] theorem chartAt_inf : @chartAt ℂ _ 𝕊 _ _ ∞ = invCoeOpenPartialHomeomorph.symm := rfl
-theorem extChartAt_coe {z : ℂ} : extChartAt I (z : 𝕊) = coePartialEquiv.symm := by
+@[simp] public lemma chartAt_coe {z : ℂ} : chartAt ℂ (z : 𝕊) = coeOpenPartialHomeomorph.symm := rfl
+@[simp] public lemma chartAt_inf : @chartAt ℂ _ 𝕊 _ _ ∞ = invCoeOpenPartialHomeomorph.symm := rfl
+public theorem extChartAt_coe {z : ℂ} : extChartAt I (z : 𝕊) = coePartialEquiv.symm := by
   simp only [coeOpenPartialHomeomorph, extChartAt, OpenPartialHomeomorph.extend, chartAt_coe,
     OpenPartialHomeomorph.symm_toPartialEquiv, modelWithCornersSelf_partialEquiv,
     PartialEquiv.trans_refl]
 theorem extChartAt_zero : extChartAt I (0 : 𝕊) = coePartialEquiv.symm := by
   simp only [← coe_zero, extChartAt_coe]
-theorem extChartAt_inf :
+public theorem extChartAt_inf :
     extChartAt I (∞ : 𝕊) = invEquiv.toPartialEquiv.trans coePartialEquiv.symm := by
   apply PartialEquiv.ext
   · intro z
@@ -300,7 +308,7 @@ theorem extChartAt_inf :
       Homeomorph.toOpenPartialHomeomorph_symm_apply, Homeomorph.homeomorph_mk_coe_symm,
       invEquiv_symm, PartialEquiv.trans_source, Equiv.toPartialEquiv_source,
       Equiv.toPartialEquiv_apply]
-theorem extChartAt_inf_apply {x : 𝕊} : extChartAt I ∞ x = x⁻¹.toComplex := by
+public theorem extChartAt_inf_apply {x : 𝕊} : extChartAt I ∞ x = x⁻¹.toComplex := by
   simp only [extChartAt_inf, PartialEquiv.trans_apply, coePartialEquiv_symm_apply,
     Equiv.toPartialEquiv_apply, invEquiv_apply]
 
@@ -331,10 +339,10 @@ instance : HasGroupoid 𝕊 (contDiffGroupoid ⊤ I) where
     all_goals aesop
 
 /-- `𝕊` is an analytic manifold -/
-instance : IsManifold I ⊤ 𝕊 where
+public instance : IsManifold I ⊤ 𝕊 where
 
 /-- Composing with `coe` turns convergence `cobounded` into convergence to `𝓝 ∞` -/
-theorem tendsto_inf_iff_tendsto_cobounded {X : Type} {f : Filter X} {g : X → ℂ} :
+public theorem tendsto_inf_iff_tendsto_cobounded {X : Type} {f : Filter X} {g : X → ℂ} :
     Tendsto (fun x ↦ (g x : 𝕊)) f (𝓝 ∞) ↔ Tendsto (fun x ↦ g x) f (cobounded ℂ) := by
   constructor
   · intro t; simp only [Filter.tendsto_iff_comap] at t ⊢
@@ -348,7 +356,7 @@ variable {Y : Type} [TopologicalSpace Y]
 variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T]
 
 /-- `coe : ℂ → 𝕊` is an open map -/
-theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
+public theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
   intro s o
   have e : (fun z : ℂ ↦ (z : 𝕊)) '' s = {∞}ᶜ ∩ OnePoint.toComplex ⁻¹' s := by
     apply Set.ext; intro z
@@ -358,7 +366,7 @@ theorem isOpenMap_coe : IsOpenMap (fun z : ℂ ↦ (z : 𝕊)) := by
     intro ⟨n, m⟩; use z.toComplex, m, coe_toComplex n
   rw [e]; exact continuousOn_toComplex.isOpen_inter_preimage isOpen_compl_singleton o
 
-theorem prod_nhds_eq {x : X} {z : ℂ} :
+public theorem prod_nhds_eq {x : X} {z : ℂ} :
     𝓝 (x, (z : 𝕊)) = Filter.map (fun p : X × ℂ ↦ (p.1, ↑p.2)) (𝓝 (x, z)) := by
   refine le_antisymm ?_
     (continuousAt_fst.prodMk (continuous_coe.continuousAt.comp continuousAt_snd))
@@ -386,7 +394,7 @@ theorem prod_mem_inf_of_mem_cobounded {s : Set (X × ℂ)} {x : X} (f : s ∈ �
     exact wu
 
 /-- `coe : ℂ → 𝕊` is analytic -/
-theorem mAnalytic_coe : ContMDiff I I ⊤ (fun z : ℂ ↦ (z : 𝕊)) := by
+public theorem mAnalytic_coe : ContMDiff I I ⊤ (fun z : ℂ ↦ (z : 𝕊)) := by
   rw [mAnalytic_iff_of_boundaryless]; use continuous_coe; intro z
   simp only [extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_symm, PartialEquiv.refl_coe,
     Function.comp_id, id_eq]
@@ -395,7 +403,8 @@ theorem mAnalytic_coe : ContMDiff I I ⊤ (fun z : ℂ ↦ (z : 𝕊)) := by
   apply analyticAt_id
 
 /-- `OnePoint.toComplex : 𝕊 → ℂ` is analytic except at `∞` -/
-theorem mAnalyticAt_toComplex {z : ℂ} : ContMDiffAt I I ⊤ (OnePoint.toComplex : 𝕊 → ℂ) z := by
+public theorem mAnalyticAt_toComplex {z : ℂ} :
+    ContMDiffAt I I ⊤ (OnePoint.toComplex : 𝕊 → ℂ) z := by
   rw [mAnalyticAt_iff_of_boundaryless]
   use continuousAt_toComplex
   simp only [toComplex_coe, extChartAt_coe, extChartAt_eq_refl, PartialEquiv.refl_coe,
@@ -403,14 +412,14 @@ theorem mAnalyticAt_toComplex {z : ℂ} : ContMDiffAt I I ⊤ (OnePoint.toComple
   apply analyticAt_id
 
 /-- `OnePoint.toComplex : 𝕊 → ℂ` is analytic except at `∞` -/
-theorem mAnalyticAt_toComplex' {z : 𝕊} (ne : z ≠ ∞) :
+public theorem mAnalyticAt_toComplex' {z : 𝕊} (ne : z ≠ ∞) :
     ContMDiffAt I I ⊤ (OnePoint.toComplex : 𝕊 → ℂ) z := by
   induction z using OnePoint.rec
   · simp only [ne_eq, not_true_eq_false] at ne
   · apply mAnalyticAt_toComplex
 
 /-- Inversion is analytic -/
-theorem mAnalytic_inv : ContMDiff I I ⊤ (fun z : 𝕊 ↦ z⁻¹) := by
+public theorem mAnalytic_inv : ContMDiff I I ⊤ (fun z : 𝕊 ↦ z⁻¹) := by
   rw [mAnalytic_iff_of_boundaryless]
   use continuous_inv
   intro z
@@ -434,13 +443,13 @@ theorem mAnalytic_inv : ContMDiff I I ⊤ (fun z : 𝕊 ↦ z⁻¹) := by
       simp only [Pi.inv_apply, id, inv_coe w0, toComplex_coe]
 
 /-- Given `f : ℂ → X`, fill in the value at `∞` to get `𝕊 → X` -/
-def fill {X : Type} (f : ℂ → X) (y : X) : 𝕊 → X := fun z ↦ z.rec y f
+public def fill {X : Type} (f : ℂ → X) (y : X) : 𝕊 → X := fun z ↦ z.rec y f
 
 /-- Lift `f : ℂ → ℂ` to `𝕊 → 𝕊` by filling in a value at `∞` -/
-def lift (f : ℂ → ℂ) (y : 𝕊) : 𝕊 → 𝕊 := fun z ↦ z.rec y (fun z ↦ f z)
+public def lift (f : ℂ → ℂ) (y : 𝕊) : 𝕊 → 𝕊 := fun z ↦ z.rec y (fun z ↦ f z)
 
 /-- Lift `f : X → ℂ → ℂ` to `X → 𝕊 → 𝕊` by filling in a value at `∞` -/
-def lift' (f : X → ℂ → ℂ) (y : 𝕊) : X → 𝕊 → 𝕊 := fun x z ↦ z.rec y (fun z ↦ f x z)
+public def lift' (f : X → ℂ → ℂ) (y : 𝕊) : X → 𝕊 → 𝕊 := fun x z ↦ z.rec y (fun z ↦ f x z)
 
 section Fill
 
@@ -449,14 +458,15 @@ variable {g : α → ℂ → ℂ}
 variable {y : 𝕊} {x : α} {z : ℂ}
 
 -- Values of `fill` and `lift` at `coe` and `∞`
-@[simp] lemma fill_coe {f : ℂ → α} {y : α} : fill f y z = f z := rfl
-@[simp] lemma fill_inf {f : ℂ → α} {y : α} : fill f y ∞ = y := rfl
-@[simp] lemma lift_coe : lift f y z = ↑(f z) := rfl
-@[simp] lemma lift_coe' : lift' g y x z = ↑(g x z) := rfl
-@[simp] lemma lift_inf : lift f y ∞ = y := rfl
-@[simp] lemma lift_inf' : lift' g y x ∞ = y := rfl
+@[simp] public lemma fill_coe {f : ℂ → α} {y : α} : fill f y z = f z := by rfl
+@[simp] public lemma fill_inf {f : ℂ → α} {y : α} : fill f y ∞ = y := by rfl
+@[simp] public lemma lift_coe : lift f y z = ↑(f z) := by rfl
+@[simp] public lemma lift_coe' : lift' g y x z = ↑(g x z) := by rfl
+@[simp] public lemma lift_inf : lift f y ∞ = y := by rfl
+@[simp] public lemma lift_inf' : lift' g y x ∞ = y := by rfl
 
-lemma toComplex_lift' {w : 𝕊} (ne : w ≠ ∞) : (lift' g y x w).toComplex = g x w.toComplex := by
+public lemma toComplex_lift' {w : 𝕊} (ne : w ≠ ∞) :
+    (lift' g y x w).toComplex = g x w.toComplex := by
   induction w using OnePoint.rec
   · simp only [ne_eq, not_true_eq_false] at ne
   · simp only [lift', rec_coe, toComplex_coe]
@@ -468,29 +478,29 @@ variable {g : X → ℂ → ℂ}
 variable {y : 𝕊} {x : X} {z : ℂ}
 
 /-- `lift` in terms of `fill` -/
-theorem lift_eq_fill : lift f y = fill (fun z ↦ (f z : 𝕊)) y := rfl
+public theorem lift_eq_fill : lift f y = fill (fun z ↦ (f z : 𝕊)) y := by rfl
 
 /-- `fill` is continuous at finite values -/
-theorem continuousAt_fill_coe {f : ℂ → X} {y : X} (fc : ContinuousAt f z) :
+public theorem continuousAt_fill_coe {f : ℂ → X} {y : X} (fc : ContinuousAt f z) :
     ContinuousAt (fill f y) z := by
   simp only [OnePoint.continuousAt_coe, Function.comp_def, fill_coe, fc]
 
 /-- `fill` is continuous at `∞` -/
-theorem continuousAt_fill_inf {f : ℂ → X} {y : X} (fi : Tendsto f (cobounded ℂ) (𝓝 y)) :
+public theorem continuousAt_fill_inf {f : ℂ → X} {y : X} (fi : Tendsto f (cobounded ℂ) (𝓝 y)) :
     ContinuousAt (fill f y) ∞ := by
   simp only [OnePoint.continuousAt_infty', Filter.coclosedCompact_eq_cocompact, ←
     Metric.cobounded_eq_cocompact, Function.comp_def, fill_coe, fill_inf, fi]
 
 /-- `fill` is continuous -/
-theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f)
+public theorem continuous_fill {f : ℂ → X} {y : X} (fc : Continuous f)
     (fi : Tendsto f (cobounded ℂ) (𝓝 y)) : Continuous (fill f y) := by
   rw [continuous_iff_continuousAt]; intro z; induction z using OnePoint.rec
   · exact continuousAt_fill_inf fi
   · exact continuousAt_fill_coe fc.continuousAt
 
 /-- `fill` is analytic at finite values -/
-theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : ContMDiffAt I I ⊤ f z) :
-    ContMDiffAt I I ⊤ (fill f y) z := by
+public theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
+    (fa : ContMDiffAt I I ⊤ f z) : ContMDiffAt I I ⊤ (fill f y) z := by
   have e : (fun x : 𝕊 ↦ f x.toComplex) =ᶠ[𝓝 ↑z] fill f y := by
     simp only [OnePoint.nhds_coe_eq, Filter.EventuallyEq, Filter.eventually_map, toComplex_coe,
       fill_coe, Filter.eventually_true]
@@ -499,7 +509,7 @@ theorem mAnalyticAt_fill_coe [IsManifold I ⊤ T] {f : ℂ → T} {y : T} (fa : 
   simp only [toComplex_coe]
 
 /-- `fill` is analytic at `∞` -/
-theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
+public theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
     (fa : ∀ᶠ z in cobounded ℂ, ContMDiffAt I I ⊤ f z) (fi : Tendsto f (cobounded ℂ) (𝓝 y)) :
     ContMDiffAt I I ⊤ (fill f y) ∞ := by
   rw [mAnalyticAt_iff_of_boundaryless]
@@ -617,14 +627,14 @@ theorem mAnalyticAt_lift_inf (fa : ∀ᶠ z in cobounded ℂ, AnalyticAt ℂ f z
   exact coe_tendsto_inf.comp fi
 
 /-- `lift` is analytic -/
-theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ) (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) :
-    ContMDiff I I ⊤ (lift f ∞) := by
+public theorem mAnalytic_lift (fa : AnalyticOnNhd ℂ f univ)
+    (fi : Tendsto f (cobounded ℂ) (cobounded ℂ)) : ContMDiff I I ⊤ (lift f ∞) := by
   intro z; induction z using OnePoint.rec
   · exact mAnalyticAt_lift_inf (.of_forall fun z ↦ fa z (mem_univ _)) fi
   · exact mAnalyticAt_lift_coe (fa _ (mem_univ _))
 
 /-- `lift'` is analytic (the parameterized version) -/
-theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOnNhd ℂ (uncurry f) univ)
+public theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOnNhd ℂ (uncurry f) univ)
     (fi : ∀ x, Tendsto (uncurry f) (𝓝 x ×ˢ cobounded ℂ) (cobounded ℂ)) :
     ContMDiff II I ⊤ (uncurry (lift' f ∞)) := by
   apply osgoodManifold (continuous_lift' fa.continuous fi)
@@ -637,7 +647,7 @@ theorem mAnalytic_lift' {f : ℂ → ℂ → ℂ} (fa : AnalyticOnNhd ℂ (uncur
       ((fi x).comp (tendsto_const_nhds.prodMk Filter.tendsto_id)) z
 
 /-- `𝕊` is path connected -/
-instance : PathConnectedSpace 𝕊 := by
+public instance : PathConnectedSpace 𝕊 := by
   constructor; use ∞
   have i1 : Joined ∞ ((1 : ℂ) : 𝕊) := by
     generalize hp : (fun t : unitInterval ↦ (((t : ℝ) : ℂ) : 𝕊)⁻¹) = p

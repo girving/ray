@@ -1,17 +1,23 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
+import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.Schwarz
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Ray.Analytic.Analytic
+import Ray.Hartogs.MaxLog
+import Ray.Hartogs.Osgood
+import Ray.Hartogs.Subharmonic
 import Ray.Misc.Bounds
 import Ray.Misc.Max
-import Ray.Hartogs.MaxLog
-import Ray.Misc.Multilinear
-import Ray.Hartogs.Osgood
 import Ray.Misc.Prod
-import Ray.Hartogs.Subharmonic
+import Ray.Misc.Multilinear
+import Ray.Misc.Prod
 import Ray.Misc.Topology
 
 /-!
@@ -46,7 +52,7 @@ open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open MeasureTheory.MeasureSpace (volume)
-open Metric (ball closedBall sphere isOpen_ball)
+open Metric (ball closedBall sphere isOpen_ball ball_subset_closedBall)
 open Prod (swap)
 open Set (univ)
 open scoped Real NNReal ENNReal Topology
@@ -243,11 +249,11 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
     refine Set.nonempty_of_mem
         (mem_interior.mpr ⟨ball c0 re, ?_, Metric.isOpen_ball, Metric.mem_ball_self (lt_min rp ep)⟩)
     rw [Set.subset_def]; intro z0 z0s; rw [Set.mem_iUnion]
-    have z0s' := esub (mem_open_closed z0s)
+    have z0s' := esub (ball_subset_closedBall z0s)
     rcases (isCompact_closedBall _ _).bddAbove_image (h.on1 z0s').continuousOn.norm with ⟨b, fb⟩
     simp only [mem_upperBounds, Set.forall_mem_image] at fb
     use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
-    refine ⟨mem_open_closed z0s, ?_⟩
+    refine ⟨ball_subset_closedBall z0s, ?_⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
     exact _root_.trans (fb z1r) (Nat.le_ceil _)
   rcases NonemptyInterior.nonempty_interior_of_iUnion_of_closed hc hU with ⟨b, bi⟩
@@ -613,7 +619,7 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
     refine ⟨?_, EMetric.isOpen_ball, EMetric.mem_ball_self sp⟩
     intro w1 w1s
     have p0 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (unevenSeries u w1) c0 := by
-      have w1c : w1 ∈ closedBall c1 r1 := mem_open_closed (sb w1s)
+      have w1c : w1 ∈ closedBall c1 r1 := ball_subset_closedBall (sb w1s)
       refine (Uneven.has_series u u.r1p (le_refl _) w1c).hasFPowerSeriesAt
     have p1 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (p.changeOrigin (g w1)).along0 c0 := by
       have wz : ↑‖((0 : ℂ), w1 - z1)‖₊ < r := by
@@ -633,8 +639,8 @@ theorem unevenTerm.analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : �
     AnalyticOnNhd ℂ (fun z1 ↦ unevenTerm u z1 n) (ball c1 r1) := by
   have e : ∀ z1, unevenTerm u z1 n =
       (cmmapApplyCmap ℂ (fun _ : Fin n ↦ ℂ) E fun _ ↦ 1) (unevenSeries u z1 n) := by
-    intro z1; simp [unevenTerm, ←unevenSeries_apply, cmmapApplyCmap, unevenSeries,
-      ContinuousLinearMap.coe_mk', LinearMap.coe_mk]  -- simp? fails to pretty print, here
+    intro z1
+    simp [unevenTerm, ← unevenSeries_apply, cmmapApplyCmap_apply, unevenSeries]
   simp_rw [e]
   exact ContinuousLinearMap.comp_analyticOnNhd _ (unevenSeries_analytic u n)
 
@@ -704,7 +710,7 @@ theorem unevenLog_nonuniform_bound [CompleteSpace E] (u : Uneven f c0 c1 r0 r1)
 theorem uneven_nonuniform_subharmonic [CompleteSpace E] [SecondCountableTopology E]
     (u : Uneven f c0 c1 r0 r1) (n : ℕ) :
     SubharmonicOn (unevenLog u n) (ball c1 r1) := by
-  refine SubharmonicOn.constMul ?_ (by bound)
+  refine SubharmonicOn.const_mul ?_ (by bound)
   apply AnalyticOnNhd.maxLog_norm_subharmonicOn _ (-1)
   rw [Complex.analyticOnNhd_iff_differentiableOn Metric.isOpen_ball]
   apply DifferentiableOn.const_smul
@@ -804,7 +810,7 @@ theorem uneven_bounded [CompleteSpace E] [SecondCountableTopology E]
 end Hartogs
 
 /-- Hartogs's theorem on `ℂ × ℂ`: separately analytic functions are jointly analytic -/
-theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+public theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
     [SecondCountableTopology E] {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} (so : IsOpen s)
     (fa0 : ∀ c0 c1, (c0, c1) ∈ s → AnalyticAt ℂ (fun z0 ↦ f (z0, c1)) c0)
     (fa1 : ∀ c0 c1, (c0, c1) ∈ s → AnalyticAt ℂ (fun z1 ↦ f (c0, z1)) c1) : AnalyticOnNhd ℂ f s := by
@@ -831,7 +837,7 @@ theorem Pair.hartogs {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [Comp
         (Metric.closedBall_subset_closedBall (_root_.trans vr.le r1t))
 
 /-- Hartog's theorem near a point: local separate analyticity implies `AnalyticAt` -/
-theorem Pair.hartogs_at {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+public theorem Pair.hartogs_at {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
     [SecondCountableTopology E] {f : ℂ × ℂ → E} {c : ℂ × ℂ}
     (fa0 : ∀ᶠ p : ℂ × ℂ in 𝓝 c, AnalyticAt ℂ (fun z0 ↦ f (z0, p.2)) p.1)
     (fa1 : ∀ᶠ p : ℂ × ℂ in 𝓝 c, AnalyticAt ℂ (fun z1 ↦ f (p.1, z1)) p.2) : AnalyticAt ℂ f c := by

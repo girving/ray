@@ -1,13 +1,21 @@
+module
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Analysis.Calculus.DSlope
+public import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+public import Ray.Analytic.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.Analytic.Constructions
-import Mathlib.Analysis.Analytic.Linear
-import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Analysis.Calculus.Deriv.Mul
+import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
+import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
+import Mathlib.Tactic.Cases
 import Mathlib.Topology.Basic
 import Ray.Misc.Bounds
 import Ray.Misc.Multilinear
@@ -30,8 +38,8 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
 /-- Drop 'Within' from `AnalyticWithinAt` if we have a neighborhood -/
-lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E} (fa : AnalyticWithinAt 𝕜 f s x)
-    (xs : s ∈ 𝓝 x) : AnalyticAt 𝕜 f x := by
+public lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E}
+    (fa : AnalyticWithinAt 𝕜 f s x) (xs : s ∈ 𝓝 x) : AnalyticAt 𝕜 f x := by
   obtain ⟨p, r, fp⟩ := fa
   obtain ⟨e, e0, es⟩ := Metric.mem_nhds_iff.mp xs
   refine ⟨p, min r (.ofReal e),
@@ -42,22 +50,22 @@ lemma AnalyticWithinAt.analyticAt {f : E → F} {s : Set E} {x : E} (fa : Analyt
   exact fp.hasSum (.inr (es (by simp [ye]))) (by simp [yr])
 
 /-- Extract `AnalyticAt` from `ContDiffOn 𝕜 ω` if we have a neighborhood -/
-lemma ContDiffOn.analyticAt {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) {x : E}
+public lemma ContDiffOn.analyticAt {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) {x : E}
     (xs : s ∈ 𝓝 x) : AnalyticAt 𝕜 f x :=
   (fa x (mem_of_mem_nhds xs)).analyticWithinAt.analyticAt xs
 
 /-- Extract `AnalyticOnNhd` from `ContDiffOn 𝕜 ω` if we're open -/
-lemma ContDiffOn.analyticOnNhd {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s) (os : IsOpen s) :
-    AnalyticOnNhd 𝕜 f s :=
+public lemma ContDiffOn.analyticOnNhd {f : E → F} {s : Set E} (fa : ContDiffOn 𝕜 ω f s)
+    (os : IsOpen s) : AnalyticOnNhd 𝕜 f s :=
   fun x xs ↦ (fa x xs).analyticWithinAt.analyticAt (os.mem_nhds xs)
 
-lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
+public lemma AnalyticAt.div_const {f : E → 𝕜} {c : E} (fa : AnalyticAt 𝕜 f c) {w : 𝕜} :
     AnalyticAt 𝕜 (fun z ↦ f z / w) c := by
   by_cases w0 : w = 0
   · simp only [w0, div_zero, analyticAt_const]
   · exact fa.div analyticAt_const w0
 
-lemma AnalyticAt.dslope {f : 𝕜 → E} {c x : 𝕜} (fa : AnalyticAt 𝕜 f x) :
+public lemma AnalyticAt.dslope {f : 𝕜 → E} {c x : 𝕜} (fa : AnalyticAt 𝕜 f x) :
     AnalyticAt 𝕜 (dslope f c) x := by
   by_cases e : x = c
   · obtain ⟨p,fp⟩ := fa
@@ -70,21 +78,15 @@ lemma AnalyticAt.dslope {f : 𝕜 → E} {c x : 𝕜} (fa : AnalyticAt 𝕜 f x)
       exact fa.sub analyticAt_const
 
 /-- Power series coefficients in terms of iterated derivatives -/
-lemma HasFPowerSeriesAt.coeff_eq_iteratedDeriv_div [CompleteSpace 𝕜] [CharZero 𝕜] {f : 𝕜 → 𝕜}
+public lemma HasFPowerSeriesAt.coeff_eq_iteratedDeriv_div [CompleteSpace 𝕜] [CharZero 𝕜] {f : 𝕜 → 𝕜}
     {p : FormalMultilinearSeries 𝕜 𝕜 𝕜} {c : 𝕜} (fp : HasFPowerSeriesAt f p c) (n : ℕ) :
     p.coeff n = iteratedDeriv n f c / n.factorial := by
   simp only [fp.eq_formalMultilinearSeries (AnalyticAt.hasFPowerSeriesAt ⟨_, fp⟩),
     FormalMultilinearSeries.coeff_ofScalars]
 
-/-- The order of a zero at a point.
-    We define this in terms of the function alone so that expressions involving order can
-    depend only on `f`. -/
-def orderAt (f : 𝕜 → E) (c : 𝕜) : ℕ :=
-  if p : AnalyticAt 𝕜 f c then (choose p).order else 0
-
 /-- `orderAt` is unique, since power series are -/
-theorem HasFPowerSeriesAt.orderAt_unique {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E} {c : 𝕜}
-    (fp : HasFPowerSeriesAt f p c) : orderAt f c = p.order := by
+public theorem HasFPowerSeriesAt.orderAt_unique {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E}
+    {c : 𝕜} (fp : HasFPowerSeriesAt f p c) : orderAt f c = p.order := by
   have fa : AnalyticAt 𝕜 f c := ⟨p, fp⟩
   simp only [orderAt, fa, dif_pos]
   have s := choose_spec fa
@@ -93,7 +95,7 @@ theorem HasFPowerSeriesAt.orderAt_unique {f : 𝕜 → E} {p : FormalMultilinear
   rw [fp.eq_formalMultilinearSeries s]
 
 /-- `orderAt` is zero for nonzeros -/
-theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f c = 0 := by
+public theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f c = 0 := by
   by_cases fp : AnalyticAt 𝕜 f c
   · rcases fp with ⟨p, fp⟩; rw [fp.orderAt_unique]; rw [← fp.coeff_zero 1] at f0
     rw [FormalMultilinearSeries.order_eq_zero_iff']; right
@@ -102,7 +104,7 @@ theorem orderAt_eq_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : orderAt f
   · simp [orderAt, fp]
 
 /-- `orderAt = 0` means either `f = 0` or `f c ≠ 0` -/
-theorem orderAt_eq_zero_iff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) :
+public theorem orderAt_eq_zero_iff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) :
     orderAt f c = 0 ↔ f =ᶠ[𝓝 c] 0 ∨ f c ≠ 0 := by
   rcases fa with ⟨p, fp⟩
   simp only [fp.orderAt_unique, ←fp.coeff_zero fun _ ↦ 0,
@@ -112,7 +114,7 @@ theorem orderAt_eq_zero_iff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f 
   apply or_congr_left'; intro _; exact fp.locally_zero_iff.symm
 
 /-- `orderAt = 1 → deriv ≠ 0` -/
-theorem deriv_ne_zero_of_orderAt_eq_one {f : 𝕜 → E} {c : 𝕜} (o : orderAt f c = 1) :
+public theorem deriv_ne_zero_of_orderAt_eq_one {f : 𝕜 → E} {c : 𝕜} (o : orderAt f c = 1) :
     deriv f c ≠ 0 := by
   by_cases fa : AnalyticAt 𝕜 f c
   · rcases fa with ⟨p, fp⟩
@@ -124,16 +126,13 @@ theorem deriv_ne_zero_of_orderAt_eq_one {f : 𝕜 → E} {c : 𝕜} (o : orderAt
       FormalMultilinearSeries.coeff_eq_zero, Ne]
   · simp only [orderAt, fa] at o; rw [dif_neg] at o; norm_num at o; exact not_false
 
-/-- The leading nonzero coefficient of `f`'s power series -/
-def leadingCoeff (f : 𝕜 → E) (c : 𝕜) : E :=
-  ((Function.swap dslope c)^[orderAt f c]) f c
-
 /-- `leadingCoeff` for nonzeros -/
-theorem leadingCoeff_of_ne_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) : leadingCoeff f c = f c := by
+public theorem leadingCoeff_of_ne_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) :
+    leadingCoeff f c = f c := by
   simp only [leadingCoeff, orderAt_eq_zero f0, Function.iterate_zero_apply]
 
 /-- `f` is approximated by its leading monomial -/
-theorem AnalyticAt.leading_approx {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) :
+public theorem AnalyticAt.leading_approx {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) :
     (fun z ↦ f z - (z - c) ^ orderAt f c • leadingCoeff f c) =o[𝓝 c] fun z ↦
       (z - c) ^ orderAt f c := by
   rcases fa with ⟨p, fp⟩
@@ -158,7 +157,7 @@ theorem AnalyticAt.leading_approx {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt �
     _ = k * ‖(y - c) ^ d‖ := by rw [mul_comm]
 
 /-- `orderAt > 0` means `f` has a zero -/
-theorem AnalyticAt.zero_of_order_pos {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
+public theorem AnalyticAt.zero_of_order_pos {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
     (p : 0 < orderAt f c) : f c = 0 := by
   have a := (Asymptotics.isBigOWith_iff.mp (fa.leading_approx.forall_isBigOWith zero_lt_one)).self_of_nhds
   simp only [(pow_eq_zero_iff (Nat.pos_iff_ne_zero.mp p)).mpr, sub_self, zero_smul, sub_zero,
@@ -272,7 +271,7 @@ theorem FormalMultilinearSeries.ne_zero_iff_coeff_ne_zero (p : FormalMultilinear
   · intro h; contrapose h; exact coeff_eq_zero.mpr h
 
 /-- The order of `(z - n)^n • f z` is `n` greater than `f`'s -/
-theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
+public theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
     (fnz : ∃ᶠ z in 𝓝 c, f z ≠ 0) (n : ℕ) :
     orderAt (fun z ↦ (z - c) ^ n • f z) c = n + orderAt f c := by
   rcases fa with ⟨p, fp⟩
@@ -298,7 +297,7 @@ theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa : Analyt
     specialize mp a (le_refl _); rwa [FormalMultilinearSeries.coeff_eq_zero]
 
 /-- The leading coefficient of `(z - n)^n • f z` is the same as `f`'s -/
-theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
+public theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
     (fnz : ∃ᶠ z in 𝓝 c, f z ≠ 0) (n : ℕ) :
     leadingCoeff (fun z ↦ (z - c) ^ n • f z) c = leadingCoeff f c := by
   simp [leadingCoeff, fa.monomial_mul_orderAt fnz n]; generalize orderAt f c = a
@@ -320,7 +319,7 @@ theorem AnalyticAt.monomial_mul_leadingCoeff {f : 𝕜 → E} {c : 𝕜} (fa : A
     rw [e, h]
 
 /-- `deriv` in the second variable is analytic -/
-theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E × 𝕜}
+public theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} {c : E × 𝕜}
     (fa : AnalyticAt 𝕜 (uncurry f) c) :
     AnalyticAt 𝕜 (fun x : E × 𝕜 ↦ _root_.deriv (f x.1) x.2) c := by
   set p : (E × 𝕜 →L[𝕜] 𝕜) →L[𝕜] 𝕜 := ContinuousLinearMap.apply 𝕜 𝕜 (0, 1)
@@ -356,7 +355,7 @@ theorem analyticAt_iff_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
   · intro ⟨p, fp⟩; exact ⟨_, fp.const_smul⟩
 
 /-- Nonzero scaling does not change `orderAt` -/
-theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
+public theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
     orderAt (fun z ↦ a • f z) c = orderAt f c := by
   by_cases fa : AnalyticAt 𝕜 f c
   · rcases fa with ⟨p, fp⟩
@@ -379,7 +378,7 @@ theorem leadingCoeff.zero {c : 𝕜} : leadingCoeff (fun _ : 𝕜 ↦ (0 : E)) c
   split_ifs; rfl; rfl
 
 /-- `leadingCoeff` has linear scaling -/
-theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :
+public theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :
     leadingCoeff (fun z ↦ a • f z) c = a • leadingCoeff f c := by
   by_cases a0 : a = 0; simp only [a0, zero_smul, leadingCoeff.zero]
   simp only [leadingCoeff, orderAt_const_smul a0]
@@ -396,8 +395,8 @@ theorem leadingCoeff_const_smul {f : 𝕜 → E} {c a : 𝕜} :
   simp only [e, Pi.smul_apply]
 
 /-- `leadingCoeff` is nonzero for nonzero order -/
-theorem leadingCoeff_ne_zero {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c) (o0 : orderAt f c ≠ 0) :
-    leadingCoeff f c ≠ 0 := by
+public theorem leadingCoeff_ne_zero {f : 𝕜 → E} {c : 𝕜} (fa : AnalyticAt 𝕜 f c)
+    (o0 : orderAt f c ≠ 0) : leadingCoeff f c ≠ 0 := by
   rcases fa with ⟨p, fp⟩
   simp only [fp.orderAt_unique, leadingCoeff] at o0 ⊢
   exact fp.iterate_dslope_fslope_ne_zero (FormalMultilinearSeries.ne_zero_of_order_ne_zero o0)

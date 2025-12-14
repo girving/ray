@@ -1,3 +1,6 @@
+module
+public import Mathlib.Topology.Algebra.InfiniteSum.Defs
+public import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Algebra.Order.Group.CompleteLattice
 import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 import Ray.Misc.Bound
@@ -70,7 +73,7 @@ theorem Real.hasSum_ciSup [Nonempty ι] {f : ℕ → ι → ℝ} {a : ℕ → �
   simpa only [sub_add_cancel] using s.add (sum 0)
 
 /- Variant where we know the limit of the sums -/
-theorem Real.hasSum_ciSup_of_tendsto [Nonempty ι] {f : ℕ → ι → ℝ} {a : ℕ → ℝ} {b : ℝ}
+public theorem Real.hasSum_ciSup_of_tendsto [Nonempty ι] {f : ℕ → ι → ℝ} {a : ℕ → ℝ} {b : ℝ}
     (sum : ∀ n, HasSum (f n) (a n)) (mono : Monotone f)
     (bound_f : ∀ i, BddAbove (range (fun n ↦ f n i))) (bound_a : BddAbove (range a))
     (tendsto : Tendsto a atTop (𝓝 b)) : HasSum (fun i ↦ ⨆ n, f n i) b := by

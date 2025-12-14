@@ -1,4 +1,8 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Connected
+import Ray.Misc.Cobounded
 
 /-!
 ## The Mandelbrot set and its complement are connected
@@ -16,23 +20,21 @@ open Set
 open scoped Topology Real
 noncomputable section
 
-local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
-
 /-- The Mandelbrot set: all points that do not escape to `∞` under `z ↦ z^2 + c` -/
-def mandelbrot : Set ℂ :=
+@[expose] public def mandelbrot : Set ℂ :=
   {c | ¬Tendsto (fun n ↦ ‖(fun z ↦ z^2 + c)^[n] c‖) atTop atTop}
 
 /-- The Mandelbrot set is the `d = 2` Multibrot set -/
-theorem mandelbrot_eq_multibrot : mandelbrot = multibrot 2 := by
+public theorem mandelbrot_eq_multibrot : mandelbrot = multibrot 2 := by
   ext c
   simp only [mandelbrot, mem_setOf_eq, multibrot, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
     tendsto_cobounded_iff_norm_tendsto_atTop]
   rfl
 
 /-- The Mandelbrot set is connected -/
-theorem isConnected_mandelbrot : IsConnected mandelbrot := by
+public theorem isConnected_mandelbrot : IsConnected mandelbrot := by
   rw [mandelbrot_eq_multibrot]; exact isConnected_multibrot 2
 
 /-- The complement of the Mandelbrot set is connected -/
-theorem isConnected_compl_mandelbrot : IsConnected mandelbrotᶜ := by
+public theorem isConnected_compl_mandelbrot : IsConnected mandelbrotᶜ := by
   rw [mandelbrot_eq_multibrot]; exact isConnected_compl_multibrot 2

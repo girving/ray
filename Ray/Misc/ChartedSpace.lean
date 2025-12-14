@@ -1,3 +1,4 @@
+module
 import Mathlib.Geometry.Manifold.ChartedSpace
 
 /-!

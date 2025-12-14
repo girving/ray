@@ -1,8 +1,14 @@
-import Mathlib.Analysis.Normed.Field.Basic
+module
+public import Mathlib.Analysis.Normed.Field.Basic
+public import Mathlib.Analysis.Normed.Group.Bounded
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Order.Filter.Basic
+public import Mathlib.Topology.Bornology.Basic
 import Mathlib.Analysis.Normed.Group.Basic
 import Mathlib.Order.Directed
 import Mathlib.Order.Filter.Basic
 import Mathlib.Topology.MetricSpace.Basic
+import Ray.Misc.Bound
 import Ray.Misc.Topology
 
 /-!
@@ -20,7 +26,7 @@ variable {X : Type} [NormedAddCommGroup X]
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
 /-- `Filter.hasBasis_cobounded_norm` but with `r < ‖x‖` instead of `r ≤ ‖x‖` -/
-lemma hasBasis_cobounded_norm_lt :
+public lemma hasBasis_cobounded_norm_lt :
     (cobounded X).HasBasis (fun _ ↦ True) (fun r ↦ {x | r < ‖x‖}) := by
   have b := Filter.hasBasis_cobounded_norm (E := X)
   simp only [Filter.hasBasis_iff, setOf_subset, true_and] at b ⊢
@@ -30,7 +36,7 @@ lemma hasBasis_cobounded_norm_lt :
   all_goals exact fun ⟨r, h⟩ ↦ ⟨r + 1, fun x lt ↦ h x (by linarith)⟩
 
 /-- Characterization of `→ cobounded` convergence -/
-theorem tendsto_cobounded {f : α → X} {l : Filter α} :
+public theorem tendsto_cobounded {f : α → X} {l : Filter α} :
     Tendsto f l (cobounded X) ↔ ∀ r, ∀ᶠ x in l, r < ‖f x‖ := by
   rw [hasBasis_cobounded_norm_lt.tendsto_right_iff]
   simp only [true_imp_iff, mem_setOf]
@@ -42,7 +48,7 @@ theorem tendsto_atTop_cobounded {f : ℕ → X} :
     Filter.HasBasis.tendsto_iff (f := f) Filter.atTop_basis hasBasis_cobounded_norm_lt
 
 /-- `cobounded` convergence in terms of norm convergence -/
-theorem tendsto_cobounded_iff_norm_tendsto_atTop {f : Filter α} {g : α → X} :
+public theorem tendsto_cobounded_iff_norm_tendsto_atTop {f : Filter α} {g : α → X} :
     Tendsto (fun x ↦ g x) f (cobounded X) ↔ Tendsto (fun x ↦ ‖g x‖) f atTop := by
   rw [Filter.atTop_basis_Ioi.tendsto_right_iff]
   simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, true_imp_iff, mem_setOf, mem_Ioi]
@@ -52,11 +58,11 @@ theorem mem_cobounded_iff {s : Set X} : s ∈ cobounded X ↔ ∃ r, {x | r < �
   simp only [Filter.hasBasis_iff.mp hasBasis_cobounded_norm_lt s, true_and]
 
 /-- Eventually `cobounded` the norm is as large as desired -/
-theorem eventually_cobounded (r : ℝ) : ∀ᶠ x : X in cobounded X, r < ‖x‖ := by
+public theorem eventually_cobounded (r : ℝ) : ∀ᶠ x : X in cobounded X, r < ‖x‖ := by
   rw [Filter.eventually_iff, mem_cobounded_iff]; use r
 
 /-- Eventually `cobounded` is the same as eventually `𝓝[≠] 0` for `x⁻¹` -/
-theorem eventually_cobounded_iff_nhds_zero {p : 𝕜 → Prop} :
+public theorem eventually_cobounded_iff_nhds_zero {p : 𝕜 → Prop} :
     (∀ᶠ x in cobounded 𝕜, p x) ↔ ∀ᶠ x in 𝓝[≠] 0, p x⁻¹ := by
   rw [hasBasis_cobounded_norm_lt.eventually_iff, Metric.nhdsWithin_basis_ball.eventually_iff]
   constructor
@@ -77,7 +83,7 @@ theorem eventually_cobounded_iff_nhds_zero {p : 𝕜 → Prop} :
     exact ⟨m, x0⟩
 
 /-- Convergence `cobounded` is the same as convergence at `0` for the reciprocal function -/
-theorem tendsto_cobounded_iff_tendsto_nhds_zero {l : Filter α}
+public theorem tendsto_cobounded_iff_tendsto_nhds_zero {l : Filter α}
     {f : 𝕜 → α} : Tendsto f (cobounded 𝕜) l ↔ Tendsto (fun x ↦ f x⁻¹) (𝓝[{0}ᶜ] 0) l := by
   rw [Filter.HasBasis.tendsto_left_iff hasBasis_cobounded_norm_lt,
     Metric.nhdsWithin_basis_ball.tendsto_left_iff]
@@ -100,17 +106,19 @@ theorem tendsto_cobounded_iff_tendsto_nhds_zero {l : Filter α}
     simp [inv_lt_comm₀ np rp, xs, norm_pos_iff.mp np]
 
 /-- `⁻¹` tendsto `cobounded` near `0` -/
-theorem inv_tendsto_cobounded : Tendsto (fun x : 𝕜 ↦ x⁻¹) (𝓝[{(0 : 𝕜)}ᶜ] 0) (cobounded 𝕜) := by
+public theorem inv_tendsto_cobounded :
+    Tendsto (fun x : 𝕜 ↦ x⁻¹) (𝓝[{(0 : 𝕜)}ᶜ] 0) (cobounded 𝕜) := by
   rw [← tendsto_cobounded_iff_tendsto_nhds_zero (f := fun x : 𝕜 ↦ x)]
   exact Filter.tendsto_id
 
 /-- `⁻¹` tendsto `0` near `cobounded` -/
-theorem inv_tendsto_cobounded' : Tendsto (fun x : 𝕜 ↦ x⁻¹) (cobounded 𝕜) (𝓝 0) := by
+public theorem inv_tendsto_cobounded' :
+    Tendsto (fun x : 𝕜 ↦ x⁻¹) (cobounded 𝕜) (𝓝 0) := by
   simp only [tendsto_cobounded_iff_tendsto_nhds_zero, inv_inv]
   exact Filter.tendsto_id.mono_left nhdsWithin_le_nhds
 
 /-- We either tend to infinity or have a cluster point -/
-lemma tendsto_cobounded_or_mapClusterPt [ProperSpace X] (f : α → X) (l : Filter α) :
+public lemma tendsto_cobounded_or_mapClusterPt [ProperSpace X] (f : α → X) (l : Filter α) :
     Tendsto f l (cobounded X) ∨ ∃ z, MapClusterPt z l f := by
   by_cases t : Tendsto f l (cobounded X)
   · exact .inl t
@@ -122,7 +130,7 @@ lemma tendsto_cobounded_or_mapClusterPt [ProperSpace X] (f : α → X) (l : Filt
     obtain ⟨z,m,c⟩ := t
     exact ⟨z,c⟩
 
-lemma eventually_cobounded_lt_norm (r : ℝ) : ∀ᶠ x in cobounded X, r < ‖x‖ := by
+public lemma eventually_cobounded_lt_norm (r : ℝ) : ∀ᶠ x in cobounded X, r < ‖x‖ := by
   filter_upwards [eventually_cobounded_le_norm (r + 1)]
   intro x le
   linarith

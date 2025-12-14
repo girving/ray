@@ -1,7 +1,14 @@
+module
+public import Mathlib.Analysis.Normed.Group.Basic
+public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Data.Complex.Basic
+import Mathlib.Analysis.Convex.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Ray.Misc.Bound
 import Ray.Misc.Bounds
 
 /-!
@@ -13,7 +20,7 @@ open Set
 variable {z w : ℂ}
 
 /-- `Complex.pow` and `pow` interact nicely -/
-lemma pow_mul_nat {z w : ℂ} {n : ℕ} : (z ^ w) ^ n = z ^ (w * n) := by
+public lemma pow_mul_nat {z w : ℂ} {n : ℕ} : (z ^ w) ^ n = z ^ (w * n) := by
   by_cases z0 : z = 0
   · rw [z0]
     by_cases w0 : w = 0; · rw [w0]; simp
@@ -26,7 +33,7 @@ lemma pow_mul_nat {z w : ℂ} {n : ℕ} : (z ^ w) ^ n = z ^ (w * n) := by
   ring_nf
 
 /-- Bound `cpow` in terms of `rpow` -/
-lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : ‖z‖ < 1) (a0 : a ≤ 0) :
+public lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : ‖z‖ < 1) (a0 : a ≤ 0) :
     ‖(1 - z) ^ (a : ℂ) - 1‖ ≤ (1 - ‖z‖) ^ a - 1 := by
   by_cases z0 : z = 0
   · simp [z0]
@@ -87,7 +94,7 @@ lemma Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : ‖z‖ 
     bound
 
 /-- Bound `cpow` in terms of `rpow` -/
-lemma Complex.norm_one_add_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : ‖z‖ < 1) (a0 : a ≤ 0) :
+public lemma Complex.norm_one_add_cpow_sub_one_le_rpow_sub_one {a : ℝ} (z1 : ‖z‖ < 1) (a0 : a ≤ 0) :
     ‖(1 + z) ^ (a : ℂ) - 1‖ ≤ (1 - ‖z‖) ^ a - 1 := by
   simpa using Complex.norm_one_sub_cpow_sub_one_le_rpow_sub_one (z := -z) (by simpa) a0
 
@@ -115,8 +122,8 @@ lemma Real.convexOn_rpow_of_neg {p : ℝ} (p0 : p ≤ 0) :
   · apply convex_Ioi
 
 /-- Bound `(1 - x) ^ -a - 1` linearly, optimally -/
-lemma Real.one_sub_rpow_neg_sub_one_le_linear {x y a : ℝ} (x0 : 0 ≤ x) (xy : x ≤ y) (y1 : y < 1)
-    (a0 : a ≤ 0) : (1 - x) ^ a - 1 ≤ ((1 - y) ^ a - 1) / y * x := by
+public lemma Real.one_sub_rpow_neg_sub_one_le_linear {x y a : ℝ} (x0 : 0 ≤ x) (xy : x ≤ y)
+    (y1 : y < 1) (a0 : a ≤ 0) : (1 - x) ^ a - 1 ≤ ((1 - y) ^ a - 1) / y * x := by
   by_cases xz : x = 0
   · simp [xz]
   · replace x0 : 0 < x := (Ne.symm xz).lt_of_le x0

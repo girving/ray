@@ -1,4 +1,11 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Iterates
+import Ray.Dynamics.Multibrot.Specific
+import Ray.Dynamics.Potential
 
 /-!
 ## Effective bounds on the Multibrot `potential` function
@@ -109,7 +116,7 @@ lemma tendsto_log_neg_log_potential (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z�
     neg_mul, ← div_eq_inv_mul, Real.log_div ln0.ne' dn0, Real.log_pow, f] using t
 
 /-- `log (-log potential)` inherits the `iter_approx` bound by taking limits -/
-lemma log_neg_log_potential_approx (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public lemma log_neg_log_potential_approx (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     |log (-log ((superF d).potential c z)) - log (log (‖z‖))| ≤ iter_error d c z := by
   apply le_of_forall_pos_lt_add; intro e ep
   rcases (Metric.tendsto_nhds.mp (tendsto_log_neg_log_potential d z3 cz) e ep).exists with ⟨n,t⟩
@@ -129,12 +136,6 @@ lemma log_neg_log_potential_approx (d : ℕ) [Fact (2 ≤ d)] (z3 : 3 ≤ ‖z�
 
 This undoes the `log (log (abs z))` from `iter_approx`.
 -/
-
-/-- We will use this function below to produce bounds on `s.potential` approximates -/
-def ene (x : ℝ) : ℝ := exp (-exp x)
-
-/-- The (negated) derivative of `ene` -/
-def dene (x : ℝ) : ℝ := exp (x - exp x)
 
 /-- `d ene / dx = dene` -/
 lemma hasDerivAt_ene (x : ℝ) : HasDerivAt ene (-dene x) x := by
@@ -174,10 +175,6 @@ lemma dene_eq {z : ℝ} (z1 : 1 < z) (k : ℝ) :
 /-!
 ## Effective bounds on `potential`
 -/
-
-/-- Error term in the `potential` approximate -/
-def potential_error (d : ℕ) (c z : ℂ) : ℝ :=
-  dene (log (log ‖z‖) - iter_error d c z) * iter_error d c z
 
 /-- Generic `potential_error` bound for any `b ≤ abs z` lower bound -/
 lemma potential_error_le (d : ℕ) [Fact (2 ≤ d)] {b : ℝ} {c z : ℂ}
@@ -230,7 +227,7 @@ lemma potential_error_le' (d : ℕ) [Fact (2 ≤ d)] (i j b : ℝ) {c z : ℂ}
     exact le_trans bj bz
 
 /-- `potential_error` bound for `4 ≤ abs z` -/
-lemma potential_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ}
+public lemma potential_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ}
     (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     potential_error d c z ≤ 0.8095 / ‖z‖ ^ (1.864 : ℝ) := by
   apply potential_error_le' d _ (j := 0.146) (b := 4) (by norm_num) z4 cz (by norm_num)
@@ -262,7 +259,7 @@ lemma iter_error_le_log_log_abs (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 �
   refine le_trans (by norm_num) (mul_le_mul z4 hl (by positivity) (by positivity))
 
 /-- `s.potential ≈ 1/abs z` -/
-theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     |(superF d).potential c z - 1 / ‖z‖| ≤ potential_error d c z := by
   set s := superF d
   have z3 : 3 ≤ ‖z‖ := le_trans (by norm_num) z4

@@ -1,11 +1,17 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Normed.Group.Basic
+public import Mathlib.Analysis.Normed.Module.Basic
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Ray.Misc.Annuli
+public import Ray.Misc.Measure
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
-import Ray.Misc.Annuli
 import Ray.Misc.Circle
 import Ray.Misc.Complex
-import Ray.Misc.Measure
 import Ray.Misc.Prod
 
 /-!
@@ -104,7 +110,8 @@ theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
     ext z
     rw [mem_image]
     constructor
-    · intro gp; rcases gp with ⟨⟨s, t⟩, ss, tz⟩
+    · intro gp
+      rcases gp with ⟨⟨s, t⟩, ss, tz⟩
       simp only at tz
       simp only [square, prodMk_mem_set_prod_eq, mem_Ioc] at ss
       rw [← tz]
@@ -200,7 +207,7 @@ theorem measurable_symm_equiv_inverse {z : ℂ} :
   · simp only [Complex.equivRealProdCLM_symm_apply_im]
 
 /-- Integration over a complex annulus using polar coordinates -/
-theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+public theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     {f : ℂ → E} {c : ℂ} {r0 r1 : ℝ} (fc : ContinuousOn f (annulus_cc c r0 r1)) (r0p : 0 ≤ r0) :
     ∫ z in annulus_oc c r0 r1, f z =
       ∫ s in Ioc r0 r1, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
@@ -238,7 +245,7 @@ theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Co
   exact fi.mono_set (prod_mono Ioc_subset_Icc_self Ioc_subset_Icc_self)
 
 /-- Integration over a complex ball using polar coordinates -/
-theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+public theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     {f : ℂ → E} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (closedBall c r)) :
     ∫ z in closedBall c r, f z =
       ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) := by
@@ -250,7 +257,7 @@ theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] [Compl
   · rfl
 
 /-- The volume of the complex closed ball is `π r^2` -/
-theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
+public theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
     volume.real (closedBall c r) = π * r ^ 2 := by
   have c : ContinuousOn (fun _ : ℂ ↦ (1 : ℝ)) (closedBall c r) := continuousOn_const
   have f := fubini_ball c; clear c
@@ -262,7 +269,8 @@ theorem Complex.volume_closedBall' {c : ℂ} {r : ℝ} (rp : 0 ≤ r) :
   exact f
 
 /-- `closedBall` with positive radius has positive, nonzero volume -/
-theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (closedBall c r) where
+public theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) :
+    NiceVolume (closedBall c r) where
   measurable := measurableSet_closedBall
   finite := by
     simp only [Complex.volume_closedBall]
@@ -276,7 +284,8 @@ theorem NiceVolume.closedBall (c : ℂ) {r : ℝ} (rp : 0 < r) : NiceVolume (clo
     bound
 
 /-- `closedBall` with positive radius has positive volume near each point -/
-theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) : LocalVolumeSet (closedBall c r) := by
+public theorem LocalVolume.closedBall {c : ℂ} {r : ℝ} (rp : r > 0) :
+    LocalVolumeSet (closedBall c r) := by
   apply LocalVolume.closure_interior
   · intro x r rp
     simp only [Complex.volume_ball, gt_iff_lt, CanonicallyOrderedAdd.mul_pos, ENNReal.coe_pos,

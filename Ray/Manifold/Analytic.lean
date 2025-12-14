@@ -1,6 +1,11 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+public import Mathlib.Geometry.Manifold.IsManifold.Basic
+public import Mathlib.Topology.UniformSpace.Cauchy
+public import Ray.Manifold.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Constructions
-import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Data.Complex.Basic
@@ -43,13 +48,14 @@ theorem mAnalyticAt_iff {f : M → N} {x : M} [CompleteSpace F] :
   rw [contMDiffAt_iff, contDiffWithinAt_omega_iff_analyticWithinAt]
 
 /-- Functions are `ContMDiffAt` iff they are continuous and analytic in charts -/
-theorem mAnalyticAt_iff_of_boundaryless [I.Boundaryless] [CompleteSpace F] {f : M → N} {x : M} :
+public theorem mAnalyticAt_iff_of_boundaryless [I.Boundaryless] [CompleteSpace F] {f : M → N}
+    {x : M} :
     ContMDiffAt I J ω f x ↔ ContinuousAt f x ∧
       AnalyticAt 𝕜 (extChartAt J (f x) ∘ f ∘ (extChartAt I x).symm) (extChartAt I x x) := by
   simp only [mAnalyticAt_iff, I.range_eq_univ, analyticWithinAt_univ]
 
 /-- Functions are `ContMDiff` iff they are continuous and analytic in charts everywhere -/
-theorem mAnalytic_iff {f : M → N} [CompleteSpace F] [IsManifold I ω M] [IsManifold J ω N] :
+public theorem mAnalytic_iff {f : M → N} [CompleteSpace F] [IsManifold I ω M] [IsManifold J ω N] :
     ContMDiff I J ω f ↔ Continuous f ∧
       ∀ x : M, AnalyticWithinAt 𝕜 (extChartAt J (f x) ∘ f ∘ (extChartAt I x).symm)
         (range I) (extChartAt I x x) := by
@@ -58,7 +64,7 @@ theorem mAnalytic_iff {f : M → N} [CompleteSpace F] [IsManifold I ω M] [IsMan
   aesop
 
 /-- Functions are `ContMDiff` iff they are continuous and analytic in charts everywhere -/
-theorem mAnalytic_iff_of_boundaryless [I.Boundaryless] [IsManifold I ω M] [IsManifold J ω N]
+public theorem mAnalytic_iff_of_boundaryless [I.Boundaryless] [IsManifold I ω M] [IsManifold J ω N]
     [CompleteSpace F] {f : M → N} :
     ContMDiff I J ω f ↔ Continuous f ∧
       ∀ x : M, AnalyticAt 𝕜 (extChartAt J (f x) ∘ f ∘ (extChartAt I x).symm)
@@ -70,7 +76,7 @@ section Iff
 variable (I J)
 
 /-- Analytic functions are analytic, and vice versa -/
-theorem analyticAt_iff_mAnalyticAt [I.Boundaryless] [ChartedSpace A E] [IsManifold I ω E]
+public theorem analyticAt_iff_mAnalyticAt [I.Boundaryless] [ChartedSpace A E] [IsManifold I ω E]
     [ChartedSpace B F] [IsManifold J ω F] [ExtChartEqRefl I] [ExtChartEqRefl J] [CompleteSpace F]
     {f : E → F} {x : E} : AnalyticAt 𝕜 f x ↔ ContMDiffAt I J ω f x := by
   simp only [mAnalyticAt_iff_of_boundaryless, extChartAt_eq_refl, PartialEquiv.refl_coe,
@@ -80,7 +86,7 @@ theorem analyticAt_iff_mAnalyticAt [I.Boundaryless] [ChartedSpace A E] [IsManifo
 end Iff
 
 /-- Analytic functions are analytic -/
-theorem AnalyticAt.mAnalyticAt {f : E → F} {x : E} (fa : AnalyticAt 𝕜 f x) [CompleteSpace F]
+public theorem AnalyticAt.mAnalyticAt {f : E → F} {x : E} (fa : AnalyticAt 𝕜 f x) [CompleteSpace F]
     (I : ModelWithCorners 𝕜 E A) [ChartedSpace A E] [IsManifold I ω E] [ExtChartEqRefl I]
     (J : ModelWithCorners 𝕜 F B) [ChartedSpace B F] [IsManifold J ω F] [ExtChartEqRefl J] :
     ContMDiffAt I J ω f x := by
@@ -89,14 +95,14 @@ theorem AnalyticAt.mAnalyticAt {f : E → F} {x : E} (fa : AnalyticAt 𝕜 f x) 
   exact fa.analyticWithinAt
 
 /-- ContMDiff functions are analytic -/
-theorem ContMDiffAt.analyticAt [CompleteSpace F] (I : ModelWithCorners 𝕜 E A) [I.Boundaryless]
+public theorem ContMDiffAt.analyticAt [CompleteSpace F] (I : ModelWithCorners 𝕜 E A) [I.Boundaryless]
     [ChartedSpace A E] [IsManifold I ω E] [ExtChartEqRefl I] (J : ModelWithCorners 𝕜 F B)
     [ChartedSpace B F] [IsManifold J ω F] [ExtChartEqRefl J] {f : E → F} {x : E} :
     ContMDiffAt I J ω f x → AnalyticAt 𝕜 f x :=
   (analyticAt_iff_mAnalyticAt _ _).mpr
 
 /-- Complex powers `f x ^ g x` are analytic if `f x` avoids the negative real axis  -/
-theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCorners ℂ E A}
+public theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCorners ℂ E A}
     [IsManifold I ω M] {f g : M → ℂ} {x : M} (fa : ContMDiffAt I (𝓘(ℂ, ℂ)) ω f x)
     (ga : ContMDiffAt I (𝓘(ℂ, ℂ)) ω g x) (a : 0 < (f x).re ∨ (f x).im ≠ 0) :
     ContMDiffAt I (𝓘(ℂ, ℂ)) ω (fun x ↦ f x ^ g x) x := by
@@ -107,9 +113,9 @@ theorem ContMDiffAt.cpow [NormedSpace ℂ E] [CompleteSpace E] {I : ModelWithCor
 
 /-- If we're analytic at a point, we're locally analytic.
 This is true even with boundary, but for now we prove only the `Boundaryless` case. -/
-theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace E] [CompleteSpace F]
-    [IsManifold I ω M] [IsManifold J ω N] {f : M → N} {x : M} (fa : ContMDiffAt I J ω f x) :
-    ∀ᶠ y in 𝓝 x, ContMDiffAt I J ω f y := by
+public theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace E]
+    [CompleteSpace F] [IsManifold I ω M] [IsManifold J ω N] {f : M → N} {x : M}
+    (fa : ContMDiffAt I J ω f x) : ∀ᶠ y in 𝓝 x, ContMDiffAt I J ω f y := by
   have ea := (mAnalyticAt_iff_of_boundaryless.mp fa).2.eventually_analyticAt
   simp only [← map_extChartAt_nhds_of_boundaryless, Filter.eventually_map] at ea
   filter_upwards [ea, (fa.continuousAt.eventually_mem ((isOpen_extChartAt_source (f x)).mem_nhds
@@ -129,31 +135,27 @@ theorem ContMDiffAt.eventually [I.Boundaryless] [J.Boundaryless] [CompleteSpace 
   · simp only [Function.comp, PartialEquiv.left_inv _ m]
 
 /-- The domain of analyticity is open -/
-theorem isOpen_mAnalyticAt [I.Boundaryless] [J.Boundaryless] [CompleteSpace E] [CompleteSpace F]
-    [IsManifold I ω M] [IsManifold J ω N] {f : M → N} :
+public theorem isOpen_mAnalyticAt [I.Boundaryless] [J.Boundaryless] [CompleteSpace E]
+    [CompleteSpace F] [IsManifold I ω M] [IsManifold J ω N] {f : M → N} :
     IsOpen {x | ContMDiffAt I J ω f x} := by
   rw [isOpen_iff_eventually]; intro x fa; exact fa.eventually
 
-/-- Analyticity in a neighborhood of a set (the manifold analogue of `AnalyticOnNhd`) -/
-def ContMDiffOnNhd (I : ModelWithCorners 𝕜 E A) (J : ModelWithCorners 𝕜 F B)
-    (f : M → N) (s : Set M) : Prop := ∀ x ∈ s, ContMDiffAt I J ω f x
-
 /-- `ContMDiffOnNhd` restricts to subsets -/
-lemma ContMDiffOnNhd.mono {f : M → N} {s t : Set M} (fa : ContMDiffOnNhd I J f s) (st : t ⊆ s) :
+public lemma ContMDiffOnNhd.mono {f : M → N} {s t : Set M} (fa : ContMDiffOnNhd I J f s) (st : t ⊆ s) :
     ContMDiffOnNhd I J f t := fun x m ↦ fa x (st m)
 
 /-- `ContMDiffOnNhd` extends `ContMDiffOn` -/
-lemma ContMDiffOnNhd.contMDiffOn {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) :
+public lemma ContMDiffOnNhd.contMDiffOn {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) :
     ContMDiffOn I J ω f s := fun x m ↦ (fa x m).contMDiffWithinAt
 
 /-- `ContMDiffOnNhd` implies analyticity -/
-lemma ContMDiffOnNhd.contMDiffAt {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) {x : M}
-    (xs : x ∈ s) : ContMDiffAt I J ω f x := fa x xs
+public lemma ContMDiffOnNhd.contMDiffAt {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s)
+    {x : M} (xs : x ∈ s) : ContMDiffAt I J ω f x := fa x xs
 
 /-- `ContMDiffOnNhd` implies continuity -/
-lemma ContMDiffOnNhd.continuousAt {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) {x : M}
-    (xs : x ∈ s) : ContinuousAt f x := (fa x xs).continuousAt
+public lemma ContMDiffOnNhd.continuousAt {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s)
+    {x : M} (xs : x ∈ s) : ContinuousAt f x := (fa x xs).continuousAt
 
 /-- `ContMDiffOnNhd` implies continuity on the domain -/
-lemma ContMDiffOnNhd.continuousOn {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) :
+public lemma ContMDiffOnNhd.continuousOn {f : M → N} {s : Set M} (fa : ContMDiffOnNhd I J f s) :
     ContinuousOn f s := fun x m ↦ (fa x m).continuousAt.continuousWithinAt

@@ -1,12 +1,18 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+public import Ray.Misc.Defs
 import Mathlib.Analysis.Normed.Ring.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Tactic.Bound
+import Mathlib.Tactic.Cases
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Topology.MetricSpace.Basic
 import Ray.Misc.Bound
@@ -26,16 +32,14 @@ variable {M : Type} [AddCommMonoid M]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {G : Type} [NormedAddCommGroup G]
 
-/-- A `Finset ℕ` with only large elements -/
-def Late (N : Finset ℕ) (m : ℕ) :=
-  ∀ n, n ∈ N → n ≥ m
-
-lemma late_iff_disjoint_range {m : ℕ} {A : Finset ℕ} : Late A m ↔ Disjoint A (Finset.range m) := by
+public lemma late_iff_disjoint_range {m : ℕ} {A : Finset ℕ} :
+    Late A m ↔ Disjoint A (Finset.range m) := by
   simp only [Late, ge_iff_le, Finset.disjoint_iff_ne, Finset.mem_range, ne_eq]; constructor
   · intro h n na b bm; linarith [h _ na]
   · intro h n na; specialize h n na n; simpa [not_true, imp_false, not_lt] using h
 
-lemma sdiff_late {m : ℕ} {B : Finset ℕ} (A : Finset ℕ) : B ≥ Finset.range m → Late (A \ B) m := by
+public lemma sdiff_late {m : ℕ} {B : Finset ℕ} (A : Finset ℕ) :
+    B ≥ Finset.range m → Late (A \ B) m := by
   intro Bm n nAB
   rw [Finset.mem_sdiff] at nAB
   by_contra h; simp only [not_le] at h
@@ -44,13 +48,13 @@ lemma sdiff_late {m : ℕ} {B : Finset ℕ} (A : Finset ℕ) : B ≥ Finset.rang
   exact nAB.2 nB
 
 /-- Summing a subset of a geometric series is ≤ the series sum -/
-theorem partial_geometric_bound {a : ℝ} (N : Finset ℕ) (a0 : 0 ≤ a) (a1 : a < 1) :
+public theorem partial_geometric_bound {a : ℝ} (N : Finset ℕ) (a0 : 0 ≤ a) (a1 : a < 1) :
     N.sum (fun n ↦ a^n) ≤ (1 - a)⁻¹ :=
   haveI pos : ∀ n, n ∉ N → 0 ≤ a^n := by intro n _; bound
   sum_le_hasSum N pos (hasSum_geometric_of_lt_one a0 a1)
 
-theorem partial_scaled_geometric_bound {a : ℝ} (c : ℝ≥0) (N : Finset ℕ) (a0 : 0 ≤ a) (a1 : a < 1)
-    : N.sum (fun n ↦ (c:ℝ) * a^n) ≤ c * (1 - a)⁻¹ := by
+public theorem partial_scaled_geometric_bound {a : ℝ} (c : ℝ≥0) (N : Finset ℕ) (a0 : 0 ≤ a)
+    (a1 : a < 1) : N.sum (fun n ↦ (c:ℝ) * a^n) ≤ c * (1 - a)⁻¹ := by
   rw [←Finset.mul_sum]
   bound [partial_geometric_bound N a0 a1]
 
@@ -77,8 +81,8 @@ theorem late_series_sum' {m : ℕ} {N : Finset ℕ} (h : Late N m) (f : ℕ → 
   exists Finset.image (fun n ↦ n - m) N
   exact late_series_sum h f
 
-theorem late_geometric_bound {m : ℕ} {a : ℝ} {N : Finset ℕ} (h : Late N m) (a0 : 0 ≤ a) (a1 : a < 1)
-    : N.sum (fun n ↦ a^n) ≤ a^m * (1 - a)⁻¹ := by
+public theorem late_geometric_bound {m : ℕ} {a : ℝ} {N : Finset ℕ} (h : Late N m) (a0 : 0 ≤ a)
+    (a1 : a < 1) : N.sum (fun n ↦ a^n) ≤ a^m * (1 - a)⁻¹ := by
   rcases late_series_sum' h (fun n ↦ a^n) with ⟨M,L⟩
   rw [L]; clear L
   have pa : (fun n ↦ a^(n + m)) = (fun n ↦ a^n * a^m) := by apply funext; intro n; rw [pow_add]
@@ -112,7 +116,7 @@ theorem sdiff_sdiff_disjoint (A B : Finset ℕ) : Disjoint (A \ B) (B \ A) :=
 theorem symmDiff_union (A B : Finset ℕ) : A ∆ B = A \ B ∪ B \ A := by
   rw [symmDiff_def, Finset.sup_eq_union]
 
-theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → G) :
+public theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → G) :
     dist (A.sum f) (B.sum f) ≤ (A ∆ B).sum (fun n ↦ ‖f n‖) := by
   rw [finset_sum_partition A B f, finset_sum_partition B A f, Finset.inter_comm B A]
   rw [dist_add_right ((A \ B).sum f) ((B \ A).sum f) ((A ∩ B).sum f)]
@@ -127,8 +131,8 @@ theorem symmDiff_bound (A B : Finset ℕ) (f : ℕ → G) :
     rw [←Finset.sum_union (sdiff_sdiff_disjoint A B), symmDiff_union]
 
 /-- Symmetric differences of sets containing ranges are late -/
-theorem symmDiff_late {A B : Finset ℕ} {m : ℕ} (ha : A ≥ Finset.range m) (hb : B ≥ Finset.range m) :
-    Late (A ∆ B) m := by
+public theorem symmDiff_late {A B : Finset ℕ} {m : ℕ} (ha : A ≥ Finset.range m)
+    (hb : B ≥ Finset.range m) : Late (A ∆ B) m := by
   intro n ab
   rw [symmDiff_def, Finset.sup_eq_union, Finset.mem_union] at ab
   by_contra h; simp at h
@@ -141,7 +145,7 @@ theorem symmDiff_late {A B : Finset ℕ} {m : ℕ} (ha : A ≥ Finset.range m) (
     exact b.2 h
 
 /-- `a - z` has similar absolute value to `a` for small `z` -/
-theorem sub_near (a z : ℂ) : |‖a - z‖ - ‖a‖| ≤ ‖z‖ := by
+public theorem sub_near (a z : ℂ) : |‖a - z‖ - ‖a‖| ≤ ‖z‖ := by
   rw [abs_le]; constructor
   · simp only [neg_le_sub_iff_le_add]
     exact norm_le_norm_sub_add a z
@@ -149,7 +153,7 @@ theorem sub_near (a z : ℂ) : |‖a - z‖ - ‖a‖| ≤ ‖z‖ := by
       ‖a - z‖ - ‖a‖ ≤ ‖a‖ + ‖z‖ - ‖a‖ := by bound
       _ = ‖z‖ := by simp only [add_sub_cancel_left]
 
-theorem add_near (a z : ℂ) : |‖a + z‖ - ‖a‖| ≤ ‖z‖ := by
+public theorem add_near (a z : ℂ) : |‖a + z‖ - ‖a‖| ≤ ‖z‖ := by
   have h := sub_near a (-z)
   simp only [sub_neg_eq_add, norm_neg] at h
   assumption
@@ -167,12 +171,12 @@ theorem mem_slitPlane_of_near_one' {z : ℂ} (z1 : ‖z - 1‖ ≤ 1) (z0 : z �
     simp [i0, abs_sub_le_iff, Complex.ext_iff] at z0 z1 ⊢
     grind
 
-theorem mem_slitPlane_of_near_one {z : ℂ} (z1 : ‖z - 1‖ < 1) : z ∈ slitPlane := by
+public theorem mem_slitPlane_of_near_one {z : ℂ} (z1 : ‖z - 1‖ < 1) : z ∈ slitPlane := by
   by_cases z0 : z = 0
   · simp [z0] at z1
   · exact mem_slitPlane_of_near_one' z1.le z0
 
-theorem near_one_avoids_zero {z : ℂ} : ‖z - 1‖ < 1 → z ≠ 0 := by
+public theorem near_one_avoids_zero {z : ℂ} : ‖z - 1‖ < 1 → z ≠ 0 := by
   intro h; exact Complex.slitPlane_ne_zero (mem_slitPlane_of_near_one h)
 
 theorem derivWithin.cid {z : ℂ} {s : Set ℂ} (o : IsOpen s) (zs : z ∈ s) :
@@ -227,8 +231,8 @@ theorem weak_log1p_small {z : ℂ} {r : ℝ} (r1 : r < 1) (h : ‖z‖ < r) :
     simp only [Complex.log_one, sub_zero, one_div, add_sub_cancel_left] at L
     simpa only [one_div, ge_iff_le]
 
-theorem le_of_forall_small_le_add {a b t : ℝ} (tp : 0 < t) (h : ∀ e, 0 < e → e < t → a ≤ b + e) :
-    a ≤ b := by
+public theorem le_of_forall_small_le_add {a b t : ℝ} (tp : 0 < t)
+    (h : ∀ e, 0 < e → e < t → a ≤ b + e) : a ≤ b := by
   apply le_of_forall_pos_lt_add
   intro e ep
   by_cases et : e ≥ t
@@ -284,7 +288,7 @@ theorem slightly_smaller {z : ℂ} (nz : z ≠ 0) {r : ℝ} (rp : 0 < r) :
     exact mul_lt_of_lt_one_left azp a1
 
 /-- There are smaller values nearby any z ≠ 0 -/
-theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, ‖w‖ < ‖z‖ := by
+public theorem frequently_smaller {z : ℂ} (z0 : z ≠ 0) : ∃ᶠ w : ℂ in 𝓝 z, ‖w‖ < ‖z‖ := by
   simp only [Filter.Frequently, Metric.eventually_nhds_iff, not_exists, not_forall, not_not,
     Complex.dist_eq, not_and]
   intro r rp; rcases slightly_smaller z0 rp with ⟨w, b, lt⟩; use w, b, lt
@@ -335,7 +339,7 @@ theorem Real.log1p_small {x : ℝ} (xr : |x| ≤ 1/2) : |Real.log (1 + x)| ≤ 2
   le_trans (Real.log1p_small' (by norm_num) xr) (le_of_eq (by norm_num))
 
 /-- `log z` is small for `z ≈ 1` -/
-theorem log_small {z : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) : ‖log z‖ ≤ 2 * ‖z - 1‖ := by
+public theorem log_small {z : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) : ‖log z‖ ≤ 2 * ‖z - 1‖ := by
   generalize zw : z - 1 = z1; have wz : z = 1 + z1 := by rw [← zw]; ring
   rw [wz]; refine log1p_small ?_; rw [← zw]; assumption
 
@@ -376,15 +380,11 @@ lemma exp_small_general {z : ℂ} {r : ℝ} (zs : ‖z‖ ≤ r) : ‖exp z - 1�
     ne_eq, one_ne_zero, not_false_eq_true, div_self, pow_one, mul_comm ‖z‖] at b
   exact le_trans b (by bound)
 
-/-- Lipschitz coefficient for `pow1p_small_general` -/
-noncomputable def psg (r s : ℝ) : ℝ :=
-  rexp (r * s / (1 - r)) / (1 - r)
-
-@[bound] lemma psg_nonzero {r s : ℝ} (r1 : r ≤ 1) : 0 ≤ psg r s := by
+@[bound] public lemma psg_nonzero {r s : ℝ} (r1 : r ≤ 1) : 0 ≤ psg r s := by
   unfold psg
   bound
 
-theorem pow1p_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1)  :
+public theorem pow1p_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1)  :
     ‖(1 + z) ^ w - 1‖ ≤ psg r s * ‖z‖ * ‖w‖ := by
   by_cases z0 : z = 0
   · simp [z0]
@@ -437,7 +437,7 @@ theorem pow1p_small' {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ 
     grind
   · bound
 
-theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
+public theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
     ‖(1 + z) ^ w - 1‖ ≤ 4 * ‖z‖ * ‖w‖ := by
   have L := pow1p_small' zs ws (by norm_num) (by bound)
   norm_num at L
@@ -452,37 +452,37 @@ theorem pow_small' {z w : ℂ} {r s : ℝ} (zr : ‖z - 1‖ ≤ r) (ws : ‖w�
   exact wz ▸ pow1p_small' (by rwa [← zw]) ws r1 rs1
 
 /-- `‖z^w - 1‖ = O(‖z - 1‖ * ‖w‖)` for `z ≈ 1`, `w` small -/
-theorem pow_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z - 1‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1) :
+public theorem pow_small_general {z w : ℂ} {r s : ℝ} (zr : ‖z - 1‖ ≤ r) (ws : ‖w‖ ≤ s) (r1 : r < 1) :
     ‖z ^ w - 1‖ ≤ psg r s * ‖z - 1‖ * ‖w‖ := by
   generalize zw : z - 1 = z1
   have wz : z = 1 + z1 := by rw [← zw]; ring
   exact wz ▸ pow1p_small_general (by rwa [← zw]) ws r1
 
 /-- `‖z^w - 1‖ ≤ 4 * ‖z - 1‖ * ‖w‖` for `z ≈ 1`, `w` small -/
-theorem pow_small {z w : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) (ws : ‖w‖ ≤ 1) :
+public theorem pow_small {z w : ℂ} (zs : ‖z - 1‖ ≤ 1 / 2) (ws : ‖w‖ ≤ 1) :
     ‖z ^ w - 1‖ ≤ 4 * ‖z - 1‖ * ‖w‖ := by
   generalize zw : z - 1 = z1
   have wz : z = 1 + z1 := by rw [← zw]; ring
   exact wz ▸ pow1p_small (by rwa [← zw]) ws
 
 /-- `a + b ≠ 0` from `abs b < abs a` -/
-theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : ‖b‖ < ‖a‖) : a + b ≠ 0 := by
+public theorem add_ne_zero_of_abs_lt {a b : ℂ} (h : ‖b‖ < ‖a‖) : a + b ≠ 0 := by
   have e : a + b = a - -b := by abel
   rw [e, sub_ne_zero]
   contrapose h
   simp only [h, not_lt, norm_neg, le_refl]
 
 /-- `e < 3` -/
-theorem Real.exp_one_lt_3 : Real.exp 1 < 3 :=
+public theorem Real.exp_one_lt_3 : Real.exp 1 < 3 :=
   _root_.trans Real.exp_one_lt_d9 (by norm_num)
 
-theorem log_add (a b : ℝ) (a0 : 0 < a) (ab0 : 0 < a + b) :
+public theorem log_add (a b : ℝ) (a0 : 0 < a) (ab0 : 0 < a + b) :
     Real.log (a + b) = Real.log a + Real.log (1 + b/a) := by
   have d0 : 0 < 1 + b/a := by field_simp [a0.ne']; bound
   rw [←Real.log_mul a0.ne' d0.ne', left_distrib, mul_one, mul_div_cancel₀ _ a0.ne']
 
 /-- `log (abs (a + b)) = log (abs a) + log (abs (1 + b/a))` -/
-theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
+public theorem log_abs_add (a b : ℂ) (a0 : a ≠ 0) (ab0 : a + b ≠ 0) :
     Real.log (‖a + b‖) = Real.log (‖a‖) + Real.log (‖1 + b/a‖) := by
   have d0 : 1 + b/a ≠ 0 := by field_simp [a0, ab0]; exact div_ne_zero ab0 a0
   have a0' : ‖a‖ ≠ 0 := norm_ne_zero_iff.mpr a0
@@ -496,7 +496,7 @@ theorem Real.exp_forth_lt_four_thirds : Real.exp (1/4) < 4/3 := by
   exact _root_.trans Real.exp_one_lt_d9 (by norm_num)
 
 /-- Bound `abs (product - 1)` in terms of `abs (sum)` -/
-theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
+public theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
     (le : s.sum (fun n ↦ ‖f n - 1‖) ≤ c) (c1 : c ≤ 1/2) : ‖s.prod f - 1‖ ≤ 4 * c := by
   set g := fun n ↦ Complex.log (f n)
   have b : ∀ n, n ∈ s → ‖f n - 1‖ ≤ c := by
@@ -515,7 +515,7 @@ theorem dist_prod_one_le_abs_sum {f : ℕ → ℂ} {s : Finset ℕ} {c : ℝ}
   rw [e]; exact _root_.trans (exp_small (by linarith)) (by linarith)
 
 /-- If `z, w` are close, then `0 < (z⁻¹ * w).re` -/
-lemma re_mul_inv_pos_of_close {z w : ℂ} (wz : ‖w - z‖ < ‖z‖) : 0 < (z⁻¹ * w).re := by
+public lemma re_mul_inv_pos_of_close {z w : ℂ} (wz : ‖w - z‖ < ‖z‖) : 0 < (z⁻¹ * w).re := by
   have z0 : z ≠ 0 := norm_ne_zero_iff.mp (lt_of_le_of_lt (by bound) wz).ne'
   have h : ‖z⁻¹ * w - 1‖ < 1 := by
     nth_rw 1 [← inv_mul_cancel₀ z0]

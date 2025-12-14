@@ -1,6 +1,16 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Ray.Koebe.Snap
 import Mathlib.Algebra.Lie.OfAssociative
-import Ray.Koebe.Snap
+import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.Calculus.Deriv.Mul
+import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Ray.Misc.Bound
 import Ray.Misc.Bounds
+import Ray.Misc.Complex
 import Ray.Misc.Circle
 
 /-!
@@ -23,7 +33,7 @@ noncomputable section
 variable {f : ℂ → ℂ} {r a b t : ℝ} {z : ℂ}
 
 /-- `f z ≈ z` on `sphere 0 r`, and `f` winds monotonically around the origin -/
-structure WindInj (f : ℂ → ℂ) (r : ℝ) : Prop where
+public structure WindInj (f : ℂ → ℂ) (r : ℝ) : Prop where
   r0 : 0 < r
   fa : ∀ z, ‖z‖ = r → AnalyticAt ℂ f z
   close : ∀ z, ‖z‖ = r → ‖f z - z‖ ≤ r / 20
@@ -148,7 +158,7 @@ lemma WindInj.snap_close (i : WindInj f r) (m : ‖z‖ = r) : ‖snap (f z) - z
     _ = 1/9 * ‖f z‖ := by ring_nf
 
 /-- `z ↦ snap (f z)` is injective -/
-lemma WindInj.inj (i : WindInj f r) : InjOn (fun z ↦ snap (f z)) (sphere 0 r) := by
+public lemma WindInj.inj (i : WindInj f r) : InjOn (fun z ↦ snap (f z)) (sphere 0 r) := by
   -- We're either close enough to apply `i.inj_near` or far enough that `i.close` works.
   intro x xm y ym e
   contrapose e

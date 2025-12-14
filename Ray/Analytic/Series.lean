@@ -1,5 +1,6 @@
-import Mathlib.Analysis.Analytic.Basic
-import Mathlib.Data.Complex.Basic
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
@@ -9,6 +10,7 @@ import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
 import Ray.Analytic.Uniform
 import Ray.Misc.Bounds
+import Ray.Misc.Finset
 
 /-!
 ## Infinite series of analytic functions
@@ -26,18 +28,18 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {G : Type} [NormedAddCommGroup G]
 
 /-- Summability restricted to sets -/
-def SummableOn (f : ℕ → ℂ → E) (s : Set ℂ) :=
+@[expose] public def SummableOn (f : ℕ → ℂ → E) (s : Set ℂ) :=
   ∀ z, z ∈ s → Summable fun n ↦ f n z
 
 /-- `n ↦ f n z` has a convergent sum for each `z ∈ s` -/
-def HasSumOn (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
+@[expose] public def HasSumOn (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
   ∀ z, z ∈ s → HasSum (fun n ↦ f n z) (g z)
 
 /-- The parameterized limit of an infinite sum, if it exists -/
-noncomputable def tsumOn (f : ℕ → ℂ → E) := fun z ↦ tsum fun n ↦ f n z
+@[expose] public noncomputable def tsumOn (f : ℕ → ℂ → E) := fun z ↦ tsum fun n ↦ f n z
 
 /-- Uniform convergence of sums on a set -/
-def HasUniformSum (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
+@[expose] public def HasUniformSum (f : ℕ → ℂ → E) (g : ℂ → E) (s : Set ℂ) :=
   TendstoUniformlyOn (fun (N : Finset ℕ) z ↦ N.sum fun n ↦ f n z) g atTop s
 
 /-- Uniform vanishing means late sums are uniformly small -/
@@ -81,7 +83,7 @@ lemma sum_cons' {a : G} {f : ℕ → G} (h : Summable f) :
   rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; rw [HasSum.tsum_eq _]; exact sum_cons h
 
 /-- Dropping the first term subtracts it -/
-lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
+public lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
     HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
   have c := sum_cons (a := -f 0) h
   rw [HasSum]
@@ -96,7 +98,7 @@ lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
   rw [s] at c; assumption
 
 /-- Dropping the first term subtracts it (`tsum` version) -/
-lemma tsum_drop {f : ℕ → G} (h : Summable f) :
+public lemma tsum_drop {f : ℕ → G} (h : Summable f) :
     ∑' n, f n = f 0 + ∑' n, f (n + 1) := by
   rw [(sum_drop h.hasSum).tsum_eq, add_sub_cancel]
 
@@ -191,8 +193,9 @@ theorem fast_series_converge_at {f : ℕ → G} {c a : ℝ} (a0 : 0 ≤ a) (a1 :
   apply HasSum.summable; assumption
 
 /-- Analytic series that converge exponentially converge to analytic functions -/
-theorem fast_series_converge {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s) (a0 : 0 ≤ a)
-    (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
+public theorem fast_series_converge {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+    (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
+    (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
     ∃ g : ℂ → E, AnalyticOnNhd ℂ g s ∧ HasSumOn f g s := by
   use tsumOn f; constructor
   · exact uniform_analytic_lim o (fun N ↦ N.analyticOnNhd_fun_sum fun _ _ ↦ h _)
@@ -200,7 +203,7 @@ theorem fast_series_converge {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (
   · exact fun z zs ↦ Summable.hasSum (fast_series_converge_at a0 a1 fun n ↦ hf n z zs)
 
 /-- Analytic series that converge exponentially converge to analytic functions, tsum version -/
-theorem fast_series_converge_tsum_at {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
+public theorem fast_series_converge_tsum_at {f : ℕ → ℂ → E} {s : Set ℂ} {c a : ℝ} (o : IsOpen s)
     (a0 : 0 ≤ a) (a1 : a < 1) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) :
     AnalyticOnNhd ℂ (fun z ↦ ∑' n, f n z) s := by

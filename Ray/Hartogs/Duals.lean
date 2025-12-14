@@ -1,6 +1,11 @@
+module
+public import Mathlib.Data.Complex.Basic
+public import Mathlib.Order.Filter.Defs
+public import Mathlib.Order.PartialSups
+public import Ray.Hartogs.MaxLog
+import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.Topology.Basic
-import Ray.Hartogs.MaxLog
 import Ray.Misc.Topology
 
 /-!
@@ -17,7 +22,6 @@ such that `‖x‖ = ⨆ n, ‖duals n x‖`.
 -/
 
 open Classical
-open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
 open Metric (ball closedBall sphere)
@@ -51,7 +55,7 @@ theorem dualVector_le (x y : F) : ‖dualVector x y‖ ≤ ‖y‖ := by
     _ = ‖y‖ := by simp only [one_mul]
 
 /-- Dual vectors of a dense subset of `E` -/
-def duals : ℕ → E →L[ℂ] ℂ := fun n ↦ dualVector (TopologicalSpace.denseSeq E n)
+public def duals : ℕ → E →L[ℂ] ℂ := fun n ↦ dualVector (TopologicalSpace.denseSeq E n)
 
 /-- Lipschitz 0 functions are constant -/
 theorem LipschitzWith.is_const {g : ℝ → ℝ} (g0 : LipschitzWith 0 g) : ∀ x y, g x = g y := by
@@ -139,7 +143,7 @@ theorem Csupr.has_lim (s : ℕ → ℝ) (ba : BddAbove (range s)) :
       _ < e := ep
 
 /-- Partial sups of `maxLog b ‖duals k x‖` converge to `maxLog b ‖x‖` -/
-theorem duals_lim_tendsto_maxLog_norm (b : ℝ) (x : E) :
+public theorem duals_lim_tendsto_maxLog_norm (b : ℝ) (x : E) :
     Filter.Tendsto (partialSups fun k ↦ maxLog b ‖duals k x‖) atTop (𝓝 (maxLog b ‖x‖)) := by
   rw [maxLog_norm_eq_duals_iSup]; exact Csupr.has_lim _ (duals_bddAbove (monotone_maxLog _) _)
 

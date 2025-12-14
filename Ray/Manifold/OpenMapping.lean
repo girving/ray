@@ -1,9 +1,16 @@
+module
+public import Ray.Manifold.Analytic
+public import Ray.Manifold.Nontrivial
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.Tactic.Cases
 import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
-import Ray.Manifold.Nontrivial
+import Ray.Manifold.Analytic
+import Ray.Manifold.Manifold
+import Ray.Manifold.OneDimension
+import Ray.Misc.Topology
 import Ray.Misc.TotallyDisconnected
 
 /-!
@@ -108,7 +115,7 @@ theorem norm_sub_self_lt {z : ℂ} {r : ℝ} (rp : 0 < r) : ‖z - z‖ < r := b
 
 /-- The parameterized open mapping theorem for analytic `f : ℂ → ℂ → ℂ`:
     `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods if `f` is nontrivial. -/
-theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} {c z : ℂ}
+public theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ → ℂ} {c z : ℂ}
     (n : NontrivialMAnalyticAt (f c) z) (fa : AnalyticAt ℂ (uncurry f) (c, z)) :
     𝓝 (c, f c z) ≤ Filter.map (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by
   -- Reduce to a neighborhood of (c,z) on which f is analytic
@@ -200,7 +207,7 @@ theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAna
 /-- The local open mapping theorem, manifold version: if `f : S → T` is nontrivial,
     `f` sends neighborhoods to neighborhoods.  This is a manifold version of
     `AnalyticAt.eventually_constant_or_nhds_le_map_nhds`. -/
-theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [IsManifold I ω T] {f : S → T} {z : S}
+public theorem NontrivialMAnalyticAt.nhds_eq_map_nhds [IsManifold I ω T] {f : S → T} {z : S}
     (n : NontrivialMAnalyticAt f z) : 𝓝 (f z) = Filter.map f (𝓝 z) := by
   refine le_antisymm ?_ n.mAnalyticAt.continuousAt
   generalize hg : (fun x ↦ extChartAt I (f z) (f ((extChartAt I z).symm x))) = g
@@ -235,7 +242,7 @@ theorem Filter.prod_map_id_map_eq {A B C : Type} {f : Filter A} {g : Filter B} {
 
 /-- The local open mapping theorem, parameterized manifold version: if `f : ℂ → S → T` is
     nontrivial, then `(c,z) ↦ (c, f c z)` sends neighborhoods to neighborhoods. -/
-theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [IsManifold I ω T] {f : ℂ → S → T}
+public theorem NontrivialMAnalyticAt.nhds_eq_map_nhds_param [IsManifold I ω T] {f : ℂ → S → T}
     {c : ℂ} {z : S} (n : NontrivialMAnalyticAt (f c) z)
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) :
     𝓝 (c, f c z) = Filter.map (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) (𝓝 (c, z)) := by

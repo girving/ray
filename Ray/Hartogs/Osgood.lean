@@ -1,3 +1,8 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+public import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.InnerProductSpace.EuclideanDist
@@ -49,7 +54,7 @@ For a quick refresher on why the Cauchy power series works, for `c = 0`:
 open Complex (exp I log)
 open Filter (atTop)
 open Function (curry uncurry)
-open Metric (ball closedBall sphere isOpen_ball)
+open Metric (ball closedBall sphere isOpen_ball ball_subset_closedBall)
 open intervalIntegral
 open Set
 open scoped Real NNReal ENNReal Topology MeasureTheory
@@ -88,9 +93,6 @@ theorem spheres_subset_closedBall {c0 c1 : ℂ} {r : ℝ} :
 theorem Separate.rs' (h : Separate f c0 c1 r b s) : sphere c0 r ×ˢ sphere c1 r ⊆ s :=
   le_trans spheres_subset_closedBall h.rs
 
-theorem mem_open_closed {z c : ℂ} {r : ℝ} : z ∈ ball c r → z ∈ closedBall c r := by
-  simp only [Metric.mem_ball, Metric.mem_closedBall]; exact le_of_lt
-
 theorem mem_sphere_closed {z c : ℂ} {r : ℝ} : z ∈ sphere c r → z ∈ closedBall c r := by
   simp only [mem_sphere_iff_norm, Metric.mem_closedBall]; exact le_of_eq
 
@@ -105,7 +107,7 @@ theorem Separate.fc0 (h : Separate f c0 c1 r b s) (w1m : w1 ∈ ball c1 r) :
   refine ContinuousOn.comp h.fc ?_ ?_
   · exact ContinuousOn.prodMk continuousOn_id continuousOn_const
   · intro z0 z0m; apply h.rs
-    rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨z0m, mem_open_closed w1m⟩
+    rw [← closedBall_prod_same]; exact Set.mem_prod.mpr ⟨z0m, ball_subset_closedBall w1m⟩
 
 /-- `f` is continuous in `z1` -/
 theorem Separate.fc1 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ closedBall c0 r) :
@@ -299,7 +301,7 @@ theorem cauchy1_bound {f : ℂ → E} {b r : ℝ} {c : ℂ} (rp : r > 0)
     apply ContinuousOn.smul; exact ContinuousOn.inv_sphere rp; assumption
 
 /-- The 1D Cauchy integral with the constant has the expected bound -/
-theorem cauchy1_bound' {f : ℂ → E} {r : ℝ} {c : ℂ} (rp : r > 0) (b : ℝ)
+public theorem cauchy1_bound' {f : ℂ → E} {r : ℝ} {c : ℂ} (rp : r > 0) (b : ℝ)
     (fc : ContinuousOn f (sphere c r)) (bh : ∀ z, z ∈ sphere c r → ‖f z‖ ≤ b) (n : ℕ) :
     ‖(2*π*I : ℂ)⁻¹ • ∮ z in C(c, r), (z - c)⁻¹ ^ n • (z - c)⁻¹ • f z‖ ≤ b * r⁻¹ ^ n := by
   have a : ‖(2*π*I : ℂ)⁻¹‖ = (2*π)⁻¹ := by
@@ -419,19 +421,19 @@ theorem cauchy2 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball c0 r) (w1m : w1 
       (∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))) =
       f (w0, w1) := by
   have h1 := fun z0 (z0m : z0 ∈ closedBall c0 r) ↦
-    cauchy1 w1m (h.fc1 z0m) fun z1 z1m ↦ h.fd1 z0m (mem_open_closed z1m)
+    cauchy1 w1m (h.fc1 z0m) fun z1 z1m ↦ h.fd1 z0m (ball_subset_closedBall z1m)
   have ic1 : ContinuousOn (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹ • f (z0, z1))
       (closedBall c0 r) :=
     (h.fc0 w1m).congr h1
   have id1 : DifferentiableOn ℂ (fun z0 ↦ (2 * π * I : ℂ)⁻¹ • ∮ z1 in C(c1, r), (z1 - w1)⁻¹
       • f (z0, z1)) (ball c0 r) := by
-    rw [differentiableOn_congr fun z zs ↦ h1 z (mem_open_closed zs)]
+    rw [differentiableOn_congr fun z zs ↦ h1 z (ball_subset_closedBall zs)]
     intro z0 z0m; apply DifferentiableAt.differentiableWithinAt
-    exact h.fd0 (mem_open_closed z0m) (mem_open_closed w1m)
+    exact h.fd0 (ball_subset_closedBall z0m) (ball_subset_closedBall w1m)
   have h01 :=
     cauchy1 w0m ic1 fun z0 z0m ↦
       DifferentiableOn.differentiableAt id1 (IsOpen.mem_nhds isOpen_ball z0m)
-  exact _root_.trans h01 (h1 w0 (mem_open_closed w0m))
+  exact _root_.trans h01 (h1 w0 (ball_subset_closedBall w0m))
 
 /-- Shifted inverses are continuous on the sphere -/
 theorem ContinuousOn.inv_sphere_ball {c w : ℂ} {r : ℝ} (wr : w ∈ ball (0 : ℂ) r) :
@@ -569,8 +571,8 @@ end osgood
 
 /-- Osgood's lemma: if `f` is separately analytic on an open set,
     it is jointly analytic on that set -/
-theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    [CompleteSpace E] (o : IsOpen s) (fc : ContinuousOn f s)
+public theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] (o : IsOpen s) (fc : ContinuousOn f s)
     (fa0 : ∀ z0 z1 : ℂ, (z0, z1) ∈ s → AnalyticAt ℂ (fun z0 ↦ f (z0, z1)) z0)
     (fa1 : ∀ z0 z1 : ℂ, (z0, z1) ∈ s → AnalyticAt ℂ (fun z1 ↦ f (z0, z1)) z1) :
     AnalyticOnNhd ℂ f s := by
@@ -595,8 +597,8 @@ theorem osgood {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)} [NormedA
 
 /-- Osgood's lemma at a point: if `f` is separately analytic near a point,
     it is jointly analytic there -/
-theorem osgood_at' {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    [CompleteSpace E]
+public theorem osgood_at' {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E]
     (h : ∀ᶠ x : ℂ × ℂ in 𝓝 c, ContinuousAt f x ∧
       AnalyticAt ℂ (fun z ↦ f (z, x.2)) x.1 ∧ AnalyticAt ℂ (fun z ↦ f (x.1, z)) x.2) :
     AnalyticAt ℂ f c := by
@@ -606,8 +608,8 @@ theorem osgood_at' {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [NormedAdd
 
 /-- Osgood's lemma at a point: if `f` is separately analytic near a point,
     it is jointly analytic there -/
-theorem osgood_at {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    [CompleteSpace E] (fc : ∀ᶠ x in 𝓝 c, ContinuousAt f x)
+public theorem osgood_at {E : Type} {f : ℂ × ℂ → E} {c : ℂ × ℂ} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] [CompleteSpace E] (fc : ∀ᶠ x in 𝓝 c, ContinuousAt f x)
     (fa0 : ∀ᶠ x : ℂ × ℂ in 𝓝 c, AnalyticAt ℂ (fun z ↦ f (z, x.2)) x.1)
     (fa1 : ∀ᶠ x : ℂ × ℂ in 𝓝 c, AnalyticAt ℂ (fun z ↦ f (x.1, z)) x.2) : AnalyticAt ℂ f c :=
   osgood_at' (fc.and (fa0.and fa1))

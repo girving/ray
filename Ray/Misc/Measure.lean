@@ -1,10 +1,20 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Normed.Group.Basic
+public import Mathlib.Analysis.Normed.Module.Basic
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
+public import Mathlib.MeasureTheory.Integral.Average
+public import Mathlib.MeasureTheory.Integral.IntegrableOn
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
+public import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Prod
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Group.Measure
-import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Mathlib.Tactic.Bound
 import Mathlib.Topology.Constructions
@@ -42,17 +52,18 @@ theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t :
   exact measure_eq_zero_iff_ae_notMem.mp tz
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
-theorem ae_minus_point [NoAtoms (volume : Measure M)] {s : Set M} {x : M} :
+public theorem ae_minus_point [NoAtoms (volume : Measure M)] {s : Set M} {x : M} :
     s =ᵐ[volume] (s \ {x} : Set M) :=
   ae_minus_null (measure_singleton x)
 
 /-- `ℝ × ℝ` has additive Haar measure.
     Lean fails to infer this, so I'm caching it for easy access. -/
-instance ProdRealReal.isAddHaarMeasure_volume : (volume : Measure (ℝ × ℝ)).IsAddHaarMeasure :=
+public instance ProdRealReal.isAddHaarMeasure_volume :
+    (volume : Measure (ℝ × ℝ)).IsAddHaarMeasure :=
   MeasureTheory.Measure.prod.instIsAddHaarMeasure _ _
 
 /-- `ℂ` has additive Haar measure -/
-instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHaarMeasure := by
+public instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHaarMeasure := by
   have v : (volume : Measure ℂ) = volume.map Complex.equivRealProdAddHom.symm := by
     have e : (⇑Complex.measurableEquivRealProd.symm : ℝ × ℝ → ℂ) =
         ⇑Complex.equivRealProdAddHom.symm := by
@@ -77,7 +88,7 @@ instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHaarMeasu
   · rw [←e]; exact Complex.equivRealProdCLM.symm.toHomeomorph.toCocompactMap.cocompact_tendsto'
 
 /-- `ℂ` has no atoms -/
-instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
+public instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
   measure_singleton := by
     intro z
     rw [← (MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod).measure_preimage]
@@ -87,26 +98,26 @@ instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
 
 /-- The property that a set has finite, positive measure.
     This means that multiplication and division by the measure are invertible operations. -/
-structure NiceVolume (s : Set M) : Prop where
+public structure NiceVolume (s : Set M) : Prop where
   measurable : MeasurableSet s
   finite : volume s < ∞
   pos : volume s > 0
 
 -- Useful lemmas about NiceVolume
-lemma NiceVolume.ne_zero {s : Set M} (sn : NiceVolume s) : volume s ≠ 0 := sn.pos.ne'
-lemma NiceVolume.ne_top {s : Set M} (sn : NiceVolume s) : volume s ≠ ⊤ := sn.finite.ne
-lemma NiceVolume.real_pos {s : Set M} (sn : NiceVolume s) : 0 < volume.real s :=
+public lemma NiceVolume.ne_zero {s : Set M} (sn : NiceVolume s) : volume s ≠ 0 := sn.pos.ne'
+public lemma NiceVolume.ne_top {s : Set M} (sn : NiceVolume s) : volume s ≠ ⊤ := sn.finite.ne
+public lemma NiceVolume.real_pos {s : Set M} (sn : NiceVolume s) : 0 < volume.real s :=
   ENNReal.toReal_pos_iff.mpr ⟨sn.pos, sn.finite⟩
-lemma NiceVolume.real_nonneg {s : Set M} (sn : NiceVolume s) : volume.real s ≠ 0 :=
+public lemma NiceVolume.real_nonneg {s : Set M} (sn : NiceVolume s) : volume.real s ≠ 0 :=
   sn.real_pos.ne'
 
 /-- Constants are integrable on NiceVolume sets -/
-theorem NiceVolume.integrableOn_const {s : Set M} (sn : NiceVolume s) (c : ℝ) :
+public theorem NiceVolume.integrableOn_const {s : Set M} (sn : NiceVolume s) (c : ℝ) :
     IntegrableOn (fun _ : M ↦ c) s :=
   MeasureTheory.integrableOn_const (ne_top sn) enorm_ne_top
 
 /-- Uniform limits of continuous functions and integrals commute -/
-theorem TendstoUniformlyOn.integral_tendsto {f : ℕ → X → G} {g : X → G} {s : Set X}
+public theorem TendstoUniformlyOn.integral_tendsto {f : ℕ → X → G} {g : X → G} {s : Set X}
     [SecondCountableTopology G] [IsLocallyFiniteMeasure (volume : Measure X)]
     (u : TendstoUniformlyOn f g atTop s)
     (fc : ∀ n, ContinuousOn (f n) s) (sc : IsCompact s) :
@@ -120,26 +131,26 @@ theorem TendstoUniformlyOn.integral_tendsto {f : ℕ → X → G} {g : X → G} 
   · rw [ae_restrict_iff' sc.measurableSet]; apply ae_of_all; intro x xs; exact u.tendsto_at xs
 
 /-- An abbreviation for Ioc 0 (2*π) -/
-def itau := Ioc 0 (2 * π)
+@[expose] public def itau := Ioc 0 (2 * π)
 
 -- Lemmas about Itau
-theorem itau_volume : volume itau = ENNReal.ofReal (2 * π) := by
+public theorem itau_volume : volume itau = ENNReal.ofReal (2 * π) := by
   simp only [itau, Real.volume_Ioc, sub_zero]
-theorem itau_real_volume : volume.real itau = 2 * π := by
+public theorem itau_real_volume : volume.real itau = 2 * π := by
   simp only [Measure.real, itau_volume, ENNReal.toReal_ofReal Real.two_pi_pos.le]
-theorem NiceVolume.itau : NiceVolume itau :=
+public theorem NiceVolume.itau : NiceVolume itau :=
   { measurable := by simp only [_root_.itau, measurableSet_Ioc]
     finite := by simp only [itau_volume, ENNReal.ofReal_lt_top]
     pos := by simp only [itau_volume, gt_iff_lt, ENNReal.ofReal_pos, zero_lt_two,
       mul_pos_iff_of_pos_left, Real.pi_pos] }
-theorem measurableSet_itau : MeasurableSet itau := by
+public theorem measurableSet_itau : MeasurableSet itau := by
   simp only [itau, measurableSet_Ioc]
-theorem tau_mem_itau : 2*π ∈ itau := by
+public theorem tau_mem_itau : 2*π ∈ itau := by
   simp only [itau, Set.mem_Ioc, zero_lt_two, mul_pos_iff_of_pos_left, Real.pi_pos, le_refl,
     and_self]
 
 /-- Continuous functions are integrable on spheres -/
-theorem ContinuousOn.integrableOn_sphere {f : ℂ → V} {c : ℂ} {r : ℝ}
+public theorem ContinuousOn.integrableOn_sphere {f : ℂ → V} {c : ℂ} {r : ℝ}
     (fc : ContinuousOn f (closedBall c r)) (rp : 0 < r) :
     IntegrableOn (fun t ↦ f (circleMap c r t)) itau := by
   apply Continuous.integrableOn_Ioc; apply fc.comp_continuous (continuous_circleMap _ _)
@@ -147,34 +158,36 @@ theorem ContinuousOn.integrableOn_sphere {f : ℂ → V} {c : ℂ} {r : ℝ}
     norm_circleMap_zero, abs_of_pos rp, le_refl]
 
 /-- Continuous functions are integrable on `closedBall` -/
-theorem ContinuousOn.integrableOn_closedBall {f : ℂ → V} {c : ℂ} {r : ℝ}
+public theorem ContinuousOn.integrableOn_closedBall {f : ℂ → V} {c : ℂ} {r : ℝ}
     (fc : ContinuousOn f (closedBall c r)) : IntegrableOn f (closedBall c r) :=
   fc.integrableOn_compact (isCompact_closedBall _ _)
 
 /-- Averages add -/
-theorem Average.add {f g : M → G} {s : Set M} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
+public theorem Average.add {f g : M → G} {s : Set M} (fi : IntegrableOn f s)
+    (gi : IntegrableOn g s) :
     ⨍ z in s, f z + g z = (⨍ z in s, f z) + ⨍ z in s, g z := by
   simp_rw [average_eq, integral_add fi gi, smul_add]
 
 /-- Averages subtract -/
-theorem Average.sub {f g : M → G} {s : Set M} (fi : IntegrableOn f s) (gi : IntegrableOn g s) :
+public theorem Average.sub {f g : M → G} {s : Set M} (fi : IntegrableOn f s)
+    (gi : IntegrableOn g s) :
     ⨍ z in s, f z - g z = (⨍ z in s, f z) - ⨍ z in s, g z := by
   simp_rw [average_eq, integral_sub fi gi, smul_sub]
 
 /-- Averages commute with linear maps -/
-theorem average_linear_comm [CompleteSpace G] {f : M → G} {s : Set M} (fi : IntegrableOn f s)
+public theorem average_linear_comm [CompleteSpace G] {f : M → G} {s : Set M} (fi : IntegrableOn f s)
     (g : G →L[ℝ] F) : ⨍ x in s, g (f x) = g (⨍ x in s, f x) := by
   simp only [average_eq, MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter, map_smul]
   apply congr_arg₂ _ rfl
   exact ContinuousLinearMap.integral_comp_comm _ fi
 
 /-- Averages on a set depend only on ae values within the set -/
-theorem average_congr_on {f g : M → G} {s : Set M} (sn : NiceVolume s)
+public theorem average_congr_on {f g : M → G} {s : Set M} (sn : NiceVolume s)
     (h : ∀ᵐ x, x ∈ s → f x = g x) : ⨍ x in s, f x = ⨍ x in s, g x := by
   simp only [← ae_restrict_iff' sn.measurable] at h; exact average_congr h
 
 /-- Means are at most the values of the function -/
-theorem mean_bound {f : M → ℝ} {s : Set M} {b : ℝ} (sn : NiceVolume s) (fi : IntegrableOn f s)
+public theorem mean_bound {f : M → ℝ} {s : Set M} {b : ℝ} (sn : NiceVolume s) (fi : IntegrableOn f s)
     (fb : ∀ z, z ∈ s → f z ≤ b) : ⨍ x in s, f x ≤ b := by
   rw [average_eq, smul_eq_mul]
   have bi := sn.integrableOn_const b
@@ -186,11 +199,11 @@ theorem mean_bound {f : M → ℝ} {s : Set M} {b : ℝ} (sn : NiceVolume s) (fi
   · rw [← mul_assoc _ _ b, inv_mul_cancel₀ sn.real_nonneg, one_mul]
 
 /-- Sets where each point is near positive volume -/
-def LocalVolumeSet (s : Set X) :=
+public def LocalVolumeSet (s : Set X) :=
   ∀ x r, x ∈ s → 0 < r → 0 < volume (s ∩ ball x r)
 
 /-- Sets in the closure of their interior have local volume -/
-theorem LocalVolume.closure_interior {M : Type} [MetricSpace M] [MeasureSpace M] (s : Set M)
+public theorem LocalVolume.closure_interior {M : Type} [MetricSpace M] [MeasureSpace M] (s : Set M)
     (bp : ∀ (x : M) (r), r > 0 → volume (ball x r) > 0)
     (ci : s ⊆ closure (interior s)) : LocalVolumeSet s := by
   intro x r xs rp
@@ -206,7 +219,7 @@ theorem LocalVolume.closure_interior {M : Type} [MetricSpace M] [MeasureSpace M]
   exact lt_of_lt_of_le (bp y t (by bound)) (measure_mono es)
 
 /-- Ioc has local volume -/
-theorem LocalVolume.Ioc {a b : ℝ} : LocalVolumeSet (Set.Ioc a b) := by
+public theorem LocalVolume.Ioc {a b : ℝ} : LocalVolumeSet (Set.Ioc a b) := by
   apply LocalVolume.closure_interior
   · intro x r rp
     simp only [Real.volume_ball, gt_iff_lt, ENNReal.ofReal_pos]
@@ -215,11 +228,11 @@ theorem LocalVolume.Ioc {a b : ℝ} : LocalVolumeSet (Set.Ioc a b) := by
     simp only [interior_Ioc, closure_Ioo ab, Set.Ioc_subset_Icc_self]
 
 /-- itau has local volume -/
-theorem LocalVolume.itau : LocalVolumeSet itau := LocalVolume.Ioc
+public theorem LocalVolume.itau : LocalVolumeSet itau := LocalVolume.Ioc
 
 /-- If an interval mean is above b, and each value is below b, then each value is exactly b -/
-theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (lv : LocalVolumeSet s)
-    (fc : ContinuousOn f s) (fi : IntegrableOn f s) (lo : b ≤ ⨍ x in s, f x)
+public theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s)
+    (lv : LocalVolumeSet s) (fc : ContinuousOn f s) (fi : IntegrableOn f s) (lo : b ≤ ⨍ x in s, f x)
     (hi : ∀ x, x ∈ s → f x ≤ b) : ∀ x, x ∈ s → f x = b := by
   contrapose lo; rw [average_eq]
   simp only [Algebra.id.smul_eq_mul, not_le]
@@ -279,8 +292,8 @@ theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolume s) (
   · exact fi.mono Set.diff_subset (le_refl _)
   · exact fi.mono ts (le_refl _)
 
-theorem ContinuousOn.intervalIntegral {M : Type} [TopologicalSpace M] [FirstCountableTopology M]
-    {f : M → ℝ → G} {s : Set M} {a b : ℝ}
+public theorem ContinuousOn.intervalIntegral {M : Type} [TopologicalSpace M]
+    [FirstCountableTopology M] {f : M → ℝ → G} {s : Set M} {a b : ℝ}
     (fc : ContinuousOn (uncurry f) (s ×ˢ Icc a b)) (sc : IsCompact s) (ab : a ≤ b) :
     ContinuousOn (fun x ↦ ∫ t in a..b, f x t) s := by
   rcases ((sc.prod isCompact_Icc).bddAbove_image fc.norm).exists_ge 0 with ⟨c, _, fb⟩
@@ -317,11 +330,11 @@ theorem aEMeasurable_liminf {f : ℕ → M → ENNReal} {μ : Measure M} (fm : �
     AEMeasurable (fun x ↦ atTop.liminf fun n ↦ f n x) μ :=
   aEMeasurable_liminf' fm Filter.atTop_countable_basis fun _ ↦ Set.to_countable _
 
-theorem set_lintegral_mono_aEMeasurable {s : Set M} {f g : M → ENNReal}
+public theorem set_lintegral_mono_aEMeasurable {s : Set M} {f g : M → ENNReal}
     (sm : MeasurableSet s) (fg : ∀ x, x ∈ s → f x ≤ g x) : ∫⁻ x in s, f x ≤ ∫⁻ x in s, g x := by
   apply lintegral_mono_ae; rw [ae_restrict_iff' sm]; exact ae_of_all _ fg
 
-lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s := by
+public lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s := by
   have tm := NullMeasurableSet.of_null t0
   have r := MeasureTheory.measure_union_add_inter₀ (μ := μ) s tm
   have i0 : μ (s ∩ t) = 0 := by
@@ -329,7 +342,7 @@ lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s 
     exact le_trans (MeasureTheory.measure_mono Set.inter_subset_right) t0
   simpa only [t0, i0, add_zero] using r
 
-lemma measure_union_eq_right {s t : Set M} (s0 : μ s = 0) : μ (s ∪ t) = μ t := by
+public lemma measure_union_eq_right {s t : Set M} (s0 : μ s = 0) : μ (s ∪ t) = μ t := by
   rw [Set.union_comm]
   exact measure_union_eq_left s0
 

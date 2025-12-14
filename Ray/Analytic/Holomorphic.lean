@@ -1,4 +1,8 @@
-import Mathlib.Analysis.Analytic.Basic
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
+public import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Analytic.Linear
@@ -31,7 +35,7 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace ℂ F] [CompleteSpace F]
 
 /-- `f : ℂ × ℂ → E` is differentiable iff it is analytic -/
-theorem differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)}
+public theorem differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : Set (ℂ × ℂ)}
     [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E] (o : IsOpen s) :
     DifferentiableOn ℂ f s ↔ AnalyticOnNhd ℂ f s := by
   constructor
@@ -53,7 +57,7 @@ theorem differentiable_iff_analytic2 {E : Type} {f : ℂ × ℂ → E} {s : Set 
   · exact fun a ↦ a.differentiableOn
 
 /-- `f : ℂ × ℂ → E` is `ContDiffAt` iff it is analytic -/
-theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ × ℂ} [NormedAddCommGroup E]
+public theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ × ℂ} [NormedAddCommGroup E]
     [NormedSpace ℂ E] [CompleteSpace E] {n : WithTop ℕ∞} (n1 : 1 ≤ n) :
     ContDiffAt ℂ n f x ↔ AnalyticAt ℂ f x := by
   constructor
@@ -65,7 +69,8 @@ theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x : ℂ �
   · intro a; exact a.contDiffAt.of_le le_top
 
 /-- If `f` is analytic in an open ball, it has a power series over that ball -/
-lemma analyticOnNhd_ball_iff_hasFPowerSeriesOnBall {f : ℂ → E} {c : ℂ} {r : ℝ≥0∞} (r0 : 0 < r) :
+public lemma analyticOnNhd_ball_iff_hasFPowerSeriesOnBall {f : ℂ → E} {c : ℂ} {r : ℝ≥0∞}
+    (r0 : 0 < r) :
     AnalyticOnNhd ℂ f (EMetric.ball c r) ↔
       ∃ p : FormalMultilinearSeries ℂ ℂ E, HasFPowerSeriesOnBall f p c r := by
   constructor

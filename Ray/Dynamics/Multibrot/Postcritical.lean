@@ -1,4 +1,16 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Ray.Dynamics.Multibrot.Basic
+import Ray.Dynamics.Multibrot.Iterates
 import Ray.Dynamics.Multibrot.Potential
+import Ray.Dynamics.Multibrot.Specific
+import Ray.Dynamics.Postcritical
+import Ray.Dynamics.Potential
+import Ray.Misc.Bounds
 
 /-!
 ## Effective bounds on postcritical points for Multibrot sets
@@ -97,7 +109,8 @@ lemma log_log_iter (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     _ ≥ log (log x) + 0.548 := by bound
 
 /-- For large `c`, large `z`'s are postcritical -/
-theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) : Postcritical (superF d) c z := by
+public theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+    Postcritical (superF d) c z := by
   -- Record a variety of inequalities
   have d0 : 0 < d := d_pos d
   have lcz : log (log ‖c‖) ≤ log (log ‖z‖) := log_log_mono (by linarith) cz
@@ -138,7 +151,8 @@ theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) : Pos
   ring_nf; simp only [add_lt_add_iff_right]; norm_num
 
 /-- For large `c` and small `z`, `(c,z⁻¹)` is postcritical -/
-lemma postcritical_small (c4 : 4 ≤ ‖c‖) (z1 : ‖z‖ ≤ ‖c‖⁻¹) : (c, (z : 𝕊)⁻¹) ∈ (superF d).post := by
+public lemma postcritical_small (c4 : 4 ≤ ‖c‖) (z1 : ‖z‖ ≤ ‖c‖⁻¹) :
+    (c, (z : 𝕊)⁻¹) ∈ (superF d).post := by
   set s := superF d
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', s.post_a]

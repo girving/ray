@@ -1,3 +1,4 @@
+module
 import Ray.Analytic.Log
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.Mandelbrot

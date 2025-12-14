@@ -1,7 +1,14 @@
+module
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
+public import Mathlib.Analysis.Complex.Circle
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import Ray.Koebe.Snap
+public import Ray.Koebe.Wind
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Function.Jacobian
 import Mathlib.MeasureTheory.Integral.Prod
-import Ray.Koebe.Wind
+import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 import Ray.Misc.Bound
 import Ray.Misc.Measure
 
@@ -23,19 +30,19 @@ noncomputable section
 variable {f : Circle → ℂˣ}
 
 /-- `f` winds monotonically around the origin, and is differentiable -/
-structure WindDiff (f : Circle → ℂˣ) : Prop where
+public structure WindDiff (f : Circle → ℂˣ) : Prop where
   fc : Continuous f
   inj : (fun x ↦ snap (f x)).Injective
   diff : Differentiable ℝ (fun t ↦ (f (.exp t)).val)
 
 namespace WindDiff
 
-lemma wind (i : WindDiff f) : Wind f := ⟨i.fc, i.inj⟩
+public lemma wind (i : WindDiff f) : Wind f := ⟨i.fc, i.inj⟩
 
 -- Abbreviations for `f`-related functions
-def fe (_ : WindDiff f) (t : ℝ) : ℂ := (f (.exp t)).val
-def dfe (i : WindDiff f) (t : ℝ) : ℂ := deriv i.fe t
-def fdfe (i : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ i.fe t
+@[expose] public def fe (_ : WindDiff f) (t : ℝ) : ℂ := (f (.exp t)).val
+@[expose] public def dfe (i : WindDiff f) (t : ℝ) : ℂ := deriv i.fe t
+@[expose] public def fdfe (i : WindDiff f) (t : ℝ) : ℝ →L[ℝ] ℂ := fderiv ℝ i.fe t
 
 @[simp] lemma deriv_fe (i : WindDiff f) {t : ℝ} : deriv i.fe t = i.dfe t := rfl
 lemma hasDerivAt_fe (i : WindDiff f) {t : ℝ} : HasDerivAt i.fe (i.dfe t) t :=
@@ -147,7 +154,7 @@ lemma measurableSet_gs_square (i : WindDiff f) : MeasurableSet (i.gs '' square) 
     (fun _ _ ↦ i.fderiv.hasFDerivWithinAt) i.injOn_gs
 
 /-- The area of `i.disk` as a circle integral -/
-theorem volume_eq (i : WindDiff f) :
+public theorem volume_eq (i : WindDiff f) :
     volume.real i.wind.disk = 2⁻¹ * ∫ t in (-π)..π, |inner ℝ (i.fe t * I) (i.dfe t)| := by
   simp only [i.disk_eq, image_union, MeasureTheory.Measure.real, image_singleton,
     measure_union_eq_right, MeasureTheory.NoAtoms.measure_singleton]
@@ -156,8 +163,9 @@ theorem volume_eq (i : WindDiff f) :
   have ie : ∫ z in i.gs '' square, (1 : ℝ) = volume.real (i.gs '' square) • 1 :=
     MeasureTheory.setIntegral_const _
   simp only [smul_eq_mul, mul_one, MeasureTheory.Measure.real] at ie
-  simp only [← ie, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul _ measurableSet_square
-    (fun _ _ ↦ i.fderiv.hasFDerivWithinAt) i.injOn_gs, i.dgs_det, smul_eq_mul, mul_one, abs_mul]
+  simp only [← ie, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul _
+    measurableSet_square (fun _ _ ↦ i.fderiv.hasFDerivWithinAt) i.injOn_gs, i.dgs_det, smul_eq_mul,
+    mul_one, abs_mul]
   refine Eq.trans (MeasureTheory.setIntegral_prod_mul (s := Ioc 0 1) (t := Ioc (-π) π)
     (f := fun x ↦ |x|) (g := fun x ↦ |inner ℝ (i.fe x * I) (i.dfe x)|)) ?_
   refine congr_arg₂ _ ?_ ?_

@@ -1,4 +1,9 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import Mathlib.Topology.Algebra.GroupWithZero
 import Ray.Analytic.Analytic
 import Ray.Misc.Continuation
 
@@ -30,7 +35,7 @@ lemma exp_eq_exp_of_lt {z w : ℂ} (e : exp z = exp w) (lt : ‖z - w‖ < 2 * �
   simpa only [← Int.cast_abs, ← Int.cast_one (R := ℝ), Int.cast_lt, Int.abs_lt_one_iff] using lt
 
 /-- Logarithms of nonzero analytic functions exist -/
-theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
+public theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
     (f0 : ∀ z ∈ ball c r, f z ≠ 0) :
     ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ g c = Complex.log (f c) ∧
       ∀ z ∈ ball c r, f z = exp (g z) := by
@@ -107,7 +112,7 @@ theorem AnalyticOnNhd.exists_log (fa : AnalyticOnNhd ℂ f (ball c r))
   exact ⟨g, fun _ m ↦ (pg _ m).1, by simp only [e, fsc], fun _ m ↦ (pg _ m).2⟩
 
 /-- `n`th roots of nonzero analytic functions exist -/
-theorem AnalyticOnNhd.exists_root (fa : AnalyticOnNhd ℂ f (ball c r))
+public theorem AnalyticOnNhd.exists_root (fa : AnalyticOnNhd ℂ f (ball c r))
     (f0 : ∀ z ∈ ball c r, f z ≠ 0) {n : ℕ} (n0 : n ≠ 0) :
     ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball c r) ∧ g c = exp (Complex.log (f c) / n) ∧
       ∀ z ∈ ball c r, f z = g z ^ n := by

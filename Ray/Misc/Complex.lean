@@ -1,3 +1,11 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+public import Mathlib.RingTheory.Norm.Defs
+public import Mathlib.Topology.Algebra.Module.Determinant
 import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
@@ -41,7 +49,7 @@ theorem Metric.sphere_eq_empty {S : Type} [RCLike S] {c : S} {r : ℝ} : sphere 
     simpa only [not_lt, NormedSpace.sphere_nonempty, not_le] using n
 
 /-- `range (circleMap c r _) = sphere c r` even when restricted to `Ioc 0 (2π)` -/
-theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
+public theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     ∃ t, t ∈ Ioc 0 (2 * π) ∧ z = circleMap c r t := by
   by_cases rp : r < 0
   · simp only [Metric.sphere_eq_empty.mpr rp, mem_empty_iff_false] at zs
@@ -69,7 +77,7 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.exp_two_pi_mul_I, mul_one,
       one_zpow, div_one, true_or]
 
-@[fun_prop] lemma ContinuousAt.complex_conj {f : X → ℂ} {x : X} (h : ContinuousAt f x) :
+@[fun_prop] public lemma ContinuousAt.complex_conj {f : X → ℂ} {x : X} (h : ContinuousAt f x) :
     ContinuousAt (fun x ↦ conj (f x)) x :=
   Complex.continuous_conj.continuousAt.comp h
 
@@ -78,14 +86,14 @@ theorem circleMap_Ioc {c z : ℂ} {r : ℝ} (zs : z ∈ sphere c r) :
 -/
 
 /-- `Complex.ofReal` is real analytic -/
-lemma Complex.analyticAt_ofReal {x : ℝ} : AnalyticAt ℝ Complex.ofReal x := by
+public lemma Complex.analyticAt_ofReal {x : ℝ} : AnalyticAt ℝ Complex.ofReal x := by
   have e : Complex.ofReal = fun x ↦ Complex.ofRealCLM x := by simp
   rw [e]
   exact Complex.ofRealCLM.analyticAt x
 
 /-- `Complex.ofReal` is real analytic -/
-lemma AnalyticAt.ofReal {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → ℝ} {x : E}
-    (a : AnalyticAt ℝ f x) : AnalyticAt ℝ (fun x ↦ (f x : ℂ)) x :=
+public lemma AnalyticAt.ofReal {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E] {f : E → ℝ}
+    {x : E} (a : AnalyticAt ℝ f x) : AnalyticAt ℝ (fun x ↦ (f x : ℂ)) x :=
   Complex.analyticAt_ofReal.comp a
 
 /-- `Complex.ofReal` is real analytic -/
@@ -99,7 +107,7 @@ lemma Complex.contDiff_ofReal : ContDiff ℝ ω Complex.ofReal := by
   apply Complex.contDiffAt_ofReal
 
 /-- Complex `norm` is real analytic -/
-lemma Complex.analyticAt_norm {z : ℂ} (z0 : z ≠ 0) : AnalyticAt ℝ (fun z : ℂ ↦ ‖z‖) z :=
+public lemma Complex.analyticAt_norm {z : ℂ} (z0 : z ≠ 0) : AnalyticAt ℝ (fun z : ℂ ↦ ‖z‖) z :=
   (contDiffAt_norm (𝕜 := ℝ) z0).analyticAt
 
 /-- Complex `norm` is real analytic -/
@@ -128,8 +136,8 @@ lemma hasFDerivAt_arg {z : ℂ} (m : z ∈ slitPlane) :
   exact HasFDerivAt.comp _ hasFDerivAt_im (Complex.real_hasFDerivAt (Complex.hasDerivAt_log m))
 
 /-- The derivative of `arg` along a curve -/
-lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p' t) (m : p t ∈ slitPlane) :
-    HasDerivAt (fun t ↦ arg (p t)) ((p t)⁻¹ * p').im t := by
+public lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p' t)
+    (m : p t ∈ slitPlane) : HasDerivAt (fun t ↦ arg (p t)) ((p t)⁻¹ * p').im t := by
   convert ((hasFDerivAt_arg m).comp t h.hasFDerivAt).hasDerivAt
   simp only [ContinuousLinearMap.comp, Complex.imCLM_coe, ContinuousLinearMap.coe_mk',
     LinearMap.coe_comp, Complex.imLm_coe, Function.comp_apply]
@@ -142,11 +150,11 @@ lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p'
 ### Determinants of complex derivatives
 -/
 
-@[simp] lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
+@[simp] public lemma Complex.algebra_norm (z : ℂ) : Algebra.norm ℝ (z : ℂ) = ‖z‖ ^ 2 := by
   simp [Algebra.norm_complex_eq, Complex.normSq_eq_norm_sq]
 
 /-- If `f` is complex differentiable at a point, it's `fderiv` determinant is clean -/
-lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
+public lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : DifferentiableAt ℂ f z) :
     (fderiv ℝ f z).det = ‖deriv f z‖ ^ 2 := by
   have d1 := df.hasDerivAt.hasFDerivAt.restrictScalars ℝ
   have d2 := (df.restrictScalars ℝ).hasFDerivAt

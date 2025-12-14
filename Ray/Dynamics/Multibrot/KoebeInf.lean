@@ -1,4 +1,11 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Ray.Dynamics.Bottcher
+import Ray.Dynamics.Multibrot.Basic
+import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Dynamics.Multibrot.BottcherInv
+import Ray.Dynamics.Multibrot.Postcritical
+import Ray.Dynamics.Postcritical
 import Ray.Koebe.Koebe
 
 /-!
@@ -25,7 +32,7 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 -/
 
 /-- `sbottcher_inv` covers a large disk around the origin, by the Koebe quarter theorem -/
-lemma sbottcher_inv_koebe (c4 : 4 ≤ ‖c‖) (rc : r ≤ ‖c‖⁻¹) :
+public lemma sbottcher_inv_koebe (c4 : 4 ≤ ‖c‖) (rc : r ≤ ‖c‖⁻¹) :
     ball 0 (r / 4) ⊆ sbottcher_inv d c '' (ball 0 r) := by
   have c4 : 4 ≤ ‖c‖ := by linarith
   have k := koebe_quarter' (f := sbottcher_inv d c) (c := 0) (r := r) ?_ ?_
@@ -37,7 +44,7 @@ lemma sbottcher_inv_koebe (c4 : 4 ≤ ‖c‖) (rc : r ≤ ‖c‖⁻¹) :
   · exact (sbottcher_inv_inj c4).mono (Metric.ball_subset_ball rc)
 
 /-- Large `c`, small `x` has small `sbottcher_inv` preimage -/
-lemma sbottcher_inv_small_mem_preimage (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+public lemma sbottcher_inv_small_mem_preimage (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
     ∃ z : ℂ, ‖z‖ < ‖c‖⁻¹ ∧ ‖z‖ ≤ 4 * ‖x‖ ∧ (c, (z : 𝕊)⁻¹) ∈ (superF d).post ∧
       sbottcher_inv d c z = x := by
   set s := superF d
@@ -68,16 +75,20 @@ lemma sbottcher_inv_small_mem_preimage (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c
     · exact postcritical_small (by linarith) (by linarith)
 
 /-- Large `c`, small `x` is in `s.ext` -/
-lemma small_mem_ext (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) : (c, x) ∈ (superF d).ext := by
+public lemma small_mem_ext (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) : (c, x) ∈ (superF d).ext := by
   obtain ⟨z,_,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c4 xc
-  exact zx ▸ ((superF d).homeomorphSlice c).map_target zp
+  simp only [sbottcher_inv_def] at zx
+  have t := ((superF d).homeomorphSlice c).map_target (x := z⁻¹)
+  simp only [Super.target_homeomorphSlice, mem_setOf_eq, zp, Super.source_homeomorphSlice,
+    Super.invFun_homeomorphSlice, forall_const] at t
+  simpa [zx] using t
 
 /-!
 ### Koebe quarter theorem at infinity applied to `bottcher`
 -/
 
 /-- `bottcher` covers a large disk around the origin, by the Koebe quarter theorem -/
-lemma bottcher_inv_koebe (r2 : r ≤ 2⁻¹) :
+public lemma bottcher_inv_koebe (r2 : r ≤ 2⁻¹) :
     ball 0 (r / 4) ⊆ bottcher_inv d '' (ball 0 r) := by
   have k := koebe_quarter' (f := bottcher_inv d) (c := 0) (r := r) ?_ ?_
   · simpa [bottcher_hasDerivAt_one.deriv] using k
@@ -87,7 +98,7 @@ lemma bottcher_inv_koebe (r2 : r ≤ 2⁻¹) :
   · exact bottcher_inv_inj.mono (Metric.ball_subset_ball r2)
 
 /-- Small `z`s have small `bottcher_inv` preimages -/
-lemma bottcher_inv_small_mem_preimage (z8 : ‖z‖ < 8⁻¹) :
+public lemma bottcher_inv_small_mem_preimage (z8 : ‖z‖ < 8⁻¹) :
     ∃ c : ℂ, ‖c‖ ≤ 4 * ‖z‖ ∧ (c : 𝕊)⁻¹ ∈ multibrotExt d ∧ bottcher_inv d c = z := by
   set s := superF d
   by_cases z0 : z = 0

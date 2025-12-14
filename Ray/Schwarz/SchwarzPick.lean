@@ -1,7 +1,11 @@
+module
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Analysis.Complex.Basic
+public import Ray.Schwarz.Mobius
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.Schwarz
 import Ray.Analytic.Analytic
-import Ray.Schwarz.Mobius
+import Ray.Misc.Bound
 
 /-!
 ## Schwarz-Pick theorem
@@ -64,7 +68,7 @@ lemma ContDiffOn.norm_le_norm_of_mapsTo_closedBall (fa : ContDiffOn ℂ ω f (ba
 -/
 
 /-- Finite difference version of Schwarz-Pick for the unit disk -/
-lemma ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
+public lemma ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
     (fi : MapsTo f (ball 0 1) (closedBall 0 1)) (z1 : ‖z‖ < 1) (w1 : ‖w‖ < 1) :
     ‖f z - f w‖ ≤ ‖1 - conj (f z) * f w‖ * ‖mobius z w‖ := by
   rcases MapsTo.mapsTo_ball fa fi with ⟨a,c⟩ | fi
@@ -85,7 +89,7 @@ lemma ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω 
     Complex.norm_le_norm_of_mapsTo_ball_self (ga.differentiableOn le_top) gm g0 u1
 
 /-- Derivative version of Schwarz-Pick for the unit disk -/
-lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
+public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
     (fi : MapsTo f (ball 0 1) (closedBall 0 1)) (z1 : ‖z‖ < 1) :
     ‖deriv f z‖ ≤ (1 - ‖f z‖ ^ 2) / (1 - ‖z‖ ^ 2) := by
   rcases MapsTo.mapsTo_ball fa fi with ⟨a,c⟩ | fi'
@@ -103,7 +107,7 @@ lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f
     filter_upwards [isOpen_ball.eventually_mem zm] with w w1 wz
     simp only [Metric.mem_ball, dist_zero_right] at w1
     have s := ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball fa fi z1 w1
-    simp only [mobius, Complex.norm_div, ← mul_div_assoc, mul_div_right_comm] at s
+    simp only [mobius_def, Complex.norm_div, ← mul_div_assoc, mul_div_right_comm] at s
     rw [← div_le_iff₀ (norm_pos_iff.mpr (by grind))] at s
     simpa [slope, ← div_eq_inv_mul, norm_sub_rev (f w), norm_sub_rev w]
   have dc : ContinuousAt (fun w ↦ ‖1 - conj (f z) * f w‖ / ‖1 - conj z * w‖) z :=
@@ -127,7 +131,7 @@ We leave the centres at zero since otherwise the statements get very messy.
 -/
 
 /-- Holomorphicity and boundedness of the scaled function -/
-private lemma scaled_prop (fa : ContDiffOn ℂ ω f (ball 0 r0))
+lemma scaled_prop (fa : ContDiffOn ℂ ω f (ball 0 r0))
     (fi : MapsTo f (ball 0 r0) (closedBall 0 r1)) (r0p : 0 < r0) :
     let g := fun z ↦ r1⁻¹ * (f (r0 * z))
     ContDiffOn ℂ ω g (ball 0 1) ∧ MapsTo g (ball 0 1) (closedBall 0 1) := by
@@ -151,7 +155,7 @@ private lemma scaled_prop (fa : ContDiffOn ℂ ω f (ball 0 r0))
     simpa using fi (x := r0 * z) (by simp [abs_of_pos r0p]; bound)
 
 /-- Finite difference version of Schwarz-Pick for disks of any radii -/
-lemma Complex.dist_le_mul_mobius_of_mapsTo_ball (fa : ContDiffOn ℂ ω f (ball 0 r0))
+public lemma Complex.dist_le_mul_mobius_of_mapsTo_ball (fa : ContDiffOn ℂ ω f (ball 0 r0))
     (fi : MapsTo f (ball 0 r0) (closedBall 0 r1)) (zr : ‖z‖ < r0) (wr : ‖w‖ < r0) :
     ‖f z - f w‖ ≤ r0 / r1 * ‖r1 ^ 2 - conj (f z) * f w‖ * ‖z - w‖ / ‖r0 ^ 2 - conj z * w‖ := by
   have r0p : 0 < r0 := lt_of_le_of_lt (by bound) zr
@@ -166,14 +170,14 @@ lemma Complex.dist_le_mul_mobius_of_mapsTo_ball (fa : ContDiffOn ℂ ω f (ball 
   have s := ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball ga gm (z := r0⁻¹ * z) (w := r0⁻¹ * w)
     (by simpa [abs_of_pos r0p, ← div_eq_inv_mul, div_lt_iff₀ r0p])
     (by simpa [abs_of_pos r0p, ← div_eq_inv_mul, div_lt_iff₀ r0p])
-  simp only [mobius_denom_inv_mul r1p.ne', mobius_denom_inv_mul r0p.ne', norm_mul, mobius] at s
+  simp only [mobius_denom_inv_mul r1p.ne', mobius_denom_inv_mul r0p.ne', norm_mul, mobius_def] at s
   simp only [← mul_assoc, Complex.ofReal_inv, mul_inv_cancel₀ r0z, one_mul, ← mul_sub, norm_mul,
     norm_inv, Complex.norm_real, Real.norm_eq_abs, abs_of_pos r1p, norm_pow, norm_div,
     abs_of_pos r0p, ← div_eq_inv_mul _ r1, div_le_iff₀ r1p] at s
   exact le_trans s (le_of_eq (by field_simp [r0p.ne', r1p.ne']))
 
 /-- Derivative version of Schwarz-Pick for disks of any radii -/
-lemma Complex.norm_deriv_le_mul_div_of_mapsTo_ball (fa : ContDiffOn ℂ ω f (ball 0 r0))
+public lemma Complex.norm_deriv_le_mul_div_of_mapsTo_ball (fa : ContDiffOn ℂ ω f (ball 0 r0))
     (fi : MapsTo f (ball 0 r0) (closedBall 0 r1)) (zr : ‖z‖ < r0) :
     ‖deriv f z‖ ≤ r0 / r1 * (r1 ^ 2 - ‖f z‖ ^ 2) / (r0 ^ 2 - ‖z‖ ^ 2) := by
   have r0p : 0 < r0 := lt_of_le_of_lt (by bound) zr

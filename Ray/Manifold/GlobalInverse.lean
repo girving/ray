@@ -1,5 +1,12 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Geometry.Manifold.ContMDiff.Defs
+public import Ray.Manifold.OneDimension
+public import Ray.Manifold.Analytic
 import Ray.Dynamics.Multiple
-import Ray.Manifold.Inverse
+import all Ray.Manifold.Inverse
+import Ray.Manifold.Nontrivial
+import Ray.Manifold.OpenMapping
 
 /-!
 ## Global inverse functions theorems on 1D complex manifolds
@@ -29,12 +36,13 @@ variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : IsManifold 
 
 /-- The global 1D inverse function theorem (parameterized, open case): if `f : ℂ → S → T`
     is nonsingular and injective on an open set `s`, it has a global analytic inverse. -/
-theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : Set (ℂ × S)}
+public theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : Set (ℂ × S)}
     (fa : ContMDiffOn II I ω (uncurry f) s) (nc : ∀ p : ℂ × S, p ∈ s → mfderiv I I (f p.1) p.2 ≠ 0)
     (inj : InjOn (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) s) (so : IsOpen s) :
     ∃ g : ℂ → T → S,
       ContMDiffOnNhd II I (uncurry g) ((fun p : ℂ × S ↦ (p.1, f p.1 p.2)) '' s) ∧
         ∀ p : ℂ × S, p ∈ s → g p.1 (f p.1 p.2) = p.2 := by
+  --obtain blah := complex_inverse_fun
   have i : ∀ p : ℂ × S, p ∈ s → ComplexInverseFun.Cinv f p.1 p.2 := by
     intro ⟨c, z⟩ m; exact
       { fa := fa.contMDiffAt (so.mem_nhds m)
@@ -72,7 +80,7 @@ theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S] {s : 
 
 /-- The global 1D inverse function theorem (compact case): if `f : S → T` is nonsingular and
     injective on a compact set `s`, it has a global analytic inverse. -/
-theorem global_complex_inverse_fun_compact {f : ℂ → S → T} [Nonempty S] [T2Space T]
+public theorem global_complex_inverse_fun_compact {f : ℂ → S → T} [Nonempty S] [T2Space T]
     {s : Set (ℂ × S)} (fa : ContMDiffOnNhd II I (uncurry f) s)
     (nc : ∀ p : ℂ × S, p ∈ s → mfderiv I I (f p.1) p.2 ≠ 0)
     (inj : InjOn (fun p : ℂ × S ↦ (p.1, f p.1 p.2)) s) (sc : IsCompact s) :
@@ -130,7 +138,7 @@ theorem weak_global_complex_inverse_fun_open {f : S → T} [Nonempty S] {s : Set
 
 /-- The global 1D inverse function theorem (open case): if `f : S → T` is injective on an
     open set `s`, it has a global analytic inverse. -/
-theorem global_complex_inverse_fun_open' {f : S → T} [Nonempty S] {s : Set S}
+public theorem global_complex_inverse_fun_open' {f : S → T} [Nonempty S] {s : Set S}
     (fa : ContMDiffOn I I ω f s) (inj : InjOn f s) (so : IsOpen s) :
     ∃ g : T → S, ContMDiffOnNhd I I g (f '' s) ∧ ∀ z, z ∈ s → g (f z) = z :=
   weak_global_complex_inverse_fun_open fa
@@ -138,7 +146,7 @@ theorem global_complex_inverse_fun_open' {f : S → T} [Nonempty S] {s : Set S}
 
 /-- The global 1D inverse function theorem (open, complex case): if `f : ℂ → ℂ` is injective on an
     open set `s`, it has a global analytic inverse. -/
-theorem global_complex_inverse_fun_open'' {f : ℂ → ℂ} {s : Set ℂ}
+public theorem global_complex_inverse_fun_open'' {f : ℂ → ℂ} {s : Set ℂ}
     (fa : AnalyticOnNhd ℂ f s) (inj : InjOn f s) (so : IsOpen s) :
     ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (f '' s) ∧ ∀ z, z ∈ s → g (f z) = z := by
   have ⟨g,ga,gf⟩ := global_complex_inverse_fun_open' (f := f) ?_ inj so

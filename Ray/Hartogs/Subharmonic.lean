@@ -1,14 +1,23 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.MeasureTheory.Integral.Average
+public import Ray.Hartogs.MaxLog
+public import Ray.Misc.Measure
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Mathlib.Tactic.Bound
+import Mathlib.Tactic.Cases
 import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
 import Ray.Hartogs.Duals
 import Ray.Hartogs.FubiniBall
-import Ray.Hartogs.MaxLog
+import Ray.Misc.Complex
 import Ray.Misc.Max
-import Ray.Misc.Measure
+import Ray.Misc.Multilinear
 
 /-!
 ## Subharmonic and harmonic functions and Hartogs' lemma
@@ -58,7 +67,7 @@ variable {H : Type} [NormedAddCommGroup H] [NormedSpace ℂ H]
     We require the mean property for large circles because it is easy to prove
     for the cases we need, and will be needed for the large submean theorem
     for subharmonic functions. -/
-structure HarmonicOn (f : ℂ → E) (s : Set ℂ) : Prop where
+public structure HarmonicOn (f : ℂ → E) (s : Set ℂ) : Prop where
   /-- `f` is continuous throughout `s` -/
   cont : ContinuousOn f s
   /-- If a circle bounds a disk contained in `s`, the circle mean is equal to the center value. -/
@@ -70,7 +79,7 @@ structure HarmonicOn (f : ℂ → E) (s : Set ℂ) : Prop where
 
     Out of laziness, we assume continuity as well for now.  Ideally we'd allow `-∞` as values, but
     using `ereal` instead of `ℝ` adds many annoying technicalities. -/
-structure SubharmonicOn (f : ℂ → ℝ) (s : Set ℂ) : Prop where
+public structure SubharmonicOn (f : ℂ → ℝ) (s : Set ℂ) : Prop where
   /-- The usual definition requires upper semicontinuity; we use continuity out of laziness. -/
   cont : ContinuousOn f s
   /-- Near each `c ∈ interior s`, for sufficiently small radii, `f c ≤` the circle mean of `f` -/
@@ -78,7 +87,7 @@ structure SubharmonicOn (f : ℂ → ℝ) (s : Set ℂ) : Prop where
     ∀ s, 0 < s → s < r → f c ≤ ⨍ t in itau, f (circleMap c s t)
 
 /-- Subharmonic functions are subharmonic on smaller sets -/
-theorem SubharmonicOn.mono {f : ℂ → ℝ} {s t : Set ℂ} (fs : SubharmonicOn f s) (ts : t ⊆ s) :
+public theorem SubharmonicOn.mono {f : ℂ → ℝ} {s t : Set ℂ} (fs : SubharmonicOn f s) (ts : t ⊆ s) :
     SubharmonicOn f t :=
   { cont := fs.cont.mono ts
     submean' := fun c cs ↦ fs.submean' c (interior_mono ts cs) }
@@ -101,18 +110,18 @@ theorem HarmonicOn.convex {f : ℂ → E} {s : Set ℂ} {g : E → ℝ} (fh : Ha
       exact ((c.comp_continuousOn fh.cont).mono cs).integrableOn_sphere tp }
 
 /-- Harmonic functions are subharmonic -/
-theorem HarmonicOn.subharmonicOn {f : ℂ → ℝ} {s : Set ℂ} (h : HarmonicOn f s) :
+public theorem HarmonicOn.subharmonicOn {f : ℂ → ℝ} {s : Set ℂ} (h : HarmonicOn f s) :
     SubharmonicOn (fun z ↦ f z) s := by
   have e : (fun z ↦ f z) = fun z ↦ (fun x ↦ x) (f z) := rfl
   rw [e]; exact h.convex continuous_id (convexOn_id convex_univ)
 
 /-- Norms of harmonic functions are subharmonic -/
-theorem HarmonicOn.norm {f : ℂ → E} {s : Set ℂ} (h : HarmonicOn f s) :
+public theorem HarmonicOn.norm {f : ℂ → E} {s : Set ℂ} (h : HarmonicOn f s) :
     SubharmonicOn (fun z ↦ ‖f z‖) s :=
   h.convex continuous_norm (convexOn_norm convex_univ)
 
 /-- `SubharmonicOn` depends only on values in `s` (`→` version) -/
-theorem SubharmonicOn.congr {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
+public theorem SubharmonicOn.congr {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
     (h : Set.EqOn g f s) : SubharmonicOn g s :=
   { cont := fs.cont.congr h
     submean' := by
@@ -136,12 +145,12 @@ theorem SubharmonicOn.congr {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicO
       rwa [← h.symm (interior_subset cs), ← integral_congr_ae hs] }
 
 /-- `SubharmonicOn` depends only on values in `s` (`↔` version) -/
-theorem subharmonicOn_congr {f g : ℂ → ℝ} {s : Set ℂ} (h : Set.EqOn f g s) :
+public theorem subharmonicOn_congr {f g : ℂ → ℝ} {s : Set ℂ} (h : Set.EqOn f g s) :
     SubharmonicOn f s ↔ SubharmonicOn g s :=
   ⟨fun fs ↦ fs.congr h.symm, fun gs ↦ gs.congr h⟩
 
 /-- Constants are harmonic -/
-theorem HarmonicOn.const (a : E) {s : Set ℂ} : HarmonicOn (fun _ ↦ a) s :=
+public theorem HarmonicOn.const (a : E) {s : Set ℂ} : HarmonicOn (fun _ ↦ a) s :=
   { cont := continuousOn_const
     mean := by
       intro c r _ _
@@ -151,8 +160,8 @@ theorem HarmonicOn.const (a : E) {s : Set ℂ} : HarmonicOn (fun _ ↦ a) s :=
       simp }
 
 /-- Differences are harmonic -/
-theorem HarmonicOn.sub {f g : ℂ → F} {s : Set ℂ} (fh : HarmonicOn f s) (gh : HarmonicOn g s) :
-    HarmonicOn (f - g) s :=
+public theorem HarmonicOn.sub {f g : ℂ → F} {s : Set ℂ} (fh : HarmonicOn f s)
+    (gh : HarmonicOn g s) : HarmonicOn (f - g) s :=
   { cont := ContinuousOn.sub fh.cont gh.cont
     mean := by
       intro c r rp cs; simp [fh.mean c r rp cs, gh.mean c r rp cs]
@@ -160,7 +169,7 @@ theorem HarmonicOn.sub {f g : ℂ → F} {s : Set ℂ} (fh : HarmonicOn f s) (gh
         ((gh.cont.mono cs).integrableOn_sphere rp)] }
 
 /-- Subharmonic functions add (note that they don't subtract) -/
-theorem SubharmonicOn.add {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
+public theorem SubharmonicOn.add {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn f s)
     (gs : SubharmonicOn g s) : SubharmonicOn (fun z ↦ f z + g z) s :=
   { cont := fs.cont.add gs.cont
     submean' := by
@@ -183,19 +192,20 @@ theorem SubharmonicOn.add {f g : ℂ → ℝ} {s : Set ℂ} (fs : SubharmonicOn 
       exact add_le_add m0 m1 }
 
 /-- Negations are harmonic -/
-theorem HarmonicOn.neg {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) : HarmonicOn (-f) s := by
+public theorem HarmonicOn.neg {f : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) :
+    HarmonicOn (-f) s := by
   have nh := HarmonicOn.sub (HarmonicOn.const (0 : E)) fh
   have e : (fun _ : ℂ ↦ (0 : E)) - f = -f := by ext; simp
   rwa [← e]
 
 /-- Additions are harmonic -/
-theorem HarmonicOn.add {f g : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s) (gh : HarmonicOn g s) :
-    HarmonicOn (f + g) s := by
+public theorem HarmonicOn.add {f g : ℂ → E} {s : Set ℂ} (fh : HarmonicOn f s)
+    (gh : HarmonicOn g s) : HarmonicOn (f + g) s := by
   have e : f + g = f - -g := by ext; simp
   rw [e]; exact fh.sub gh.neg
 
 /-- Scalar multiples are harmonic -/
-theorem HarmonicOn.const_mul {f : ℂ → S} {s : Set ℂ} (fh : HarmonicOn f s) (a : S) :
+public theorem HarmonicOn.const_mul {f : ℂ → S} {s : Set ℂ} (fh : HarmonicOn f s) (a : S) :
     HarmonicOn (fun z ↦ a * f z) s :=
   { cont := ContinuousOn.mul continuousOn_const fh.cont
     mean := by
@@ -203,7 +213,7 @@ theorem HarmonicOn.const_mul {f : ℂ → S} {s : Set ℂ} (fh : HarmonicOn f s)
       simp_rw [← smul_eq_mul, integral_smul, smul_comm _ a, ← average_eq, ← fh.mean c r rp cs] }
 
 /-- Nonnegative scalar multiples are subharmonic -/
-theorem SubharmonicOn.constMul {f : ℂ → ℝ} {s : Set ℂ} {a : ℝ} (fs : SubharmonicOn f s)
+public theorem SubharmonicOn.const_mul {f : ℂ → ℝ} {s : Set ℂ} {a : ℝ} (fs : SubharmonicOn f s)
     (ap : 0 ≤ a) : SubharmonicOn (fun z ↦ a * f z) s :=
   { cont := ContinuousOn.mul continuousOn_const fs.cont
     submean' := by
@@ -871,8 +881,8 @@ theorem SubharmonicOn.monotone_lim {f : ℕ → ℂ → ℝ} {g : ℂ → ℝ} {
     Some machinery is required to handle general Banach spaces: we rewrite `‖f z‖` as the limit
     of norms along larger and larger finite subspaces, and use the fact that `linear ∘ analytic`
     is analytic to reduce to the case of `H = ℂ`. -/
-theorem AnalyticOnNhd.maxLog_norm_subharmonicOn [SecondCountableTopology H] {f : ℂ → H} {s : Set ℂ}
-    (fa : AnalyticOnNhd ℂ f s) (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
+public theorem AnalyticOnNhd.maxLog_norm_subharmonicOn [SecondCountableTopology H] {f : ℂ → H}
+    {s : Set ℂ} (fa : AnalyticOnNhd ℂ f s) (b : ℝ) : SubharmonicOn (fun z ↦ maxLog b ‖f z‖) s := by
   have gc := fa.continuousOn.maxLog_norm b
   have ft := fun z (_ : z ∈ s) ↦ duals_lim_tendsto_maxLog_norm b (f z)
   have fs : ∀ n, SubharmonicOn (fun z ↦ partialSups (fun k ↦ maxLog b ‖duals k (f z)‖) n) s := by
@@ -1059,7 +1069,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
     since `ℝ` not being complete makes it complicated otherwise.
 
     See https://www-users.cse.umn.edu/~garrett/m/complex/hartogs.pdf -/
-theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : ℝ}
+public theorem SubharmonicOn.hartogs {f : ℕ → ℂ → ℝ} {s k : Set ℂ} {c b : ℝ}
     (fs : ∀ n, SubharmonicOn (f n) s) (fb : ∀ n z, z ∈ s → f n z ≤ b)
     (fc : ∀ z, z ∈ s → ∀ d, d > c → ∀ᶠ n in atTop, f n z ≤ d) (ck : IsCompact k)
     (ks : k ⊆ interior s) : ∀ d, d > c → ∀ᶠ n in atTop, ∀ z, z ∈ k → f n z ≤ d := by

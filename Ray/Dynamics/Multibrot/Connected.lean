@@ -1,5 +1,10 @@
-import Ray.Misc.Connected
+module
+public import Ray.Dynamics.Multibrot.Defs
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Isomorphism
+import Ray.Manifold.Analytic
+import Ray.Manifold.Nonseparating
+import Ray.Misc.Connected
 
 /-!
 ## The Multibrot set and its complement are connected
@@ -27,7 +32,8 @@ variable {c : ℂ}
 variable {d : ℕ} [Fact (2 ≤ d)]
 
 /-- `multibrotExt` is path connected -/
-theorem isPathConnected_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsPathConnected (multibrotExt d) := by
+public theorem isPathConnected_multibrotExt (d : ℕ) [Fact (2 ≤ d)] :
+    IsPathConnected (multibrotExt d) := by
   rw [← ray_surj d]; apply IsPathConnected.image_of_continuousOn
   exact (convex_ball _ _).isPathConnected (Metric.nonempty_ball.mpr one_pos)
   exact (rayMAnalytic d).continuousOn
@@ -49,7 +55,8 @@ theorem isPathConnected_potential_levelset (p : ℝ) (p0 : 0 ≤ p) (p1 : p < 1)
 
 /-- `(multibrotEext d)ᶜ` is connected, since it is the downward intersection of the compact,
     connected sets `potential d ⁻¹' (Ici p)`. -/
-theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibrotExt d)ᶜ := by
+public theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] :
+    IsConnected (multibrotExt d)ᶜ := by
   refine ⟨⟨((0 : ℂ) : 𝕊),?_⟩,?_⟩
   · simp only [mem_compl_iff, multibrotExt_coe, not_not, multibrot_zero]
   have e : (multibrotExt d)ᶜ = ⋂ p : Ico 0 (1 : ℝ), potential d ⁻¹' Ici p := by
@@ -74,7 +81,7 @@ theorem isConnected_compl_multibrotExt (d : ℕ) [Fact (2 ≤ d)] : IsConnected 
   · intro ⟨p, m⟩; exact (isClosed_Ici.preimage potential_continuous).isCompact
 
 /-- `multibrot d` is connected -/
-theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibrot d) := by
+public theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibrot d) := by
   have e : _root_.multibrot d = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d)ᶜ := by
     apply Set.ext; intro z; simp only [mem_image, mem_compl_iff]; constructor
     intro m; use z
@@ -88,7 +95,8 @@ theorem isConnected_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (multibro
   simp only [m, notMem_compl_iff, multibrotExt_inf]
 
 /-- `(multibrot d)ᶜ` is connected -/
-theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] : IsConnected (_root_.multibrot d)ᶜ := by
+public theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] :
+    IsConnected (_root_.multibrot d)ᶜ := by
   have dc : IsConnected (multibrotExt d \ {∞}) := by
     refine ⟨⟨(((3 : ℝ) : ℂ) : 𝕊),?_⟩,?_⟩
     constructor

@@ -1,6 +1,10 @@
+module
+public import Ray.Dynamics.Multibrot.Isomorphism
+import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.Isomorphism
 import Ray.Dynamics.Multibrot.KoebeInf
+import Ray.Misc.Bound
 
 /-!
 ## Effective bounds on `s.ray` for multibrot sets
@@ -28,7 +32,7 @@ lemma sray_le_weak (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
   obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) (by linarith) xc
   have b := zx ▸ sbottcher_inv_approx_z d (by linarith) (z := z) (by linarith)
   nth_rw 1 [← zx]
-  simp only [sbottcher_inv, s.ray_bottcher zp]
+  simp only [sbottcher_inv_def, s.ray_bottcher zp]
   simp only [toComplex_inv, toComplex_coe, norm_inv]
   refine le_trans ?_ (b := ‖(x / k)‖⁻¹) (by simp [div_eq_mul_inv, abs_of_pos k0])
   have ci4 : ‖c‖⁻¹ ≤ 4⁻¹ := by bound
@@ -77,18 +81,18 @@ lemma norm_inv_sub_inv_le {a b : ℝ} {z w : ℂ} (za : ‖z‖ < a⁻¹) (b0 : 
   simp only [← mul_assoc, mul_div_cancel₀ _ a0.ne', le_refl]
 
 /-- A strong bound on `s.ray`, using the Böttcher approximation to boost the weak bound -/
-lemma sray_le (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+public lemma sray_le (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
     ‖((superF d).ray c x).toComplex - x⁻¹‖ ≤ 4 := by
   set s := superF d
   obtain ⟨z,zc,zx,zp,szx⟩ := sbottcher_inv_small_mem_preimage (d := d) (by linarith) xc
   have b := szx ▸ sbottcher_inv_approx_z d (by linarith) (z := z) (by linarith)
   nth_rw 1 [← szx]
-  simp only [sbottcher_inv, s.ray_bottcher zp, toComplex_inv, toComplex_coe]
+  simp only [sbottcher_inv_def, s.ray_bottcher zp, toComplex_inv, toComplex_coe]
   have ci : ‖c‖⁻¹ ≤ 4⁻¹ := by bound
   exact norm_inv_sub_inv_le (by linarith) (by norm_num) b (le_trans zx (by bound))
 
 /-- A strong bound on `ray d`, using the Böttcher approximation and the Koebe quarter theorem -/
-lemma ray_le (z8 : ‖z‖ < 16⁻¹) : ‖(ray d z).toComplex - z⁻¹‖ ≤ 4 := by
+public lemma ray_le (z8 : ‖z‖ < 16⁻¹) : ‖(ray d z).toComplex - z⁻¹‖ ≤ 4 := by
   set s := superF d
   obtain ⟨c,cz,cm,cx⟩ := bottcher_inv_small_mem_preimage (d := d) (z := z) (by linarith)
   by_cases c0 : c = 0
@@ -99,9 +103,9 @@ lemma ray_le (z8 : ‖z‖ < 16⁻¹) : ‖(ray d z).toComplex - z⁻¹‖ ≤ 4
     rw [norm_inv, lt_inv_comm₀ (by norm_num) (norm_pos_iff.mpr c0)]
     exact lt_of_le_of_lt cz (by linarith)
   have cx' : bottcher' d c⁻¹ = z := by
-    simp only [← cx, bottcher_inv, bottcher, inv_coe c0, fill_coe]
+    simp only [← cx, bottcher_inv_def, bottcher, inv_coe c0, fill_coe]
   have b := bottcher_approx d (by linarith)
   simp only [inv_inv, norm_inv, cx'] at b
   nth_rw 1 [← cx]
-  rw [bottcher_inv, ray_bottcher cm, inv_coe c0, toComplex_coe]
+  rw [bottcher_inv_def, ray_bottcher cm, inv_coe c0, toComplex_coe]
   exact norm_inv_sub_inv_le (by linarith) (by bound) b (le_trans cz (by bound))

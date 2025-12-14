@@ -1,3 +1,7 @@
+module
+public import Mathlib.Analysis.Analytic.Basic
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Order.Lattice
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Ray.Misc.Bounds
@@ -172,7 +176,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm
 
 /-- Uniform limits of analytic functions are analytic -/
-theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → E} {g : ℂ → E}
+public theorem uniform_analytic_lim {I : Type} [Lattice I] [Nonempty I] {f : I → ℂ → E} {g : ℂ → E}
     {s : Set ℂ} (o : IsOpen s) (h : ∀ n, AnalyticOnNhd ℂ (f n) s)
     (u : TendstoUniformlyOn f g atTop s) : AnalyticOnNhd ℂ g s := by
   intro c hc

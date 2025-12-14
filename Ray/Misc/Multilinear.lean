@@ -1,7 +1,10 @@
-import Mathlib.Algebra.EuclideanDomain.Field
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Normed.Module.Multilinear.Basic
+public import Mathlib.Data.Fintype.Defs
+public import Mathlib.Topology.Algebra.Module.Multilinear.Basic
 import Mathlib.Analysis.CStarAlgebra.Classes
 import Mathlib.Analysis.InnerProductSpace.Basic
-import Mathlib.Analysis.Normed.Module.Multilinear.Basic
 import Mathlib.Tactic.Cases
 
 /-!
@@ -197,13 +200,13 @@ theorem smulCmmap_norm [NormedAddCommGroup A] [NormedSpace 𝕜 A] [NormedAddCom
 
 /-- A term of the general `n`-linear map on `𝕜 × 1𝕜,
     equal to `z0^k * z1^(n-k)` when applied to `fun _ ↦ (z0,z1)` -/
-noncomputable def termCmmap (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
+public noncomputable def termCmmap (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
     [NormedSpace 𝕜 E] : ∀ n : ℕ, ℕ → E → ContinuousMultilinearMap 𝕜 (fun _ : Fin n ↦ 𝕜 × 𝕜) E
   | 0 => fun _ x ↦ ContinuousMultilinearMap.constOfIsEmpty _ _ x
   | n + 1 => fun k x ↦
     smulCmmap _ _ _ (if n < k then fstCmmap 𝕜 𝕜 𝕜 else sndCmmap 𝕜 𝕜 𝕜) (termCmmap 𝕜 n k x)
 
-theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMulCommClass 𝕜 𝕜 E]
+public theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMulCommClass 𝕜 𝕜 E]
     [IsScalarTower 𝕜 𝕜 E] (n k : ℕ) (a b : 𝕜) (x : E) :
     (termCmmap 𝕜 n k x fun _ ↦ (a, b)) = a ^ min k n • b ^ (n - k) • x := by
   induction' n with n h
@@ -223,7 +226,7 @@ theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMulCommCla
       rw [min_eq_left nk, min_eq_left nsk]
       rw [smul_comm b _, ← smul_assoc b _ _, smul_eq_mul, ← pow_succ', ← Nat.sub_add_comm nk]
 
-theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
+public theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
     [NormedSpace 𝕜 E] (n k : ℕ) (x : E) : ‖termCmmap 𝕜 n k x‖ ≤ ‖x‖ := by
   induction' n with n nh
   · simp only [termCmmap, le_refl, ContinuousMultilinearMap.norm_constOfIsEmpty]
@@ -235,16 +238,16 @@ theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [NormedAddCo
     · simp [nk] at tn ⊢; rw [sndCmmap_norm] at tn; simp at tn; exact _root_.trans tn nh
 
 /-- `conj` as a `ContinuousLinearMap`. This is `starₗᵢ ℂ`, but with a simpler type. -/
-def conjCLM : ℂ →L[ℝ] ℂ where
+public def conjCLM : ℂ →L[ℝ] ℂ where
   toFun z := conj z
   map_add' := by simp only [map_add, forall_const]
   map_smul' := by simp only [Complex.real_smul, map_mul, RingHom.id_apply, Complex.conj_ofReal,
     implies_true]
 
-theorem conjCLM_apply (z : ℂ) : conjCLM z = conj z := rfl
+public theorem conjCLM_apply (z : ℂ) : conjCLM z = conj z := by rfl
 
 /-- The continuous linear map that evaluates a continuous multilinear map at a point -/
-def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype I]
+public def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype I]
     [NontriviallyNormedField 𝕜] [∀ i, NormedAddCommGroup (A i)] [∀ i, NormedSpace 𝕜 (A i)]
     [NormedAddCommGroup B] [NormedSpace 𝕜 B] (x : ∀ i, A i) : ContinuousMultilinearMap 𝕜 A B →L[𝕜] B
     where
@@ -253,14 +256,19 @@ def cmmapApplyCmap (𝕜 : Type) {I : Type} (A : I → Type) (B : Type) [Fintype
   map_smul' := by simp
   cont := by simp [continuous_eval_const]
 
+@[simp] public theorem cmmapApplyCmap_apply {I : Type} (A : I → Type) (B : Type) [Fintype I]
+    [∀ i, NormedAddCommGroup (A i)] [∀ i, NormedSpace 𝕜 (A i)]
+    [NormedAddCommGroup B] [NormedSpace 𝕜 B] (x : ∀ i, A i) (f : ContinuousMultilinearMap 𝕜 A B) :
+    cmmapApplyCmap 𝕜 A B x f = f x := by rfl
+
 /-- Prove `A x = 0` by `x = 0` for a continuous linear map `A` -/
-lemma ContinuousLinearMap.apply_eq_zero_of_eq_zero {𝕜 X Y : Type} [NormedField 𝕜]
+public lemma ContinuousLinearMap.apply_eq_zero_of_eq_zero {𝕜 X Y : Type} [NormedField 𝕜]
     [TopologicalSpace X] [NormedAddCommGroup X] [Module 𝕜 X] [NormedAddCommGroup Y] [Module 𝕜 Y]
     (f : X →L[𝕜] Y) {x : X} (h : x = 0) : f x = 0 := by
   rw [h, ContinuousLinearMap.map_zero]
 
 /-- `.smulRight` is nonzero if it's inputs are -/
-lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [TopologicalSpace A]
+public lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [TopologicalSpace A]
     [AddCommMonoid A] [TopologicalSpace R] [Module R A] [TopologicalSpace B] [AddCommMonoid B]
     [Module R B] [ContinuousSMul R B] [NoZeroSMulDivisors R B] {c : A →L[R] R} {f : B}
     (c0 : c ≠ 0) (f0 : f ≠ 0) :
@@ -271,14 +279,14 @@ lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [Topological
   use x
 
 /-- `1 ≠ 0`, `ContinuousLinearMap` case -/
-lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A] [AddCommMonoid A]
-    [Module R A] [Nontrivial A] : (1 : A →L[R] A) ≠ 0 := by
+public lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A]
+    [AddCommMonoid A] [Module R A] [Nontrivial A] : (1 : A →L[R] A) ≠ 0 := by
   simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
     ContinuousLinearMap.one_apply]
   apply exists_ne
 
 /-- `mkPiRing` is continuous -/
-lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [NontriviallyNormedField 𝕜]
+public lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [NontriviallyNormedField 𝕜]
     [Fintype ι] [NormedAddCommGroup E] [NormedSpace 𝕜 E] [CompleteSpace E] :
     Continuous (fun z : E ↦ ContinuousMultilinearMap.mkPiRing 𝕜 ι z) := by
   rw [Metric.continuous_iff]
@@ -299,7 +307,7 @@ lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [Nontrivia
 -/
 
 /-- Conjugate a `ContinuousMultilinearMap` with complex `conj` -/
-def ContinuousMultilinearMap.conj_conj [Fintype ι]
+public def ContinuousMultilinearMap.conj_conj [Fintype ι]
     (m : ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ) :
     ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ where
   toFun := fun z ↦ conj (m fun i ↦ conj (z i))
@@ -311,6 +319,6 @@ def ContinuousMultilinearMap.conj_conj [Fintype ι]
     simp only [smul_eq_mul, map_mul, RingHomCompTriple.comp_apply, RingHom.id_apply]
   cont := by continuity
 
-@[simp] lemma ContinuousMultilinearMap.conj_conj_apply [Fintype ι]
+@[simp] public lemma ContinuousMultilinearMap.conj_conj_apply [Fintype ι]
     (m : ContinuousMultilinearMap ℂ (fun _ : ι ↦ ℂ) ℂ) (x : ι → ℂ) :
-    m.conj_conj x = conj (m fun i ↦ conj (x i)) := rfl
+    m.conj_conj x = conj (m fun i ↦ conj (x i)) := by rfl

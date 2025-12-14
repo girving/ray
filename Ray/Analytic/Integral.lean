@@ -1,3 +1,6 @@
+module
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Ray.Analytic.Analytic
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Ray.Misc.Bound
@@ -206,7 +209,7 @@ theorem AnalyticOnNhd.integral_ball {r : ℝ} (fc : ContinuousOn (uncurry f) (s 
   exact i.hasFPowerSeriesOnBall_integral.analyticOnNhd
 
 /-- Well-behaved integrals of analytic functions are analytic, general set version -/
-theorem AnalyticOnNhd.integral {t : Set ℂ} (fc : ContinuousOn (uncurry f) (s ×ˢ t))
+public theorem AnalyticOnNhd.integral {t : Set ℂ} (fc : ContinuousOn (uncurry f) (s ×ˢ t))
     (fa : ∀ x ∈ s, AnalyticOnNhd ℂ (f x) t) (sc : IsCompact s) (μs : μ s ≠ ⊤ := by finiteness)
     (ot : IsOpen t) : AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) t := by
   intro c ct

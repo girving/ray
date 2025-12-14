@@ -1,11 +1,25 @@
-import Mathlib.Topology.ExtendFrom
+module
+public import Ray.Dynamics.BottcherNearM
+public import Ray.Dynamics.Defs
+public import Ray.Dynamics.Nice
+import Mathlib.Analysis.Calculus.ContDiff.Defs
+import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Geometry.Manifold.Algebra.Structures
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Mathlib.Tactic.Cases
+import Mathlib.Topology.ExtendFrom
+import Ray.Dynamics.BottcherNearM
+import Ray.Dynamics.Nice
 import Ray.Dynamics.Postcritical
-import Ray.Dynamics.Potential
+import all Ray.Dynamics.Potential
+import Ray.Manifold.Analytic
+import Ray.Manifold.Inverse
 import Ray.Manifold.LocalInj
 import Ray.Manifold.Nonseparating
 import Ray.Misc.Connected
 import Ray.Misc.Continuation
+import Ray.Misc.Topology
 
 /-!
 ## Analytic continuation of external rays for all postcritical values
@@ -53,20 +67,20 @@ variable {r : ℂ → ℂ → S}
 
 /-- `Eqn s n r (c,z)` means `r` looks locally like external rays near `z`, mapping forwards
     by `f c^[n]` to hit `s.near`. -/
-structure Eqn (s : Super f d a) (n : ℕ) (r : ℂ → ℂ → S) (x : ℂ × ℂ) : Prop where
+public structure Eqn (s : Super f d a) (n : ℕ) (r : ℂ → ℂ → S) (x : ℂ × ℂ) : Prop where
   holo : ContMDiffAt II I ω (uncurry r) x
   near : (x.1, (f x.1)^[n] (r x.1 x.2)) ∈ s.near
   eqn : s.bottcherNear x.1 ((f x.1)^[n] (r x.1 x.2)) = x.2 ^ d ^ n
 
 /-- `r` is an external ray map in a neighborhood of `{c} ×ˢ closedBall 0 p` -/
-structure Grow (s : Super f d a) (c : ℂ) (p : ℝ) (n : ℕ) (r : ℂ → ℂ → S) : Prop where
+public structure Grow (s : Super f d a) (c : ℂ) (p : ℝ) (n : ℕ) (r : ℂ → ℂ → S) : Prop where
   nonneg : 0 ≤ p
   zero : r c 0 = a
   start : ∀ᶠ x : ℂ × ℂ in 𝓝 (c, 0), s.bottcherNear x.1 (r x.1 x.2) = x.2
   eqn : ∀ᶠ x : ℂ × ℂ in 𝓝ˢ ({c} ×ˢ closedBall 0 p), Eqn s n r x
 
 /-- Construct `Eqn` using fewer `∀ᶠ` -/
-theorem eqn_near {s : Super f d a} {n : ℕ} {r : ℂ → ℂ → S} {c x : ℂ}
+public theorem eqn_near {s : Super f d a} {n : ℕ} {r : ℂ → ℂ → S} {c x : ℂ}
     (holo : ContMDiffAt II I ω (uncurry r) (c, x)) (mem : (c, (f c)^[n] (r c x)) ∈ s.near)
     (loc : ∀ᶠ y : ℂ × ℂ in 𝓝 (c, x), s.bottcherNear y.1 ((f y.1)^[n] (r y.1 y.2)) = y.2 ^ d ^ n) :
     ∀ᶠ y in 𝓝 (c, x), Eqn s n r y := by
@@ -107,7 +121,7 @@ theorem mem_domain (c : ℂ) {p : ℝ} (p0 : 0 ≤ p) :
   mk_mem_prod rfl (Metric.mem_closedBall_self p0)
 
 /-- The boundary is in the domain -/
-theorem mem_domain_self {c x : ℂ} :
+public theorem mem_domain_self {c x : ℂ} :
     (c, x) ∈ ({c} ×ˢ closedBall 0 ‖x‖ : Set (ℂ × ℂ)) := by
   simp only [mem_prod_eq, mem_singleton_iff, mem_closedBall, Complex.dist_eq, sub_zero, true_and,
     le_refl]
@@ -171,8 +185,9 @@ theorem Grow.congr {r0 r1 : ℂ → ℂ → S} (g : Grow s c p n r0)
       exact eqn.congr e }
 
 /-- `s.potential (r x) = abs x`, if `Eqn s n r x` -/
-theorem Eqn.potential {x : ℂ × ℂ} (e : Eqn s n r x) : s.potential x.1 (r x.1 x.2) = ‖x.2‖ := by
-  simp only [s.potential_eq e.near, Super.potential', e.eqn, norm_pow, ← Nat.cast_pow,
+public theorem Eqn.potential {x : ℂ × ℂ} (e : Eqn s n r x) :
+    s.potential x.1 (r x.1 x.2) = ‖x.2‖ := by
+  simp only [s.potential_eq e.near, e.eqn, norm_pow, ← Nat.cast_pow,
     Real.pow_rpow_inv_natCast (norm_nonneg _) (pow_ne_zero _ s.d0)]
 
 /-- `Eqn` implies that `s.bottcherNearIter` is noncritical -/
@@ -201,7 +216,7 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
 theorem Grow.p1 (g : Grow s c p n r) : p < 1 := by
   by_contra p1; simp only [not_lt] at p1
   have e := (g.eqn.filter_mono (nhds_le_nhdsSet (x := (c, 1)) ?_)).self_of_nhds
-  · have lt := s.potential_lt_one ⟨_, e.near⟩
+  · have lt := s.potential_lt_one (s.basin_iff_near.mpr ⟨_, e.near⟩)
     rw [e.potential, norm_one, lt_self_iff_false] at lt
     exact lt
   · simp only [p1, singleton_prod, mem_image, mem_closedBall_zero_iff, norm_one, Prod.mk_inj,
@@ -276,7 +291,7 @@ theorem Grow.anti (g : Grow s c p n r) {q : ℝ} (nonneg : 0 ≤ q) (le : q ≤ 
       g.eqn.filter_mono (nhdsSet_mono (prod_mono_right (Metric.closedBall_subset_closedBall le))) }
 
 /-- `Eqn` determines `r` locally, given equality at a point -/
-theorem eqn_unique {r0 r1 : ℂ → ℂ → S} {x : ℂ × ℂ} (e0 : ∀ᶠ y in 𝓝 x, Eqn s n r0 y)
+public theorem eqn_unique {r0 r1 : ℂ → ℂ → S} {x : ℂ × ℂ} (e0 : ∀ᶠ y in 𝓝 x, Eqn s n r0 y)
     (e1 : ∀ᶠ y in 𝓝 x, Eqn s n r1 y) (r01 : r0 x.1 x.2 = r1 x.1 x.2) (x0 : x.2 ≠ 0) :
     uncurry r0 =ᶠ[𝓝 x] uncurry r1 := by
   have ba := s.bottcherNearIter_mAnalytic e0.self_of_nhds.near
@@ -351,14 +366,16 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : �
       intro y m; simp only [Function.comp]; exact (g.eqn.self_of_nhdsSet (c, y) ⟨rfl, m⟩).potential
     exact tendsto_nhdsWithin_congr (fun t m ↦ (e t m).symm)
       continuous_norm.continuousWithinAt
-  rcases s.nice_np c (lt_of_lt_of_le g.post s.p_le_one) z (_root_.trans (le_of_eq pz) ax)
-    with ⟨m, nc⟩
-  replace nc := nc _ (le_refl _)
-  generalize hn : s.np c p = n; rw [hn] at m nc
+  have nice := s.nice_np c (lt_of_lt_of_le g.post s.p_le_one)
+  have ba := nice.contMDiffAt_bottcherNearIter (le_trans (le_of_eq pz) ax)
+  have nc := nice.mfderiv_ne_zero (le_trans (le_of_eq pz) ax) (le_refl _)
+  generalize hn : s.np c p = n
+  rw [hn] at ba nc
   generalize hb : s.bottcherNearIter n = b
   have bz : b c z = x ^ d ^ n := by
     refine eq_of_nhds_neBot (cp.map ?_ (Filter.tendsto_map' ?_))
-    · rw [← hb]; exact (s.bottcherNearIter_mAnalytic m).along_snd.continuousAt
+    · rw [← hb]
+      exact ba.along_snd.continuousAt
     · have e : ∀ y, y ∈ t → (b c ∘ r c) y = y ^ d ^ n := by
         intro y m
         simp only [Function.comp, ← hb, ← hn]
@@ -367,7 +384,6 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : �
   have post : Postcritical s c z := lt_of_le_of_lt (_root_.trans (le_of_eq pz) ax) g.post
   rw [← pz] at za
   -- Invert s.bottcherNearIter at z
-  have ba := s.bottcherNearIter_mAnalytic m
   replace nc := s.bottcherNearIter_mfderiv_ne_zero nc (post.not_precritical za.ne')
   rcases complex_inverse_fun ba nc with ⟨i, ia, ib, bi⟩
   simp only [hb, bz] at ia bi ib
@@ -378,7 +394,9 @@ theorem GrowOpen.point (g : GrowOpen s c p r) [OnePreimage s] {x : ℂ} (ax : �
   use fun e y ↦ i e (y ^ d ^ n); constructor
   · -- We satisfy eqn near x
     apply eqn_near ian
-    · simp only [←bz]; rw [ib.self_of_nhds]; exact m
+    · simp only [← bz]
+      rw [ib.self_of_nhds, ← hn]
+      exact nice.near (le_trans (le_of_eq pz) ax)
     · refine (pt.eventually bi).mp (.of_forall ?_)
       intro _ bi; simp only [← hb] at bi; exact bi
   · -- We frequently match r, by local injectivity of b
@@ -627,7 +645,7 @@ theorem Super.grow (s : Super f d a) [OnePreimage s] :
     That is, there exists a map on `𝓝ˢ ({c} ×ˢ ball 0 (s.p c))` which everywhere looks
     like an inverse to Böttcher coordinates, and thus defines external rays up to the
     critical potential `s.p c`. -/
-theorem Super.has_ray (s : Super f d a) [OnePreimage s] :
+public theorem Super.has_ray (s : Super f d a) [OnePreimage s] :
     ∃ r : ℂ → ℂ → S, ∀ c p, 0 ≤ p → p < s.p c → Grow s c p (s.np c p) r := by
   generalize hr : (fun {c p} (h : 0 ≤ p ∧ p < s.p c) ↦ choose (s.grow _ h.1 h.2)) = r
   have g : ∀ {c p} (h : 0 ≤ p ∧ p < s.p c), Grow s c p (s.np c p) (r h) := by

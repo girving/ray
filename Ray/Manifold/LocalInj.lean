@@ -1,3 +1,6 @@
+module
+public import Ray.Manifold.Defs
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Ray.Manifold.Inverse
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OpenMapping
@@ -21,7 +24,7 @@ variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S] [cms : IsManifold 
 variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [cmt : IsManifold I ω T]
 
 /-- Nonzero derivative analytic functions are locally injective -/
-theorem ContMDiffAt.local_inj {f : S → T} {z : S}
+public theorem ContMDiffAt.local_inj {f : S → T} {z : S}
     (fa : ContMDiffAt I I ω f z) (nc : mfderiv I I f z ≠ 0) :
     ∀ᶠ p : S × S in 𝓝 (z, z), f p.1 = f p.2 → p.1 = p.2 := by
   rcases complex_inverse_fun' fa nc with ⟨g, ga, gf, fg⟩
@@ -36,7 +39,7 @@ theorem ContMDiffAt.local_inj {f : S → T} {z : S}
 
 /-- Nonzero derivative analytic functions are locally injective, parameterized version.
     Specifically, we show local injectivity of `(c,z) ↦ (c, f c z)`. -/
-theorem ContMDiffAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem ContMDiffAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : (ℂ × S) × ℂ × S in 𝓝 ((c, z), (c, z)),
       p.1.1 = p.2.1 → f p.1.1 p.1.2 = f p.2.1 p.2.2 → p.1 = p.2 := by
@@ -55,7 +58,7 @@ theorem ContMDiffAt.local_inj'' {f : ℂ → S → T} {c : ℂ} {z : S}
 
 /-- Nonzero derivative analytic functions are locally injective, parameterized version.
     Specifically, we show local injectivity of `(c,z) ↦ (c, f c z)`. -/
-theorem ContMDiffAt.local_inj' {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem ContMDiffAt.local_inj' {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : ℂ × S × S in 𝓝 (c, z, z), f p.1 p.2.1 = f p.1 p.2.2 → p.2.1 = p.2.2 := by
   set g : ℂ × S × S → (ℂ × S) × ℂ × S := fun p ↦ ((p.1, p.2.1), (p.1, p.2.2))

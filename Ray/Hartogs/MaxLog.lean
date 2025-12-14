@@ -1,3 +1,9 @@
+module
+public import Mathlib.Analysis.Complex.Exponential
+public import Mathlib.Analysis.SpecialFunctions.Log.Basic
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Topology.EMetricSpace.Lipschitz
+public import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
@@ -20,46 +26,47 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {F : Type} [NormedAddCommGroup F]
 
 /-- `max b (log x)` -/
-def maxLog (b x : ℝ) : ℝ :=
+public def maxLog (b x : ℝ) : ℝ :=
   (max b.exp x).log
 
 theorem max_exp_pos {b x : ℝ} : 0 < max b.exp x := by
   bound
 
-@[simp, bound] lemma le_maxLog (b x : ℝ) : b ≤ maxLog b x := by
+@[simp, bound] public lemma le_maxLog (b x : ℝ) : b ≤ maxLog b x := by
   rw [maxLog, Real.le_log_iff_exp_le max_exp_pos]; bound
 
-theorem maxLog_eq_b {b x : ℝ} (h : x ≤ b.exp) : maxLog b x = b := by simp [maxLog, max_eq_left h]
+public theorem maxLog_eq_b {b x : ℝ} (h : x ≤ b.exp) : maxLog b x = b := by
+  simp [maxLog, max_eq_left h]
 
-theorem maxLog_eq_log {b x : ℝ} (h : b.exp ≤ x) : maxLog b x = x.log := by
+public theorem maxLog_eq_log {b x : ℝ} (h : b.exp ≤ x) : maxLog b x = x.log := by
   simp [maxLog, max_eq_right h]
 
-theorem maxLog_le {b x y : ℝ} (yb : b ≤ y) (xy : x ≤ y.exp) : maxLog b x ≤ y := by
+public theorem maxLog_le {b x y : ℝ} (yb : b ≤ y) (xy : x ≤ y.exp) : maxLog b x ≤ y := by
   rw [maxLog, Real.log_le_iff_le_exp max_exp_pos]; apply max_le
   apply Real.exp_le_exp.mpr yb; exact xy
 
-@[bound] lemma le_exp_maxLog (b x : ℝ) : x ≤ (maxLog b x).exp := by
+@[bound] public lemma le_exp_maxLog (b x : ℝ) : x ≤ (maxLog b x).exp := by
   rw [maxLog, Real.exp_log max_exp_pos]; bound
 
 /-- Extract underlying bounds from `maxLog` bounds -/
-theorem le_of_maxLog_le {b x y : ℝ} (m : maxLog b x ≤ y) : x ≤ y.exp := by
+public theorem le_of_maxLog_le {b x y : ℝ} (m : maxLog b x ≤ y) : x ≤ y.exp := by
   rw [maxLog, Real.log_le_iff_le_exp max_exp_pos] at m; exact le_of_max_le_right m
 
 /-- `maxLog` is increasing -/
-theorem monotone_maxLog (b : ℝ) : Monotone fun x ↦ maxLog b x := by
+public theorem monotone_maxLog (b : ℝ) : Monotone fun x ↦ maxLog b x := by
   simp_rw [maxLog]; intro x y xy
   simp only; rw [Real.log_le_log_iff max_exp_pos max_exp_pos]
   apply max_le_max (le_refl _) xy
 
 /-- `maxLog` is continuous -/
-theorem continuous_maxLog (b : ℝ) : Continuous fun x ↦ maxLog b x := by
+public theorem continuous_maxLog (b : ℝ) : Continuous fun x ↦ maxLog b x := by
   simp_rw [maxLog]; rw [continuous_iff_continuousAt]; intro x
   refine (ContinuousAt.log ?_ max_exp_pos.ne').comp ?_
   · apply Continuous.continuousAt; apply Continuous.max; exact continuous_const; exact continuous_id
   · exact continuousAt_id
 
 /-- `max b (log ‖f z‖)` is continuous for continuous `f` -/
-theorem ContinuousOn.maxLog_norm {f : ℂ → F} {s : Set ℂ} (fc : ContinuousOn f s) (b : ℝ) :
+public theorem ContinuousOn.maxLog_norm {f : ℂ → F} {s : Set ℂ} (fc : ContinuousOn f s) (b : ℝ) :
     ContinuousOn (fun z ↦ maxLog b ‖f z‖) s :=
   (continuous_maxLog b).comp_continuousOn fc.norm
 
@@ -91,7 +98,7 @@ theorem LipschitzOnWith.log (b : ℝ) : LipschitzOnWith (-b).exp.toNNReal Real.l
   exact half y x xs xy.le
 
 /-- `maxLog` is Lipschitz -/
-theorem LipschitzWith.maxLog (b : ℝ) : LipschitzWith (-b).exp.toNNReal (maxLog b) := by
+public theorem LipschitzWith.maxLog (b : ℝ) : LipschitzWith (-b).exp.toNNReal (maxLog b) := by
   rw [← lipschitzOnWith_univ]
   have h := (LipschitzOnWith.log b).comp ((LipschitzWith.id.const_max b.exp).lipschitzOnWith
     (s := univ)) (by simp only [id_eq, Set.mapsTo_univ_iff, Set.mem_Ici, le_max_iff, le_refl,

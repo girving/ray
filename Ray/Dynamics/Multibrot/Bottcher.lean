@@ -1,6 +1,19 @@
+module
+public import Ray.Dynamics.Multibrot.Defs
 import Mathlib.Analysis.Complex.RealDeriv
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
+import Mathlib.Geometry.Manifold.MFDeriv.Basic
+import Ray.Analytic.Products
+import Ray.Dynamics.Bottcher
+import Ray.Dynamics.BottcherNear
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Postcritical
-import Ray.Dynamics.Multibrot.RealBounds
+import all Ray.Dynamics.Multibrot.RealBounds
+import Ray.Dynamics.Postcritical
+import Ray.Manifold.Analytic
+import Ray.Manifold.Nontrivial
+import Ray.Misc.Bound
+import Ray.Misc.Bounds
 
 /-!
 ## Effective bounds on the Multibrot `bottcher` function
@@ -16,8 +29,8 @@ more directly, though the effective calculations we did along the way are also u
 
 Our main results are:
 
-1. If `16 < abs c ≤ abs z`, `s.bottcher = bottcherNear`, and thus the infinite produce holds.
-2. If `16 < abs c ≤ abs z`, `abs (s.bottcher c z - z⁻¹) ≤ 16 * (abs z)⁻¹^2`
+1. If `4 ≤ ‖c‖ ≤ ‖z‖`, `s.bottcher = bottcherNear`, and thus the infinite product holds.
+2. If `4 ≤ ‖c‖ ≤ ‖z‖`, `‖s.bottcher c z - z⁻¹‖ ≤ 0.943 * ‖z‖⁻¹ ^ 2`
 3. `bottcher d` is monic at `∞` (has derivative 1 there)
 -/
 
@@ -52,7 +65,7 @@ theorem inv_mem_t (c3 : 3 < ‖c‖) (cz : ‖c‖ ≤ ‖z‖) : z⁻¹ ∈ sup
 /-- `s.bottcher = bottcherNear` for large `c,z`.
     This means that `s.bottcher` is given by the infinite product formula from `BottcherNear.lean`
     for large `c,z`. -/
-theorem bottcher_eq_bottcherNear_z (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+public theorem bottcher_eq_bottcherNear_z (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     (superF d).bottcher c z = bottcherNear (fl (f d) ∞ c) d z⁻¹ := by
   have c0 : 0 < ‖c‖ := by linarith
   have z0 : 0 < ‖z‖ := lt_of_lt_of_le c0 cz
@@ -255,7 +268,7 @@ lemma term_approx_pow_5_3 (d : ℕ) [Fact (2 ≤ d)] (bc : 5 ≤ ‖c‖) (cz : 
     ‖term (fl (f d) ∞ c) d 3 z⁻¹ - 1‖ ≤ 0.392 * ‖z‖⁻¹ ^ 15 := term_approx_pow bc cz
 
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹ ^ 2)` -/
-theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖(superF d).bottcher c z - z⁻¹‖ ≤ 0.943 * ‖z‖⁻¹ ^ 2 := by
   set s := superF d
   have z4 : ‖z‖⁻¹ ≤ 4⁻¹ := by bound
@@ -287,21 +300,15 @@ theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (c4 : 4 ≤ ‖
     linarith
 
 /-- `bottcher' d c = c⁻¹ + O(c⁻¹^2)` -/
-theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] (c4 : 4 ≤ ‖c‖) :
+public theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] (c4 : 4 ≤ ‖c‖) :
     ‖bottcher' d c - c⁻¹‖ ≤ 0.943 * ‖c‖⁻¹ ^ 2 :=
   bottcher_approx_z d c4 (le_refl _)
 
-/-- `bottcher` near `∞` as an analytic `ℂ → ℂ` function -/
-def bottcher_inv (d : ℕ) [Fact (2 ≤ d)] : ℂ → ℂ :=
-  fun z ↦ bottcher d (↑z)⁻¹
-
-lemma bottcher_inv_def : bottcher_inv d = fun z : ℂ ↦ bottcher d (↑z)⁻¹ := rfl
-
-@[simp] lemma bottcher_inv_zero : bottcher_inv d 0 = 0 := by
-  simp only [bottcher_inv, coe_zero, inv_zero', bottcher_inf]
+@[simp] public lemma bottcher_inv_zero : bottcher_inv d 0 = 0 := by
+  simp only [bottcher_inv_def, coe_zero, inv_zero', bottcher_inf]
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
-theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
+public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
   rw [HasDerivAt, HasDerivAtFilter, bottcher_inv_def, bottcher, hasFDerivAtFilter_iff_isLittleO,
     coe_zero, inv_zero', fill_inf]
   simp only [sub_zero, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
@@ -325,7 +332,7 @@ theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
     linarith
 
 /-- bottcher is nonsingular at `∞` -/
-theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
+public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
   simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt le_top, if_pos,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp_def,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,

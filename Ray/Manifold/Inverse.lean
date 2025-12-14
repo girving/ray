@@ -1,6 +1,11 @@
+module
+public import Ray.Manifold.Defs
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
+import Mathlib.Geometry.Manifold.ContMDiff.Atlas
+import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
 import Ray.Analytic.Holomorphic
 import Ray.Manifold.Analytic
+import Ray.Manifold.Manifold
 import Ray.Manifold.OneDimension
 
 /-!
@@ -25,7 +30,7 @@ open Filter (Tendsto)
 open Function (uncurry)
 open OneDimension
 open Set
-open scoped ContDiff Topology
+open scoped ContDiff OneDimension Topology
 noncomputable section
 
 variable {S : Type} [TopologicalSpace S] [ChartedSpace ℂ S]
@@ -317,7 +322,7 @@ variable [IsManifold I ω S] [IsManifold I ω T]
     If `f : ℂ → S → T` is analytic with nonzero derivative (w.r.t. the second
     argument) at a point `(c,z)`, it is a parameterized local inverse `g : ℂ → T → S` s.t.
     `g c (f c z) = z` and `f c (g c z) = z` locally. -/
-theorem complex_inverse_fun {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem complex_inverse_fun {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (nc : mfderiv I I (f c) z ≠ 0) :
     ∃ g : ℂ → T → S,
       ContMDiffAt II I ω (uncurry g) (c, f c z) ∧
@@ -330,7 +335,7 @@ theorem complex_inverse_fun {f : ℂ → S → T} {c : ℂ} {z : S}
 
 /-- The 1D inverse function theorem for complex manifolds (nonparameterized version):
     If `f : S → T` is analytic with nonzero derivative, it has a local inverse `g : T → S`. -/
-theorem complex_inverse_fun' {f : S → T} {z : S} (fa : ContMDiffAt I I ω f z)
+public theorem complex_inverse_fun' {f : S → T} {z : S} (fa : ContMDiffAt I I ω f z)
     (nc : mfderiv I I f z ≠ 0) :
     ∃ g : T → S,
       ContMDiffAt I I ω g (f z) ∧ (∀ᶠ x in 𝓝 z, g (f x) = x) ∧ ∀ᶠ x in 𝓝 (f z), f (g x) = x := by

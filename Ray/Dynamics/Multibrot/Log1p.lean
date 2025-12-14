@@ -1,3 +1,6 @@
+module
+public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
@@ -13,7 +16,7 @@ open Set
 
     It feels like this lemma should have an algebraic proof, but I don't see it:
       https://math.stackexchange.com/questions/4844828 -/
-lemma Complex.norm_log_one_add_le' {z : ℂ} (z1 : ‖z‖ < 1) :
+public lemma Complex.norm_log_one_add_le' {z : ℂ} (z1 : ‖z‖ < 1) :
     ‖Complex.log (1 + z)‖ ≤ -Real.log (1 - ‖z‖) := by
   have m1 : ∀ t : ℝ, t ≤ 1 → t * ‖z‖ < 1 :=
     fun t m ↦ (mul_le_of_le_one_left (norm_nonneg _) m).trans_lt z1
@@ -65,7 +68,7 @@ lemma Complex.norm_log_one_add_le' {z : ℂ} (z1 : ‖z‖ < 1) :
       simp only [norm_one, norm_mul, Complex.norm_real, Real.norm_eq_abs, _root_.abs_of_nonneg t0]
 
 /-- The real version is simpler, but we'll use the complex version anyways -/
-lemma Real.abs_log_one_add_le {x : ℝ} (x1 : |x| < 1) :
+public lemma Real.abs_log_one_add_le {x : ℝ} (x1 : |x| < 1) :
     |Real.log (1 + x)| ≤ -Real.log (1 - |x|) := by
   have h := Complex.norm_log_one_add_le' (z := x) ?_
   · rw [← Complex.ofReal_one, ← Complex.ofReal_add, ← Complex.ofReal_log] at h
@@ -74,12 +77,12 @@ lemma Real.abs_log_one_add_le {x : ℝ} (x1 : |x| < 1) :
   · simpa only [Complex.norm_real]
 
 /-- Our bound is monotonic -/
-lemma Real.neg_log_one_sub_mono {x y : ℝ} (xy : x ≤ y) (y1 : y < 1) :
+public lemma Real.neg_log_one_sub_mono {x y : ℝ} (xy : x ≤ y) (y1 : y < 1) :
     -Real.log (1 - x) ≤ -Real.log (1 - y) :=
   neg_le_neg (Real.log_le_log (by linarith) (by linarith))
 
 /-- Our bound is `≤ 2` for `x ≤ 1/2` -/
-lemma neg_log_one_sub_le_two {x : ℝ} (x2 : x ≤ 1/2) : -Real.log (1 - x) ≤ 2 := by
+public lemma neg_log_one_sub_le_two {x : ℝ} (x2 : x ≤ 1/2) : -Real.log (1 - x) ≤ 2 := by
   apply le_trans (Real.neg_log_one_sub_mono x2 (by linarith)) ?_
   rw [neg_le, Real.le_log_iff_exp_le]
   · exact (exp_neg_ofNat_lt).le
@@ -87,7 +90,7 @@ lemma neg_log_one_sub_le_two {x : ℝ} (x2 : x ≤ 1/2) : -Real.log (1 - x) ≤ 
 
 /-- Variable linear bound on `-log (1 - x)`.
     This is intended to be used with a concrete value for `c`, so that `norm_num` can work.  -/
-lemma neg_log_one_sub_le_linear {x c : ℝ} (x0 : 0 ≤ x) (c1 : 1 < c)
+public lemma neg_log_one_sub_le_linear {x c : ℝ} (x0 : 0 ≤ x) (c1 : 1 < c)
     (xc : x ≤ min 1 (((c - 1) * 2)⁻¹ + 1)⁻¹) : -Real.log (1 - x) ≤ c * x := by
   rcases le_min_iff.mp xc with ⟨x1,xc⟩
   by_cases xz : x = 0

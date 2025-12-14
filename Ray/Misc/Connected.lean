@@ -1,3 +1,6 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Topology.Connected.PathConnected
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.Tactic.Cases
 import Ray.Misc.Set
@@ -67,7 +70,7 @@ theorem isPreconnected_iff_subset_of_fully_disjoint_open [NormalSpace X] {s : Se
       exfalso; exact disjoint_right.mp uv' (h m) (uu mu); exact mv
 
 /-- Directed intersections of preconnected compact sets are preconnected -/
-theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I] [T4Space X]
+public theorem IsPreconnected.directed_iInter {I : Type} {s : I → Set X} [Nonempty I] [T4Space X]
     (d : Directed Superset s) (p : ∀ a, IsPreconnected (s a)) (c : ∀ a, IsCompact (s a)) :
     IsPreconnected (⋂ a, s a) := by
   contrapose p
@@ -129,7 +132,7 @@ theorem IsPreconnected.limits_atBot [CompactSpace X] [T4Space X] {P : Type} [Sem
 /-- The limits points near `a` of an open curve from `Ioc a b` are preconnected -/
 -- Ideally I'd use `IsPreconnected.limits_atTop` to prove this, but when I tried that
 -- I hit horrible instance resolution mismatches.
-theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {a b : ℝ}
+public theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {a b : ℝ}
     (rc : ContinuousOn r (Ioc a b)) : IsPreconnected {x | MapClusterPt x (𝓝[Ioc a b] a) r} := by
   by_cases ab : ¬a < b
   · simp only [Ioc_eq_empty ab, nhdsWithin_empty, MapClusterPt, Filter.map_bot, ClusterPt.bot,
@@ -170,8 +173,9 @@ theorem IsPreconnected.limits_Ioc [CompactSpace X] [T4Space X] {r : ℝ → X} {
   rw [e]; exact IsPreconnected.directed_iInter d p c
 
 /-- Nonempty, relatively clopen subsets of preconnected sets are empty or the full set -/
-theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s) (ne : (s ∩ t).Nonempty)
-    (op : s ∩ t ⊆ interior t) (cl : s ∩ closure t ⊆ t) : s ⊆ interior t := by
+public theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s)
+    (ne : (s ∩ t).Nonempty) (op : s ∩ t ⊆ interior t) (cl : s ∩ closure t ⊆ t) :
+    s ⊆ interior t := by
   generalize hu : (fun x : s ↦ (x : X)) ⁻¹' t = u
   have uo : IsOpen u := by
     rw [← subset_interior_iff_isOpen]; intro ⟨x, m⟩ h
@@ -194,7 +198,7 @@ theorem IsPreconnected.relative_clopen {s t : Set X} (sp : IsPreconnected s) (ne
 
 /-- `ContinuousOn` images of preconnected sets are preconnected (this is a version of
     `IsPathConnected.image` assuming only `ContinuousOn`) -/
-theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
+public theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
     {s : Set X} (sc : IsPathConnected s) {f : X → Y} (fc : ContinuousOn f s) :
     IsPathConnected (f '' s) := by
   have uc : IsPathConnected (univ : Set s) := by
@@ -207,7 +211,7 @@ theorem IsPathConnected.image_of_continuousOn {X Y : Type} [TopologicalSpace X] 
   rw [e]; exact uc.image (continuousOn_iff_continuous_restrict.mp fc)
 
 /-- Circles are path connected -/
-theorem Complex.isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) :
+public theorem Complex.isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) :
     IsPathConnected (sphere z r) := by
   rw [← abs_of_nonneg r0, ← image_circleMap_Ioc z r]
   refine IsPathConnected.image ?_ (continuous_circleMap _ _)
@@ -218,7 +222,7 @@ theorem Complex.isPathConnected_sphere {z : ℂ} {r : ℝ} (r0 : 0 ≤ r) :
 
     Proof: Walk out of s until we hit the frontier, then move within the frontier.
     Unfortunately this seems very tedious to write out, so I'm clearly missing some tricks. -/
-theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
+public theorem IsPathConnected.of_frontier {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
     [PathConnectedSpace X] {f : X → Y} {s : Set Y}
     (pc : IsPathConnected (f ⁻¹' frontier s)) (fc : Continuous f) (sc : IsClosed s) :
     IsPathConnected (f ⁻¹' s) := by
@@ -310,7 +314,7 @@ theorem IsPreconnected.subset_of_disjoint_frontier {s t : Set X} (sp : IsPreconn
     simp [subset_closure xt] at xd
 
 /-- Two intersecting, open, preconnected sets with common frontier are the same -/
-theorem IsPreconnected.eq_of_frontier_eq {s t : Set X} (sp : IsPreconnected s)
+public theorem IsPreconnected.eq_of_frontier_eq {s t : Set X} (sp : IsPreconnected s)
     (tp : IsPreconnected t) (os : IsOpen s) (ot : IsOpen t) (f : frontier s = frontier t)
     (n : (s ∩ t).Nonempty) : s = t := by
   apply subset_antisymm

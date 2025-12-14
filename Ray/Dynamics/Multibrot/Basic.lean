@@ -1,6 +1,24 @@
-import Ray.Dynamics.Bottcher
-import Ray.Manifold.RiemannSphere
+module
+public import Ray.Dynamics.Bottcher
+public import Ray.Dynamics.Multibrot.Defs
+import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
+import Mathlib.Geometry.Manifold.MFDeriv.Basic
+import Mathlib.Order.Filter.AtTopBot.Basic
+import Mathlib.Tactic.Cases
+import Ray.Analytic.Analytic
+import Ray.Dynamics.BottcherNear
+import Ray.Dynamics.BottcherNearM
+import Ray.Dynamics.Potential
 import Ray.Dynamics.Multibrot.D
+import Ray.Manifold.Nontrivial
+import Ray.Manifold.OneDimension
+import Ray.Manifold.OpenMapping
+import Ray.Misc.Bound
+import Ray.Misc.Bounds
+import Ray.Misc.Cobounded
+import Ray.Misc.Connected
+import Ray.Misc.Topology
 
 /-!
 ## The Multibrot sets and their basic properties
@@ -41,155 +59,28 @@ variable {c : ℂ}
 variable {d : ℕ} [Fact (2 ≤ d)]
 
 /-!
-## The defining iteration, the Multibrot set, and its complement
+## Basic properties of the sets
 -/
 
-/-- The Multibrot iteration, `ℂ → ℂ` version -/
-def f' (d : ℕ) (c z : ℂ) : ℂ :=
-  z ^ d + c
-
-/-- The Multibrot iteration, `𝕊 → 𝕊` version -/
-def f (d : ℕ) : ℂ → 𝕊 → 𝕊 :=
-  lift' (f' d) ∞
-
-/-- The Multibrot set is those points that do not escape to `∞` -/
-def multibrot (d : ℕ) : Set ℂ :=
-  {c | ¬Tendsto (fun n ↦ (f d c)^[n] ↑c) atTop (𝓝 ∞)}
-
-/-- The complement of the Multibrot set, including `∞` -/
-def multibrotExt (d : ℕ) : Set 𝕊 :=
-  ((fun z : ℂ ↦ (z : 𝕊)) '' multibrot d)ᶜ ∪ {(∞ : 𝕊)}
-
 -- Basic properties of multibrot_ext
-@[simp] theorem multibrotExt_inf {d : ℕ} : (∞ : 𝕊) ∈ multibrotExt d :=
+@[simp] public theorem multibrotExt_inf {d : ℕ} : (∞ : 𝕊) ∈ multibrotExt d :=
   subset_union_right rfl
-theorem multibrotExt_coe {d : ℕ} {c : ℂ} : ↑c ∈ multibrotExt d ↔ c ∉ multibrot d := by
+public theorem multibrotExt_coe {d : ℕ} {c : ℂ} : ↑c ∈ multibrotExt d ↔ c ∉ multibrot d := by
   simp only [multibrotExt, mem_union, mem_singleton_iff, coe_eq_inf_iff, or_false, mem_image,
     mem_compl_iff, coe_eq_coe, not_iff_not]
   constructor; intro ⟨x, m, e⟩; rw [e] at m; exact m; intro m; use c, m
-theorem coe_preimage_multibrotExt {d : ℕ} :
+public theorem coe_preimage_multibrotExt {d : ℕ} :
     (fun z : ℂ ↦ (z : 𝕊)) ⁻¹' multibrotExt d = (multibrot d)ᶜ := by
   apply Set.ext; intro z; simp only [mem_compl_iff, mem_preimage, multibrotExt_coe]
 
 /-!
 ## Basic properties of the iteration `f`
-
-In particular, we show that `f d` has a superattracting fixpoint at `∞`.
 -/
-
--- Basic properties of f
-theorem f_0' (d : ℕ) [Fact (2 ≤ d)] : f' d c 0 = c := by
-  simp only [f', zero_pow (d_ne_zero _), zero_add]
-
-theorem f_0 (d : ℕ) [Fact (2 ≤ d)] : f d c 0 = c := by
-  simp only [f, ← coe_zero, lift_coe', f', zero_pow (d_ne_zero _), zero_add]
-
-theorem analytic_f' {d : ℕ} : AnalyticOnNhd ℂ (uncurry (f' d)) univ := fun _ _ ↦
-  (analyticAt_snd.pow _).add analyticAt_fst
 
 theorem deriv_f' {d : ℕ} {z : ℂ} : deriv (f' d c) z = d * z ^ (d - 1) := by
   have h : HasDerivAt (f' d c) (d * z ^ (d - 1) + 0) z :=
     (hasDerivAt_pow _ _).add (hasDerivAt_const _ _)
   simp only [add_zero] at h; exact h.deriv
-
-theorem tendsto_f'_cobounded (c : ℂ) :
-    Tendsto (uncurry (f' d)) (𝓝 c ×ˢ cobounded ℂ) (cobounded ℂ) := by
-  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, Set.mem_setOf_eq,
-    forall_true_left, uncurry, Metric.eventually_nhds_prod_iff]
-  intro r; use 1, zero_lt_one, fun z ↦ max r 0 + ‖c‖ + 1 < ‖z‖; constructor
-  · refine (eventually_cobounded (max r 0 + ‖c‖ + 1)).mp (.of_forall fun w h ↦ ?_)
-    exact h
-  · intro e ec z h
-    simp only [Complex.dist_eq] at ec
-    have zz : ‖z‖ ≤ ‖z ^ d‖ := by
-      rw [norm_pow]
-      refine le_self_pow₀ ?_ (d_ne_zero _)
-      exact le_trans (le_add_of_nonneg_left (add_nonneg (le_max_right _ _) (norm_nonneg _))) h.le
-    calc ‖f' d e z‖
-      _ = ‖z ^ d + e‖ := rfl
-      _ = ‖z ^ d + (c + (e - c))‖ := by ring_nf
-      _ ≥ ‖z ^ d‖ - ‖c + (e - c)‖ := by bound
-      _ ≥ ‖z ^ d‖ - (‖c‖ + ‖e - c‖) := by bound
-      _ ≥ ‖z‖ - (‖c‖ + 1) := by bound
-      _ > max r 0 + ‖c‖ + 1 - (‖c‖ + 1) := by bound
-      _ = max r 0 := by ring_nf
-      _ ≥ r := le_max_left _ _
-
-theorem mAnalyticAt_f : ContMDiff II I ω (uncurry (f d)) :=
-  mAnalytic_lift' analytic_f' tendsto_f'_cobounded
-
-theorem writtenInExtChartAt_coe_f {d : ℕ} {z : ℂ} :
-    writtenInExtChartAt I I (z : 𝕊) (f d c) = f' d c := by
-  simp only [writtenInExtChartAt, f, Function.comp_def, lift_coe', RiemannSphere.extChartAt_coe,
-    PartialEquiv.symm_symm, coePartialEquiv_apply, coePartialEquiv_symm_apply, toComplex_coe]
-
-theorem fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
-  funext c z
-  simp only [fl, RiemannSphere.extChartAt_inf, Function.comp_def, invEquiv_apply,
-    PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, PartialEquiv.coe_trans_symm,
-    coePartialEquiv_symm_apply, PartialEquiv.symm_symm, coePartialEquiv_apply,
-    Equiv.toPartialEquiv_symm_apply, invEquiv_symm, RiemannSphere.inv_inf, toComplex_zero,
-    add_zero, sub_zero]
-  by_cases z0 : z = 0
-  · simp only [z0, coe_zero, inv_zero', f, lift_inf', RiemannSphere.inv_inf, toComplex_zero,
-      zero_pow (d_ne_zero _), zero_div]
-  simp only [f, f', inv_coe z0, lift_coe', inv_pow]
-  have zd := pow_ne_zero d z0
-  by_cases h : (z ^ d)⁻¹ + c = 0
-  · simp only [h, coe_zero, inv_zero', toComplex_inf]
-    simp only [← add_eq_zero_iff_neg_eq.mp h, neg_mul, inv_mul_cancel₀ zd, ← sub_eq_add_neg,
-      sub_self, div_zero]
-  rw [inv_coe h, toComplex_coe, eq_div_iff, inv_mul_eq_iff_eq_mul₀ h, right_distrib,
-    inv_mul_cancel₀ zd]
-  contrapose h
-  rw [add_comm, add_eq_zero_iff_eq_neg, ← eq_div_iff zd, neg_div, ←
-    inv_eq_one_div, ← add_eq_zero_iff_eq_neg, add_comm] at h
-  exact h
-
-/-- `f` near `∞` with the `z^d` factor removed -/
-def gl (d : ℕ) (c z : ℂ) :=
-  (1 + c * z ^ d)⁻¹
-
-theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
-  simp only [fl_f, gl, g]
-  by_cases z0 : z = 0
-  simp only [if_pos, z0, zero_pow (d_ne_zero _), MulZeroClass.mul_zero, add_zero, inv_one]
-  rw [if_neg z0, div_eq_mul_inv _ (_ + _), mul_comm, mul_div_assoc, div_self (pow_ne_zero _ z0),
-    mul_one]
-
-theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
-  apply (analyticAt_const.add (analyticAt_const.mul (analyticAt_id.pow _))).inv
-  simp only [Pi.add_apply, Pi.mul_apply, Pi.pow_apply, id_eq, zero_pow (d_ne_zero _), mul_zero,
-    add_zero, ne_eq, one_ne_zero, not_false_eq_true]
-
-theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
-  funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
-
-theorem gl_zero : gl d c 0 = 1 := by
-  simp only [gl, zero_pow (d_ne_zero _), MulZeroClass.mul_zero]; norm_num
-
-theorem gl_frequently_ne_zero : ∃ᶠ z in 𝓝 0, gl d c z ≠ 0 := by
-  refine (analyticAt_gl.continuousAt.eventually_ne ?_).frequently; simp only [gl_zero]
-  exact one_ne_zero
-
-theorem fc_f : leadingCoeff (fl (f d) ∞ c) 0 = 1 := by
-  rw [fl_f', analyticAt_gl.monomial_mul_leadingCoeff gl_frequently_ne_zero, leadingCoeff_of_ne_zero]
-  exact gl_zero; rw [gl_zero]; exact one_ne_zero
-
-theorem fd_f : orderAt (fl (f d) ∞ c) 0 = d := by
-  rw [fl_f', analyticAt_gl.monomial_mul_orderAt gl_frequently_ne_zero, orderAt_eq_zero, add_zero]
-  rw [gl_zero]; exact one_ne_zero
-
-theorem f_inf {d : ℕ} : f d c ∞ = (∞ : 𝕊) := by
-  simp only [f, lift_inf']
-
--- f has a superattracting fixpoint at ∞
-theorem superF (d : ℕ) [Fact (2 ≤ d)] : Super (f d) d ∞ :=
-  { d2 := two_le_d d
-    fa := mAnalyticAt_f
-    fc := fun _ ↦ fc_f
-    fd := fun _ ↦ fd_f
-    f0 := fun _ ↦ f_inf }
 
 /-- Bound on `(1 + z)⁻¹ - 1` used in `superNearF` -/
 lemma inv_sub_one_le {z : ℂ} {b : ℝ} (zb : ‖z‖ ≤ b / (1 + b)) (b0 : 0 ≤ b) :
@@ -206,12 +97,12 @@ lemma inv_sub_one_le {z : ℂ} {b : ℝ} (zb : ‖z‖ ≤ b / (1 + b)) (b0 : 0 
   · bound
 
 /-- The set of `z`s for which `superNearF` holds -/
-def superNearT (d : ℕ) (c : ℂ) : Set ℂ :=
+@[expose] public def superNearT (d : ℕ) (c : ℂ) : Set ℂ :=
   {z | ‖z‖ < 1 / 3 ∧ ‖c‖ * ‖z‖ ^ d < 2 / 5}
 
 /-- An explicit bound on the near region near `∞`, giving an explicit region where the
     infinite product formula for `s.bottcher` will hold -/
-theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
+public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     SuperNear (fl (f d) ∞ c) d (superNearT d c) (1 / 3) (2 / 3) := by
   set s := superF d
   have zb : ∀ {z}, z ∈ superNearT d c → ‖z‖ < 1 / 3 := by
@@ -276,13 +167,6 @@ theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
         norm_num
         simpa using cz m }
 
-/-- `f` has one preimage of `∞` -/
-instance onePreimageF : OnePreimage (superF d) where
-  eq_a := by
-    intro c z; induction z using OnePoint.rec
-    · simp only [imp_true_iff]
-    · simp only [f, lift_coe', OnePoint.coe_ne_infty, IsEmpty.forall_iff]
-
 /-- `0, ∞` are the only critical points of `f` -/
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊) := by
   induction' z using OnePoint.rec with z
@@ -295,7 +179,8 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
       mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or, pow_eq_zero_iff (d_minus_one_pos d).ne']
     constructor
-    · intro h; specialize h 1
+    · intro h
+      specialize h 1
       simp only [one_ne_zero, false_or] at h
       exact h
     · exact fun h x ↦ Or.inr h
@@ -311,12 +196,11 @@ theorem multibrot_basin : c ∈ multibrot d ↔ (c, (0 : 𝕊)) ∉ (superF d).b
     intro n; induction' n with n h
     · simp only [Function.iterate_zero_apply, zero_add, Function.iterate_one, f_0]
     · simp only [Function.iterate_succ_apply', h]
-  simp only [e]; constructor
-  · intro ⟨n, h⟩; exact ⟨n + 1, h⟩
-  · intro ⟨n, h⟩; use n; simp only [Function.iterate_succ_apply']; exact s.stays_near h
+  simp only [e]
+  apply Filter.tendsto_add_atTop_iff_nat (f := (fun n ↦ (f d c)^[n] 0))
 
 /-- The critical potential is the potential of 0 (as 0 is the only nontrivial critical point) -/
-theorem multibrot_p : (superF d).p c = (superF d).potential c 0 := by
+public theorem multibrot_p : (superF d).p c = (superF d).potential c 0 := by
   set s := superF d
   have e : s.ps c = {1, s.potential c 0} := by
     apply Set.ext; intro p
@@ -329,10 +213,11 @@ theorem multibrot_p : (superF d).p c = (superF d).potential c 0 := by
     · intro h; cases' h with h h; left; exact h; right; constructor
       · simp only [h, s.potential_ne_zero]; exact inf_ne_zero.symm
       · use 0, h.symm, Or.inl rfl
-  simp only [Super.p, e, csInf_pair]; exact inf_of_le_right s.potential_le_one
+  simp only [Super.p, e, csInf_pair]
+  exact inf_of_le_right s.potential_le_one
 
 /-- `(c,c)` is postcritical for `c` outside multibrot -/
-theorem multibrotPost (m : c ∉ multibrot d) : Postcritical (superF d) c c := by
+public theorem multibrotPost (m : c ∉ multibrot d) : Postcritical (superF d) c c := by
   set s := superF d
   simp only [Postcritical, multibrot_p, ← f_0 d, s.potential_eqn]
   simp only [multibrot_basin, not_not] at m
@@ -343,24 +228,17 @@ theorem multibrotPost (m : c ∉ multibrot d) : Postcritical (superF d) c c := b
 ## The diagonal Böttcher map
 -/
 
-/-- The Böttcher map for the Multibrot set is the diagonal of the dynamical map (`ℂ → ℂ` version) -/
-def bottcher' (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) : ℂ :=
-  (superF d).bottcher c c
-
-/-- The Böttcher map for the Multibrot set is the diagonal of the dynamical map (`𝕊 → ℂ` version) -/
-def bottcher (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℂ :=
-  fill (bottcher' d) 0
-
 -- `bottcher` at `ℂ` and `∞`
-theorem bottcher_coe {c : ℂ} : bottcher d c = bottcher' d c := rfl
-@[simp] theorem bottcher_inf : bottcher d ∞ = 0 := rfl
+public theorem bottcher_coe {c : ℂ} : bottcher d c = bottcher' d c := by
+  simp only [bottcher, fill_coe, bottcher']
+@[simp] public theorem bottcher_inf : bottcher d ∞ = 0 := by simp only [bottcher, fill_inf]
 
 /-!
 ## Exponential lower and upper bounds on iterates
 -/
 
 /-- A warmup exponential lower bound on iterates -/
-lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b) (bz : b ≤ ‖z‖)
+public lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b) (bz : b ≤ ‖z‖)
     (cz : ‖c‖ ≤ ‖z‖) (n : ℕ) : (b-1)^n * ‖z‖ ≤ ‖((f' d c)^[n] z)‖ := by
   induction' n with n h
   · simp only [pow_zero, one_mul, Function.iterate_zero_apply, le_refl]
@@ -385,7 +263,7 @@ lemma iter_large (d : ℕ) [Fact (2 ≤ d)] (b : ℝ) {c z : ℂ} (b2 : 2 ≤ b)
       _ ≥ (b-1) ^ (n + 1) * ‖z‖ := by bound
 
 /-- Ap exponential upper bound on a single iteration -/
-lemma iter_small (d : ℕ) (c z : ℂ) : ‖(f' d c z)‖ ≤ ‖z‖ ^ d + ‖c‖ := by
+public lemma iter_small (d : ℕ) (c z : ℂ) : ‖(f' d c z)‖ ≤ ‖z‖ ^ d + ‖c‖ := by
   calc ‖z ^ d + c‖
     _ ≤ ‖z ^ d‖ + ‖c‖ := by bound
     _ ≤ ‖z‖ ^ d + ‖c‖ := by rw [norm_pow]
@@ -395,10 +273,10 @@ lemma iter_small (d : ℕ) (c z : ℂ) : ‖(f' d c z)‖ ≤ ‖z‖ ^ d + ‖c
 -/
 
 /-- Multibrot membership in terms of the `ℂ → ℂ` iteration `f'`, not `f` -/
-theorem f_f'_iter {d : ℕ} (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c)^[n] z) := by
+public theorem f_f'_iter {d : ℕ} (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑((f' d c)^[n] z) := by
   induction' n with n h; simp only [Function.iterate_zero, id]
   simp only [h, Function.iterate_succ_apply']
-  simp only [f, lift', rec_coe]
+  simp only [f, lift_coe']
 
 theorem multibrot_coe {d : ℕ} :
     c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop (cobounded ℂ) := by
@@ -419,11 +297,11 @@ theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : ‖c‖
   exact julia_two_lt m cz
 
 /-- `0 < s.potential` at finite values -/
-lemma potential_pos {z : ℂ} : 0 < (superF d).potential c z :=
+public lemma potential_pos {z : ℂ} : 0 < (superF d).potential c z :=
   ((superF d).potential_pos _).mpr RiemannSphere.coe_ne_inf
 
 /-- `s.potential < 1` outside radius `max 2 (abs c)` -/
-lemma potential_lt_one_of_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public lemma potential_lt_one_of_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     (superF d).potential c z < 1 :=
   (superF d).potential_lt_one (julia_two_lt z2 cz)
 
@@ -437,7 +315,7 @@ theorem multibrot_subset_closedBall : multibrot d ⊆ closedBall 0 2 := by
   intro c m; simp only [mem_closedBall, Complex.dist_eq, sub_zero]; exact multibrot_le_two m
 
 /-- Points with absolute value `> 2` are not in the Multibrot set -/
-theorem multibrot_two_lt (a : 2 < ‖c‖) : c ∉ multibrot d := by
+public theorem multibrot_two_lt (a : 2 < ‖c‖) : c ∉ multibrot d := by
   contrapose a; simp only [not_lt] at a ⊢; exact multibrot_le_two a
 
 /-- If the iteration repeats, we're in the Multibrot set -/
@@ -467,11 +345,11 @@ theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multibrot d 
   exact multibrot_of_repeat (Nat.zero_lt_succ _) (_root_.trans i0 i1.symm)
 
 /-- `0 ∈ multbrot d` -/
-@[simp] theorem multibrot_zero : (0 : ℂ) ∈ multibrot d := by
+@[simp] public theorem multibrot_zero : (0 : ℂ) ∈ multibrot d := by
   apply multibrot_of_zero; rw [Function.iterate_zero_apply, coe_zero]
 
 /-- `0 ∉ multibrotExt d` -/
-@[simp] theorem multibrotExt_zero : (0 : 𝕊) ∉ multibrotExt d := by
+@[simp] public theorem multibrotExt_zero : (0 : 𝕊) ∉ multibrotExt d := by
   simp only [← coe_zero, multibrotExt_coe, not_not, multibrot_zero]
 
 theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
@@ -523,7 +401,7 @@ theorem isCompact_multibrot : IsCompact (multibrot d) := by
   exact (analytic_f' _ (mem_univ _)).continuousAt.comp₂ continuousAt_id h.continuousAt
 
 /-- The exterior of the Multibrot set is open -/
-theorem isOpen_multibrotExt : IsOpen (multibrotExt d) := by
+public theorem isOpen_multibrotExt : IsOpen (multibrotExt d) := by
   rw [OnePoint.isOpen_iff_of_mem']
   simp only [coe_preimage_multibrotExt, compl_compl]
   use isCompact_multibrot, isCompact_multibrot.isClosed.isOpen_compl
@@ -608,7 +486,7 @@ theorem bottcher_analytic : AnalyticOnNhd ℂ (bottcher' d) (multibrot d)ᶜ := 
     (mAnalytic_coe _) rfl
 
 /-- `bottcher d` is analytic outside the Multibrot set -/
-theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
+public theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
     ContMDiffOnNhd I I (bottcher d) (multibrotExt d) := by
   intro c m; induction c using OnePoint.rec
   · refine mAnalyticAt_fill_inf ?_ bottcher_tendsto_zero
@@ -623,16 +501,16 @@ theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
 -/
 
 /-- The potential map on 𝕊, defined as the diagonal of `s.potential` -/
-def potential (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℝ :=
+public def potential (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℝ :=
   fill (fun c ↦ (superF d).potential c c) 0
 
-theorem norm_bottcher {c : 𝕊} : ‖bottcher d c‖ = potential d c := by
+public theorem norm_bottcher {c : 𝕊} : ‖bottcher d c‖ = potential d c := by
   set s := superF d
   induction c using OnePoint.rec
   · simp only [bottcher, potential, fill_inf, norm_zero]
   · simp only [bottcher, potential, fill_coe]; exact s.norm_bottcher
 
-theorem potential_continuous : Continuous (potential d) := by
+public theorem potential_continuous : Continuous (potential d) := by
   set s := superF d; rw [continuous_iff_continuousAt]; intro c; induction c using OnePoint.rec
   · have e : potential d =ᶠ[𝓝 (∞ : 𝕊)] fun c ↦ ‖bottcher d c‖ := by
       refine .of_forall fun c ↦ ?_; rw [← norm_bottcher]
@@ -642,25 +520,25 @@ theorem potential_continuous : Continuous (potential d) := by
   · exact continuousAt_fill_coe ((Continuous.potential s).comp₂
       continuous_id continuous_coe).continuousAt
 
-theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibrotExt d := by
+public theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibrotExt d := by
   set s := superF d
   induction c using OnePoint.rec
   · simp only [potential, fill_inf, zero_lt_one, multibrotExt_inf]
   · constructor
     · intro h; contrapose h
       simp only [not_not, not_lt, multibrot_basin', potential, fill_coe, Super.basin,
-        mem_setOf, not_exists, multibrotExt_coe] at h ⊢
+        mem_setOf, multibrotExt_coe] at h ⊢
       rw [s.potential_eq_one]; exact h
     · intro m; rw [← norm_bottcher]; simp only [bottcher, fill_coe]
       simp only [multibrotExt_coe] at m
       exact s.bottcher_lt_one (multibrotPost m)
 
-theorem potential_nonneg {c : 𝕊} : 0 ≤ potential d c := by
+public theorem potential_nonneg {c : 𝕊} : 0 ≤ potential d c := by
   induction c using OnePoint.rec
   · simp only [potential, fill_inf, le_refl]
   · simp only [potential, fill_coe]; exact (superF d).potential_nonneg
 
-theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = (∞ : 𝕊) := by
+public theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = (∞ : 𝕊) := by
   induction c using OnePoint.rec
   · simp only [potential, fill_inf]
   · simp only [potential, fill_coe, (superF d).potential_eq_zero_of_onePreimage]
@@ -671,7 +549,7 @@ theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = (∞ : 𝕊) :=
 
 /-- `bottcher d` is nontrivial everywhere in `multibrotExt`,
     as otherwise trivality spreads throughout `𝕊` -/
-theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
+public theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
     NontrivialMAnalyticAt (bottcher d) c := by
   by_cases h : ∃ᶠ e in 𝓝 c, bottcher d e ≠ bottcher d c
   exact
@@ -710,7 +588,7 @@ theorem bottcherNontrivial {c : 𝕊} (m : c ∈ multibrotExt d) :
   simp only [← coe_zero, multibrotExt_coe, multibrot_zero, not_true] at m0
 
 /-- `bottcher d` surjects onto `ball 0 1` -/
-theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d = ball 0 1 := by
+public theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d = ball 0 1 := by
   set s := superF d
   apply subset_antisymm
   · intro w; simp only [mem_image]; intro ⟨c, m, e⟩; rw [← e]; clear e w
@@ -751,8 +629,8 @@ theorem bottcher_surj (d : ℕ) [Fact (2 ≤ d)] : bottcher d '' multibrotExt d 
 ### Ineffective approximations
 -/
 
-/-- `s.bottcher c z ~ 1/z` for large `z` -/
-theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
+/-- `s.bottcher c z ~ z⁻¹` for large `z` -/
+public theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     Tendsto (fun z : ℂ ↦ (superF d).bottcher c z * z) (cobounded ℂ) (𝓝 1) := by
   set s := superF d
   have e : ∀ᶠ z : ℂ in cobounded ℂ, s.bottcher c z * z = s.bottcherNear c z * z := by
@@ -779,8 +657,8 @@ theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     toComplex_zero, sub_zero, inv_coe z0, toComplex_coe]
   exact h
 
-/-- `s.potential c z ~ 1/abs z` for large `z` -/
-theorem potential_tendsto (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
+/-- `s.potential c z ~ ‖z‖⁻¹` for large `z` -/
+public theorem potential_tendsto (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
     Tendsto (fun z : ℂ ↦ (superF d).potential c z * ‖z‖) (cobounded ℂ) (𝓝 1) := by
   set s := superF d
   have c := continuous_norm.continuousAt.tendsto.comp (bottcher_large_approx d c)

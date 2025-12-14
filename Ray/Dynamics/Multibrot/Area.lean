@@ -1,3 +1,7 @@
+module
+public import Ray.Dynamics.Multibrot.Isomorphism
+import Mathlib.Analysis.Complex.RemovableSingularity
+import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.InvRay
 import Ray.Koebe.Gronwall
 
@@ -18,20 +22,16 @@ variable {z : ℂ}
 -- We fix `d ≥ 2`
 variable {d : ℕ} [Fact (2 ≤ d)]
 
-/-- The function we need to plug into Grönwall's area theorem: `z / inv_ray d` -/
-def pray (d : ℕ) [Fact (2 ≤ d)] (z : ℂ) : ℂ :=
-  (dslope (inv_ray d) 0 z)⁻¹
-
 /-- The inner dslope is nonzero -/
 lemma pray_dslope_ne_zero (m : z ∈ ball (0 : ℂ) 1) : dslope (inv_ray d) 0 z ≠ 0 := by
   by_cases z0 : z = 0
   · simp [z0, ray_hasDerivAt_one.deriv]
   · simp [z0, dslope_of_ne _ z0, slope, inv_ray_ne_zero z0 m]
 
-@[simp] lemma pray_zero : pray d 0 = 1 := by
+@[simp] public lemma pray_zero : pray d 0 = 1 := by
   simp only [pray, dslope_same, ray_hasDerivAt_one.deriv, inv_one]
 
-@[simp] lemma pray_ne_zero (m : z ∈ ball (0 : ℂ) 1) : pray d z ≠ 0 := by
+@[simp] public lemma pray_ne_zero (m : z ∈ ball (0 : ℂ) 1) : pray d z ≠ 0 := by
   simp only [pray, ne_eq, _root_.inv_eq_zero, pray_dslope_ne_zero m, not_false_eq_true]
 
 /-- `inv_ray` in terms of `pray` -/
@@ -42,7 +42,7 @@ lemma inv_ray_eq_pray : inv_ray d z = z / pray d z := by
     field_simp [z0]
 
 /-- `ray` in terms of `pray` -/
-lemma ray_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray d z = (z / pray d z : 𝕊)⁻¹ := by
+public lemma ray_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray d z = (z / pray d z : 𝕊)⁻¹ := by
   rw [← inv_ray_eq_pray, inv_ray, RiemannSphere.coe_toComplex (by simp [m]), inv_inv]
 
 /-- `ray` in terms of `pray`, `norm_Ioi` version -/
@@ -56,7 +56,7 @@ lemma ray_inv_eq_pray (m : z ∈ norm_Ioi 1) : ray d z⁻¹ = z * pray d z⁻¹ 
     linarith
 
 /-- `pray` is analytic on the ball -/
-lemma pray_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (pray d) z := by
+public lemma pray_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (pray d) z := by
   have pa : ∀ z : ℂ, z ∈ ball (0 : ℂ) 1 → z ≠ 0 → ContDiffAt ℂ ⊤ (pray d) z := by
     intro z m z0
     have e : pray d =ᶠ[𝓝 z] fun z ↦ z / inv_ray d z := by
@@ -76,7 +76,7 @@ lemma pray_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (pray d) z
       exact (inv_ray_analytic (by simp)).differentiableAt le_top
   · exact pa z m z0
 
-lemma pray_analyticOnNhd : AnalyticOnNhd ℂ (pray d) (ball 0 1) := by
+public lemma pray_analyticOnNhd : AnalyticOnNhd ℂ (pray d) (ball 0 1) := by
   intro z m
   exact (pray_analytic m).analyticAt
 
@@ -97,9 +97,8 @@ lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' no
   · intro ⟨w,w1,wz⟩
     rw [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray w1] at wz
     rw [← wz]
-    apply (bottcherHomeomorph d).map_target
-    simp only [norm_Ioi, mem_setOf_eq, bottcherHomeomorph, mem_ball, dist_zero_right,
-      norm_inv] at w1 ⊢
+    apply ray_mem_multibrotExt
+    simp only [norm_Ioi, mem_setOf_eq, mem_ball, dist_zero_right, norm_inv] at w1 ⊢
     exact inv_lt_one_of_one_lt₀ w1
 
 /-- `ray` in terms of `pray` is injective -/

@@ -1,5 +1,14 @@
-import Ray.Manifold.OpenMapping
+module
+public import Ray.Dynamics.Defs
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Tactic.Cases
+import Ray.Dynamics.BottcherNearM
+import Ray.Dynamics.Nice
 import Ray.Dynamics.Potential
+import Ray.Manifold.OpenMapping
+import Ray.Misc.Bounds
+import Ray.Misc.Topology
 
 /-!
 ## Postcritical points
@@ -32,21 +41,13 @@ variable {a z z0 z1 : S}
 variable {d n : ℕ}
 variable {s : Super f d a}
 
-/-- The set of potentials of non-`a` critical points of `f c`, which 1 included.
-    For compact `S` 1 is automatically a critical value, but we don't want to show this here. -/
-def Super.ps (s : Super f d a) (c : ℂ) : Set ℝ :=
-  {p | p = 1 ∨ p ≠ 0 ∧ ∃ z, s.potential c z = p ∧ Critical (f c) z}
-
-/-- The critical potential: the least potential of any non-`a` critical point of `f c` -/
-def Super.p (s : Super f d a) (c : ℂ) : ℝ :=
-  sInf (s.ps c)
-
 /-- `s.ps c` is nonempty (since it contains 1) -/
-theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
+public theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
   ⟨1, by simp only [Super.ps, mem_setOf, true_or]⟩
 
 /-- `s.ps c` is compact -/
-theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] : IsCompact (s.ps c) := by
+public theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] :
+    IsCompact (s.ps c) := by
   have pc : Continuous (s.potential c) := (Continuous.potential s).along_snd
   have c1 : IsCompact {(1 : ℝ)} := isCompact_singleton
   convert c1.union ((s.isClosed_critical_not_a.snd_preimage c).isCompact.image pc)
@@ -71,11 +72,11 @@ theorem Super.mem_ps (s : Super f d a) (c : ℂ) [OnePreimage s] [T2Space S] : s
   rw [← s.compact_ps.isClosed.closure_eq]; exact csInf_mem_closure s.nonempty_ps s.bddBelow_ps
 
 /-- `s.p c` is positive, since it is the infimum of a compact set of positive numbers -/
-theorem Super.p_pos (s : Super f d a) (c : ℂ) [OnePreimage s] [T2Space S] : 0 < s.p c :=
+public theorem Super.p_pos (s : Super f d a) (c : ℂ) [OnePreimage s] [T2Space S] : 0 < s.p c :=
   s.ps_pos c (s.mem_ps c)
 
 /-- `s.p c ≤ 1` -/
-theorem Super.p_le_one (s : Super f d a) : s.p c ≤ 1 :=
+@[bound] public theorem Super.p_le_one (s : Super f d a) : s.p c ≤ 1 :=
   csInf_le s.bddBelow_ps (Or.inl rfl)
 
 /-- `s.p` doesn't jump down locally as a function of `c`.
@@ -83,7 +84,7 @@ theorem Super.p_le_one (s : Super f d a) : s.p c ≤ 1 :=
     Intuitively, this is because if `c` varies a little bit, critical points might suddenly
     disappear (if we're at the furthest `c` extent of a critical surface) but they can't suddenly
     appear as the set of critical points is closed. -/
-theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] [T2Space S] :
+public theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] [T2Space S] :
     LowerSemicontinuous s.p := by
   intro c p h; contrapose h
   simp only [not_lt, Filter.not_eventually] at h ⊢
@@ -111,10 +112,6 @@ theorem Super.lowerSemicontinuous_p (s : Super f d a) [OnePreimage s] [T2Space S
   rw [← zr, Ne, s.potential_eq_zero_of_onePreimage] at r0; rw [mem_image]
   refine ⟨(e, z), ⟨?_, zc, r0⟩, rfl⟩; simp only [zr]; exact rq.le
 
-/-- `z : S` is postcritical if its potential is smaller than any critical point (except for `a`) -/
-def Postcritical (s : Super f d a) (c : ℂ) (z : S) : Prop :=
-  s.potential c z < s.p c
-
 /-- Postcritical points are in the basin, since they have `s.potential c z < s.p c ≤ 1` -/
 theorem Postcritical.basin (p : Postcritical s c z) : (c, z) ∈ s.basin :=
   s.potential_lt_one_iff.mp (lt_of_lt_of_le p s.p_le_one)
@@ -125,7 +122,7 @@ theorem Postscritical.mono (p : Postcritical s c z1) (z01 : s.potential c z0 ≤
   lt_of_le_of_lt z01 p
 
 /-- Postcritical points are not precritical, since iteration decreases potential (except for `a`) -/
-theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential c z ≠ 0) :
+public theorem Postcritical.not_precritical (p : Postcritical s c z) (p0 : s.potential c z ≠ 0) :
     ¬Precritical (f c) z := by
   contrapose p; simp only [Postcritical, not_lt] at p ⊢
   rcases p with ⟨n, p⟩; trans s.potential c ((f c)^[n] z)
@@ -139,12 +136,8 @@ theorem Postcritical.not_precritical' (p : Postcritical s c z) (za : z ≠ a) [O
     ¬Precritical (f c) z := by
   apply p.not_precritical; simp only [Ne, s.potential_eq_zero_of_onePreimage]; exact za
 
-/-- The set of postcritical points -/
-def Super.post (s : Super f d a) : Set (ℂ × S) :=
-  {p : ℂ × S | Postcritical s p.1 p.2}
-
 /-- `s.post` is open -/
-theorem Super.isOpen_post (s : Super f d a) [OnePreimage s] [T2Space S] : IsOpen s.post := by
+public theorem Super.isOpen_post (s : Super f d a) [OnePreimage s] [T2Space S] : IsOpen s.post := by
   set f := fun x : ℂ × S ↦ s.p x.1 - s.potential x.1 x.2
   have fc : LowerSemicontinuous f :=
     (s.lowerSemicontinuous_p.comp continuous_fst).add
@@ -160,7 +153,7 @@ theorem Postcritical.eventually (p : Postcritical s c z) [OnePreimage s] [T2Spac
   refine (s.isOpen_post.eventually_mem ?_).mp (.of_forall fun _ m ↦ m); exact p
 
 /-- Postcritical points are in the basin -/
-theorem Super.post_basin (s : Super f d a) : s.post ⊆ s.basin := fun _ m ↦
+public theorem Super.post_basin (s : Super f d a) : s.post ⊆ s.basin := fun _ m ↦
   Postcritical.basin m
 
 /-- `p ∈ s.post` means `p` is postcritical -/
@@ -168,12 +161,12 @@ theorem Super.postPostcritical (s : Super f d a) {p : ℂ × S} (m : p ∈ s.pos
     Postcritical s p.1 p.2 := m
 
 /-- `a` is postcritical -/
-@[simp] lemma Super.post_a (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) :
+@[simp] public lemma Super.post_a (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) :
     (c, a) ∈ s.post := by
   simp only [Super.post, Postcritical, s.potential_a, mem_setOf]; exact s.p_pos c
 
 /-- `f` maps `s.post` into itself -/
-theorem Super.stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post) :
+public theorem Super.stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post) :
     (p.1, f p.1 p.2) ∈ s.post := by
   rcases p with ⟨c, z⟩; simp only [Super.post, mem_setOf, Postcritical, s.potential_eqn]
   exact lt_of_le_of_lt (pow_le_of_le_one s.potential_nonneg s.potential_le_one s.d0) m
@@ -185,56 +178,28 @@ theorem Super.iter_stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post
   simp only [Function.iterate_succ_apply']; exact s.stays_post h
 
 /-- We can get from `s.basin` to `s.post` with enough iterations -/
-theorem Super.basin_post (s : Super f d a) [OnePreimage s] [T2Space S] (m : (c, z) ∈ s.basin) :
-    ∃ n, (c, (f c)^[n] z) ∈ s.post := by
+public theorem Super.basin_post (s : Super f d a) [OnePreimage s] [T2Space S]
+    (m : (c, z) ∈ s.basin) : ∃ n, (c, (f c)^[n] z) ∈ s.post := by
   rcases tendsto_atTop_nhds.mp (s.basin_attracts m) {z | (c, z) ∈ s.post} (s.post_a c)
       (s.isOpen_post.snd_preimage c) with ⟨n, h⟩
   specialize h n (le_refl n); simp only [mem_setOf] at h; use n, h
 
-/-- `s.bottcherNearIter` is nontrivial at postcritical points -/
-theorem Super.bottcherNearIterNontrivial (s : Super f d a) (r : (c, (f c)^[n] z) ∈ s.near)
-    (p : Postcritical s c z) [OnePreimage s] [T2Space S] :
-    NontrivialMAnalyticAt (s.bottcherNearIter n c) z := by
-  rcases((Filter.eventually_ge_atTop n).and (s.eventually_noncritical ⟨_, r⟩)).exists with
-    ⟨m, nm, mc⟩
-  have r' := s.iter_stays_near' r nm
-  have h : NontrivialMAnalyticAt (s.bottcherNearIter m c) z := by
-    by_cases p0 : s.potential c z = 0
-    · rw [s.potential_eq_zero_of_onePreimage] at p0
-      rw [p0]; exact s.bottcherNearIter_nontrivial_a
-    · exact nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.bottcherNearIter_mAnalytic r').along_snd
-          (s.bottcherNearIter_mfderiv_ne_zero mc (p.not_precritical p0))
-  replace h := h.nonconst
-  refine ⟨(s.bottcherNearIter_mAnalytic r).along_snd, ?_⟩
-  contrapose h; simp only [Filter.not_frequently, not_not] at h ⊢
-  rw [← Nat.sub_add_cancel nm]; generalize hk : m - n = k; clear hk nm mc r' p m
-  have er : ∀ᶠ w in 𝓝 z, (c, (f c)^[n] w) ∈ s.near :=
-    (continuousAt_const.prodMk (s.continuousAt_iter continuousAt_const
-      continuousAt_id)).eventually_mem (s.isOpen_near.mem_nhds r)
-  refine (h.and er).mp (.of_forall ?_); intro x ⟨e, m⟩
-  simp only [Super.bottcherNearIter] at e
-  simp only [Super.bottcherNearIter, Function.iterate_add_apply, s.bottcherNear_eqn_iter m,
-    s.bottcherNear_eqn_iter r, e]
-
 /-- `s.potential` has postcritical minima only at `z = a` -/
-theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space S]
+public theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space S]
     (p : Postcritical s c z) (m : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w) : z = a := by
   contrapose m; simp only [Filter.not_eventually, not_le]
-  rcases s.nice_nz p.basin z (le_refl _) with ⟨near, nc⟩
+  have nice := s.nice_nz p.basin
   set f : S → ℂ := s.bottcherNearIter (s.nz c z) c
-  have o : 𝓝 (f z) = Filter.map f (𝓝 z) :=
-    (nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.bottcherNearIter_mAnalytic near).along_snd
-        (s.bottcherNearIter_mfderiv_ne_zero (nc _ (le_refl _))
-          (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
+  have o : 𝓝 (f z) = Filter.map f (𝓝 z) := (nontrivialMAnalyticAt_of_mfderiv_ne_zero
+      (nice.contMDiffAt_bottcherNearIter (le_refl _)).along_snd
+      (s.bottcherNearIter_mfderiv_ne_zero (nice.mfderiv_ne_zero (le_refl _) (le_refl _))
+        (p.not_precritical ((s.potential_ne_zero _).mpr m)))).nhds_eq_map_nhds
   have e : ∃ᶠ x : ℂ in 𝓝 (f z), ‖x‖ < ‖f z‖ := by
-    apply frequently_smaller; contrapose m
-    replace m := (s.bottcherNear_eq_zero near).mp m
-    rw [s.preimage_eq] at m; exact m
+    apply frequently_smaller
+    contrapose m
+    rwa [nice.bottcherNear_eq_zero (le_refl _), s.preimage_eq] at m
   rw [o, Filter.frequently_map] at e
   apply e.mp
-  apply (((s.isOpen_preimage _).snd_preimage c).eventually_mem near).mp
-  refine .of_forall fun w m lt ↦ ?_
-  simp only at m lt; rw [mem_setOf, mem_setOf] at m; simp only at m
-  simp only [s.potential_eq m, s.potential_eq near, Super.potential']
-  exact Real.rpow_lt_rpow (norm_nonneg _) lt
-    (inv_pos.mpr (pow_pos (Nat.cast_pos.mpr s.dp) _))
+  filter_upwards [nice.norm_bottcherNear' (le_refl _)] with w wp lt
+  simp only [f, Super.bottcherNearIter, nice.norm_bottcherNear (le_refl _), wp] at lt
+  rwa [pow_lt_pow_iff_left₀ (by bound) (by bound) (by simp [s.d0])] at lt

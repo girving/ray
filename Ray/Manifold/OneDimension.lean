@@ -1,3 +1,13 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Geometry.Manifold.ContMDiff.Defs
+public import Mathlib.Geometry.Manifold.IsManifold.Basic
+public import Mathlib.Geometry.Manifold.MFDeriv.Defs
+public import Ray.Manifold.Defs
+import Mathlib.Geometry.Manifold.ContMDiff.Atlas
+import Mathlib.Geometry.Manifold.LocalInvariantProperties
+import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
+import Mathlib.Tactic.Cases
 import Ray.Analytic.Analytic
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
@@ -15,21 +25,10 @@ of `TangentSpace I z = ℂ` to do noncanonical field arithmetic over `ℂ`.
 
 open Filter (Tendsto)
 open Function (uncurry)
+open OneDimension
 open Set
 open scoped ContDiff Manifold Topology
 noncomputable section
-
-namespace OneDimension
-
-/-- Abbreviation for `𝓘(ℂ,ℂ) = modelWithCornersSelf ℂ ℂ` -/
-abbrev I := modelWithCornersSelf ℂ ℂ
-
-/-- Abbreviation for `𝓘(ℂ,ℂ).prod 𝓘(ℂ,ℂ)` -/
-abbrev II := I.prod I
-
-end OneDimension
-
-open OneDimension
 
 variable {S : Type} [TopologicalSpace S] [cs : ChartedSpace ℂ S]
 variable {T : Type} [TopologicalSpace T] [ct : ChartedSpace ℂ T]
@@ -126,7 +125,7 @@ theorem mderiv_ne_zero_iff' {z : S} {w : T} {f : TangentSpace I z →L[ℂ] Tang
   simp only [ne_eq, mderiv_ne_zero_iff, u0, not_false_eq_true, and_true]
 
 /-- 1D map composition is zero iff either side is -/
-theorem mderiv_comp_eq_zero_iff {x : S} {y : T} {z : U}
+public theorem mderiv_comp_eq_zero_iff {x : S} {y : T} {z : U}
     (f : TangentSpace I y →L[ℂ] TangentSpace I z) (g : TangentSpace I x →L[ℂ] TangentSpace I y) :
     f.comp g = 0 ↔ f = 0 ∨ g = 0 := by
   rcases exists_ne (0 : TangentSpace I x) with ⟨t, t0⟩
@@ -138,8 +137,9 @@ theorem mderiv_comp_eq_zero_iff {x : S} {y : T} {z : U}
   · intro h; cases' h with h h; simp only [h, g.zero_comp]; simp only [h, f.comp_zero]
 
 /-- 1D map composition is nonzero if both sides are -/
-theorem mderiv_comp_ne_zero {x : S} {y : T} {z : U} (f : TangentSpace I y →L[ℂ] TangentSpace I z)
-    (g : TangentSpace I x →L[ℂ] TangentSpace I y) : f ≠ 0 → g ≠ 0 → f.comp g ≠ 0 := by
+public theorem mderiv_comp_ne_zero {x : S} {y : T} {z : U}
+    (f : TangentSpace I y →L[ℂ] TangentSpace I z) (g : TangentSpace I x →L[ℂ] TangentSpace I y) :
+    f ≠ 0 → g ≠ 0 → f.comp g ≠ 0 := by
   intro f0 g0; simp only [Ne, mderiv_comp_eq_zero_iff, f0, g0, or_self_iff, not_false_iff]
 
 /-- Nonzero `mfderiv` implies differentiability -/
@@ -149,7 +149,7 @@ theorem has_mfderiv_at_of_mderiv_ne_zero {f : S → T} {x : S} (d0 : mfderiv I I
   simp only [mfderiv, d0, if_false]
 
 /-- If two functions have nonzero derivative, their composition has nonzero derivative -/
-theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
+public theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
     mfderiv I I f (g x) ≠ 0 → mfderiv I I g x ≠ 0 → mfderiv I I (fun x ↦ f (g x)) x ≠ 0 := by
   intro df dg
   have e : (fun x ↦ f (g x)) = f ∘ g := rfl
@@ -157,13 +157,16 @@ theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
   exact mderiv_comp_ne_zero _ _ df dg
 
 /-- Nonzero 1D derivatives are invertible -/
-def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w) (f0 : f ≠ 0) :
-    TangentSpace I z ≃L[ℂ] TangentSpace I w where
+@[expose] public def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w)
+    (f0 : f ≠ 0) : TangentSpace I z ≃L[ℂ] TangentSpace I w where
   toFun := f
   map_add' := f.map_add'
   map_smul' := f.map_smul'
   invFun := by
-    intro x; have f' : ℂ →L[ℂ] ℂ := f; simp only [TangentSpace] at f x; exact (f' 1)⁻¹ * x
+    intro x
+    have f' : ℂ →L[ℂ] ℂ := f
+    unfold TangentSpace at f x
+    exact (f' 1)⁻¹ * x
   left_inv := by
     generalize hu : (1:ℂ) = u
     have u0 : u ≠ 0 := by rw [←hu]; norm_num
@@ -187,14 +190,15 @@ def mderivEquiv {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w
   continuous_invFun := by
     simp only [TangentSpace] at f ⊢; exact Continuous.mul continuous_const continuous_id
 
-theorem mderivEquiv_apply {z : S} {w : T} {f : TangentSpace I z →L[ℂ] TangentSpace I w} (f0 : f ≠ 0)
-    (x : TangentSpace I z) : mderivEquiv f f0 x = f x := rfl
+public theorem mderivEquiv_apply {z : S} {w : T} {f : TangentSpace I z →L[ℂ] TangentSpace I w}
+    (f0 : f ≠ 0) (x : TangentSpace I z) : mderivEquiv f f0 x = f x := by rfl
 
-theorem mderivEquiv_eq {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w) (f0 : f ≠ 0) :
-    ↑(mderivEquiv f f0) = f := by apply ContinuousLinearMap.ext; intro x; rfl
+public theorem mderivEquiv_eq {z : S} {w : T} (f : TangentSpace I z →L[ℂ] TangentSpace I w)
+    (f0 : f ≠ 0) : ↑(mderivEquiv f f0) = f := by
+  apply ContinuousLinearMap.ext; intro x; rfl
 
 /-- Identity derivatives are nonzero -/
-theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
+public theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
   have d : MDifferentiableAt I I (fun z ↦ z) z := mdifferentiableAt_id
   simp only [mfderiv, d, if_true, writtenInExtChartAt, ModelWithCorners.Boundaryless.range_eq_univ,
     fderivWithin_univ]
@@ -206,17 +210,9 @@ theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
     ContinuousLinearMap.id_apply, Function.comp_def]
   use 1, one_ne_zero
 
-/-- A critical point is where the derivative of `f` vanishes -/
-def Critical (f : S → T) (z : S) :=
-  mfderiv I I f z = 0
-
-/-- A precritical point is an iterated preimage of a critical point -/
-def Precritical (f : S → S) (z : S) :=
-  ∃ n, Critical f (f^[n] z)
-
 /-- Critical points of iterations are precritical points -/
-theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f) (c : Critical f^[n] z) :
-    Precritical f z := by
+public theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f)
+    (c : Critical f^[n] z) : Precritical f z := by
   induction' n with n h
   · rw [Function.iterate_zero, Critical, mfderiv_id, ← ContinuousLinearMap.opNorm_zero_iff,
       ContinuousLinearMap.norm_id] at c
@@ -230,7 +226,7 @@ theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I ω f) 
 variable [IsManifold I ω S] [IsManifold I ω T] [IsManifold I ω U]
 
 /-- Chart derivatives are nonzero -/
-theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source) :
+public theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source) :
     mfderiv I I (extChartAt I z) w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I z) with ⟨t, t0⟩
   rw [← mderiv_ne_zero_iff' t0]; contrapose t0
@@ -240,7 +236,7 @@ theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).source)
   exact t0
 
 /-- Chart derivatives are nonzero -/
-theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt I z).target) :
+public theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt I z).target) :
     mfderiv I I (extChartAt I z).symm w ≠ 0 := by
   rcases exists_ne (0 : TangentSpace I (extChartAt I z z)) with ⟨t, t0⟩
   rw [← mderiv_ne_zero_iff' t0]; contrapose t0
@@ -250,16 +246,16 @@ theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (extChartAt
   exact t0
 
 /-- Chart derivatives are nonzero -/
-theorem extChartAt_mderiv_ne_zero (z : S) : mfderiv I I (extChartAt I z) z ≠ 0 :=
+public theorem extChartAt_mderiv_ne_zero (z : S) : mfderiv I I (extChartAt I z) z ≠ 0 :=
   extChartAt_mderiv_ne_zero' (mem_extChartAt_source z)
 
 /-- Chart derivatives are nonzero -/
-theorem extChartAt_symm_mderiv_ne_zero (z : S) :
+public theorem extChartAt_symm_mderiv_ne_zero (z : S) :
     mfderiv I I (extChartAt I z).symm (extChartAt I z z) ≠ 0 :=
   extChartAt_symm_mderiv_ne_zero' (mem_extChartAt_target z)
 
 /-- Nonzeroness of `mfderiv` reduces to nonzeroness of `deriv` -/
-theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
+public theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
     mfderiv I I f z = 0 ↔ deriv f z = 0 := by
   by_cases d : DifferentiableAt ℂ f z
   · constructor
@@ -277,7 +273,7 @@ theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
     simp only [deriv_zero_of_not_differentiableAt d, mfderiv_zero_of_not_mdifferentiableAt d']
 
 /-- `mfderiv ≠ 0` iff `deriv ≠ 0` -/
-theorem mfderiv_ne_zero_iff_deriv_ne_zero {f : ℂ → ℂ} {z : ℂ} :
+public theorem mfderiv_ne_zero_iff_deriv_ne_zero {f : ℂ → ℂ} {z : ℂ} :
     mfderiv I I f z ≠ 0 ↔ deriv f z ≠ 0 := by rw [not_iff_not, mfderiv_eq_zero_iff_deriv_eq_zero]
 
 /-!
@@ -289,22 +285,23 @@ into the necessary theory, I'm going to express what I need in coordinates for n
 -/
 
 /-- A curried function in coordinates -/
-def inChart (f : ℂ → S → T) (c : ℂ) (z : S) : ℂ → ℂ → ℂ := fun e w ↦
+@[expose] public def inChart (f : ℂ → S → T) (c : ℂ) (z : S) : ℂ → ℂ → ℂ := fun e w ↦
   extChartAt I (f c z) (f e ((extChartAt I z).symm w))
 
 /-- `inChart` is analytic -/
-theorem ContMDiffAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem ContMDiffAt.inChart {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) :
     AnalyticAt ℂ (uncurry (inChart f c z)) (c, _root_.extChartAt I z z) := by
   apply ContMDiffAt.analyticAt II I
-  apply (contMDiffAt_extChartAt' (extChartAt_source I (f c z) ▸ (mem_extChartAt_source (f c z)))).comp_of_eq
+  apply (contMDiffAt_extChartAt' (extChartAt_source I (f c z) ▸
+    (mem_extChartAt_source (f c z)))).comp_of_eq
   apply fa.comp₂_of_eq contMDiffAt_fst
   apply ((contMDiffOn_extChartAt_symm _).contMDiffAt
     (extChartAt_target_mem_nhds' (mem_extChartAt_target z))).comp_of_eq contMDiffAt_snd
   repeat' simp only [PartialEquiv.left_inv _ (mem_extChartAt_source z)]
 
 /-- `inChart` preserves critical points locally -/
-theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z),
       mfderiv I I (f p.1) p.2 = 0 ↔ deriv (inChart f c z p.1) (extChartAt I z p.2) = 0 := by
@@ -338,7 +335,7 @@ theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
   · simp only [Function.comp, PartialEquiv.left_inv _ m]
 
 /-- `mfderiv` is nonzero near where it is nonzero (parameterized version) -/
-theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
+public theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
     (fa : ContMDiffAt II I ω (uncurry f) (c, z)) (f0 : mfderiv I I (f c) z ≠ 0) :
     ∀ᶠ p : ℂ × S in 𝓝 (c, z), mfderiv I I (f p.1) p.2 ≠ 0 := by
   set g := inChart f c z
@@ -356,7 +353,7 @@ theorem mfderiv_ne_zero_eventually' {f : ℂ → S → T} {c : ℂ} {z : S}
   rw [Ne, e]; exact g0
 
 /-- `mfderiv` is nonzero near where it is nonzero -/
-theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : ContMDiffAt I I ω f z)
+public theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : ContMDiffAt I I ω f z)
     (f0 : mfderiv I I f z ≠ 0) : ∀ᶠ w in 𝓝 z, mfderiv I I f w ≠ 0 := by
   set c : ℂ := 0
   set g : ℂ → S → T := fun _ z ↦ f z
@@ -367,12 +364,12 @@ theorem mfderiv_ne_zero_eventually {f : S → T} {z : S} (fa : ContMDiffAt I I �
   exact pc.eventually (mfderiv_ne_zero_eventually' ga f0)
 
 /-- The set of noncritical points is open -/
-theorem isOpen_noncritical {f : ℂ → S → T} (fa : ContMDiff II I ω (uncurry f)) :
+public theorem isOpen_noncritical {f : ℂ → S → T} (fa : ContMDiff II I ω (uncurry f)) :
     IsOpen {p : ℂ × S | ¬Critical (f p.1) p.2} := by
   rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m; exact mfderiv_ne_zero_eventually' (fa _) m
 
 /-- The set of critical points is closed -/
-theorem isClosed_critical {f : ℂ → S → T} (fa : ContMDiff II I ω (uncurry f)) :
+public theorem isClosed_critical {f : ℂ → S → T} (fa : ContMDiff II I ω (uncurry f)) :
     IsClosed {p : ℂ × S | Critical (f p.1) p.2} := by
   have c := (isOpen_noncritical fa).isClosed_compl
   simp only [compl_setOf, not_not] at c; exact c
@@ -380,7 +377,7 @@ theorem isClosed_critical {f : ℂ → S → T} (fa : ContMDiff II I ω (uncurry
 /-- Osgood's theorem on 2D product manifolds: separate analyticity + continuity
     implies joint analyticity.  I'm not sure if a Hartogs' analogue is possible,
     since we use continuity to remain within the right charts. -/
-theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
+public theorem osgoodManifold {f : S × T → U} (fc : Continuous f)
     (f0 : ∀ x y, ContMDiffAt I I ω (fun x ↦ f (x, y)) x)
     (f1 : ∀ x y, ContMDiffAt I I ω (fun y ↦ f (x, y)) y) : ContMDiff II I ω f := by
   rw [mAnalytic_iff_of_boundaryless]; use fc; intro p; apply osgood_at'

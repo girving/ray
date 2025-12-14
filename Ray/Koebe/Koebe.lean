@@ -1,3 +1,10 @@
+module
+public import Mathlib.Analysis.Complex.Basic
+public import Ray.Analytic.Analytic
+import Mathlib.Analysis.Calculus.Deriv.CompMul
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.Analysis.Calculus.Deriv.Shift
 import Ray.Dynamics.Multiple
 import Ray.Koebe.Bieberbach
 
@@ -10,18 +17,16 @@ The proof follows Wikipedia: https://en.wikipedia.org/wiki/Koebe_quarter_theorem
 -/
 
 open Classical
-open Complex (arg)
 open Metric (ball closedBall isOpen_ball sphere)
 open Set
 open Filter (atTop Tendsto)
-open MeasureTheory (volume)
 open scoped ContDiff Topology NNReal
 noncomputable section
 
 variable {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
 
 /-- The Koebe quarter theorem, `f 0 = 0, f' 0 = 1` case -/
-theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1))
+public theorem koebe_quarter_special (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1))
     (f0 : f 0 = 0) (d0 : deriv f 0 = 1) : ball 0 4⁻¹ ⊆ f '' (ball 0 1) := by
   intro w wm
   contrapose wm
@@ -110,7 +115,7 @@ lemma affine_image_ball {a s c : ℂ} (s0 : s ≠ 0) :
     · simp only [mul_div_cancel₀ _ s0, add_sub_cancel]
 
 /-- The Koebe quarter theorem, general affine case -/
-lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball c r)) :
+public lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball c r)) :
     ball (f c) (r * ‖deriv f c‖ / 4) ⊆ f '' (ball c r) := by
   by_cases r0 : r ≤ 0
   · simp only [Metric.ball_eq_empty.mpr r0, image_empty, subset_empty_iff, Metric.ball_eq_empty]
@@ -149,6 +154,6 @@ lemma koebe_quarter' (fa : AnalyticOnNhd ℂ f (ball c r)) (inj : InjOn f (ball 
   exact ik
 
 /-- The Koebe quarter theorem, unit ball case -/
-theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1)) :
+public theorem koebe_quarter (fa : AnalyticOnNhd ℂ f (ball 0 1)) (inj : InjOn f (ball 0 1)) :
     ball (f 0) (‖deriv f 0‖ / 4) ⊆ f '' (ball 0 1) := by
   simpa only [one_mul] using koebe_quarter' fa inj

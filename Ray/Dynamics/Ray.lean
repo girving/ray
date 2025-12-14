@@ -1,5 +1,18 @@
+module
+public import Ray.Dynamics.Defs
+import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Geometry.Manifold.Algebra.Structures
+import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Mathlib.Tactic.Cases
 import Ray.Dynamics.Grow
+import Ray.Dynamics.Postcritical
+import Ray.Dynamics.Potential
+import Ray.Manifold.LocalInj
+import Ray.Manifold.OneDimension
+import Ray.Manifold.OpenMapping
+import Ray.Misc.Connected
+import Ray.Misc.Topology
 
 /-
 ## The external ray map
@@ -37,10 +50,6 @@ variable {d n : ℕ}
 variable {s : Super f d a}
 variable {y : ℂ × ℂ}
 
-/-- The domain on which `s.ray` is well behaved: `{(c,z) | s.potential c z < s.p c}`. -/
-def Super.ext (s : Super f d a) : Set (ℂ × ℂ) :=
-  {y : ℂ × ℂ | ‖y.2‖ < s.p y.1}
-
 /-- The `c`-slice of `s.ext` is `ball 0 (s.p c)` -/
 theorem Super.ext_slice (s : Super f d a) (c : ℂ) :
     {x | (c, x) ∈ s.ext} = ball (0 : ℂ) (s.p c) := by
@@ -50,11 +59,11 @@ variable [T2Space S]
 
 /-- The external ray map: `s.ray c y` is moving in external ray space from the superattractor `a`
     out by `y`.  `s.ray` is well behaved for all postcritical values `(c,y) ∈ s.ext` (see below). -/
-def Super.ray (s : Super f d a) [OnePreimage s] : ℂ → ℂ → S :=
+public def Super.ray (s : Super f d a) [OnePreimage s] : ℂ → ℂ → S :=
   choose s.has_ray
 
 /-- `s.ext` is open -/
-theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
+public theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
   set f := fun y : ℂ × ℂ ↦ s.p y.1 - ‖y.2‖
   have fc : LowerSemicontinuous f :=
     (s.lowerSemicontinuous_p.comp continuous_fst).add
@@ -64,17 +73,18 @@ theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext := by
   rw [e]; exact fc.isOpen_preimage _
 
 /-- `(c,0) ∈ s.ext` -/
-@[simp] theorem Super.mem_ext (s : Super f d a) [OnePreimage s] (c : ℂ) : (c, (0 : ℂ)) ∈ s.ext := by
+@[simp] public theorem Super.mem_ext (s : Super f d a) [OnePreimage s] (c : ℂ) :
+    (c, (0 : ℂ)) ∈ s.ext := by
   simp only [Super.ext, mem_setOf, norm_zero, s.p_pos c]
 
 /-- `c`-slices of `s.ext` are connected -/
-theorem Super.ext_slice_connected (s : Super f d a) [OnePreimage s] (c : ℂ) :
+public theorem Super.ext_slice_connected (s : Super f d a) [OnePreimage s] (c : ℂ) :
     IsConnected {x | (c, x) ∈ s.ext} := by
   rw [s.ext_slice c]
   exact ⟨⟨(0 : ℂ), mem_ball_self (s.p_pos c)⟩, (convex_ball (0 : ℂ) (s.p c)).isPreconnected⟩
 
 /-- `s.ext` is connected (since `c`-slices and `univ ×ˢ {0}` are connected) -/
-theorem Super.ext_connected (s : Super f d a) [OnePreimage s] : IsConnected s.ext := by
+public theorem Super.ext_connected (s : Super f d a) [OnePreimage s] : IsConnected s.ext := by
   refine ⟨⟨(0, 0), s.mem_ext 0⟩, isPreconnected_of_forall (0, 0) ?_⟩; intro ⟨c, x⟩ m
   use(fun x ↦ (c, x)) '' {x | (c, x) ∈ s.ext} ∪ univ ×ˢ {0}
   simp only [mem_image, mem_union, union_subset_iff, mem_setOf, mem_prod_eq, mem_univ, true_and,
@@ -101,7 +111,7 @@ lemma Super.ray_eqn_self (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.
   (s.ray_spec (norm_nonneg _) post).eqn.self_of_nhdsSet _ mem_domain_self
 
 /-- `s.ray` is analytic on `s.ext` (up to the critical potential for each `c`) -/
-theorem Super.ray_mAnalytic (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_mAnalytic (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     ContMDiffAt II I ω (uncurry s.ray) (c, x) :=
   (s.ray_eqn_self post).holo
 
@@ -110,17 +120,17 @@ theorem Super.ray_mAnalytic_slice (s : Super f d a) [OnePreimage s] (c : ℂ) :
     ContMDiffOnNhd I I (s.ray c) {x | (c, x) ∈ s.ext} := fun _ m ↦ (s.ray_mAnalytic m).along_snd
 
 /-- `s.ray` is analytic on `s.ext` (up to the critical potential for each `c`) -/
-theorem Super.ray_mAnalyticOn (s : Super f d a) [OnePreimage s] :
+public theorem Super.ray_mAnalyticOn (s : Super f d a) [OnePreimage s] :
     ContMDiffOnNhd II I (uncurry s.ray) s.ext := by intro ⟨c, x⟩ m; exact s.ray_mAnalytic m
 
 /-- Rays start at `a`: `s.ray c 0 = a` -/
-@[simp] theorem Super.ray_zero (s : Super f d a) [OnePreimage s] (c : ℂ) : s.ray c 0 = a :=
+@[simp] public theorem Super.ray_zero (s : Super f d a) [OnePreimage s] (c : ℂ) : s.ray c 0 = a :=
   (s.ray_spec (le_refl _) (s.p_pos c)).zero
 
 /-- `s.ray` maps `s.ext` into `s.basin` -/
-theorem Super.ray_basin (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_basin (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     (c, s.ray c x) ∈ s.basin :=
-  ⟨_, (s.ray_eqn_self post).near⟩
+  s.basin_iff_near.mpr ⟨_, (s.ray_eqn_self post).near⟩
 
 /-- `s.ray` maps into `s.near` with if we iterate `s.np c ‖x‖` times -/
 theorem Super.ray_near (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
@@ -128,7 +138,7 @@ theorem Super.ray_near (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ex
   (s.ray_eqn_self post).near
 
 /-- `s.ray` inverts `s.bottcherNear` near 0 -/
-theorem Super.ray_eqn_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
+public theorem Super.ray_eqn_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
     ∀ᶠ y : ℂ × ℂ in 𝓝 (c, 0), s.bottcherNear y.1 (s.ray y.1 y.2) = y.2 :=
   (s.ray_spec (le_refl _) (s.p_pos c)).start
 
@@ -140,12 +150,12 @@ theorem Super.ray_eqn_iter' (s : Super f d a) [OnePreimage s] (post : (c, x) ∈
     (.of_forall fun _ e ↦ e.eqn)
 
 /-- `s.ray` sends absolute value to potential -/
-theorem Super.ray_potential (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_potential (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     s.potential c (s.ray c x) = ‖x‖ :=
   (s.ray_eqn_self post).potential
 
 /-- `s.ray` maps `s.ext` into `s.post` -/
-theorem Super.ray_post (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_post (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     (c, s.ray c x) ∈ s.post := by
   simp only [Super.post, Postcritical, mem_setOf, s.ray_potential post]; exact post
 
@@ -165,7 +175,7 @@ theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
   rw [mfderiv_comp 0 hb hr, h, ContinuousLinearMap.comp_zero]
 
 -- `s.ray` is noncritical everywhere in `s.ext`
-theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     mfderiv I I (s.ray c) x ≠ 0 := by
   by_cases x0 : x = 0; rw [x0]; exact s.ray_noncritical_zero c
   set n := s.np c ‖x‖
@@ -189,7 +199,7 @@ theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) �
   exact h.2
 
 /-- `s.ray` is nontrivial, since it is noncritical at 0 and `s.ext` is connected -/
-theorem Super.ray_nontrivial (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
+public theorem Super.ray_nontrivial (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     NontrivialMAnalyticAt (s.ray c) x :=
   (nontrivialMAnalyticAt_of_mfderiv_ne_zero (s.ray_mAnalytic (s.mem_ext c)).along_snd
         (s.ray_noncritical_zero c)).on_preconnected
@@ -204,7 +214,7 @@ theorem Super.ray_nontrivial (s : Super f d a) [OnePreimage s] (post : (c, x) �
        to `s.bottcherNear` to find a slightly smaller `t < 1` where
        `s.ray c (t*x0) = s.ray c (t*x1)`
     3. (1) + (2) is a contradiction, since we can walk all the down to `t ≈ 0`. -/
-theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
+public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     (c, x0) ∈ s.ext → (c, x1) ∈ s.ext → s.ray c x0 = s.ray c x1 → x0 = x1 := by
   -- Preliminaries
   intro p0 p1 e
@@ -288,8 +298,8 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     exact tendsto_nhds_unique_of_frequently_eq (rc p0) (rc p1) e
 
 /-- Special case of injectivity: `s.ray c x = a` iff `x = 0` -/
-@[simp] lemma Super.ray_eq_a_iff (s : Super f d a) [OnePreimage s] {x : ℂ} (m : (c, x) ∈ s.ext) :
-    s.ray c x = a ↔ x = 0 := by
+@[simp] public lemma Super.ray_eq_a_iff (s : Super f d a) [OnePreimage s] {x : ℂ}
+    (m : (c, x) ∈ s.ext) : s.ray c x = a ↔ x = 0 := by
   constructor
   · intro e
     nth_rw 2 [← s.ray_zero (c := c)] at e
@@ -304,7 +314,7 @@ theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     1. The image of `s.ray c` is open (by the Open Mapping Theorem)
     2. The image of `s.ray c` restricted to `s.potential c z ≤ p` is closed.
     3. By picking `p` greater than any particular postcritical potential, we cover `s.post`. -/
-theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
+public theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     ∀ {z}, (c, z) ∈ s.post → ∃ x, (c, x) ∈ s.ext ∧ s.ray c x = z := by
   intro z0 m0
   by_contra i0; simp only [not_exists, not_and] at i0
@@ -353,7 +363,7 @@ theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   have h := zu.2 0 (s.mem_ext c); simp only [s.ray_zero] at h; exact h za.symm
 
 /-- `s.ray` is bijective from `s.ext` to `s.post`, accounting for `c` -/
-theorem Super.ray_bij (s : Super f d a) [OnePreimage s] :
+public theorem Super.ray_bij (s : Super f d a) [OnePreimage s] :
     BijOn (fun y : ℂ × ℂ ↦ (y.1, s.ray y.1 y.2)) s.ext s.post := by
   refine ⟨fun _ m ↦ s.ray_post m, ?_, ?_⟩
   · intro ⟨c0, x0⟩ m0 ⟨c1, x1⟩ m1 e; simp only [Prod.ext_iff] at e ⊢; rcases e with ⟨ec, ex⟩

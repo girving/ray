@@ -1,5 +1,13 @@
+module
+public import Mathlib.Analysis.Convex.Basic
+public import Mathlib.Analysis.Normed.Module.Convex
+import Mathlib.Analysis.LocallyConvex.WithSeminorms
+import Mathlib.Analysis.Normed.Group.Basic
+import Mathlib.Analysis.Normed.Module.Basic
+import Mathlib.Analysis.Normed.Module.Convex
 import Mathlib.Tactic.Bound
 import Ray.Misc.Connected
+import Ray.Misc.Topology
 
 /-!
 ## Continuation of a function from a convex set to its closure
@@ -35,7 +43,7 @@ section Continuation
 /-- Information we need to continue a function from a convex set `s` to `closure s`, while
     preserving local properties of the function.  Such properties are represented by an abstract
     `p : (E → α) → E → Prop`, where `p f x` means `f` is a valid germ at `x`. -/
-structure Base (p : (E → α) → E → Prop) (s : Set E) (f : E → α) : Prop where
+public structure Base (p : (E → α) → E → Prop) (s : Set E) (f : E → α) : Prop where
   /-- The base set is convex -/
   convex : Convex ℝ s
   /-- Its closure is compact, so that we can stitch together finitely many local continuations -/
@@ -159,7 +167,7 @@ theorem Convex.inter_ball (c : Convex ℝ s) (x0 x1 : closure s) {r0 r1 : ℝ} (
   simp only [← add_div, add_comm r1 r0, div_self (add_pos r0p r1p).ne']
 
 /-- Our full continuation `u` throughout `closure s` -/
-def Base.u (b : Base p s f) : E → α := fun z ↦
+public def Base.u (b : Base p s f) : E → α := fun z ↦
   if m : z ∈ b.t then b.g (b.y m) z else f z
 
 /-- The continuation `u` is equal to each `g` -/
@@ -175,7 +183,7 @@ theorem Base.ug (b : Base p s f) (x : closure s) :
     ((b.gf x).self_of_nhdsSet ⟨m.1.1, m.2⟩).symm⟩
 
 /-- `u` is equal to our original `f` -/
-theorem Base.uf (b : Base p s f) : b.u =ᶠ[𝓝ˢ s] f := by
+public theorem Base.uf (b : Base p s f) : b.u =ᶠ[𝓝ˢ s] f := by
   simp only [Filter.EventuallyEq, Filter.eventually_iff, mem_nhdsSet_iff_forall]
   intro z m; simp only [← Filter.eventually_iff]
   set x : closure s := ⟨z, subset_closure m⟩
@@ -185,7 +193,7 @@ theorem Base.uf (b : Base p s f) : b.u =ᶠ[𝓝ˢ s] f := by
   exact ug.trans ((b.gf x).filter_mono (nhds_le_nhdsSet ⟨m, zs⟩))
 
 /-- `u` is valid in `𝓝ˢ (closure s)` -/
-theorem Base.up (b : Base p s f) : ∀ᶠ z in 𝓝ˢ (closure s), p b.u z := by
+public theorem Base.up (b : Base p s f) : ∀ᶠ z in 𝓝ˢ (closure s), p b.u z := by
   apply Filter.eventually_of_mem (b.ot.mem_nhdsSet.mpr b.cover)
   intro x m; refine b.congr (b.gp (b.y m) (b.yt m)) ?_
   exact ((b.ug _).eventuallyEq_of_mem ((b.ot.inter isOpen_ball).mem_nhds ⟨m, b.yt m⟩)).symm
@@ -198,7 +206,7 @@ variable [ProperSpace E]
 variable {c : E} {s' : Set E} {r t : ℝ}
 
 /-- Information we need to continue a function throughout an open ball. -/
-structure Continuation [NormedSpace ℝ E] [ProperSpace E] (p : (E → α) → E → Prop)
+public structure Continuation [NormedSpace ℝ E] [ProperSpace E] (p : (E → α) → E → Prop)
     (c : E) (r : ℝ) (fs : E → α) : Prop where
   /-- The radius is positive -/
   pos : 0 < r
@@ -221,7 +229,7 @@ variable {i : Continuation p c r fs}
 attribute [bound_forward] Continuation.pos
 
 /-- We can grow out through a set `t` -/
-def Grow (_ : Continuation p c r fs) (s : Set E) : Prop :=
+@[expose] public def Grow (_ : Continuation p c r fs) (s : Set E) : Prop :=
   ∃ f, f c = fs c ∧ ∀ᶠ x in 𝓝ˢ s, p f x
 
 /-- Grow is monotonic -/
@@ -316,7 +324,7 @@ lemma Grow.sup {u : ℕ → ℝ} (mono : Monotone u) (tend : Tendsto u atTop (�
       simpa using Nat.find_spec (ex _ yt)
 
 /-- We can grow through the whole ball -/
-lemma grow : i.Grow (ball c r) := by
+public lemma grow : i.Grow (ball c r) := by
   set s : Set ℝ := {t | 0 < t ∧ t ≤ r ∧ i.Grow (ball c t)}
   have above : BddAbove s := bddAbove_def.mpr ⟨r, by aesop⟩
   obtain ⟨t0, t0p, t0r, g0⟩ := i.grow_small
