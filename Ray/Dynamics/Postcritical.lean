@@ -6,6 +6,7 @@ import Mathlib.Tactic.Cases
 import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Nice
 import Ray.Dynamics.Potential
+import Ray.Manifold.Nontrivial
 import Ray.Manifold.OpenMapping
 import Ray.Misc.Bounds
 import Ray.Misc.Topology

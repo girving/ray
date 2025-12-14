@@ -2,7 +2,7 @@ module
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.MeasureTheory.Integral.Average
-public import Ray.Hartogs.MaxLog
+public import Ray.Misc.Defs
 public import Ray.Misc.Measure
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Fourier.AddCircle
@@ -15,6 +15,7 @@ import Ray.Analytic.Analytic
 import Ray.Analytic.Holomorphic
 import Ray.Hartogs.Duals
 import Ray.Hartogs.FubiniBall
+import Ray.Hartogs.MaxLog
 import Ray.Misc.Complex
 import Ray.Misc.Max
 import Ray.Misc.Multilinear

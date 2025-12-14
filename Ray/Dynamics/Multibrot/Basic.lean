@@ -11,6 +11,7 @@ import Ray.Dynamics.BottcherNear
 import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Potential
 import Ray.Dynamics.Multibrot.D
+import Ray.Manifold.Analytic
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
 import Ray.Manifold.OpenMapping

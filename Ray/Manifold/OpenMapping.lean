@@ -1,6 +1,5 @@
 module
-public import Ray.Manifold.Analytic
-public import Ray.Manifold.Nontrivial
+public import Ray.Manifold.Defs
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
@@ -9,6 +8,7 @@ import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
+import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
 import Ray.Misc.Topology
 import Ray.Misc.TotallyDisconnected

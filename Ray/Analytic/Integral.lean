@@ -1,8 +1,9 @@
 module
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
-public import Ray.Analytic.Analytic
+public import Ray.Analytic.Defs
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.Complex.CauchyIntegral
+import Ray.Analytic.Analytic
 import Ray.Misc.Bound
 import Ray.Misc.Multilinear
 

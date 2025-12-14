@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""
+Visualize the public import graph for Ray files using graphviz.
+
+Usage:
+  ./scripts/deps           # Pop up a visualization window
+  ./scripts/deps out.pdf   # Write to a file instead
+"""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).parent.resolve()
+VENV_DIR = SCRIPT_DIR / ".venv"
+
+def ensure_venv():
+  """Ensure we're running in the venv with required packages."""
+  if sys.prefix == str(VENV_DIR): return
+  venv_python = VENV_DIR / "bin" / "python"
+  if not VENV_DIR.exists():
+    print(f"Creating venv and installing graphviz...")
+    subprocess.run([sys.executable, "-m", "venv", str(VENV_DIR)], check=True)
+    subprocess.run([str(venv_python), "-m", "pip", "install", "-q", "graphviz"], check=True)
+  os.execv(str(venv_python), [str(venv_python)] + sys.argv)
+
+ensure_venv()
+import re, tempfile, graphviz
+
+def parse_public_imports(path: Path) -> list[str]:
+  """Extract public Ray imports from a Lean file."""
+  try:
+    return re.findall(r"^public\s+import\s+(Ray\.[A-Za-z0-9_.]+)", path.read_text(), re.MULTILINE)
+  except:
+    return []
+
+def build_graph(root: Path) -> dict[str, list[str]]:
+  """Build graph of public imports between Ray modules."""
+  files = list((root / "Ray").glob("**/*.lean"))
+  if (root / "Ray.lean").exists(): files.append(root / "Ray.lean")
+  graph = {}
+  for f in files:
+    module = str(f.relative_to(root).with_suffix("")).replace(os.sep, ".")
+    imports = parse_public_imports(f)
+    # Skip trivial re-exports (single import to a Defs file)
+    if imports and not (len(imports) == 1 and imports[0].endswith(".Defs")):
+      graph[module] = imports
+  return graph
+
+def render(graph: dict[str, list[str]], output: str | None):
+  """Render the dependency graph."""
+  dot = graphviz.Digraph(comment="Ray Public Import Graph")
+  dot.attr(rankdir="TB")  # Top to bottom
+  dot.attr("node", shape="box", style="rounded,filled", fillcolor="lightblue")
+  dot.attr("edge", color="gray40")
+
+  nodes = set(graph.keys()) | {t for ts in graph.values() for t in ts}
+  for node in sorted(nodes):
+    dot.node(node, node.removeprefix("Ray."))
+  for src, tgts in graph.items():
+    for tgt in tgts: dot.edge(src, tgt)
+
+  if output:
+    p = Path(output)
+    dot.render(str(p.with_suffix("")), format=p.suffix.lstrip(".") or "pdf", cleanup=True)
+    print(f"Generated: {output}")
+  else:
+    dot.render(os.path.join(tempfile.mkdtemp(prefix="ray_deps_"), "deps"), format="pdf", view=True, cleanup=True)
+
+def main():
+  root = SCRIPT_DIR.parent
+  print(f"Scanning: {root}")
+  graph = build_graph(root)
+  if not graph: return print("No public imports found.")
+  print(f"Found {len(graph)} modules, {sum(len(t) for t in graph.values())} edges")
+  render(graph, sys.argv[1] if len(sys.argv) > 1 else None)
+
+if __name__ == "__main__":
+  main()

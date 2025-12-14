@@ -3,6 +3,7 @@ public import Ray.Dynamics.Multibrot.Defs
 import Ray.Dynamics.Multiple
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Bottcher
+import Ray.Manifold.Analytic
 import Ray.Manifold.GlobalInverse
 import Ray.Manifold.LocalInj
 import Ray.Manifold.OpenMapping

@@ -1,11 +1,11 @@
 module
 public import Mathlib.Data.Complex.Basic
-public import Mathlib.Order.Filter.Defs
 public import Mathlib.Order.PartialSups
-public import Ray.Hartogs.MaxLog
+public import Ray.Misc.Defs
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Normed.Module.HahnBanach
 import Mathlib.Topology.Basic
+import Ray.Hartogs.MaxLog
 import Ray.Misc.Topology
 
 /-!

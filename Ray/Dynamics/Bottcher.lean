@@ -1,5 +1,4 @@
 module
-public import Ray.Dynamics.Defs
 public import Ray.Dynamics.Ray
 import Mathlib.Geometry.Manifold.Algebra.Structures
 import Mathlib.Geometry.Manifold.ContMDiff.Constructions
@@ -8,7 +7,9 @@ import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Postcritical
 import Ray.Dynamics.Potential
 import Ray.Dynamics.Ray
+import Ray.Manifold.Analytic
 import Ray.Manifold.GlobalInverse
+import Ray.Manifold.Nontrivial
 import Ray.Manifold.OpenMapping
 import Ray.Misc.Topology
 

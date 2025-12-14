@@ -8,7 +8,9 @@ import Mathlib.Tactic.Cases
 import Ray.Dynamics.Grow
 import Ray.Dynamics.Postcritical
 import Ray.Dynamics.Potential
+import Ray.Manifold.Analytic
 import Ray.Manifold.LocalInj
+import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
 import Ray.Manifold.OpenMapping
 import Ray.Misc.Connected

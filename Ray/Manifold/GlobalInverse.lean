@@ -1,8 +1,7 @@
 module
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Geometry.Manifold.ContMDiff.Defs
-public import Ray.Manifold.OneDimension
-public import Ray.Manifold.Analytic
+public import Ray.Manifold.Defs
 import Ray.Dynamics.Multiple
 import all Ray.Manifold.Inverse
 import Ray.Manifold.Nontrivial

@@ -1,10 +1,10 @@
 module
-public import Mathlib.Analysis.Complex.Basic
-public import Ray.Analytic.Analytic
+public import Ray.Analytic.Defs
 import Mathlib.Analysis.Calculus.Deriv.CompMul
 import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.Calculus.Deriv.Shift
+import Ray.Analytic.Analytic
 import Ray.Dynamics.Multiple
 import Ray.Koebe.Bieberbach
 

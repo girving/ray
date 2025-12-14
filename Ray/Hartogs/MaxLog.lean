@@ -1,13 +1,10 @@
 module
-public import Mathlib.Analysis.Complex.Exponential
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-public import Mathlib.Data.Real.Basic
-public import Mathlib.Topology.EMetricSpace.Lipschitz
-public import Mathlib.Topology.MetricSpace.Basic
+public import Ray.Misc.Defs
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.Bound
+import all Ray.Misc.Defs
 
 /-!
 ## `x ↦ max b (log x)`
@@ -24,10 +21,6 @@ noncomputable section
 
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 variable {F : Type} [NormedAddCommGroup F]
-
-/-- `max b (log x)` -/
-public def maxLog (b x : ℝ) : ℝ :=
-  (max b.exp x).log
 
 theorem max_exp_pos {b x : ℝ} : 0 < max b.exp x := by
   bound
