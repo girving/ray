@@ -5,6 +5,8 @@ import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.Area
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Bottcher
+import Ray.Dynamics.Multibrot.BottcherDeriv
+import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.Connected
 import Ray.Dynamics.Multibrot.InvRay
 import Ray.Dynamics.Multibrot.Isomorphism

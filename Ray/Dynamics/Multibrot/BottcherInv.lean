@@ -128,3 +128,11 @@ public lemma bottcher_inv_inj : InjOn (bottcher_inv d) (ball 0 2⁻¹) := by
   simp only [Metric.mem_ball, dist_zero_right] at m0 m1
   simpa [bottcher_inj.eq_iff (inv_mem_multibrotExt m0) (inv_mem_multibrotExt m1),
     bottcher_inv_def] using e
+
+/-- `bottcher_inv d c = c + O(c^2)` -/
+public theorem bottcher_inv_approx (d : ℕ) [Fact (2 ≤ d)] (z4 : ‖z‖ ≤ 4⁻¹) :
+    ‖bottcher_inv d z - z‖ ≤ 0.943 * ‖z‖ ^ 2 := by
+  by_cases z0 : z = 0
+  · simp [z0]
+  · have zi : 4 ≤ ‖z⁻¹‖ := by rwa [norm_inv, le_inv_comm₀ (by linarith) (norm_pos_iff.mpr z0)]
+    simpa [bottcher_inv_def, bottcher, inv_coe z0] using bottcher_approx d zi
