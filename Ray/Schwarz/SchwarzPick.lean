@@ -1,11 +1,10 @@
 module
-public import Mathlib.Analysis.Calculus.ContDiff.Defs
-public import Mathlib.Analysis.Complex.Basic
-public import Ray.Schwarz.Mobius
+public import Ray.Schwarz.Defs
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.Complex.Schwarz
 import Ray.Analytic.Analytic
 import Ray.Misc.Bound
+import Ray.Schwarz.Mobius
 
 /-!
 ## Schwarz-Pick theorem

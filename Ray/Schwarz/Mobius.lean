@@ -1,7 +1,9 @@
 module
-public import Mathlib.Analysis.Complex.Basic
-public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Ray.Schwarz.Defs
 import Mathlib.Analysis.Calculus.ContDiff.Operations
+import Mathlib.Analysis.Calculus.Deriv.Add
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Calculus.Deriv.Mul
 import Ray.Misc.Bound
 
 /-!
@@ -11,19 +13,12 @@ We consider only Möbius transform of the form `z ↦ (w - z) / (1 - conj w * z)
 need to prove the Schwarz-Pick theorem.
 -/
 
-open Metric (ball)
+open Metric (ball isOpen_ball)
 open Set
 open scoped ComplexConjugate ContDiff Topology
 noncomputable section
 
 variable {w z a : ℂ} {r : ℝ}
-
-/-- The particular Möbius transform we need for Schwarz-Pick -/
-public def mobius (w z : ℂ) : ℂ :=
-  (w - z) / (1 - conj w * z)
-
-/-- As a definition, for simp convenience -/
-public lemma mobius_def (w z : ℂ) : mobius w z = (w - z) / (1 - conj w * z) := by rfl
 
 /-- Our Möbius denominator is nonsingular -/
 public lemma norm_mobius_denom_pos (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) : 0 < ‖1 - conj w * z‖ := by
@@ -81,6 +76,30 @@ public lemma mobius_mobius (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) : mobius w (mob
   simp only [sub_mul, div_mul_cancel₀ _ n1, mul_assoc]
   ring
 
+/-- Möbius transforms are homeomorphisms -/
+def mobiusHom (w1 : ‖w‖ < 1) : OpenPartialHomeomorph ℂ ℂ where
+  toFun := mobius w
+  invFun := mobius w
+  source := ball 0 1
+  target := ball 0 1
+  map_source' := mapsTo_mobius w1
+  map_target' := mapsTo_mobius w1
+  left_inv' z z1 := mobius_mobius w1 (by simpa using z1)
+  right_inv' z z1 := mobius_mobius w1 (by simpa using z1)
+  open_source := isOpen_ball
+  open_target := isOpen_ball
+  continuousOn_toFun := (contDiffOn_mobius w1 (n := ω)).continuousOn
+  continuousOn_invFun := (contDiffOn_mobius w1 (n := ω)).continuousOn
+
+-- Facts pulled out of `mobiusHom`
+public lemma injOn_mobius (w1 : ‖w‖ < 1) : InjOn (mobius w) (ball 0 1) := (mobiusHom w1).injOn
+public lemma surjOn_mobius (w1 : ‖w‖ < 1) : SurjOn (mobius w) (ball 0 1) (ball 0 1) :=
+  (mobiusHom w1).surjOn
+public lemma bijOn_mobius (w1 : ‖w‖ < 1) : BijOn (mobius w) (ball 0 1) (ball 0 1) :=
+  (mobiusHom w1).bijOn
+@[simp] public lemma image_mobius (w1 : ‖w‖ < 1) : mobius w '' ball 0 1 = ball 0 1 :=
+  (mobiusHom w1).image_source_eq_target
+
 @[simp] public lemma mobius_zero : mobius w 0 = w := by simp [mobius]
 @[simp] public lemma mobius_self : mobius w w = 0 := by simp [mobius]
 
@@ -91,3 +110,26 @@ public lemma mobius_denom_inv_mul (r0 : r ≠ 0) (w z : ℂ) :
   simp only [map_mul, map_inv₀, Complex.conj_ofReal, sub_mul, one_mul]
   have r0' : (r : ℂ) ≠ 0 := by simp [r0]
   field_simp
+
+/-- The derivative of a Möbius transform anywhere -/
+public lemma hasDerivAt_mobius (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) :
+    HasDerivAt (mobius w) ((‖w‖ ^ 2 - 1) / (1 - conj w * z) ^ 2) z := by
+  suffices h : HasDerivAt (mobius w) (((-1) * (1 - conj w * z) - (w - z) * -(conj w * 1)) /
+      (1 - conj w * z) ^ 2) z by
+    simpa [sub_mul, Complex.mul_conj', mul_comm z] using h
+  exact ((hasDerivAt_id' _).const_sub _).div (((hasDerivAt_id' _).const_mul _).const_sub _)
+    (mobius_denom_ne_zero w1 z1)
+
+/-- The derivative of a Möbius transform anywhere -/
+public lemma deriv_mobius (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) :
+    deriv (mobius w) z = (‖w‖ ^ 2 - 1) / (1 - conj w * z) ^ 2 :=
+  (hasDerivAt_mobius w1 z1).deriv
+
+-- Derivatives at `0` and `w`
+public lemma deriv_mobius_zero (w1 : ‖w‖ < 1) : deriv (mobius w) 0 = ‖w‖ ^ 2 - 1 := by
+  simpa using deriv_mobius w1 (z := 0) (by simp)
+public lemma deriv_mobius_self (w1 : ‖w‖ < 1) : deriv (mobius w) w = (‖w‖ ^ 2 - 1: ℂ)⁻¹ := by
+  have d := deriv_mobius w1 w1
+  rw [Complex.conj_mul', sub_sq_comm 1] at d
+  field_simp at d ⊢
+  exact d

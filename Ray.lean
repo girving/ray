@@ -23,6 +23,7 @@ import Ray.Hartogs.Osgood
 import Ray.Koebe.Bieberbach
 import Ray.Koebe.Gronwall
 import Ray.Koebe.Koebe
+import Ray.Koebe.KoebePick
 import Ray.Koebe.Wind
 import Ray.Koebe.WindArea
 import Ray.Misc.ChartedSpace
