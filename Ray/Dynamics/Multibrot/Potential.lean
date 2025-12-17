@@ -235,7 +235,7 @@ public lemma potential_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ}
   · norm_num; exact (exp_div_lt).le
 
 /-- `potential_error` bound for `6 ≤ abs z` -/
-lemma potential_error_le_of_z6 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ}
+public lemma potential_error_le_of_z6 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ}
     (z6 : 6 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     potential_error d c z ≤ 0.8095 / ‖z‖ ^ (1.927 : ℝ) := by
   apply potential_error_le' d _ (j := 0.0753) (b := 6) (by norm_num) z6 cz (by norm_num)
