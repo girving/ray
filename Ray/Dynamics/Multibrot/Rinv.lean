@@ -40,6 +40,16 @@ public lemma le_rinv : x ≤ rinv r c ↔ x ≤ r ∧ ‖c‖ * x ≤ 1 := by
   · simp only [c0, norm_zero, zero_mul, zero_le_one, and_true]
   · simp only [← one_div, le_inf_iff, le_div_iff₀ (norm_pos_iff.mpr c0), mul_comm]
 
+@[simp] public lemma inv_rinv (r0 : 0 < r) : (rinv r⁻¹ c)⁻¹ = max r ‖c‖ := by
+  by_cases c0 : c = 0
+  · simp [c0, rinv, r0.le]
+  · simp only [rinv, c0, ↓reduceIte, min_def, inv_le_comm₀ r0 (inv_pos.mpr (norm_pos_iff.mpr c0)),
+      inv_inv, max_def]
+    grind
+
+@[simp] public lemma div_rinv (r0 : 0 < r) : x / rinv r⁻¹ c = x * max r ‖c‖ := by
+  simp only [div_eq_mul_inv, inv_rinv r0]
+
 @[simp] public lemma mem_ball_rinv : z ∈ ball 0 (rinv r c) ↔ ‖z‖ < r ∧ ‖c‖ * ‖z‖ < 1 := by
   simp only [ball, dist_zero_right, lt_rinv, mem_setOf_eq]
 
