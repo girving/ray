@@ -4,7 +4,6 @@ import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Ray.Dynamics.BottcherNearM
-import Ray.Dynamics.Mandelbrot
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Potential
 import Ray.Dynamics.Potential
@@ -14,13 +13,13 @@ import Ray.Misc.Cobounded
 ## A lower bounds `potential c z` for small `z`
 
 `potential_approx` in `Dynamics.Multibrot.Potential` gives an effective estimate on
-`s.potential c z` for `max 4 (abs c) ≤ abs z`.  However, for rendering we also need an effective
+`s.potential c z` for `max 4 ‖c‖ ≤ ‖z‖`.  However, for rendering we also need an effective
 lower bound for small `z`, in order to show that iterations which stay bounded have potential
-near `1`.  We do this by noting that if `abs c, abs z ≤ 4`, then iteration must eventually pass
-through the interval `abs w ∈ [4,20]`.  On this interval, we have the estimate
+near `1`.  We do this by noting that if `‖c‖, ‖z‖ ≤ 4`, then iteration must eventually pass
+through the interval `‖w‖ ∈ [4,4^d+4]`.  On this interval, we have the estimate
 
-  `potential c w ≥ 1/abs w - 0.8095 / abs w ^ 1.864 ≥ 0.0469`
-  `potential c z ≥ potential c w ^ (1/2) ≥ 0.216`
+  `potential c w ≥ 1/‖w‖ - 0.8095 / ‖w‖ ^ 1.864 ≥ 0.0469`
+  `potential c z ≥ potential c w ^ d⁻¹ ≥ 0.216`
 
 Note that if `z` is the result of at least 10 iterations, we then know that the potential of the
 intial `z` is at least `1 - 1/512`.
@@ -31,20 +30,17 @@ open Real (log)
 open Set
 
 variable {c z : ℂ}
-private local instance : Fact (2 ≤ 2) := ⟨by norm_num⟩
+variable {d : ℕ} [Fact (2 ≤ d)]
 
-/-- Small iterates eventually pass through `abs z ∈ [4,20]` -/
-lemma pass_through (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) (m : (c,↑z) ∈ (superF 2).basin) :
-    ∃ n, ‖(f' 2 c)^[n+1] z‖ ∈ Ioc 4 20 := by
-  set s := superF 2
-  simp only [s.basin_iff_attracts, Attracts, RiemannSphere.tendsto_inf_iff_tendsto_cobounded, f_f'_iter,
-    tendsto_cobounded_iff_norm_tendsto_atTop] at m
+/-- Small iterates eventually pass through `‖z‖ ∈ (4, 4 ^ d + 4]` -/
+lemma pass_through (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) (m : (c,↑z) ∈ (superF d).basin) :
+    ∃ n, ‖(f' d c)^[n+1] z‖ ∈ Ioc 4 (4 ^ d + 4) := by
+  set s := superF d
+  simp only [s.basin_iff_attracts, Attracts, RiemannSphere.tendsto_inf_iff_tendsto_cobounded,
+    f_f'_iter, tendsto_cobounded_iff_norm_tendsto_atTop] at m
   rcases Filter.tendsto_atTop_atTop.mp m 5 with ⟨n,h⟩
-  generalize hp : (fun n ↦ 4 < ‖(f' 2 c)^[n] z‖) = p
+  generalize hp : (fun n ↦ 4 < ‖(f' d c)^[n] z‖) = p
   replace h : p n := by rw [←hp]; linarith [h n (by linarith)]
-  --have fp : ∀ n, 4 < abs ((f' 2 c)^[n] z) → p (n+1) := by
-  --  intro n n4; simp only [←hp, Function.iterate_succ_apply']
-  --  exact lt_of_lt_of_le ?_ (iter_small 2 c _)
   generalize hk : Nat.find (p := p) ⟨_,h⟩ = k
   have k4 : p k := by rw [←hk]; exact Nat.find_spec (p := p) ⟨_,h⟩
   have k0 : k ≠ 0 := by
@@ -55,12 +51,11 @@ lemma pass_through (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) (m : (c,↑z) ∈ (
   have lt : ¬p (k-1) := by apply Nat.find_min; rw [hk]; omega
   simp only [Nat.sub_add_cancel k1, ←hp, not_lt] at k4 k1 lt ⊢
   use k4
-  have fs := iter_small 2 c ((f' 2 c)^[k-1] z)
-  simp only [←Function.iterate_succ_apply', Nat.succ_eq_add_one, Nat.sub_add_cancel k1] at fs
-  exact le_trans fs (le_trans (add_le_add (pow_le_pow_left₀ (by positivity) lt 2) c4)
-    (by norm_num))
+  have fs := iter_small d c ((f' d c)^[k-1] z)
+  simp only [← Function.iterate_succ_apply', Nat.succ_eq_add_one, Nat.sub_add_cancel k1] at fs
+  exact le_trans fs (by bound)
 
-/-- Our lower bound is decreasing in `abs z` -/
+/-- Our lower bound is decreasing in `‖z‖` -/
 lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p := by norm_num) :
     AntitoneOn (fun x : ℝ ↦ 1 / x - k / x^p) (Ici 4) := by
   have hd : ∀ x, 4 ≤ x → HasDerivAt (fun x : ℝ ↦ 1 / x - k / x^p)
@@ -90,37 +85,64 @@ lemma lower_anti (k p : ℝ) (kp : k * p ≤ 2 := by norm_num) (hp : 3/2 ≤ p :
     rw [one_div, Real.le_rpow_inv_iff_of_pos (by norm_num) x0.le (by norm_num)]
     norm_num; exact x4.le
 
-/-- If `abs c, abs z ≤ 4`, `0.216 ≤ s.potential c z` (for `d = 2`) -/
-public lemma le_potential (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) : 0.216 ≤ (superF 2).potential c z := by
-  set s := superF 2
-  by_cases m : (c,↑z) ∈ s.basin
-  · rcases pass_through c4 z4 m with ⟨n,w4,w20⟩
-    generalize hw : (f' 2 c)^[n+1] z = w at w4 w20
-    have cw : ‖c‖ ≤ ‖w‖ := by linarith
-    have pw : 0.0469 ≤ s.potential c w := by
-      have pw := (abs_le.mp (le_trans (potential_approx 2 w4.le cw)
-        (potential_error_le_of_z4 2 w4.le cw))).1
-      rw [le_sub_iff_add_le, neg_add_eq_sub] at pw
-      have anti := lower_anti 0.8095 1.864 (by norm_num) (by norm_num)
-        (a := ‖w‖) (b := 20) w4.le (by norm_num) w20
-      refine le_trans ?_ (le_trans anti pw)
-      norm_num
-      have le : (266 : ℝ) ≤ 20 ^ (233 / 125 : ℝ) := by
-        rw [div_eq_mul_inv, Real.rpow_mul (by positivity), Real.le_rpow_inv_iff_of_pos (by norm_num)
-          (by positivity) (by positivity)]
-        norm_num
-      exact le_trans (by norm_num) (sub_le_sub_left (div_le_div_of_nonneg_left (by norm_num)
-        (by norm_num) le) _)
-    have pwz : s.potential c w = s.potential c z ^ 2^(n+1) := by
-      simp only [←hw, ←f_f'_iter, s.potential_eqn_iter]
-    rw [←Real.rpow_natCast] at pwz
-    rw [←Real.rpow_inv_eq s.potential_nonneg s.potential_nonneg
-      (NeZero.natCast_ne (2^(n+1)) ℝ)] at pwz
-    rw [←pwz]
-    refine le_trans ?_ (Real.rpow_le_rpow (by norm_num) pw (by positivity))
-    rw [Real.le_rpow_inv_iff_of_pos (by norm_num) (by norm_num) (by positivity), Real.rpow_natCast]
-    refine le_trans (pow_le_pow_of_le_one (by norm_num) (by norm_num)
-      (pow_le_pow_right₀ (by norm_num) (Nat.le_add_left 1 n))) ?_
+/-- A bound we need below -/
+lemma le_of_d3 {d : ℕ} (d3 : 3 ≤ d) :
+    (0.216 : ℝ) ^ d ≤ (4 ^ d + 4)⁻¹ - 0.8095 / (4 ^ d + 4) ^ (1.864 : ℝ) := by
+  have e : (0.216 * 4 : ℝ) = 0.864 := by norm_num
+  rw [le_sub_iff_add_le, ← one_div, le_div_iff₀ (by apply add_pos <;> bound), add_mul, mul_add,
+    ← mul_pow, e, mul_comm _ (4 : ℝ), div_mul, ← Real.rpow_sub_one (by positivity)]
+  have le : 38 ≤ (68 : ℝ) ^ (108 / 125 : ℝ) := by
+    rw [div_eq_mul_inv, Real.rpow_mul (by positivity), Real.le_rpow_inv_iff_of_pos (by norm_num)
+      (by positivity) (by positivity)]
     norm_num
+  trans 0.864 ^ 3 + 4 * 0.216 ^ 3 + 0.8095 / (4 ^ 3 + 4) ^ (1.864 - 1 : ℝ)
+  · bound
+  · norm_num
+    grw [← le]
+    norm_num
+
+/-- If `‖c‖, ‖z‖ ≤ 4`, `0.216 ≤ s.potential c z` -/
+@[bound] public lemma le_potential (c4 : ‖c‖ ≤ 4) (z4 : ‖z‖ ≤ 4) :
+    0.216 ≤ (superF d).potential c z := by
+  set s := superF d
+  by_cases m : (c,↑z) ∉ s.basin
   · rw [s.potential_eq_one m]
     norm_num
+  simp only [not_not] at m
+  obtain ⟨n,w4,w20⟩ := pass_through c4 z4 m
+  generalize hw : (f' d c)^[n+1] z = w at w4 w20
+  have cw : ‖c‖ ≤ ‖w‖ := by linarith
+  have pw : 1 / (4 ^ d + 4) - 0.8095 / (4 ^ d + 4) ^ (1.864 : ℝ) ≤ s.potential c w := by
+    have pw := (abs_le.mp (le_trans (potential_approx d w4.le cw)
+      (potential_error_le_of_z4 d w4.le cw))).1
+    rw [le_sub_iff_add_le, neg_add_eq_sub] at pw
+    have anti := lower_anti 0.8095 1.864 (by norm_num) (by norm_num)
+      (a := ‖w‖) (b := 4 ^ d + 4) w4.le (by norm_num) w20
+    simp only at anti
+    exact le_trans anti pw
+  have pwz : s.potential c w ^ (d⁻¹ : ℝ) ≤ s.potential c z := by
+    have pwz : s.potential c w = s.potential c z ^ d ^ (n+1) := by
+      simp only [←hw, ←f_f'_iter, s.potential_eqn_iter]
+    rw [← Real.rpow_natCast] at pwz
+    have dn0 : ((d ^ (n + 1) : ℕ) : ℝ) ≠ 0 := by simp [s.d0]
+    rw [← Real.rpow_inv_eq s.potential_nonneg s.potential_nonneg dn0] at pwz
+    rw [← pwz]
+    apply Real.rpow_le_rpow_of_exponent_ge (by bound) (by bound)
+    simp only [Nat.cast_pow]
+    bound
+  refine le_trans ?_ pwz
+  rw [Real.le_rpow_inv_iff_of_pos (by norm_num) (by bound) (by bound)]
+  refine le_trans ?_ pw
+  simp only [Real.rpow_natCast, one_div]
+  -- Handle `d = 2` explicitly since it's tight, and be more relaxed for `2 < d`
+  by_cases d2 : d = 2
+  · simp only [d2]
+    have le : (266 : ℝ) ≤ 20 ^ (233 / 125 : ℝ) := by
+      rw [div_eq_mul_inv, Real.rpow_mul (by positivity), Real.le_rpow_inv_iff_of_pos (by norm_num)
+        (by positivity) (by positivity)]
+      norm_num
+    norm_num
+    grw [← le]
+    norm_num
+  · have d3 : 3 ≤ d := by have : 2 ≤ d := s.d2; omega
+    exact le_of_d3 d3

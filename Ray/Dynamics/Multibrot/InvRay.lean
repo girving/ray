@@ -66,11 +66,11 @@ public lemma ray_hasDerivAt_one : HasDerivAt (inv_ray d) 1 0 := by
 -/
 
 /-- `sinv_ray` is analytic for large `c`, small `x` -/
-public lemma sinv_ray_analytic (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+public lemma sinv_ray_analytic (xc : ‖x‖ < rinv 4⁻¹ c / 4) :
     AnalyticAt ℂ (uncurry (sinv_ray d)) (c, x) := by
   set s := superF d
-  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c4 xc
-  have xe := small_mem_ext (d := d) c4 xc
+  obtain ⟨z,_,zm,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) xc
+  have xe := small_mem_ext (d := d) xc
   refine ContMDiffAt.analyticAt (I := II) (J := I) ?_
   have e : uncurry (sinv_ray d) = (fun z : 𝕊 ↦ z⁻¹.toComplex) ∘ uncurry (superF d).ray := rfl
   rw [e]

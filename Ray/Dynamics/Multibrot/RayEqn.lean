@@ -8,6 +8,7 @@ import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.InvRay
 import Ray.Dynamics.Multibrot.RayBound
+import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Ray
 
 /-!
@@ -146,21 +147,28 @@ public lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : 
       _ ≥ 2 * (‖z‖ - ‖c⁻¹ - z‖) := by bound
       _ ≥ 2 * (‖z‖ - 2⁻¹ * ‖z‖) := by bound
       _ = ‖z‖ := by ring
-  have small : ‖z ^ d ^ n‖ < ‖c‖⁻¹ / 4 := by
+  have small : ‖z ^ d ^ n‖ < rinv 4⁻¹ c / 4 := by
+    rw [lt_div_iff₀ (by norm_num), lt_rinv]
     have le_p : 2 ≤ d ^ n := by
       calc d ^ n
         _ ≥ 2 ^ n := by bound
         _ ≥ 2 := Nat.le_self_pow n0 2
-    calc ‖z ^ d ^ n‖
-      _ = ‖z‖ * ‖z‖ * ‖z‖ ^ (d ^ n - 2) := by
-          rw [← pow_two, ← pow_add, Nat.add_sub_cancel' le_p, norm_pow]
-      _ ≤ 2 * ‖c‖⁻¹ * 80⁻¹ * 1 := by bound
-      _ = 40⁻¹ * ‖c‖⁻¹ := by ring_nf
-      _ < 4⁻¹ * ‖c‖⁻¹ := by bound
-      _ = ‖c‖⁻¹ / 4 := by ring_nf
+    constructor
+    · calc ‖z ^ d ^ n‖ * 4
+        _ = ‖z‖ ^ d ^ n * 4 := by simp only [norm_pow]
+        _ ≤ ‖z‖ ^ 2 * 4 := by bound
+        _ ≤ 80⁻¹ ^ 2 * 4 := by bound
+        _ < 4⁻¹ := by norm_num
+    · calc ‖c‖ * (‖z ^ d ^ n‖ * 4)
+        _ = ‖c‖ * (‖z‖ * ‖z‖ * ‖z‖ ^ (d ^ n - 2) * 4) := by
+            rw [← pow_two, ← pow_add, Nat.add_sub_cancel' le_p, norm_pow]
+        _ ≤ ‖c‖ * (2 * ‖c‖⁻¹ * 80⁻¹ * 1 * 4) := by bound
+        _ = 10⁻¹ * (‖c‖ * ‖c‖⁻¹) := by ring_nf
+        _ = 10⁻¹ := by rw [mul_inv_cancel₀ (by positivity), mul_one]
+        _ < 1 := by norm_num
   generalize hw : z ^ d ^ n = w at small
   have w0 : w ≠ 0 := by simp [← hw, n0, z0]
   calc ‖w * (s.ray c w).toComplex - 1‖
     _ = ‖(s.ray c w).toComplex - w⁻¹‖ * ‖w‖ := by
         rw [← norm_mul, sub_mul, inv_mul_cancel₀ w0, mul_comm w]
-    _ ≤ 4 * ‖w‖ := by bound [sray_le (d := d) (c := c) (x := w) (by linarith) (by linarith)]
+    _ ≤ 4 * ‖w‖ := by bound [sray_le (d := d) small]

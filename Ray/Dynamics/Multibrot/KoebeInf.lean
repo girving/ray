@@ -5,6 +5,7 @@ import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.Postcritical
+import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Postcritical
 import Ray.Koebe.Koebe
 
@@ -32,51 +33,51 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 -/
 
 /-- `sbottcher_inv` covers a large disk around the origin, by the Koebe quarter theorem -/
-public lemma sbottcher_inv_koebe (c4 : 4 ≤ ‖c‖) (rc : r ≤ ‖c‖⁻¹) :
+public lemma sbottcher_inv_koebe (rc : r ≤ rinv 4⁻¹ c) :
     ball 0 (r / 4) ⊆ sbottcher_inv d c '' (ball 0 r) := by
-  have c4 : 4 ≤ ‖c‖ := by linarith
   have k := koebe_quarter' (f := sbottcher_inv d c) (c := 0) (r := r) ?_ ?_
-  · simpa [(sbottcher_inv_monic c4).deriv] using k
+  · simpa [sbottcher_inv_monic.deriv] using k
   · intro z zr
-    refine (analyticAt_sbottcher_inv c4 ?_).along_snd
+    refine (analyticAt_sbottcher_inv ?_).along_snd
     simp only [Metric.mem_ball, dist_zero_right] at zr
     linarith
-  · exact (sbottcher_inv_inj c4).mono (Metric.ball_subset_ball rc)
+  · exact sbottcher_inv_inj.mono (Metric.ball_subset_ball rc)
+
+@[irreducible] def four_le (c : ℂ) : Prop := 4 ≤ ‖c‖
 
 /-- Large `c`, small `x` has small `sbottcher_inv` preimage -/
-public lemma sbottcher_inv_small_mem_preimage (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
-    ∃ z : ℂ, ‖z‖ < ‖c‖⁻¹ ∧ ‖z‖ ≤ 4 * ‖x‖ ∧ (c, (z : 𝕊)⁻¹) ∈ (superF d).post ∧
+public lemma sbottcher_inv_small_mem_preimage (xc : ‖x‖ < rinv 4⁻¹ c / 4) :
+    ∃ z : ℂ, ‖z‖ ≤ 4 * ‖x‖ ∧ ‖c‖ * ‖z‖ < 1 ∧ (c, (z : 𝕊)⁻¹) ∈ (superF d).post ∧
       sbottcher_inv d c z = x := by
   set s := superF d
   by_cases x0 : x = 0
   · refine ⟨0, ?_, ?_, ?_, ?_⟩
-    · simp only [norm_zero]
-      bound
     · bound
-    · simp only [coe_zero, inv_zero', s.post_a]
+    · simp
+    · bound
     · simp only [sbottcher_inv_zero, x0]
   · obtain ⟨t, t0, t1⟩ := exists_between xc
-    have tc : 4 * t ≤ ‖c‖⁻¹ := by linarith
-    obtain ⟨z,zm,zx⟩ := sbottcher_inv_koebe (d := d) c4 tc (a := x) (by simp; linarith)
+    have tc' : 4 * t ≤ rinv 4⁻¹ c := by rw [mul_comm, ← le_div_iff₀ (by norm_num)]; exact t1.le
+    obtain ⟨z,zm,zx⟩ := sbottcher_inv_koebe (d := d) (r := 4 * t) tc' (a := x) (by simp; linarith)
     simp only [Metric.mem_ball, dist_zero_right] at zm
-    have zc : ‖z‖ < ‖c‖⁻¹ := by linarith
-    refine ⟨z, (by linarith), ?_, ?_, zx⟩
+    have zr : ‖z‖ < rinv 4⁻¹ c := lt_of_lt_of_le zm tc'
+    refine ⟨z, ?_, (lt_rinv.mp zr).2, ?_, zx⟩
     · refine le_of_forall_pos_le_add fun e e0 ↦ ?_
-      have small : x ∈ ball 0 (min (4 * ‖x‖ + e) ‖c‖⁻¹ / 4) := by
+      have small : x ∈ ball 0 (min (4 * ‖x‖ + e) (rinv 4⁻¹ c) / 4) := by
         simp only [Metric.mem_ball, dist_zero_right, lt_min_iff,
           ← min_div_div_right (by norm_num : (0 : ℝ) ≤ 4)]
         constructor <;> linarith
-      obtain ⟨z',zm',zx'⟩ := sbottcher_inv_koebe (d := d) c4 (r := min (4 * ‖x‖ + e) ‖c‖⁻¹)
+      obtain ⟨z',zm',zx'⟩ := sbottcher_inv_koebe (d := d) (r := min (4 * ‖x‖ + e) (rinv 4⁻¹ c))
         (by exact min_le_right _ _) (a := x) small
       simp only [Metric.mem_ball, dist_zero_right, lt_inf_iff] at zm'
       have e := zx.trans zx'.symm
-      rw [(sbottcher_inv_inj (by linarith)).eq_iff (by simpa) (by simp [zm'])] at e
+      rw [(sbottcher_inv_inj).eq_iff (by simpa) (by simp [zm'])] at e
       exact e ▸ zm'.1.le
-    · exact postcritical_small (by linarith) (by linarith)
+    · exact postcritical_small zr.le
 
 /-- Large `c`, small `x` is in `s.ext` -/
-public lemma small_mem_ext (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) : (c, x) ∈ (superF d).ext := by
-  obtain ⟨z,_,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) c4 xc
+public lemma small_mem_ext (xc : ‖x‖ < rinv 4⁻¹ c / 4) : (c, x) ∈ (superF d).ext := by
+  obtain ⟨z,_,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) xc
   simp only [sbottcher_inv_def] at zx
   have t := ((superF d).homeomorphSlice c).map_target (x := z⁻¹)
   simp only [Super.target_homeomorphSlice, mem_setOf_eq, zp, Super.source_homeomorphSlice,

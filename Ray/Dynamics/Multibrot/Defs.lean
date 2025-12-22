@@ -216,3 +216,13 @@ public lemma sbottcher_inv_def :
 /-- Error term in the `potential` approximate -/
 @[expose] public noncomputable def potential_error (d : ℕ) (c z : ℂ) : ℝ :=
   dene (Real.log (Real.log ‖z‖) - iter_error d c z) * iter_error d c z
+
+/-!
+## Balls whose size depends on an inverse
+
+These work correctly if the inverse would be infinite.
+-/
+
+/-- `min r ‖c‖⁻¹`, but do the right thing if `c = 0` -/
+@[expose] public noncomputable def rinv (r : ℝ) (c : ℂ) : ℝ :=
+  if c = 0 then r else min r ‖c‖⁻¹

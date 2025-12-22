@@ -7,9 +7,12 @@ import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Ray.Dynamics.Multibrot.Basic
 import Ray.Dynamics.Multibrot.Iterates
 import Ray.Dynamics.Multibrot.Potential
+import Ray.Dynamics.Multibrot.PotentialLower
+import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Multibrot.Specific
 import Ray.Dynamics.Postcritical
 import Ray.Dynamics.Potential
+import Ray.Misc.Bound
 import Ray.Misc.Bounds
 
 /-!
@@ -18,6 +21,7 @@ import Ray.Misc.Bounds
 We show that any `(c,z)` with `4 ≤ abs c ≤ abs z` is postcritical.
 -/
 
+open Metric (closedBall)
 open Real (exp log)
 open RiemannSphere
 open Set
@@ -108,12 +112,30 @@ lemma log_log_iter (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     _ ≥ log (log x) + 0.693 * 0.791 := by bound [lt_log_2]
     _ ≥ log (log x) + 0.548 := by bound
 
+/-- Numerical bound we need below -/
+lemma log_neg_log_le : log (-log 0.216) < -0.15 + log (log 12) := by
+  trans 0.5
+  · rw [Real.log_lt_iff_lt_exp (by bound)]
+    trans 1.6
+    · rw [neg_lt, Real.lt_log_iff_exp_lt (by norm_num)]
+      norm_num
+      exact exp_neg_div_lt
+    · norm_num
+      simpa using lt_exp_div (c := 8 / 5) (a := 1) (b := 2)
+  · norm_num
+    rw [Real.lt_log_iff_exp_lt (by bound)]
+    trans 2
+    · exact exp_div_lt
+    · rw [Real.lt_log_iff_exp_lt (by bound)]
+      exact exp_ofNat_lt
+
 /-- For large `c`, large `z`'s are postcritical -/
-public theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖) :
+public theorem postcritical_large (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     Postcritical (superF d) c z := by
   -- Record a variety of inequalities
   have d0 : 0 < d := d_pos d
-  have lcz : log (log ‖c‖) ≤ log (log ‖z‖) := log_log_mono (by linarith) cz
+  have le_z : max 4 ‖c‖ ≤ ‖z‖ := by bound
+  have lcz : log (log (max 4 ‖c‖)) ≤ log (log ‖z‖) := log_log_mono (by bound) le_z
   -- Reduce to s.potential c (f' d c z) < s.potential c ↑c
   simp only [Postcritical, multibrot_p]
   set s := superF d
@@ -127,15 +149,12 @@ public theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖
   have zw : ‖z‖ ≤ ‖w‖ := by rw [←hw]; exact le_self_iter d (by linarith) cz 1
   have cw : ‖c‖ ≤ ‖w‖ := le_trans cz zw
   -- Move to log (-log _) space
-  have pc1 : s.potential c c < 1 := potential_lt_one_of_two_lt (by linarith) (le_refl _)
   have pw1 : s.potential c w < 1 := potential_lt_one_of_two_lt (by linarith) (by linarith)
+  by_cases pc1 : s.potential c c = 1
+  · linarith
+  replace pc1 : s.potential c c < 1 := Ne.lt_of_le pc1 (s.potential_le_one)
   rw [←log_neg_log_strict_anti potential_pos potential_pos pw1 pc1]
-  -- Use `log_neg_log_potential_approx` to replace `s.potential` with `log (log (abs _))`
-  refine lt_of_lt_of_le ?_ (le_sub_iff_add_le.mp (abs_le.mp
-    (log_neg_log_potential_approx d (by linarith) cw)).1)
-  refine lt_of_le_of_lt (sub_le_iff_le_add.mp (abs_le.mp
-    (log_neg_log_potential_approx d (by linarith) (le_refl _))).2) ?_
-  -- Settle our inequality
+  -- Bounds about `iter_error`
   have lzw : log (log ‖z‖) + 0.548 ≤ log (log ‖w‖) := by
     rw [←hw]; exact log_log_iter (by linarith) cz
   have ie : ∀ z : ℂ, 4 ≤ ‖z‖ → ‖c‖ ≤ ‖z‖ → iter_error d c z ≤ 0.15 := by
@@ -145,17 +164,49 @@ public theorem postcritical_large (c4 : 4 ≤ ‖c‖) (cz : ‖c‖ ≤ ‖z‖
       _ ≤ 0.8095 / (4 * log 4) := by bound
       _ ≤ 0.8095 / (4 * 1.386) := by bound [lt_log_4]
       _ ≤ 0.15 := by norm_num
-  have iec := ie c c4 (le_refl _)
   have iew := ie w (by linarith) cw
+  -- Use `log_neg_log_potential_approx` to replace `s.potential` with `log (log (abs _))`
+  refine lt_of_lt_of_le ?_ (le_sub_iff_add_le.mp (abs_le.mp
+    (log_neg_log_potential_approx d (by linarith) cw)).1)
+  -- If `c` is small, we can use our potential lower bound
+  by_cases c4 : ‖c‖ < 4
+  · refine lt_of_le_of_lt (b := log (-log 0.216)) ?_ ?_
+    · by_cases p1 : s.potential c c = 1
+      · simp [p1]
+        bound
+      · replace p1 : s.potential c c < 1 := Ne.lt_of_le p1 s.potential_le_one
+        bound
+    · have w12 : 12 ≤ ‖w‖ := by
+        calc ‖w‖
+          _ = ‖z ^ d + c‖ := by simp only [← hw, f']
+          _ ≥ ‖z ^ d‖ - ‖c‖ := by bound
+          _ = ‖z‖ ^ d - ‖c‖ := by simp only [norm_pow]
+          _ ≥ 4 ^ d - 4 := by bound
+          _ ≥ 4 ^ 2 - 4 := by bound
+          _ ≥ 12 := by norm_num
+      grw [iew, ← w12]
+      exact log_neg_log_le
+  simp only [not_lt] at c4
+  simp only [max_eq_right c4] at lcz
+  -- Settle our inequality
+  refine lt_of_le_of_lt (sub_le_iff_le_add.mp (abs_le.mp
+    (log_neg_log_potential_approx d (by linarith) (le_refl _))).2) ?_
+  have iec := ie c c4 (le_refl _)
   refine lt_of_lt_of_le (lt_of_le_of_lt (add_le_add iec lcz) ?_) (add_le_add (neg_le_neg iew) lzw)
   ring_nf; simp only [add_lt_add_iff_right]; norm_num
 
 /-- For large `c` and small `z`, `(c,z⁻¹)` is postcritical -/
-public lemma postcritical_small (c4 : 4 ≤ ‖c‖) (z1 : ‖z‖ ≤ ‖c‖⁻¹) :
+public lemma postcritical_small (le : ‖z‖ ≤ rinv 4⁻¹ c) :
     (c, (z : 𝕊)⁻¹) ∈ (superF d).post := by
   set s := superF d
   by_cases z0 : z = 0
   · simp only [z0, coe_zero, inv_zero', s.post_a]
   · rw [inv_coe z0]
-    apply postcritical_large c4
-    rwa [norm_inv, le_inv_comm₀ (by linarith) (by simpa)]
+    obtain ⟨z4, zc⟩ := le_rinv.mp le
+    apply postcritical_large
+    · simp only [norm_inv]
+      rwa [le_inv_comm₀ (by bound) (norm_pos_iff.mpr z0)]
+    · by_cases c0 : c = 0
+      · simp only [c0, norm_zero, norm_inv, inv_nonneg, norm_nonneg]
+      · simp only
+        rwa [norm_inv, ← one_div, le_div_iff₀ (by simpa)]

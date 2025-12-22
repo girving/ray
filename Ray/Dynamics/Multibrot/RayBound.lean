@@ -4,6 +4,7 @@ import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Dynamics.Multibrot.Isomorphism
 import Ray.Dynamics.Multibrot.KoebeInf
+import Ray.Dynamics.Multibrot.Rinv
 import Ray.Misc.Bound
 
 /-!
@@ -24,19 +25,18 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 variable {c x z : ℂ}
 
 /-- A weak upper bound on `s.ray`, using the Koebe quarter theorem -/
-lemma sray_le_weak (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+lemma sray_le_weak (xc : ‖x‖ < rinv 4⁻¹ c / 4) :
     ‖((superF d).ray c x).toComplex‖ ≤ 1.24 * ‖x‖⁻¹ := by
   set s := superF d
   generalize hk : (1.24 : ℝ) = k
   have k0 : 0 < k := by bound
-  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) (by linarith) xc
-  have b := zx ▸ sbottcher_inv_approx_z d (by linarith) (z := z) (by linarith)
+  obtain ⟨z,zm,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) xc
+  have b := zx ▸ sbottcher_inv_approx_z d (z := z) (by linarith)
   nth_rw 1 [← zx]
   simp only [sbottcher_inv_def, s.ray_bottcher zp]
   simp only [toComplex_inv, toComplex_coe, norm_inv]
   refine le_trans ?_ (b := ‖(x / k)‖⁻¹) (by simp [div_eq_mul_inv, abs_of_pos k0])
-  have ci4 : ‖c‖⁻¹ ≤ 4⁻¹ := by bound
-  have z16 : ‖z‖ ≤ 4⁻¹ := by bound
+  have z16 : ‖z‖ ≤ 4⁻¹ := by rw [lt_div_iff₀ (by norm_num), lt_rinv] at xc; linarith
   by_cases z0 : z = 0
   · simp [z0]
     bound
@@ -81,14 +81,16 @@ lemma norm_inv_sub_inv_le {a b : ℝ} {z w : ℂ} (za : ‖z‖ < a⁻¹) (b0 : 
   simp only [← mul_assoc, mul_div_cancel₀ _ a0.ne', le_refl]
 
 /-- A strong bound on `s.ray`, using the Böttcher approximation to boost the weak bound -/
-public lemma sray_le (c4 : 4 ≤ ‖c‖) (xc : ‖x‖ < ‖c‖⁻¹ / 4) :
+public lemma sray_le (xc : ‖x‖ < rinv 4⁻¹ c / 4) :
     ‖((superF d).ray c x).toComplex - x⁻¹‖ ≤ 4 := by
   set s := superF d
-  obtain ⟨z,zc,zx,zp,szx⟩ := sbottcher_inv_small_mem_preimage (d := d) (by linarith) xc
-  have b := szx ▸ sbottcher_inv_approx_z d (by linarith) (z := z) (by linarith)
+  obtain ⟨z,zx,zc,zp,szx⟩ := sbottcher_inv_small_mem_preimage (d := d) xc
+  have b := szx ▸ sbottcher_inv_approx_z d (z := z) (by linarith)
   nth_rw 1 [← szx]
   simp only [sbottcher_inv_def, s.ray_bottcher zp, toComplex_inv, toComplex_coe]
-  have ci : ‖c‖⁻¹ ≤ 4⁻¹ := by bound
+  have z4 : ‖z‖ ≤ 4⁻¹ := by
+    rw [lt_div_iff₀ (by norm_num), lt_rinv] at xc
+    linarith
   exact norm_inv_sub_inv_le (by linarith) (by norm_num) b (le_trans zx (by bound))
 
 /-- A strong bound on `ray d`, using the Böttcher approximation and the Koebe quarter theorem -/

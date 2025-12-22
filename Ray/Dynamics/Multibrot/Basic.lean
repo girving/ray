@@ -298,7 +298,7 @@ theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : ‖c‖
   exact julia_two_lt m cz
 
 /-- `0 < s.potential` at finite values -/
-public lemma potential_pos {z : ℂ} : 0 < (superF d).potential c z :=
+@[bound] public lemma potential_pos {z : ℂ} : 0 < (superF d).potential c z :=
   ((superF d).potential_pos _).mpr RiemannSphere.coe_ne_inf
 
 /-- `s.potential < 1` outside radius `max 2 (abs c)` -/

@@ -258,7 +258,7 @@ lemma iter_error_le_log_log_abs (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 �
   rw [div_le_iff₀' (by positivity), ←div_le_iff₀ (by norm_num)]
   refine le_trans (by norm_num) (mul_le_mul z4 hl (by positivity) (by positivity))
 
-/-- `s.potential ≈ 1/abs z` -/
+/-- `s.potential ≈ ‖z‖⁻¹` -/
 public theorem potential_approx (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     |(superF d).potential c z - 1 / ‖z‖| ≤ potential_error d c z := by
   set s := superF d

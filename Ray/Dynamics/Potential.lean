@@ -120,7 +120,7 @@ public theorem Super.potential_lt_one_iff (s : Super f d a) :
   simp only [s.potential_eq_one h, lt_self_iff_false, not_false_iff]
 
 /-- `potential ≤ 1` -/
-public theorem Super.potential_le_one (s : Super f d a) : s.potential c z ≤ 1 := by
+@[bound] public theorem Super.potential_le_one (s : Super f d a) : s.potential c z ≤ 1 := by
   by_cases a : (c, z) ∈ s.basin
   exact (s.potential_lt_one a).le
   exact le_of_eq (s.potential_eq_one a)
