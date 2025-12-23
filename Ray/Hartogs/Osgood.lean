@@ -7,10 +7,10 @@ import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.InnerProductSpace.EuclideanDist
 import Mathlib.Analysis.Normed.Group.Basic
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Function
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef

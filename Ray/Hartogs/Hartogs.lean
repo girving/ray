@@ -15,8 +15,8 @@ import Ray.Hartogs.Osgood
 import Ray.Hartogs.Subharmonic
 import Ray.Misc.Bounds
 import Ray.Misc.Max
-import Ray.Misc.Prod
 import Ray.Misc.Multilinear
+import Ray.Misc.Prod
 import Ray.Misc.Prod
 import Ray.Misc.Topology
 

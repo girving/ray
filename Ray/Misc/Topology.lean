@@ -6,9 +6,9 @@ public import Mathlib.Topology.Defs.Filter
 public import Mathlib.Topology.MetricSpace.Defs
 public import Mathlib.Topology.MetricSpace.ProperSpace
 public import Mathlib.Topology.Order.Real
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.Semicontinuous

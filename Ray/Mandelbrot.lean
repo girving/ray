@@ -1,8 +1,8 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Connected
+public import Ray.Multibrot.Defs
 import Ray.Misc.Cobounded
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Connected
 
 /-!
 ## The Mandelbrot set and its complement are connected

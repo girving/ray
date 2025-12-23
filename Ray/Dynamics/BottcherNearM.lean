@@ -4,8 +4,8 @@ import Mathlib.Geometry.Manifold.Algebra.LieGroup
 import Mathlib.Geometry.Manifold.ContMDiff.Atlas
 import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
 import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
-import Mathlib.Topology.AlexandrovDiscrete
 import Mathlib.Tactic.Cases
+import Mathlib.Topology.AlexandrovDiscrete
 import Ray.Analytic.Analytic
 import Ray.Dynamics.BottcherNear
 import Ray.Manifold.Analytic

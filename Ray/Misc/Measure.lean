@@ -11,10 +11,10 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 public import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Prod
+import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Integral.Average
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Integral.Prod
-import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 import Mathlib.Tactic.Bound
 import Mathlib.Topology.Constructions

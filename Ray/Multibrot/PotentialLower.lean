@@ -1,13 +1,13 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Ray.Dynamics.BottcherNearM
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Potential
 import Ray.Dynamics.Potential
 import Ray.Misc.Cobounded
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Potential
 
 /-!
 ## A lower bounds `potential c z` for small `z`

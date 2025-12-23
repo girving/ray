@@ -1,7 +1,7 @@
 module
 public import Ray.Dynamics.Defs
-import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Mathlib.Tactic.Cases
 import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Nice

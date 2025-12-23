@@ -1,6 +1,6 @@
 module
-public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Analysis.Complex.Basic
 
 /-!
 ## Definitions related to Schwarz's lemma

@@ -1,11 +1,11 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Iterates
-import Ray.Dynamics.Multibrot.Specific
 import Ray.Dynamics.Potential
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Iterates
+import Ray.Multibrot.Specific
 
 /-!
 ## Effective bounds on the Multibrot `potential` function

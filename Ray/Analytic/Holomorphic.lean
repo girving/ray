@@ -8,16 +8,16 @@ import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
 import Mathlib.Analysis.Complex.CauchyIntegral
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic
 import Ray.Analytic.Analytic
+import Ray.Hartogs.Osgood
 import Ray.Misc.Bounds
 import Ray.Misc.Multilinear
-import Ray.Hartogs.Osgood
 import Ray.Misc.Topology
 
 /-!

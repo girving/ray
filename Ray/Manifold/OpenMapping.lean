@@ -4,12 +4,12 @@ import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.Tactic.Cases
-import Ray.Misc.Connected
 import Ray.Analytic.Holomorphic
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
+import Ray.Misc.Connected
 import Ray.Misc.Topology
 import Ray.Misc.TotallyDisconnected
 

@@ -1,10 +1,10 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Isomorphism
+public import Ray.Multibrot.Defs
 import Ray.Manifold.Analytic
 import Ray.Manifold.Nonseparating
 import Ray.Misc.Connected
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Isomorphism
 
 /-!
 ## The Multibrot set and its complement are connected

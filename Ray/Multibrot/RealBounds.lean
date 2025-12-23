@@ -1,7 +1,7 @@
 module
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-public import Ray.Dynamics.Multibrot.D
+public import Ray.Multibrot.D
 import Mathlib.Analysis.Complex.RealDeriv
 import Mathlib.Tactic.Cases
 import Ray.Misc.Bound

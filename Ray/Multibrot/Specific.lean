@@ -2,8 +2,8 @@ module
 public import Mathlib.Analysis.Complex.Exponential
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.NumberTheory.NumberField.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.NumberTheory.NumberField.Basic
 
 /-!
 ## Bounds about `exp`, `log` at specific values or bounds

@@ -1,6 +1,6 @@
 module
 public import Ray.Dynamics.Bottcher
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Mathlib.Geometry.Manifold.MFDeriv.Basic
@@ -10,7 +10,6 @@ import Ray.Analytic.Analytic
 import Ray.Dynamics.BottcherNear
 import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Potential
-import Ray.Dynamics.Multibrot.D
 import Ray.Manifold.Analytic
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
@@ -20,6 +19,7 @@ import Ray.Misc.Bounds
 import Ray.Misc.Cobounded
 import Ray.Misc.Connected
 import Ray.Misc.Topology
+import Ray.Multibrot.D
 
 /-!
 ## The Multibrot sets and their basic properties

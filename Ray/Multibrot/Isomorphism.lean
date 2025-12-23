@@ -1,14 +1,14 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Ray.Dynamics.Multiple
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Bottcher
 import Ray.Manifold.Analytic
 import Ray.Manifold.GlobalInverse
 import Ray.Manifold.LocalInj
 import Ray.Manifold.OpenMapping
 import Ray.Misc.Bounds
 import Ray.Misc.Topology
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Bottcher
 
 /-!
 ## Böttcher coordinates form an isomorphism between the exterior Multibrot set and the unit disk

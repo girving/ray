@@ -1,8 +1,8 @@
 module
 public import Mathlib.Topology.Connected.TotallyDisconnected
 public import Mathlib.Topology.MetricSpace.Defs
-import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Cardinality
+import Mathlib.Data.Real.Basic
 import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Topology.MetricSpace.Basic
 

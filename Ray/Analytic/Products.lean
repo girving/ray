@@ -4,10 +4,10 @@ public import Mathlib.Analysis.Complex.Basic
 public import Ray.Analytic.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Stream.Init
@@ -15,11 +15,11 @@ import Mathlib.Tactic.Cases
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Topology.UniformSpace.UniformConvergence
 import Ray.Analytic.Analytic
+import Ray.Analytic.Holomorphic
+import Ray.Analytic.Series
 import Ray.Misc.Bound
 import Ray.Misc.Bounds
 import Ray.Misc.Finset
-import Ray.Analytic.Holomorphic
-import Ray.Analytic.Series
 
 /-!
 ## Infinite products of analytic functions

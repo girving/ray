@@ -10,8 +10,8 @@ import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Ray.Misc.Bound
 import Ray.Misc.Bounds
-import Ray.Misc.Complex
 import Ray.Misc.Circle
+import Ray.Misc.Complex
 
 /-!
 ## Curves around the origin are star-shaped, from derivatives

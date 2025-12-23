@@ -6,11 +6,11 @@ public import Ray.Analytic.Defs
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.Analytic.Constructions
+import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
-import Mathlib.Analysis.Analytic.IsolatedZeros
-import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic

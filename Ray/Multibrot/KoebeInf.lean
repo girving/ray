@@ -1,13 +1,13 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Ray.Dynamics.Bottcher
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Bottcher
-import Ray.Dynamics.Multibrot.BottcherInv
-import Ray.Dynamics.Multibrot.Postcritical
-import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Postcritical
 import Ray.Koebe.Koebe
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Bottcher
+import Ray.Multibrot.BottcherInv
+import Ray.Multibrot.Postcritical
+import Ray.Multibrot.Rinv
 
 /-!
 # The Koebe quarter theorem at infinity, applied to dynamical and parameter space Böttcher maps

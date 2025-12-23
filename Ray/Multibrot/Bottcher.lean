@@ -1,20 +1,20 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Complex.RealDeriv
 import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Mathlib.Geometry.Manifold.MFDeriv.Basic
 import Ray.Analytic.Products
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.BottcherNear
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Postcritical
-import all Ray.Dynamics.Multibrot.RealBounds
-import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Postcritical
 import Ray.Manifold.Analytic
 import Ray.Manifold.Nontrivial
 import Ray.Misc.Bound
 import Ray.Misc.Bounds
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Postcritical
+import Ray.Multibrot.Rinv
+import all Ray.Multibrot.RealBounds
 
 /-!
 ## Effective bounds on the Multibrot `bottcher` function

@@ -1,14 +1,14 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Tactic.Cases
 import Ray.Analytic.Series
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.D
-import Ray.Dynamics.Multibrot.Log1p
-import Ray.Dynamics.Multibrot.Specific
 import Ray.Misc.Bound
 import Ray.Misc.Bounds
 import Ray.Misc.Cobounded
+import Ray.Multibrot.Basic
+import Ray.Multibrot.D
+import Ray.Multibrot.Log1p
+import Ray.Multibrot.Specific
 
 /-!
 ## Effective bounds on Multibrot iterates
@@ -18,7 +18,7 @@ We derive effective bounds and estimates for the growth rate of the Multibrot it
 results such as Multibrot connectness need only weak bounds, but numerical want them to be as tight
 as possible, so we put significant effort towards tightening.  However, we strive for tightness only
 when `d = 2`.  Effective bounds are continued in
-`Ray.Dynamics.Multibrot.{Potential,Postcritical,Bottcher.lean`.
+`Ray.Multibrot.{Potential,Postcritical,Bottcher.lean`.
 
 Our main result in this file is `iter_approx`, which shows that iterates grow as
 `z^d^(n + o(1))` for large `z`.  Concretely, if if `3 ≤ b` and `max b (abs c) ≤ abs z`, then

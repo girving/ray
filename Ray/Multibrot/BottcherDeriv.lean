@@ -1,15 +1,15 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Calculus.Deriv.Inv
-import Ray.Dynamics.Multibrot.Bottcher
-import Ray.Dynamics.Multibrot.BottcherInv
-import Ray.Dynamics.Multibrot.Postcritical
-import Ray.Dynamics.Multibrot.Rinv
-import Ray.Schwarz.SchwarzPick
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
 import Ray.Manifold.OneDimension
 import Ray.Misc.Bound
+import Ray.Multibrot.Bottcher
+import Ray.Multibrot.BottcherInv
+import Ray.Multibrot.Postcritical
+import Ray.Multibrot.Rinv
+import Ray.Schwarz.SchwarzPick
 
 /-!
 ## Effective bounds on the derivative of the Multibrot `bottcher` function

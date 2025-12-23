@@ -3,12 +3,12 @@ public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 public import Ray.Misc.Defs
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.Normed.Ring.Basic
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
-import Mathlib.Analysis.Complex.ExponentialBounds
-import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Tactic.Bound

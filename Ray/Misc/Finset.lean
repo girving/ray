@@ -1,10 +1,10 @@
 module
+public import Mathlib.Analysis.Normed.Group.Basic
 public import Mathlib.Data.Finset.Defs
 public import Mathlib.Data.Stream.Defs
-public import Mathlib.Analysis.Normed.Group.Basic
+import Mathlib.Analysis.Complex.Norm
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Stream.Defs
-import Mathlib.Analysis.Complex.Norm
 import Mathlib.Tactic.Cases
 
 /-!

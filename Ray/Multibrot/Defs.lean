@@ -1,8 +1,8 @@
 module
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Ray.Dynamics.Bottcher
-public import Ray.Dynamics.Multibrot.D
 public import Ray.Manifold.RiemannSphere
+public import Ray.Multibrot.D
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Ray.Analytic.Analytic
 import Ray.Misc.Bound

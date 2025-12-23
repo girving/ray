@@ -1,5 +1,5 @@
-import Ray.Dynamics.Multibrot.BottcherInv
 import Ray.Koebe.Koebe
+import Ray.Multibrot.BottcherInv
 
 /-!
 # The Koebe quarter theorem at finite values, for ruling disks out of the Mandelbrot set

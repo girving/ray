@@ -12,7 +12,6 @@ import Mathlib.Topology.ExtendFrom
 import Ray.Dynamics.BottcherNearM
 import Ray.Dynamics.Nice
 import Ray.Dynamics.Postcritical
-import all Ray.Dynamics.Potential
 import Ray.Manifold.Analytic
 import Ray.Manifold.Inverse
 import Ray.Manifold.LocalInj
@@ -20,6 +19,7 @@ import Ray.Manifold.Nonseparating
 import Ray.Misc.Connected
 import Ray.Misc.Continuation
 import Ray.Misc.Topology
+import all Ray.Dynamics.Potential
 
 /-!
 ## Analytic continuation of external rays for all postcritical values

@@ -1,19 +1,19 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Iterates
-import Ray.Dynamics.Multibrot.Potential
-import Ray.Dynamics.Multibrot.PotentialLower
-import Ray.Dynamics.Multibrot.Rinv
-import Ray.Dynamics.Multibrot.Specific
 import Ray.Dynamics.Postcritical
 import Ray.Dynamics.Potential
 import Ray.Misc.Bound
 import Ray.Misc.Bounds
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Iterates
+import Ray.Multibrot.Potential
+import Ray.Multibrot.PotentialLower
+import Ray.Multibrot.Rinv
+import Ray.Multibrot.Specific
 
 /-!
 ## Effective bounds on postcritical points for Multibrot sets

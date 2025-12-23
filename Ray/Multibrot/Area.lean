@@ -1,9 +1,9 @@
 module
-public import Ray.Dynamics.Multibrot.Isomorphism
+public import Ray.Multibrot.Isomorphism
 import Mathlib.Analysis.Complex.RemovableSingularity
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.InvRay
 import Ray.Koebe.Gronwall
+import Ray.Multibrot.Basic
+import Ray.Multibrot.InvRay
 
 /-!
 ## Multibrot area via Grönwall's area theorem

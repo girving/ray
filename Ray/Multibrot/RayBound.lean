@@ -1,11 +1,11 @@
 module
-public import Ray.Dynamics.Multibrot.Isomorphism
-import Ray.Dynamics.Multibrot.Bottcher
-import Ray.Dynamics.Multibrot.BottcherInv
-import Ray.Dynamics.Multibrot.Isomorphism
-import Ray.Dynamics.Multibrot.KoebeInf
-import Ray.Dynamics.Multibrot.Rinv
+public import Ray.Multibrot.Isomorphism
 import Ray.Misc.Bound
+import Ray.Multibrot.Bottcher
+import Ray.Multibrot.BottcherInv
+import Ray.Multibrot.Isomorphism
+import Ray.Multibrot.KoebeInf
+import Ray.Multibrot.Rinv
 
 /-!
 ## Effective bounds on `s.ray` for multibrot sets

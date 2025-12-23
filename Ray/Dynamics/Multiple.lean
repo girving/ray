@@ -1,9 +1,9 @@
 module
 public import Ray.Manifold.Defs
-import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.Geometry.Manifold.Algebra.Structures
 import Mathlib.Geometry.Manifold.ContMDiff.Atlas
 import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
+import Mathlib.RingTheory.RootsOfUnity.Complex
 import Ray.Analytic.Analytic
 import Ray.Dynamics.BottcherNear
 import Ray.Manifold.Analytic

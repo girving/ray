@@ -3,9 +3,9 @@ public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Geometry.Manifold.ContMDiff.Defs
 public import Ray.Manifold.Defs
 import Ray.Dynamics.Multiple
-import all Ray.Manifold.Inverse
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OpenMapping
+import all Ray.Manifold.Inverse
 
 /-!
 ## Global inverse functions theorems on 1D complex manifolds

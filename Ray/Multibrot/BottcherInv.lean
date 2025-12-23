@@ -1,15 +1,15 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
+public import Ray.Multibrot.Defs
 import Mathlib.Geometry.Manifold.ContMDiff.Basic
 import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Ray.Dynamics.BottcherNear
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.Bottcher
-import Ray.Dynamics.Multibrot.Isomorphism
-import Ray.Dynamics.Multibrot.Postcritical
-import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Postcritical
 import Ray.Manifold.Analytic
+import Ray.Multibrot.Basic
+import Ray.Multibrot.Bottcher
+import Ray.Multibrot.Isomorphism
+import Ray.Multibrot.Postcritical
+import Ray.Multibrot.Rinv
 
 /-!
 ## `s.bottcher_inv` as an analytic function

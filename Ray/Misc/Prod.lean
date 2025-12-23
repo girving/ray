@@ -1,7 +1,7 @@
 module
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.Analysis.Normed.Group.Basic
 public import Mathlib.Analysis.Normed.Module.Basic
-public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.Data.Set.Defs
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Analysis.Calculus.FDeriv.Prod

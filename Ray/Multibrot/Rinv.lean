@@ -1,6 +1,6 @@
 module
-public import Ray.Dynamics.Multibrot.Defs
-import Ray.Dynamics.Multibrot.Basic
+public import Ray.Multibrot.Defs
+import Ray.Multibrot.Basic
 
 /-!
 ## Properties of `rinv`

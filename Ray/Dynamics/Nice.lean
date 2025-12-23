@@ -5,12 +5,12 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 import Mathlib.Geometry.Manifold.ContMDiff.Constructions
 import Mathlib.Tactic.Cases
 import Mathlib.Topology.AlexandrovDiscrete
-import all Ray.Dynamics.Potential
 import Ray.Manifold.Analytic
 import Ray.Manifold.Inverse
 import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
 import Ray.Misc.Topology
+import all Ray.Dynamics.Potential
 
 /-!
 ## An `n` which maps whole potential levelsets to `s.near`

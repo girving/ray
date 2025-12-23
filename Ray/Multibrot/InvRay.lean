@@ -1,11 +1,11 @@
 module
-public import Ray.Dynamics.Multibrot.Isomorphism
+public import Ray.Multibrot.Isomorphism
 import Mathlib.Geometry.Manifold.ContMDiff.NormedSpace
-import Ray.Dynamics.Multibrot.Bottcher
-import Ray.Dynamics.Multibrot.BottcherInv
-import Ray.Dynamics.Multibrot.Isomorphism
-import Ray.Dynamics.Multibrot.KoebeInf
 import Ray.Manifold.Analytic
+import Ray.Multibrot.Bottcher
+import Ray.Multibrot.BottcherInv
+import Ray.Multibrot.Isomorphism
+import Ray.Multibrot.KoebeInf
 
 /-!
 ## `inv_ray`: The external ray map as an analytic function

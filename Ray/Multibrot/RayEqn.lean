@@ -1,15 +1,15 @@
 module
-public import Ray.Dynamics.Multibrot.Isomorphism
+public import Ray.Multibrot.Isomorphism
 import Mathlib.Tactic.Cases
 import Ray.Dynamics.Bottcher
 import Ray.Dynamics.BottcherNearM
-import Ray.Dynamics.Multibrot.Area
-import Ray.Dynamics.Multibrot.Basic
-import Ray.Dynamics.Multibrot.BottcherInv
-import Ray.Dynamics.Multibrot.InvRay
-import Ray.Dynamics.Multibrot.RayBound
-import Ray.Dynamics.Multibrot.Rinv
 import Ray.Dynamics.Ray
+import Ray.Multibrot.Area
+import Ray.Multibrot.Basic
+import Ray.Multibrot.BottcherInv
+import Ray.Multibrot.InvRay
+import Ray.Multibrot.RayBound
+import Ray.Multibrot.Rinv
 
 /-!
 ## Functional equations for `ray` and `pray`

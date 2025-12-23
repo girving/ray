@@ -4,7 +4,7 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Ray.Dynamics.Multibrot.Specific
+import Ray.Multibrot.Specific
 
 /-!
 ## `Complex.log (1 + z) ≤ -Real.log (1 - abs z)` for `abs z < 1`

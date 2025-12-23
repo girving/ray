@@ -9,9 +9,9 @@ import Mathlib.Geometry.Manifold.LocalInvariantProperties
 import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
 import Mathlib.Tactic.Cases
 import Ray.Analytic.Analytic
+import Ray.Hartogs.Osgood
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
-import Ray.Hartogs.Osgood
 import Ray.Misc.Multilinear
 
 /-!

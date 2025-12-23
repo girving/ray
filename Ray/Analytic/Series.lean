@@ -1,8 +1,8 @@
 module
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Complex.Basic
-import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Init
 import Mathlib.Topology.MetricSpace.Basic
