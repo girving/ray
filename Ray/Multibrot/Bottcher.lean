@@ -210,7 +210,7 @@ lemma term_approx_const {d n : ℕ} [Fact (2 ≤ d)] {b t : ℝ}
   rw [← Real.rpow_intCast, Int.cast_neg, Int.cast_pow, Int.cast_two]
   bound
 
--- Weak `term` bounds for `4 ≤ ‖c‖ ≤ ‖z‖`
+-- Weak `term` bounds for `4 ≤ ‖z‖`
 lemma term_approx_4_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.1548 := term_approx_const bz cz
 lemma term_approx_4_1 (d : ℕ) [Fact (2 ≤ d)] (bz : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
@@ -220,7 +220,7 @@ lemma term_approx_4_2 (d : ℕ) [Fact (2 ≤ d)] (bz : 4 ≤ ‖z‖) (cz : ‖c
 lemma term_approx_4_3 (d : ℕ) [Fact (2 ≤ d)] (bz : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖term (fl (f d) ∞ c) d 3 z⁻¹ - 1‖ ≤ 0.00001 := term_approx_const bz cz
 
--- Weak `term` bounds for `5 ≤ ‖c‖ ≤ ‖z‖`
+-- Weak `term` bounds for `5 ≤ ‖z‖`
 lemma term_approx_5_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.1181 := term_approx_const bz cz
 lemma term_approx_5_1 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
@@ -262,7 +262,7 @@ lemma term_approx_pow {d n : ℕ} [Fact (2 ≤ d)] {b t zp : ℝ} {c z : ℂ} (b
       mul_comm _ u] at crunch
     exact crunch
 
--- Strong `term` bounds for `4 ≤ ‖c‖ ≤ ‖z‖`
+-- Strong `term` bounds for `4 ≤ ‖z‖`
 def term_bounds_4 (z : ℂ) : Fin 6 → ℝ :=
   ![0.619 * ‖z‖⁻¹, 0.453 * ‖z‖⁻¹ ^ 3, 0.419 * ‖z‖⁻¹ ^ 7, 0.700 * ‖z‖⁻¹ ^ 15, 3.91 * ‖z‖⁻¹ ^ 31,
     245 * ‖z‖⁻¹ ^ 63]
@@ -270,7 +270,7 @@ lemma term_approx_pow_4 (d : ℕ) [Fact (2 ≤ d)] (bz : 4 ≤ ‖z‖) (cz : �
     ‖term (fl (f d) ∞ c) d n z⁻¹ - 1‖ ≤ term_bounds_4 z n := by
   fin_cases n <;> exact term_approx_pow bz cz
 
--- Strong `term` bounds for `5 ≤ ‖c‖ ≤ ‖z‖`
+-- Strong `term` bounds for `5 ≤ ‖z‖`
 lemma term_approx_pow_5_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.591 * ‖z‖⁻¹ := term_approx_pow bz cz
 lemma term_approx_pow_5_1 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
@@ -280,8 +280,26 @@ lemma term_approx_pow_5_2 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : 
 lemma term_approx_pow_5_3 (d : ℕ) [Fact (2 ≤ d)] (bz : 5 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖term (fl (f d) ∞ c) d 3 z⁻¹ - 1‖ ≤ 0.392 * ‖z‖⁻¹ ^ 15 := term_approx_pow bz cz
 
+-- Strong `term` bounds for `6, 7, 8, 9 ≤ ‖z‖`
+lemma term_approx_pow_6_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 6 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.573 * ‖z‖⁻¹ := term_approx_pow bz cz
+lemma term_approx_pow_7_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 7 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.561 * ‖z‖⁻¹ := term_approx_pow bz cz
+lemma term_approx_pow_8_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 8 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.553 * ‖z‖⁻¹ := term_approx_pow bz cz
+lemma term_approx_pow_9_0 (d : ℕ) [Fact (2 ≤ d)] (bz : 9 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    ‖term (fl (f d) ∞ c) d 0 z⁻¹ - 1‖ ≤ 0.546 * ‖z‖⁻¹ := term_approx_pow bz cz
+
+-- Strong `term` bounds for `10 ≤ ‖z‖`
+def term_bounds_10 (z : ℂ) : Fin 6 → ℝ :=
+  ![0.541 * ‖z‖⁻¹, 0.309 * ‖z‖⁻¹ ^ 3, 0.191 * ‖z‖⁻¹ ^ 7, 0.146 * ‖z‖⁻¹ ^ 15, 0.171 * ‖z‖⁻¹ ^ 31,
+    0.465 * ‖z‖⁻¹ ^ 63]
+lemma term_approx_pow_10 (d : ℕ) [Fact (2 ≤ d)] (bz : 10 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) (n : Fin 6) :
+    ‖term (fl (f d) ∞ c) d n z⁻¹ - 1‖ ≤ term_bounds_10 z n := by
+  fin_cases n <;> exact term_approx_pow bz cz
+
 /-- `s.bottcher c z = z⁻¹ + O(z⁻¹ ^ 2)` -/
-public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
     ‖(superF d).bottcher c z - z⁻¹‖ ≤ 0.943 * ‖z‖⁻¹ ^ 2 := by
   set s := superF d
   have zi4 : ‖z‖⁻¹ ≤ 4⁻¹ := by bound
@@ -303,7 +321,38 @@ public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 
       Fin.reduceFinMk, Matrix.cons_val, Nat.lt_add_one, tsub_le_iff_right]
     have z0 : 0 < ‖z‖⁻¹ := by bound
     generalize ‖z‖⁻¹ = x at z0 z4 zi4
-    clear z cz h z4
+    have pow : ∀ k : Fin 122, x ^ (k + 1 : ℕ) ≤ 4⁻¹ ^ (k : ℕ) * x := by
+      intro k; simp only [pow_succ]; bound
+    simp only [inv_pow, Fin.forall_iff_castSucc, Fin.reduceLast, Fin.coe_ofNat_eq_mod, Nat.mod_succ,
+      Nat.reduceAdd, Fin.coe_castSucc, pow_one, Fin.val_eq_zero, zero_add, pow_zero, inv_one,
+      one_mul, le_refl, implies_true, and_true] at pow
+    ring_nf
+    linarith
+
+/-- `s.bottcher c z = z⁻¹ + O(z⁻¹ ^ 2)` -/
+public theorem bottcher_approx_z_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    ‖(superF d).bottcher c z - z⁻¹‖ ≤ 0.849 * ‖z‖⁻¹ ^ 2 := by
+  set s := superF d
+  have z4 : 4 ≤ ‖z‖ := by linarith
+  have zi4 : ‖z‖⁻¹ ≤ 4⁻¹ := by bound
+  simp only [bottcher_eq_bottcherNear_z z4 cz, bottcherNear, norm_mul, ← mul_sub_one,
+    pow_two, ← mul_assoc, norm_inv, mul_comm ‖z‖⁻¹]
+  refine mul_le_mul_of_nonneg_right ?_ (by bound)
+  obtain ⟨p, h⟩ := term_prod_exists (superNearF d c) _ (inv_mem_t (by linarith) cz)
+  rw [h.tprod_eq]
+  refine le_trans (h.norm_sub_one_le (term_approx_pow_10 d z10 cz) (c := 2 * ‖z‖⁻¹) (a := 2⁻¹) ?_ ?_
+    (by norm_num) (by norm_num) (by norm_num) ?_) ?_
+  · exact fun _ _ ↦ le_trans (term_approx d (by linarith) cz _) (le_of_eq (by ring))
+  · intro k
+    fin_cases k <;> simp only [term_bounds_10] <;> bound
+  · ring_nf
+    linarith
+  · simp only [term_bounds_10, Finset.prod_fin_eq_prod_range, Finset.prod_range_succ,
+      Finset.range_one, Finset.prod_singleton, Nat.ofNat_pos, ↓reduceDIte, Fin.zero_eta, Fin.isValue,
+      Matrix.cons_val_zero, Nat.one_lt_ofNat, Fin.mk_one, Matrix.cons_val_one, Nat.reduceLT,
+      Fin.reduceFinMk, Matrix.cons_val, Nat.lt_add_one, tsub_le_iff_right]
+    have z0 : 0 < ‖z‖⁻¹ := by bound
+    generalize ‖z‖⁻¹ = x at z0 z4 zi4
     have pow : ∀ k : Fin 122, x ^ (k + 1 : ℕ) ≤ 4⁻¹ ^ (k : ℕ) * x := by
       intro k; simp only [pow_succ]; bound
     simp only [inv_pow, Fin.forall_iff_castSucc, Fin.reduceLast, Fin.coe_ofNat_eq_mod, Nat.mod_succ,
@@ -316,6 +365,20 @@ public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 
 public theorem bottcher_approx (d : ℕ) [Fact (2 ≤ d)] (c4 : 4 ≤ ‖c‖) :
     ‖bottcher' d c - c⁻¹‖ ≤ 0.943 * ‖c‖⁻¹ ^ 2 :=
   bottcher_approx_z d c4 (le_refl _)
+
+/-- `s.potential c z = ‖z‖⁻¹ + O(‖z‖⁻¹ ^ 2)` -/
+public theorem potential_approx_strong (d : ℕ) [Fact (2 ≤ d)] (z4 : 4 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    |(superF d).potential c z - ‖z‖⁻¹| ≤ 0.943 * ‖z‖⁻¹ ^ 2 := by
+  rw [← (superF d).norm_bottcher, ← norm_inv]
+  exact le_trans (abs_norm_sub_norm_le _ _)
+    (by simpa only [norm_inv] using bottcher_approx_z d z4 cz)
+
+/-- `s.potential c z = ‖z‖⁻¹ + O(‖z‖⁻¹ ^ 2)` -/
+public theorem potential_approx_strong_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 ≤ ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    |(superF d).potential c z - ‖z‖⁻¹| ≤ 0.849 * ‖z‖⁻¹ ^ 2 := by
+  rw [← (superF d).norm_bottcher, ← norm_inv]
+  exact le_trans (abs_norm_sub_norm_le _ _)
+    (by simpa only [norm_inv] using bottcher_approx_z_10 d z10 cz)
 
 @[simp] public lemma bottcher_inv_zero : bottcher_inv d 0 = 0 := by
   simp only [bottcher_inv_def, coe_zero, inv_zero', bottcher_inf]
