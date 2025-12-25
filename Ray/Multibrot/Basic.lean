@@ -545,6 +545,17 @@ public theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = (∞ : �
   · simp only [potential, fill_coe, (superF d).potential_eq_zero_of_onePreimage]
 
 /-!
+## Dynamical space bottcher facts
+-/
+
+@[simp] public lemma spotential_coe_ne_zero {z : ℂ} : (superF d).potential c z ≠ 0 := by
+  simp [(superF d).potential_eq_zero_of_onePreimage]
+
+@[simp] public lemma sbottcher_coe_ne_zero {z : ℂ} : (superF d).bottcher c z ≠ 0 := by
+  rw [← norm_ne_zero_iff, (superF d).norm_bottcher]
+  exact spotential_coe_ne_zero
+
+/-!
 ## Surjectivity of `bottcher d`
 -/
 
