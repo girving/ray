@@ -89,7 +89,7 @@ lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' no
     have b1 : 1 < ‖bottcher d ↑z‖⁻¹ := by
       rw [one_lt_inv₀]
       · exact norm_bottcher_lt_one m
-      · simp only [norm_pos_iff, ne_eq, m, bottcher_coe_ne_zero, not_false_eq_true]
+      · simp only [norm_pos_iff, ne_eq, bottcher_coe_ne_zero, not_false_eq_true]
     refine ⟨(bottcher d z)⁻¹, ?_, ?_⟩
     · simp only [norm_Ioi, mem_setOf_eq, norm_inv, b1]
     · rw [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray, inv_inv, ray_bottcher m]

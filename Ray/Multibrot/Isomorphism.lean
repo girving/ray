@@ -152,9 +152,13 @@ public theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     simp only [not_not] at p0; rw [(p0i p0).1] at db
     exact bottcher_mfderiv_inf_ne_zero db
 
-@[simp] public lemma bottcher_coe_ne_zero {c : ℂ} (m : ↑c ∈ multibrotExt d) : bottcher d c ≠ 0 := by
-  rw [← bottcher_inf (d := d)]
-  exact bottcher_inj.ne m (by simp) (by simp)
+@[simp] public lemma bottcher_coe_ne_zero : bottcher d c ≠ 0 := by
+  by_cases m : ↑c ∈ multibrotExt d
+  · rw [← bottcher_inf (d := d)]
+    exact bottcher_inj.ne m (by simp) (by simp)
+  · simp only [← potential_lt_one, not_lt] at m
+    rw [← norm_ne_zero_iff, norm_bottcher]
+    linarith
 
 /-!
 ## The external ray map, and `bottcherHomeomorph`
