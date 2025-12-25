@@ -173,7 +173,7 @@ public theorem Super.stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.po
   exact lt_of_le_of_lt (pow_le_of_le_one s.potential_nonneg s.potential_le_one s.d0) m
 
 /-- Iterating `f` maps `s.post` into itself -/
-theorem Super.iter_stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post) (n : ℕ) :
+public theorem Super.iter_stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post) (n : ℕ) :
     (p.1, (f p.1)^[n] p.2) ∈ s.post := by
   induction' n with n h; simp only [Function.iterate_zero_apply]; exact m
   simp only [Function.iterate_succ_apply']; exact s.stays_post h
