@@ -279,12 +279,13 @@ public theorem f_f'_iter {d : ℕ} (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑(
   simp only [h, Function.iterate_succ_apply']
   simp only [f, lift_coe']
 
-theorem multibrot_coe {d : ℕ} :
+public theorem multibrot_coe {d : ℕ} :
     c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop (cobounded ℂ) := by
   simp only [multibrot, mem_setOf, f_f'_iter, tendsto_inf_iff_tendsto_cobounded]
 
 /-- Closed Julia sets are not outside radius `max 2 (abs c)` -/
-theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) : (c,↑z) ∈ (superF d).basin := by
+public theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
+    (c,↑z) ∈ (superF d).basin := by
   simp only [(superF d).basin_iff_attracts, Attracts, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
     tendsto_cobounded_iff_norm_tendsto_atTop] at z2 ⊢
   apply Filter.tendsto_atTop_mono (iter_large d ‖z‖ z2.le (le_refl _) cz)
@@ -292,7 +293,7 @@ theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) : (
   apply tendsto_pow_atTop_atTop_of_one_lt; linarith
 
 /-- Closed Julia sets are inside radius `max 2 (abs c)` -/
-theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : ‖c‖ ≤ ‖z‖) : ‖z‖ ≤ 2 := by
+public theorem julia_le_two {z : ℂ} (m : (c,↑z) ∉ (superF d).basin) (cz : ‖c‖ ≤ ‖z‖) : ‖z‖ ≤ 2 := by
   contrapose m
   simp only [not_le] at m ⊢
   exact julia_two_lt m cz
@@ -307,12 +308,12 @@ public lemma potential_lt_one_of_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c�
   (superF d).potential_lt_one (julia_two_lt z2 cz)
 
 /-- The Multibrot set is inside radius 2 -/
-theorem multibrot_le_two (m : c ∈ multibrot d) : ‖c‖ ≤ 2 := by
+public theorem multibrot_le_two (m : c ∈ multibrot d) : ‖c‖ ≤ 2 := by
   rw [multibrot_basin' (d := d)] at m
   exact julia_le_two m (le_refl _)
 
 /-- The Multibrot set is a subset of `closedBall 0 2` -/
-theorem multibrot_subset_closedBall : multibrot d ⊆ closedBall 0 2 := by
+public theorem multibrot_subset_closedBall : multibrot d ⊆ closedBall 0 2 := by
   intro c m; simp only [mem_closedBall, Complex.dist_eq, sub_zero]; exact multibrot_le_two m
 
 /-- Points with absolute value `> 2` are not in the Multibrot set -/
@@ -320,7 +321,7 @@ public theorem multibrot_two_lt (a : 2 < ‖c‖) : c ∉ multibrot d := by
   contrapose a; simp only [not_lt] at a ⊢; exact multibrot_le_two a
 
 /-- If the iteration repeats, we're in the Multibrot set -/
-theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c = (f d c)^[b] c) :
+public theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c = (f d c)^[b] c) :
     c ∈ multibrot d := by
   generalize hg : (fun n ↦ (f' d c)^[n] c) = g
   replace hg : ∀ n, (f' d c)^[n] c = g n := fun n ↦ by rw [← hg]
@@ -340,7 +341,7 @@ theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c = (f d
   rw [kl]; exact le_partialSups_of_le (fun k ↦ ‖g k‖) lb
 
 /-- If the iteration hits zero, we're in the Multibrot set -/
-theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multibrot d := by
+public theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multibrot d := by
   have i0 : (f d c)^[0] c = c := by rw [Function.iterate_zero_apply]
   have i1 : (f d c)^[n + 1] c = c := by simp only [Function.iterate_succ_apply', h, f_0]
   exact multibrot_of_repeat (Nat.zero_lt_succ _) (_root_.trans i0 i1.symm)
