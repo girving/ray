@@ -48,7 +48,8 @@ variable {a z : S}
 variable {d n : ℕ}
 
 /-- `f^[n] z` attracts iff `z` does -/
-theorem attracts_shift {f : S → S} {z a : S} (k : ℕ) : Attracts f (f^[k] z) a ↔ Attracts f z a := by
+public theorem attracts_shift {f : S → S} {z a : S} (k : ℕ) :
+    Attracts f (f^[k] z) a ↔ Attracts f z a := by
   simp only [Attracts, ← Function.iterate_add_apply]
   apply @Filter.tendsto_add_atTop_iff_nat _ fun n ↦ f^[n] z
 
