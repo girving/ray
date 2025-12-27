@@ -522,6 +522,11 @@ public theorem potential_continuous : Continuous (potential d) := by
   · exact continuousAt_fill_coe ((Continuous.potential s).comp₂
       continuous_id continuous_coe).continuousAt
 
+@[simp, bound] public lemma potential_le_one {c : 𝕊} : potential d c ≤ 1 := by
+  induction c using OnePoint.rec
+  · simp only [potential, fill_inf, zero_le_one]
+  · simp only [potential, fill_coe, (superF d).potential_le_one]
+
 public theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibrotExt d := by
   set s := superF d
   induction c using OnePoint.rec
@@ -544,6 +549,12 @@ public theorem potential_eq_zero {c : 𝕊} : potential d c = 0 ↔ c = (∞ : �
   induction c using OnePoint.rec
   · simp only [potential, fill_inf]
   · simp only [potential, fill_coe, (superF d).potential_eq_zero_of_onePreimage]
+
+public theorem potential_eq_one {c : ℂ} : potential d c = 1 ↔ c ∈ multibrot d := by
+  contrapose
+  simp only [← multibrotExt_coe, ← potential_lt_one]
+  have le : potential d c ≤ 1 := by bound
+  grind
 
 /-!
 ## Dynamical space bottcher facts
