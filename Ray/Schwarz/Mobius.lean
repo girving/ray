@@ -103,6 +103,17 @@ public lemma bijOn_mobius (w1 : ‖w‖ < 1) : BijOn (mobius w) (ball 0 1) (ball
 @[simp] public lemma mobius_zero : mobius w 0 = w := by simp [mobius]
 @[simp] public lemma mobius_self : mobius w w = 0 := by simp [mobius]
 
+public lemma mobius_eq_zero_iff (w1 : ‖w‖ < 1) (z1 : ‖z‖ < 1) :
+    mobius w z = 0 ↔ w = z := by
+  simp only [mobius, div_eq_zero_iff, sub_eq_zero, or_iff_left_iff_imp]
+  intro e
+  have lt : ‖conj w * z‖ < 1 := by
+    calc ‖conj w * z‖
+      _ = ‖w‖ * ‖z‖ := by simp
+      _ < 1 * 1 := by apply mul_lt_mul' <;> bound
+      _ = 1 := by norm_num
+  simp only [← e, one_mem, CStarRing.norm_of_mem_unitary, lt_self_iff_false] at lt
+
 /-- Convenience lemma to pull a inverse scale out of a Möbius denominator -/
 public lemma mobius_denom_inv_mul (r0 : r ≠ 0) (w z : ℂ) :
     (1 - conj (r⁻¹ * w) * (r⁻¹ * z)) = r⁻¹ ^ 2 * (r ^ 2 - conj w * z) := by

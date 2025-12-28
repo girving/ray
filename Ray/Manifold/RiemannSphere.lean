@@ -97,6 +97,13 @@ public theorem continuousOn_toComplex : ContinuousOn OnePoint.toComplex ({∞}�
   · simp only [mem_compl_iff, mem_singleton_iff, not_true] at m
   · exact continuousAt_toComplex.continuousWithinAt
 
+/-- `toComplex` is injective away from `∞` -/
+public lemma toComplex_inj {z w : 𝕊} (zi : z ≠ (∞ : 𝕊)) (wi : w ≠ (∞ : 𝕊)) :
+    z.toComplex = w.toComplex ↔ z = w := by
+  induction' z using OnePoint.rec
+  all_goals induction' w using OnePoint.rec
+  all_goals simp_all
+
 /-- Inversion in `𝕊`, interchanging `0` and `∞` -/
 public def inv (z : 𝕊) : 𝕊 := if z = 0 then ∞ else ↑z.toComplex⁻¹
 public instance : Inv 𝕊 := ⟨RiemannSphere.inv⟩

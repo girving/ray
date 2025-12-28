@@ -160,6 +160,14 @@ public theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
     rw [← norm_ne_zero_iff, norm_bottcher]
     linarith
 
+public lemma bottcher_inj' : InjOn (bottcher' d) (multibrot d)ᶜ := by
+  intro a am b bm e
+  simp only [mem_compl_iff, ← multibrotExt_coe] at am bm
+  simpa using bottcher_inj (d := d) am bm (by simp [bottcher, e])
+
+public lemma deriv_bottcher_ne_zero (m : c ∉ multibrot d) : deriv (bottcher' d) c ≠ 0 :=
+  bottcher_inj'.deriv_ne_zero isCompact_multibrot.isClosed.isOpen_compl m (bottcher_analytic _ m)
+
 /-!
 ## The external ray map, and `bottcherHomeomorph`
 -/

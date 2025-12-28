@@ -394,7 +394,7 @@ theorem multibrot_eq_le_two :
     rcases(h 3).exists with ⟨n, h⟩; use n; linarith
 
 /-- `multibrot d` is compact -/
-theorem isCompact_multibrot : IsCompact (multibrot d) := by
+public theorem isCompact_multibrot : IsCompact (multibrot d) := by
   refine IsCompact.of_isClosed_subset (isCompact_closedBall _ _) ?_ multibrot_subset_closedBall
   rw [multibrot_eq_le_two]; apply isClosed_iInter; intro n
   refine IsClosed.preimage ?_ Metric.isClosed_closedBall
@@ -480,7 +480,7 @@ theorem bottcher_tendsto_zero : Tendsto (bottcher' d) (cobounded ℂ) (𝓝 0) :
   linarith
 
 /-- `bottcher' d` is analytic outside the Multibrot set -/
-theorem bottcher_analytic : AnalyticOnNhd ℂ (bottcher' d) (multibrot d)ᶜ := by
+public theorem bottcher_analytic : AnalyticOnNhd ℂ (bottcher' d) (multibrot d)ᶜ := by
   set s := superF d
   intro c m
   apply ContMDiffAt.analyticAt I I
