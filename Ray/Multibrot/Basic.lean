@@ -540,7 +540,7 @@ public theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibr
       simp only [multibrotExt_coe] at m
       exact s.bottcher_lt_one (multibrotPost m)
 
-public theorem potential_nonneg {c : 𝕊} : 0 ≤ potential d c := by
+@[simp, bound] public theorem potential_nonneg {c : 𝕊} : 0 ≤ potential d c := by
   induction c using OnePoint.rec
   · simp only [potential, fill_inf, le_refl]
   · simp only [potential, fill_coe]; exact (superF d).potential_nonneg
