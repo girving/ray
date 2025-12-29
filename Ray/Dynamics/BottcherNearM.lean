@@ -139,7 +139,7 @@ theorem Super.fl0 (s : Super f d a) {c : ℂ} : s.fl c 0 = 0 := by
 theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   simp only [Critical, mfderiv_eq_fderiv, Super.fl]
   have p := (s.fla c).along_snd.leading_approx
-  simp only [sub_zero, Algebra.id.smul_eq_mul, Super.fl, s.fd, s.fc, mul_one, uncurry] at p
+  simp only [sub_zero, smul_eq_mul, Super.fl, s.fd, s.fc, mul_one, uncurry] at p
   generalize hg : _root_.fl f a c = g; rw [hg] at p
   have g0 : g 0 = 0 := by rw [← hg]; exact s.fl0
   apply HasFDerivAt.fderiv
@@ -526,7 +526,7 @@ public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
     rw [u, mfderiv_sub, mfderiv_const, sub_zero]
     · exact extChartAt_mderiv_ne_zero a
-    · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt le_top
+    · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt one_ne_zero
     · apply mdifferentiableAt_const
 
 /-- `s.bottcherNear` is invertible near any `(c,a)` -/

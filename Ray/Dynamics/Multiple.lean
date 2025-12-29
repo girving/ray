@@ -67,7 +67,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
   rcases s.superNear with ⟨t, s⟩
   have ba : AnalyticAt ℂ (bottcherNear f d) 0 := bottcherNear_analytic_z s _ s.t0
   have nc : mfderiv I I (bottcherNear f d) 0 ≠ 0 := by
-    rw [mfderiv_eq_fderiv, ← deriv_fderiv, (bottcherNear_monic s).deriv]
+    rw [mfderiv_eq_fderiv, ← toSpanSingleton_deriv, (bottcherNear_monic s).deriv]
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   rcases complex_inverse_fun' (ba.mAnalyticAt I I) nc with ⟨i, ia, ib, bi⟩
   rw [bottcherNear_zero] at bi ia
@@ -79,7 +79,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
     simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false] at d0
     rw [bottcherNear_zero] at d0; exact d0
-    rw [bottcherNear_zero]; exact ia.mdifferentiableAt le_top
+    rw [bottcherNear_zero]; exact ia.mdifferentiableAt (by decide)
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
   refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
   · apply ContMDiffAt.analyticAt I I
@@ -187,19 +187,19 @@ public theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDi
   have dg : mfderiv I I g (extChartAt I c c) = 0 := by
     have fd : MDifferentiableAt I I f ((extChartAt I c).symm (extChartAt I c c)) := by
       rw [PartialEquiv.left_inv]
-      exact fa.mdifferentiableAt le_top
+      exact fa.mdifferentiableAt (by decide)
       apply mem_extChartAt_source
     rw [← hg, ←Function.comp_def, ← Function.comp_def,
-      mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt le_top) _,
+      mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt one_ne_zero) _,
       mfderiv_comp _ fd (((contMDiffOn_extChartAt_symm _).contMDiffAt
-      (extChartAt_target_mem_nhds' _)).mdifferentiableAt le_top),
+      (extChartAt_target_mem_nhds' _)).mdifferentiableAt one_ne_zero),
       PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
     · apply mem_extChartAt_source
     · apply mem_extChartAt_target
     · simp
     · exact MDifferentiableAt.comp _ fd
         (((contMDiffOn_extChartAt_symm _).contMDiffAt
-        (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).mdifferentiableAt le_top)
+        (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).mdifferentiableAt one_ne_zero)
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
   have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
   rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'

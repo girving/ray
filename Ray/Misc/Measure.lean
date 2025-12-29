@@ -235,7 +235,7 @@ public theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolu
     (lv : LocalVolumeSet s) (fc : ContinuousOn f s) (fi : IntegrableOn f s) (lo : b ≤ ⨍ x in s, f x)
     (hi : ∀ x, x ∈ s → f x ≤ b) : ∀ x, x ∈ s → f x = b := by
   contrapose lo; rw [average_eq]
-  simp only [Algebra.id.smul_eq_mul, not_le]
+  simp only [smul_eq_mul, not_le]
   simp only [not_forall] at lo
   rcases lo with ⟨x, xs, fx'⟩
   have fx := lt_of_le_of_ne (hi x xs) fx'; clear fx'

@@ -179,8 +179,8 @@ public theorem extChartAt_mderiv_left_inverse [I.Boundaryless] {x y : M}
       ContinuousLinearMap.id 𝕜 (TangentSpace I y) := by
   have m' : extChartAt I x y ∈ (extChartAt I x).target := PartialEquiv.map_source _ m
   have mc : y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m
-  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m').mdifferentiableWithinAt le_top
-  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
+  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m').mdifferentiableWithinAt (by decide)
+  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt (by decide)
   replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' m')
   simp only [mdifferentiableWithinAt_univ] at d1
   have c := mfderiv_comp y d0 d1
@@ -200,8 +200,8 @@ public theorem extChartAt_mderiv_right_inverse [I.Boundaryless] {x : M} {y : E}
       ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) y) := by
   have m' : (extChartAt I x).symm y ∈ (extChartAt I x).source := PartialEquiv.map_target _ m
   have mc : (extChartAt I x).symm y ∈ (chartAt A x).source := by simpa only [mfld_simps] using m'
-  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m).mdifferentiableWithinAt le_top
-  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt le_top
+  have d0 := (contMDiffOn_extChartAt_symm (n := ⊤) _ _ m).mdifferentiableWithinAt (by decide)
+  have d1 := (contMDiffAt_extChartAt' (I := I) (n := ⊤) mc).mdifferentiableWithinAt (by decide)
   replace d0 := d0.mdifferentiableAt (extChartAt_target_mem_nhds' m)
   simp only [mdifferentiableWithinAt_univ] at d1
   have c := mfderiv_comp y d1 d0

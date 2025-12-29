@@ -197,8 +197,8 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
   replace x0 : mfderiv I I (fun y ↦ s.bottcherNearIter n c (r c y)) x = 0 := by
     rw [←Function.comp_def,
       mfderiv_comp x
-        ((s.bottcherNearIter_mAnalytic e.self_of_nhds.near).along_snd.mdifferentiableAt le_top)
-        (e.self_of_nhds.holo.along_snd.mdifferentiableAt le_top),
+        ((s.bottcherNearIter_mAnalytic e.self_of_nhds.near).along_snd.mdifferentiableAt (by decide))
+        (e.self_of_nhds.holo.along_snd.mdifferentiableAt (by decide)),
       x0, ContinuousLinearMap.zero_comp]
   have loc : (fun y ↦ s.bottcherNearIter n c (r c y)) =ᶠ[𝓝 x] fun y ↦ y ^ d ^ n :=
     ((continuousAt_const.prodMk continuousAt_id).eventually e).mp

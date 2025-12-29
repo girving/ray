@@ -171,9 +171,9 @@ theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
   contrapose h
   have hb : MDifferentiableAt I I (s.bottcherNear c) (s.ray c 0) := by
     rw [s.ray_zero]
-    exact (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd.mdifferentiableAt le_top
+    exact (s.bottcherNear_mAnalytic' (s.mem_near c)).along_snd.mdifferentiableAt (by decide)
   have hr : MDifferentiableAt I I (s.ray c) 0 :=
-    (s.ray_mAnalytic (s.mem_ext c)).along_snd.mdifferentiableAt le_top
+    (s.ray_mAnalytic (s.mem_ext c)).along_snd.mdifferentiableAt (by decide)
   rw [mfderiv_comp 0 hb hr, h, ContinuousLinearMap.comp_zero]
 
 -- `s.ray` is noncritical everywhere in `s.ext`
@@ -194,8 +194,8 @@ public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (
       mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
     exact d.1
   have d := mfderiv_comp x
-      ((s.bottcherNearIter_mAnalytic (s.ray_near post)).along_snd.mdifferentiableAt le_top)
-      ((s.ray_mAnalytic post).along_snd.mdifferentiableAt le_top)
+      ((s.bottcherNearIter_mAnalytic (s.ray_near post)).along_snd.mdifferentiableAt (by decide))
+      ((s.ray_mAnalytic post).along_snd.mdifferentiableAt (by decide))
   simp only [Function.comp_def, n] at d h
   simp only [d, Ne, mderiv_comp_eq_zero_iff, not_or] at h
   exact h.2

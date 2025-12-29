@@ -139,12 +139,7 @@ lemma hasFDerivAt_arg {z : ℂ} (m : z ∈ slitPlane) :
 public lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p' t)
     (m : p t ∈ slitPlane) : HasDerivAt (fun t ↦ arg (p t)) ((p t)⁻¹ * p').im t := by
   convert ((hasFDerivAt_arg m).comp t h.hasFDerivAt).hasDerivAt
-  simp only [ContinuousLinearMap.comp, Complex.imCLM_coe, ContinuousLinearMap.coe_mk',
-    LinearMap.coe_comp, Complex.imLm_coe, Function.comp_apply]
-  apply congr_arg
-  apply congr_arg
-  convert ContinuousLinearMap.smulRight_apply.symm
-  simp only [ContinuousLinearMap.one_apply, one_smul]
+  simp
 
 /-!
 ### Determinants of complex derivatives
@@ -159,6 +154,5 @@ public lemma Complex.fderiv_det {f : ℂ → ℂ} {z : ℂ} (df : Differentiable
   have d1 := df.hasDerivAt.hasFDerivAt.restrictScalars ℝ
   have d2 := (df.restrictScalars ℝ).hasFDerivAt
   rw [d2.unique d1]
-  simp only [ContinuousLinearMap.det, ContinuousLinearMap.coe_restrictScalars, Complex.algebra_norm,
-    LinearMap.det_restrictScalars, LinearMap.det_ring, ContinuousLinearMap.coe_coe,
-    ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, smul_eq_mul, one_mul]
+  simp [ContinuousLinearMap.det, ContinuousLinearMap.coe_restrictScalars, Complex.algebra_norm,
+    LinearMap.det_restrictScalars, LinearMap.det_ring, smul_eq_mul, one_mul]

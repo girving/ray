@@ -324,7 +324,7 @@ public theorem bottcher_approx_z (d : ℕ) [Fact (2 ≤ d)] (z4 : 4 ≤ ‖z‖)
     have pow : ∀ k : Fin 122, x ^ (k + 1 : ℕ) ≤ 4⁻¹ ^ (k : ℕ) * x := by
       intro k; simp only [pow_succ]; bound
     simp only [inv_pow, Fin.forall_iff_castSucc, Fin.reduceLast, Fin.coe_ofNat_eq_mod, Nat.mod_succ,
-      Nat.reduceAdd, Fin.coe_castSucc, pow_one, Fin.val_eq_zero, zero_add, pow_zero, inv_one,
+      Nat.reduceAdd, Fin.val_castSucc, pow_one, Fin.val_eq_zero, zero_add, pow_zero, inv_one,
       one_mul, le_refl, implies_true, and_true] at pow
     ring_nf
     linarith
@@ -356,7 +356,7 @@ public theorem bottcher_approx_z_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 ≤ ‖
     have pow : ∀ k : Fin 122, x ^ (k + 1 : ℕ) ≤ 4⁻¹ ^ (k : ℕ) * x := by
       intro k; simp only [pow_succ]; bound
     simp only [inv_pow, Fin.forall_iff_castSucc, Fin.reduceLast, Fin.coe_ofNat_eq_mod, Nat.mod_succ,
-      Nat.reduceAdd, Fin.coe_castSucc, pow_one, Fin.val_eq_zero, zero_add, pow_zero, inv_one,
+      Nat.reduceAdd, Fin.val_castSucc, pow_one, Fin.val_eq_zero, zero_add, pow_zero, inv_one,
       one_mul, le_refl, implies_true, and_true] at pow
     ring_nf
     linarith
@@ -387,8 +387,7 @@ public theorem potential_approx_strong_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 �
 public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
   rw [HasDerivAt, HasDerivAtFilter, bottcher_inv_def, bottcher, hasFDerivAtFilter_iff_isLittleO,
     coe_zero, inv_zero', fill_inf]
-  simp only [sub_zero, ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
-    smul_eq_mul, mul_one]
+  simp only [sub_zero, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
   rw [Asymptotics.isLittleO_iff]
   intro k k0; rw [Metric.eventually_nhds_iff]
   refine ⟨min 16⁻¹ (k / 16), by bound, ?_⟩; intro z le
@@ -409,7 +408,7 @@ public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
 
 /-- bottcher is nonsingular at `∞` -/
 public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
-  simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt le_top, if_pos,
+  simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt (by decide), if_pos,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp_def,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
     RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
@@ -417,6 +416,6 @@ public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [← bottcher_inv_def, bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
   rw [Ne, ContinuousLinearMap.ext_iff, not_forall]; use 1
-  simp only [ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply,
-    Algebra.id.smul_eq_mul, mul_one]
-  convert one_ne_zero; exact NeZero.one
+  simp only [ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
+  convert one_ne_zero
+  exact NeZero.one

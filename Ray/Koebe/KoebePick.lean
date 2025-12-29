@@ -33,9 +33,10 @@ public theorem koebe_pick (fa : ContDiffOn ℂ ω f (ball 0 1)) (inj : InjOn f (
     simp only [g]
     rw [deriv_comp]
     · simp only [mobius_zero, deriv_mobius_zero c1]
-    · exact (fa.contDiffAt (mobius_zero ▸ isOpen_ball.mem_nhds (by simpa))).differentiableAt le_top
+    · exact (fa.contDiffAt (mobius_zero ▸ isOpen_ball.mem_nhds (by simpa))).differentiableAt
+        (by decide)
     · exact ((contDiffOn_mobius c1).contDiffAt (isOpen_ball.mem_nhds (by simp))).differentiableAt
-        le_top
+        one_ne_zero
   have k := koebe_quarter (f := g) (ga.analyticOnNhd isOpen_ball) gi
   have e1 : ‖(‖c‖ ^ 2 - 1 : ℂ)‖ = 1 - ‖c‖ ^ 2 := by
     norm_cast

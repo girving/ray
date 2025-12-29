@@ -118,10 +118,11 @@ public lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ 
 public lemma cascade_approx : (fun z ↦ cascade d n z - 1) =O[𝓝 0] (fun z : ℂ ↦ z ^ d ^ n) := by
   by_cases n0 : n = 0
   · simpa only [n0, pow_zero, pow_one, cascade_z0, sub_zero] using
-      ((cascade_analytic (d := d) (n := 0) (z := 0) (by simp)).differentiableAt le_top).isBigO_sub
+      ((cascade_analytic (d := d) (n := 0) (z := 0) (by simp)).differentiableAt
+      (by decide)).isBigO_sub
   set s := superF d
   have cz := Asymptotics.isLittleO_iff.mp (hasDerivAt_iff_isLittleO_nhds_zero.mp
-    ((inv_ray_analytic (d := d) (z := 0) (by simp)).differentiableAt le_top).hasDerivAt)
+    ((inv_ray_analytic (d := d) (z := 0) (by simp)).differentiableAt (by decide)).hasDerivAt)
     (c := 2⁻¹) (by norm_num)
   simp only [inv_ray_zero, sub_zero, zero_add, deriv_inv_ray_zero, smul_eq_mul, mul_one] at cz
   simp only [cascade]

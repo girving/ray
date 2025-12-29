@@ -85,7 +85,7 @@ public theorem finset_norm_sum_le (N : Finset ℕ) (f : ℕ → G) :
     rw [Finset.sum_insert Nn]
     trans ‖f n‖ + ‖N.sum fun n ↦ f n‖
     · apply norm_add_le
-    · apply add_le_add_left; assumption
+    · apply add_le_add_right; assumption
 
 public theorem subset_union_sdiff (A B : Finset ℕ) : B ⊆ A ∪ B \ A := by
   rw [Finset.subset_iff]; intro x Bx

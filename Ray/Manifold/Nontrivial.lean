@@ -160,7 +160,7 @@ theorem NontrivialAnalyticOn.const (n : NontrivialAnalyticOn f s) {p : X → ℂ
   have disc : DiscreteTopology (↥(s ∩ f ⁻¹' {b})) := n.discreteTopology b
   rcases p1 with ⟨z, zt, z1⟩; simp only [← z1]
   intro x xt
-  refine @IsPreconnected.constant_of_mapsTo _ _ _ tc _ _ _ disc _ pc ?_ _ _ xt zt
+  refine @IsPreconnected.constant_of_mapsTo _ _ _ tc _ _ _ disc.isDiscrete _ pc ?_ _ _ xt zt
   intro y yt; simp only [Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff]
   use ps yt, fp _ yt
 

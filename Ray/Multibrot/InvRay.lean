@@ -49,7 +49,7 @@ public lemma bottcher_inv_inv_ray (m : z ∈ ball (0 : ℂ) 1) : bottcher_inv d 
 /-- `ray` is monic at `0 ↦ ∞` -/
 public lemma ray_hasDerivAt_one : HasDerivAt (inv_ray d) 1 0 := by
   have m : 0 ∈ ball (0 : ℂ) 1 := by simp
-  have dr : DifferentiableAt ℂ (inv_ray d) 0 := (inv_ray_analytic m).differentiableAt le_top
+  have dr : DifferentiableAt ℂ (inv_ray d) 0 := (inv_ray_analytic m).differentiableAt (by decide)
   have dc : HasDerivAt (fun z ↦ bottcher_inv d (inv_ray d z)) 1 0 := by
     apply (hasDerivAt_id _).congr_of_eventuallyEq
     filter_upwards [isOpen_ball.eventually_mem m] with z m

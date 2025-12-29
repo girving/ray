@@ -389,7 +389,7 @@ theorem SubharmonicOn.maximum_principle_ball {f : ℂ → ℝ} {c : ℂ} {r : �
       have e'p : e' > 0 := by rw [←he']; exact lt_min (half_pos ep) (by linarith)
       have teu : t + e' ≤ u := by
         rw [← he']; trans t + (u - t)
-        · exact add_le_add_left (min_le_right _ _) _
+        · exact add_le_add_right (min_le_right _ _) _
         · simp only [add_sub_cancel, le_refl]
       have e's : e' < e := by rw [← he']; exact lt_of_le_of_lt (min_le_left _ _) (half_lt_self ep)
       specialize lo e' e'p e's
@@ -452,7 +452,7 @@ omit [CompleteSpace E] in
 /-- Uniform limits of harmonic functions are harmonic -/
 theorem uniform_harmonic_lim [SecondCountableTopology E] {f : ℕ → ℂ → E} {g : ℂ → E} {s : Set ℂ}
     (h : ∀ n, HarmonicOn (f n) s) (u : TendstoUniformlyOn f g atTop s) : HarmonicOn g s :=
-  { cont := u.continuousOn (Filter.Eventually.of_forall fun n ↦ (h n).cont)
+  { cont := u.continuousOn (Filter.Eventually.of_forall fun n ↦ (h n).cont).frequently
     mean := by
       intro c r rp cs
       have m := fun n ↦ (h n).mean c r rp cs
@@ -652,8 +652,7 @@ theorem fourierExtend {f : C(Real.Angle, ℂ)} (rp : r > 0)
     exact
       { gh := xh.const_mul _
         b := by
-          simp only [xb, ContinuousMap.coe_smul, Pi.smul_apply, Algebra.id.smul_eq_mul,
-            forall_const] }
+          simp only [xb, ContinuousMap.coe_smul, Pi.smul_apply, smul_eq_mul, forall_const] }
 
 /-- All continuous functions on the circle extend to harmonic functions on the disk -/
 theorem continuousExtend (f : C(Real.Angle, ℂ)) (c : ℂ) (rp : r > 0) : Extendable f c r := by
@@ -782,7 +781,7 @@ theorem SubharmonicOn.submean_disk {f : ℂ → ℝ} {c : ℂ} {r : ℝ}
   have im := integral_mono_ae ?_ ?_ m
   · generalize hi : ∫ s in Ioc 0 r, s • ∫ t in Ioc 0 (2 * π), f (circleMap c s t) = i
     rw [hi] at im; clear hi m
-    simp only [← intervalIntegral.integral_of_le rp.le, Algebra.id.smul_eq_mul,
+    simp only [← intervalIntegral.integral_of_le rp.le, smul_eq_mul,
       intervalIntegral.integral_mul_const] at im
     rw [intervalIntegral.integral_const_mul] at im
     simp only [integral_id] at im
@@ -1046,7 +1045,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   simp only [lintegral_const, Measure.restrict_apply, MeasurableSet.univ, Set.univ_inter] at im
   have vec : e * volume (closedBall z r1) < c * volume (closedBall z r1) :=
     haveI n := NiceVolume.closedBall z r1p
-    (ENNReal.mul_lt_mul_right n.ne_zero n.ne_top).mpr ec
+    (ENNReal.mul_lt_mul_iff_left n.ne_zero n.ne_top).mpr ec
   have fatou := le_liminf.simple.mp (_root_.trans im fatou') (e * volume (closedBall z r1)) vec
   rw [Complex.volume_closedBall, NNReal.pi_eq_ofReal_pi, ←ENNReal.ofReal_pow r1p.le,
     ←ENNReal.ofReal_mul' Real.pi_nonneg, mul_comm _ π] at fatou

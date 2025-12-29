@@ -218,8 +218,8 @@ public theorem critical_iter {f : S → S} {n : ℕ} {z : S} (fa : ContMDiff I I
       ContinuousLinearMap.norm_id] at c
     norm_num at c
   · rw [Function.iterate_succ', Critical,
-      mfderiv_comp z ((fa _).mdifferentiableAt (OrderTop.le_top _))
-       ((fa.iterate _ _).mdifferentiableAt (OrderTop.le_top _)),
+      mfderiv_comp z ((fa _).mdifferentiableAt (by decide))
+       ((fa.iterate _ _).mdifferentiableAt (by decide)),
       mderiv_comp_eq_zero_iff] at c
     cases' c with c c; use n, c; exact h c
 
@@ -262,12 +262,12 @@ public theorem mfderiv_eq_zero_iff_deriv_eq_zero {f : ℂ → ℂ} {z : ℂ} :
     · have h := d.mdifferentiableAt.hasMFDerivAt; intro e; rw [e] at h
       have p := h.hasFDerivAt.hasDerivAt
       simp only at p; exact p.deriv
-    · have h := d.hasDerivAt; intro e; rw [e] at h
-      have s0 : (1 : ℂ →L[ℂ] ℂ).smulRight (0 : ℂ) = 0 := by
-        apply ContinuousLinearMap.ext
-        simp only [ContinuousLinearMap.smulRight_apply, Algebra.id.smul_eq_mul,
-          MulZeroClass.mul_zero, ContinuousLinearMap.zero_apply, forall_const]
-      have p := h.hasFDerivAt.hasMFDerivAt; rw [s0] at p; exact p.mfderiv
+    · have h := d.hasDerivAt
+      intro e
+      rw [e] at h
+      have p := h.hasFDerivAt.hasMFDerivAt
+      simp only [ContinuousLinearMap.toSpanSingleton_zero] at p
+      exact p.mfderiv
   · have d' : ¬MDifferentiableAt I I f z := by
       contrapose d; exact d.differentiableAt
     simp only [deriv_zero_of_not_differentiableAt d, mfderiv_zero_of_not_mdifferentiableAt d']
@@ -321,10 +321,11 @@ public theorem inChart_critical {f : ℂ → S → T} {c : ℂ} {z : S}
       (extChartAt_target_mem_nhds' m'))
       (PartialEquiv.right_inv _ m)
   have ce : inChart f c z e = extChartAt I (f c z) ∘ f e ∘ (extChartAt I z).symm := rfl
-  rw [ce, mfderiv_comp_of_eq (cd.mdifferentiableAt le_top) (fd.mdifferentiableAt le_top) ?blah,
-    mfderiv_comp_of_eq (fa.along_snd.mdifferentiableAt le_top)
+  rw [ce,
+    mfderiv_comp_of_eq (cd.mdifferentiableAt (by decide)) (fd.mdifferentiableAt (by decide)) _,
+    mfderiv_comp_of_eq (fa.along_snd.mdifferentiableAt (by decide))
       (((contMDiffOn_extChartAt_symm _).contMDiffAt
-        (extChartAt_target_mem_nhds' m')).mdifferentiableAt le_top)]
+        (extChartAt_target_mem_nhds' m')).mdifferentiableAt WithTop.top_ne_zero)]
   · simp only [mderiv_comp_eq_zero_iff, Function.comp]
     rw [(extChartAt I z).left_inv m]
     simp only [extChartAt_mderiv_ne_zero' fm, false_or]

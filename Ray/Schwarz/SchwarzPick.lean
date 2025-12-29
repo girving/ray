@@ -60,7 +60,7 @@ lemma ContDiffOn.norm_le_norm_of_mapsTo_closedBall (fa : ContDiffOn ℂ ω f (ba
   · have w0 := f0 ▸ c 0 (by simp [r0])
     rw [c _ (by simp [zr]), ← w0, norm_zero]
     bound
-  · exact Complex.norm_le_norm_of_mapsTo_ball_self (fa.differentiableOn le_top) m f0 zr
+  · exact Complex.norm_le_norm_of_mapsTo_ball_self (fa.differentiableOn (by decide)) m f0 zr
 
 /-!
 ### Unit ball versions
@@ -85,7 +85,7 @@ public lemma ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball (fa : ContDiffOn 
   have u1 : ‖u‖ < 1 := norm_mobius_lt_one z1 w1
   simpa only [g, Function.comp_apply, mobius_def (f z), u, mobius_mobius z1 w1, norm_div,
     div_le_iff₀ (norm_mobius_denom_pos fz1 fw1), mul_comm ‖mobius _ _‖] using
-    Complex.norm_le_norm_of_mapsTo_ball_self (ga.differentiableOn le_top) gm g0 u1
+    Complex.norm_le_norm_of_mapsTo_ball_self (ga.differentiableOn (by decide)) gm g0 u1
 
 /-- Derivative version of Schwarz-Pick for the unit disk -/
 public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
@@ -100,7 +100,7 @@ public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn �
       exact c w w1
   have zm : z ∈ ball 0 1 := by simpa using z1
   have fz1 : ‖f z‖ < 1 := by simpa using fi' (x := z) (by simpa)
-  have df := (fa.differentiableOn le_top).differentiableAt (x := z) (isOpen_ball.mem_nhds zm)
+  have df := (fa.differentiableOn (by decide)).differentiableAt (x := z) (isOpen_ball.mem_nhds zm)
   have s : ∀ᶠ w in 𝓝[≠] z, ‖slope f z w‖ - ‖1 - conj (f z) * f w‖ / ‖1 - conj z * w‖ ≤ 0 := by
     simp only [eventually_nhdsWithin_iff, mem_compl_iff, mem_singleton_iff]
     filter_upwards [isOpen_ball.eventually_mem zm] with w w1 wz

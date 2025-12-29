@@ -173,17 +173,17 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
   · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ ContinuousLinearMap.zero_apply _
-    simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt le_top, if_pos,
-      ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ, writtenInExtChartAt_coe_f,
-      RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply, toComplex_coe, coe_eq_zero,
-      coe_eq_inf_iff, or_false, ← deriv_fderiv, deriv_f', ContinuousLinearMap.ext_iff, zx,
-      ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.one_apply, Algebra.id.smul_eq_mul,
-      mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or, pow_eq_zero_iff (d_minus_one_pos d).ne']
+    simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
+      if_pos, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
+      writtenInExtChartAt_coe_f, RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply,
+      toComplex_coe, coe_eq_zero, coe_eq_inf_iff, or_false, ← toSpanSingleton_deriv, deriv_f',
+      ContinuousLinearMap.ext_iff, zx, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul,
+      mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, ne_eq, (d_minus_one_pos _).ne', not_false_eq_true,
+      pow_eq_zero_iff, false_or]
     constructor
     · intro h
       specialize h 1
-      simp only [one_ne_zero, false_or] at h
-      exact h
+      simpa only [one_ne_zero, false_or] using h
     · exact fun h x ↦ Or.inr h
 
 /-- The multibrot set is all `c`'s s.t. `0` doesn't reach `∞` -/

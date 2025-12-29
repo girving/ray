@@ -65,7 +65,7 @@ public theorem contDiffAt_iff_analytic_at2 {E : Type} {f : ℂ × ℂ → E} {x 
     rcases d.contDiffOn (m := 1) (by simpa) (by simp) with ⟨u, un, d⟩
     rcases mem_nhds_iff.mp un with ⟨v, uv, vo, vx⟩
     refine (differentiable_iff_analytic2 vo).mp ?_ _ vx
-    exact (d.mono uv).differentiableOn (le_refl _)
+    exact (d.mono uv).differentiableOn (by decide)
   · intro a; exact a.contDiffAt.of_le le_top
 
 /-- If `f` is analytic in an open ball, it has a power series over that ball -/

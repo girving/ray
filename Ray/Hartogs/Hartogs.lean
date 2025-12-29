@@ -13,6 +13,7 @@ import Ray.Analytic.Analytic
 import Ray.Hartogs.MaxLog
 import Ray.Hartogs.Osgood
 import Ray.Hartogs.Subharmonic
+import Ray.Misc.Bound
 import Ray.Misc.Bounds
 import Ray.Misc.Max
 import Ray.Misc.Multilinear
@@ -612,7 +613,7 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
       simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, s] at xs z1s ⊢
       calc dist x c1
         _ ≤ dist x z1 + dist z1 c1 := by bound
-        _ < s' + dist z1 c1 := (add_lt_add_right xs.right _)
+        _ < s' + dist z1 c1 := (add_lt_add_left xs.right _)
         _ = r1 - dist z1 c1 + dist z1 c1 := rfl
         _ = r1 := by ring_nf
     use EMetric.ball z1 s

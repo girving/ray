@@ -84,7 +84,7 @@ theorem g0 {f : ℂ → ℂ} {d : ℕ} : g f d 0 = 1 := by simp only [g, if_true
 /-- Asymptotic bound on `f` based on the order `d` zero -/
 theorem SuperAt.approx (s : SuperAt f d) : (fun z ↦ f z - z ^ d) =o[𝓝 0] fun z ↦ z ^ d := by
   have a := s.fa0.leading_approx
-  simp only [s.fd, s.fc, sub_zero, Algebra.id.smul_eq_mul, mul_one] at a
+  simp only [s.fd, s.fc, sub_zero, smul_eq_mul, mul_one] at a
   exact a
 
 /-- `f 0 = 0` -/

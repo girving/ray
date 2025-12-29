@@ -69,11 +69,11 @@ public lemma pray_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (pr
     apply Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
     · simp only [z0, eventually_nhdsWithin_iff, mem_compl_iff, mem_singleton_iff, ← ne_eq]
       filter_upwards [isOpen_ball.eventually_mem (by simp : 0 ∈ ball (0 : ℂ) 1)] with w m wz
-      exact (pa w m wz).differentiableAt le_top
+      exact (pa w m wz).differentiableAt (by decide)
     · unfold pray
       refine ContinuousAt.inv₀ ?_ (pray_dslope_ne_zero m)
       simp only [z0, continuousAt_dslope_same]
-      exact (inv_ray_analytic (by simp)).differentiableAt le_top
+      exact (inv_ray_analytic (by simp)).differentiableAt (by decide)
   · exact pa z m z0
 
 public lemma pray_analyticOnNhd : AnalyticOnNhd ℂ (pray d) (ball 0 1) := by

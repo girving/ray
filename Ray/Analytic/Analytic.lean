@@ -325,7 +325,7 @@ public theorem AnalyticAt.deriv2 [CompleteSpace 𝕜] {f : E → 𝕜 → 𝕜} 
   set p : (E × 𝕜 →L[𝕜] 𝕜) →L[𝕜] 𝕜 := ContinuousLinearMap.apply 𝕜 𝕜 (0, 1)
   have e : ∀ᶠ x : E × 𝕜 in 𝓝 c, _root_.deriv (f x.1) x.2 = p (_root_.fderiv 𝕜 (uncurry f) x) := by
     refine fa.eventually_analyticAt.mp (.of_forall ?_)
-    intro ⟨x, y⟩ fa; simp only [← fderiv_deriv]
+    intro ⟨x, y⟩ fa; simp only [← fderiv_apply_one_eq_deriv]
     have e : f x = uncurry f ∘ fun y ↦ (x, y) := rfl
     rw [e]; rw [fderiv_comp]
     have pd : _root_.fderiv 𝕜 (fun y : 𝕜 ↦ (x, y)) y = ContinuousLinearMap.inr 𝕜 E 𝕜 := by

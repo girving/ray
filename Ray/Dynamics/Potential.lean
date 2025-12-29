@@ -205,7 +205,7 @@ theorem UpperSemicontinuous.potential (s : Super f d a) :
   intro ⟨c, z⟩
   by_cases r : (c, z) ∈ s.basin
   · exact (ContinuousAt.potential_of_reaches s r).upperSemicontinuousAt
-  · simp only [uncurry, UpperSemicontinuousAt, s.potential_eq_one r]
+  · simp only [uncurry, SemicontinuousAt, s.potential_eq_one r]
     exact fun y y1 ↦ .of_forall fun p ↦ lt_of_le_of_lt s.potential_le_one y1
 
 theorem Super.preimage_eq' (s : Super f d a) [o : OnePreimage s] : f c z = a ↔ z = a := by

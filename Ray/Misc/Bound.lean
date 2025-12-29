@@ -24,6 +24,10 @@ attribute [bound] norm_add_le mul_lt_of_lt_one_left Complex.normSq_nonneg norm_i
 
 @[bound] public alias ⟨_, Bound.sq_le_one₀⟩ := sq_le_one_iff₀
 
+-- These are declared as `private alias` in Mathlib, but they need to be public aliases
+@[bound] public alias ⟨_, Bound.ofReal_pos_of_pos⟩ := ENNReal.ofReal_pos
+@[bound] public alias ⟨_, Bound.one_lt_exp_of_pos⟩ := Real.one_lt_exp_iff
+
 @[bound] public lemma Bound.lt_mul_of_one_lt_left [MulOneClass α] [Zero α] {a b : α} [Preorder α]
     [MulPosStrictMono α] [MulPosReflectLT α] (a0 : 0 < a) (b1 : 1 < b) : a < b * a :=
   (lt_mul_iff_one_lt_left a0).mpr b1

@@ -131,7 +131,7 @@ theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by
     add_zero, ne_eq, one_ne_zero, not_false_eq_true]
 
 theorem fl_f' : fl (f d) ∞ = fun c z : ℂ ↦ (z - 0) ^ d • gl d c z := by
-  funext c z; simp only [fl_f, gl, sub_zero, Algebra.id.smul_eq_mul, div_eq_mul_inv]
+  funext c z; simp only [fl_f, gl, sub_zero, smul_eq_mul, div_eq_mul_inv]
 
 theorem gl_zero : gl d c 0 = 1 := by
   simp only [gl, zero_pow (d_ne_zero _), MulZeroClass.mul_zero]; norm_num

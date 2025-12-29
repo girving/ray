@@ -378,7 +378,7 @@ lemma iter_error_le_of_z3 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z3 : 3 ≤ ‖
     b11 (le_trans (by norm_num) b33) (by positivity) ?_ ?_ z3 cz
   · exact sub_pos.mpr (inv_lt_one_of_one_lt₀ (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
-    exact le_trans (add_le_add (add_le_add_left
+    exact le_trans (add_le_add (add_le_add_right
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b10)) (by norm_num)
 
@@ -415,7 +415,7 @@ public lemma iter_error_le_of_z4 (d : ℕ) [Fact (2 ≤ d)] {c z : ℂ} (z4 : 4 
     (le_trans (by norm_num) b11) (le_trans (by norm_num) b33) (by positivity) ?_ ?_ z4 cz
   · exact sub_pos.mpr (inv_lt_one_of_one_lt₀ (by linarith))
   · simp only [hb2, hb3, hb11, hb33] at b2 b3 b6 b11 b33 ⊢
-    exact le_trans (add_le_add (add_le_add_left
+    exact le_trans (add_le_add (add_le_add_right
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b2) _)
       (div_le_div_of_nonneg_left (by norm_num) (by norm_num) b10)) (by norm_num)
 

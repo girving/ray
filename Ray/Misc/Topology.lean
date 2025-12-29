@@ -11,7 +11,6 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
-import Mathlib.Topology.Semicontinuous
 
 /-!
 ## Various topology lemmas
