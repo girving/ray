@@ -14,7 +14,7 @@ attribute [bound] norm_add_le mul_lt_of_lt_one_left Complex.normSq_nonneg norm_i
   Units.norm_pos Real.cosh_pos norm_sub_norm_le neg_le_self Finset.norm_prod_le Real.one_le_exp
   Real.toNNReal_le_toNNReal mul_le_of_le_one_left sub_le_self sub_lt_self Finset.prod_nonneg
   pow_le_of_le_one mul_lt_of_lt_one_right Real.lt_sqrt_of_sq_lt Real.le_sqrt_of_sq_le
-  le_mul_of_one_le_left
+  le_mul_of_one_le_left Real.sqrt_nonneg
 
 @[bound] public alias ⟨_, Bound.neg_pos⟩ := neg_pos
 
