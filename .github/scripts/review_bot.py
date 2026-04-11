@@ -7,7 +7,6 @@ import os
 import re
 import shlex
 import subprocess
-import sys
 import tempfile
 import textwrap
 import urllib.error
@@ -25,9 +24,12 @@ COMMAND_RE = re.compile(r"^/review(?:\s+(?P<body>.*))?$", re.DOTALL)
 HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(?P<start>\d+)(?:,(?P<count>\d+))? @@")
 
 
+class ReviewBotError(RuntimeError):
+    pass
+
+
 def fail(message: str) -> None:
-    print(message, file=sys.stderr)
-    raise SystemExit(1)
+    raise ReviewBotError(message)
 
 
 class GitHubClient:
@@ -442,6 +444,13 @@ def validate_and_format_comments(
     return formatted
 
 
+def sanitize_failure_detail(detail: str, limit: int = 3500) -> str:
+    clean_detail = detail.strip().replace("```", "'''")
+    if len(clean_detail) <= limit:
+        return clean_detail
+    return f"{clean_detail[:limit].rstrip()}\n...[truncated]"
+
+
 def main() -> None:
     repository = os.environ["GITHUB_REPOSITORY"]
     github_token = os.environ["GITHUB_TOKEN"]
@@ -455,106 +464,119 @@ def main() -> None:
     commenter = event["comment"]["user"]["login"]
 
     github = GitHubClient(github_token, repository)
-    pr = github.get_pull_request(pull_number)
+    try:
+        pr = github.get_pull_request(pull_number)
 
-    if pr["head"]["repo"]["full_name"] != repository:
-        github.create_issue_comment(
-            pull_number,
-            "出于安全原因，这个 review bot 目前只对同仓库分支的 PR 运行。"
-            " 外部 fork 的 PR 不会启动 `lean_lsp` / Codex review。",
-        )
-        return
-
-    review_scope, path_filters = parse_command(comment_body)
-    pr_files = github.list_pull_request_files(pull_number)
-    if review_scope == "file":
-        if not path_filters:
+        if pr["head"]["repo"]["full_name"] != repository:
             github.create_issue_comment(
                 pull_number,
-                "file mode 需要显式指定路径。用法：`/review Ray/Misc/Real.lean --scope=file`。",
+                "出于安全原因，这个 review bot 目前只对同仓库分支的 PR 运行。"
+                " 外部 fork 的 PR 不会启动 `lean_lsp` / Codex review。",
             )
             return
-        selected_files = select_file_scope_targets(
-            pr_files=pr_files,
-            review_target_dir=review_target_dir,
-            path_filters=path_filters,
-        )
-    else:
-        selected_files = select_files(pr_files, path_filters)
 
-    if not selected_files:
-        suffix = ""
-        if path_filters:
-            suffix = f"（当前过滤条件：`{' '.join(path_filters)}`）"
+        review_scope, path_filters = parse_command(comment_body)
+        pr_files = github.list_pull_request_files(pull_number)
         if review_scope == "file":
-            message = (
-                "没有找到匹配的 `.lean` 文件"
-                f"{suffix}。可用法：`/review Ray/Foo.lean --scope=file`。"
+            if not path_filters:
+                github.create_issue_comment(
+                    pull_number,
+                    "file mode 需要显式指定路径。用法：`/review Ray/Misc/Real.lean --scope=file`。",
+                )
+                return
+            selected_files = select_file_scope_targets(
+                pr_files=pr_files,
+                review_target_dir=review_target_dir,
+                path_filters=path_filters,
             )
         else:
-            message = (
-                "没有找到可 review 的已修改 `.lean` 文件"
-                f"{suffix}。可用法：`/review`、`/review Ray/Foo.lean`、`/review Ray/Foo.lean --scope=file`。"
+            selected_files = select_files(pr_files, path_filters)
+
+        if not selected_files:
+            suffix = ""
+            if path_filters:
+                suffix = f"（当前过滤条件：`{' '.join(path_filters)}`）"
+            if review_scope == "file":
+                message = (
+                    "没有找到匹配的 `.lean` 文件"
+                    f"{suffix}。可用法：`/review Ray/Foo.lean --scope=file`。"
+                )
+            else:
+                message = (
+                    "没有找到可 review 的已修改 `.lean` 文件"
+                    f"{suffix}。可用法：`/review`、`/review Ray/Foo.lean`、`/review Ray/Foo.lean --scope=file`。"
+                )
+            github.create_issue_comment(
+                pull_number,
+                message,
             )
+            return
+
+        if len(selected_files) > MAX_CHANGED_FILES and not path_filters:
+            github.create_issue_comment(
+                pull_number,
+                "这次 PR 里可 review 的 `.lean` 改动文件太多。"
+                " 请用 `/review path/to/File.lean` 或 `/review path/to/File.lean --scope=file` 缩小范围后再触发。",
+            )
+            return
+
+        prompt_template = (
+            bot_repo_root / ".github" / "codex" / "prompts" / "review-file.md"
+        ).read_text(encoding="utf-8")
+        skill_text = (
+            bot_repo_root / ".agents" / "skills" / "pr-inline-review" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        prompt = build_prompt(
+            prompt_template,
+            skill_text,
+            pr,
+            selected_files,
+            review_scope,
+            path_filters,
+        )
+
+        response = run_codex(
+            bot_repo_root=bot_repo_root,
+            review_target_dir=review_target_dir,
+            prompt=prompt,
+            model=review_model,
+        )
+
+        summary = str(response.get("summary", "")).strip() or "Inline review completed."
+        valid_lines_by_path = {
+            file["filename"]: set(file["changed_lines"])
+            for file in selected_files
+        }
+        comments = validate_and_format_comments(
+            list(response.get("comments", [])),
+            valid_lines_by_path,
+        )
+
+        if comments:
+            github.create_review(
+                pull_number,
+                pr["head"]["sha"],
+                f"Triggered by @{commenter} with `{comment_body.strip()}` (scope: {review_scope}).\n\n{summary}",
+                comments,
+            )
+            return
+
         github.create_issue_comment(
             pull_number,
-            message,
+            f"@{commenter} review 完成（scope: {review_scope}），但这次没有生成可直接应用的 inline suggestion。\n\n{summary}",
         )
-        return
-
-    if len(selected_files) > MAX_CHANGED_FILES and not path_filters:
+    except ReviewBotError as exc:
         github.create_issue_comment(
             pull_number,
-            "这次 PR 里可 review 的 `.lean` 改动文件太多。"
-            " 请用 `/review path/to/File.lean` 或 `/review path/to/File.lean --scope=file` 缩小范围后再触发。",
+            f"@{commenter} review 运行失败。\n\n```text\n{sanitize_failure_detail(str(exc))}\n```",
         )
-        return
-
-    prompt_template = (
-        bot_repo_root / ".github" / "codex" / "prompts" / "review-file.md"
-    ).read_text(encoding="utf-8")
-    skill_text = (
-        bot_repo_root / ".agents" / "skills" / "pr-inline-review" / "SKILL.md"
-    ).read_text(encoding="utf-8")
-    prompt = build_prompt(
-        prompt_template,
-        skill_text,
-        pr,
-        selected_files,
-        review_scope,
-        path_filters,
-    )
-
-    response = run_codex(
-        bot_repo_root=bot_repo_root,
-        review_target_dir=review_target_dir,
-        prompt=prompt,
-        model=review_model,
-    )
-
-    summary = str(response.get("summary", "")).strip() or "Inline review completed."
-    valid_lines_by_path = {
-        file["filename"]: set(file["changed_lines"])
-        for file in selected_files
-    }
-    comments = validate_and_format_comments(
-        list(response.get("comments", [])),
-        valid_lines_by_path,
-    )
-
-    if comments:
-        github.create_review(
+        raise SystemExit(1) from exc
+    except Exception as exc:
+        github.create_issue_comment(
             pull_number,
-            pr["head"]["sha"],
-            f"Triggered by @{commenter} with `/review` (scope: {review_scope}).\n\n{summary}",
-            comments,
+            f"@{commenter} review 运行失败。\n\n```text\n{sanitize_failure_detail(repr(exc))}\n```",
         )
-        return
-
-    github.create_issue_comment(
-        pull_number,
-        f"@{commenter} review 完成（scope: {review_scope}），但这次没有生成可直接应用的 inline suggestion。\n\n{summary}",
-    )
+        raise SystemExit(1) from exc
 
 
 if __name__ == "__main__":

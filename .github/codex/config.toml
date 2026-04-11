@@ -1,0 +1,23 @@
+model_provider = "codex-for-me"
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+disable_response_storage = true
+
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[model_providers.codex-for-me]
+name = "codex-for-me"
+base_url = "https://api-vip.codex-for.me/v1"
+wire_api = "responses"
+requires_openai_auth = true
+
+[mcp_servers.lean_lsp]
+command = "uvx"
+args = ["lean-lsp-mcp"]
+startup_timeout_sec = 120
+tool_timeout_sec = 180
+required = false
+
+[mcp_servers.lean_lsp.env]
+LEAN_LOG_LEVEL = "NONE"
