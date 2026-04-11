@@ -20,7 +20,8 @@ from typing import Any
 API_VERSION = "2022-11-28"
 MAX_CHANGED_FILES = 8
 MAX_COMMENTS = 6
-COMMAND_RE = re.compile(r"^/review(?:\s+file)?(?:\s+(?P<paths>.*))?$", re.DOTALL)
+VALID_SCOPES = {"diff", "file"}
+COMMAND_RE = re.compile(r"^/review(?:\s+(?P<body>.*))?$", re.DOTALL)
 HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(?P<start>\d+)(?:,(?P<count>\d+))? @@")
 
 
@@ -119,17 +120,40 @@ class GitHubClient:
         )
 
 
-def parse_command(comment_body: str) -> list[str]:
+def parse_command(comment_body: str) -> tuple[str, list[str]]:
     match = COMMAND_RE.match(comment_body.strip())
     if not match:
-        return []
-    tail = (match.group("paths") or "").strip()
+        return "diff", []
+    tail = (match.group("body") or "").strip()
     if not tail:
-        return []
+        return "diff", []
     try:
-        return shlex.split(tail)
+        tokens = shlex.split(tail)
     except ValueError as exc:
-        fail(f"Unable to parse /review file arguments: {exc}")
+        fail(f"Unable to parse /review arguments: {exc}")
+
+    scope = "diff"
+    paths: list[str] = []
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token.startswith("--scope="):
+            scope = token.split("=", 1)[1]
+            i += 1
+            continue
+        if token == "--scope":
+            if i + 1 >= len(tokens):
+                fail("Missing value after --scope. Use --scope=diff or --scope=file.")
+            scope = tokens[i + 1]
+            i += 2
+            continue
+        paths.append(token)
+        i += 1
+
+    if scope not in VALID_SCOPES:
+        fail(f"Unsupported scope `{scope}`. Use --scope=diff or --scope=file.")
+
+    return scope, paths
 
 
 def parse_changed_lines(patch: str | None) -> list[int]:
@@ -207,6 +231,54 @@ def select_files(
     return eligible
 
 
+def list_repo_files(review_target_dir: Path, path_filters: list[str]) -> list[dict[str, Any]]:
+    repo_files: list[dict[str, Any]] = []
+    for path in sorted(review_target_dir.rglob("*.lean")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(review_target_dir).as_posix()
+        if path_filters and not any(fnmatch.fnmatch(relative, pattern) for pattern in path_filters):
+            continue
+        repo_files.append(
+            {
+                "filename": relative,
+                "status": "present",
+                "patch": None,
+                "changed_lines": [],
+                "changed_line_ranges": [],
+            }
+        )
+    return repo_files
+
+
+def select_file_scope_targets(
+    *,
+    pr_files: list[dict[str, Any]],
+    review_target_dir: Path,
+    path_filters: list[str],
+) -> list[dict[str, Any]]:
+    selected = list_repo_files(review_target_dir, path_filters)
+    diff_by_path: dict[str, dict[str, Any]] = {}
+    for pr_file in pr_files:
+        path = pr_file["filename"]
+        if not path.endswith(".lean"):
+            continue
+        changed_lines = parse_changed_lines(pr_file.get("patch"))
+        diff_by_path[path] = {
+            "status": pr_file.get("status", "modified"),
+            "patch": pr_file.get("patch"),
+            "changed_lines": changed_lines,
+            "changed_line_ranges": compress_ranges(changed_lines),
+        }
+
+    for item in selected:
+        overlay = diff_by_path.get(item["filename"])
+        if not overlay:
+            continue
+        item.update(overlay)
+    return selected
+
+
 def toml_string(value: str) -> str:
     return json.dumps(value)
 
@@ -216,6 +288,7 @@ def build_prompt(
     skill_text: str,
     pr: dict[str, Any],
     selected_files: list[dict[str, Any]],
+    review_scope: str,
     path_filters: list[str],
 ) -> str:
     context = {
@@ -227,6 +300,7 @@ def build_prompt(
             "base_sha": pr["base"]["sha"],
             "head_sha": pr["head"]["sha"],
         },
+        "review_scope": review_scope,
         "requested_path_filters": path_filters,
         "files": [
             {
@@ -255,8 +329,14 @@ def build_prompt(
         {json.dumps(context, ensure_ascii=False, indent=2)}
         </context_json>
 
-        只针对上面列出的文件做 review。评论必须锚定到对应文件 `changed_line_ranges_on_right_side`
-        内的行号，`line` 与 `start_line` 都必须落在这些范围内。不要输出范围外的评论。
+        只针对上面列出的文件做 review。
+        如果 `review_scope` 是 `diff`，把注意力集中在 patch 和改动行上。
+        如果 `review_scope` 是 `file`，先完整阅读被选中的文件，再决定是否有值得提出的修改。
+
+        GitHub 的 inline suggestion 只能锚定到 PR diff 里的 changed RIGHT-side lines。
+        因此，只有当某条建议对应的 `line` / `start_line` 落在该文件
+        `changed_line_ranges_on_right_side` 内时，才把它放进 `comments`。
+        如果你发现的最佳修改点不在 diff 中，请不要伪造锚点，把它写进 `summary`，并返回空 comments 或只返回其他合法 comments。
 
         如果没有合适的 inline suggestion，返回空 comments，并在 `summary` 里简短说明原因。
         """
@@ -385,18 +465,40 @@ def main() -> None:
         )
         return
 
-    path_filters = parse_command(comment_body)
+    review_scope, path_filters = parse_command(comment_body)
     pr_files = github.list_pull_request_files(pull_number)
-    selected_files = select_files(pr_files, path_filters)
+    if review_scope == "file":
+        if not path_filters:
+            github.create_issue_comment(
+                pull_number,
+                "file mode 需要显式指定路径。用法：`/review Ray/Misc/Real.lean --scope=file`。",
+            )
+            return
+        selected_files = select_file_scope_targets(
+            pr_files=pr_files,
+            review_target_dir=review_target_dir,
+            path_filters=path_filters,
+        )
+    else:
+        selected_files = select_files(pr_files, path_filters)
 
     if not selected_files:
         suffix = ""
         if path_filters:
             suffix = f"（当前过滤条件：`{' '.join(path_filters)}`）"
+        if review_scope == "file":
+            message = (
+                "没有找到匹配的 `.lean` 文件"
+                f"{suffix}。可用法：`/review Ray/Foo.lean --scope=file`。"
+            )
+        else:
+            message = (
+                "没有找到可 review 的已修改 `.lean` 文件"
+                f"{suffix}。可用法：`/review`、`/review Ray/Foo.lean`、`/review Ray/Foo.lean --scope=file`。"
+            )
         github.create_issue_comment(
             pull_number,
-            "没有找到可 review 的已修改 `.lean` 文件"
-            f"{suffix}。可用法：`/review`、`/review file`、`/review Ray/Foo.lean`。",
+            message,
         )
         return
 
@@ -404,7 +506,7 @@ def main() -> None:
         github.create_issue_comment(
             pull_number,
             "这次 PR 里可 review 的 `.lean` 改动文件太多。"
-            " 请用 `/review path/to/File.lean` 或 `/review file path/to/File.lean` 缩小范围后再触发。",
+            " 请用 `/review path/to/File.lean` 或 `/review path/to/File.lean --scope=file` 缩小范围后再触发。",
         )
         return
 
@@ -414,7 +516,14 @@ def main() -> None:
     skill_text = (
         bot_repo_root / ".agents" / "skills" / "pr-inline-review" / "SKILL.md"
     ).read_text(encoding="utf-8")
-    prompt = build_prompt(prompt_template, skill_text, pr, selected_files, path_filters)
+    prompt = build_prompt(
+        prompt_template,
+        skill_text,
+        pr,
+        selected_files,
+        review_scope,
+        path_filters,
+    )
 
     response = run_codex(
         bot_repo_root=bot_repo_root,
@@ -437,14 +546,14 @@ def main() -> None:
         github.create_review(
             pull_number,
             pr["head"]["sha"],
-            f"Triggered by @{commenter} with `/review`.\n\n{summary}",
+            f"Triggered by @{commenter} with `/review` (scope: {review_scope}).\n\n{summary}",
             comments,
         )
         return
 
     github.create_issue_comment(
         pull_number,
-        f"@{commenter} review 完成，但这次没有生成可直接应用的 inline suggestion。\n\n{summary}",
+        f"@{commenter} review 完成（scope: {review_scope}），但这次没有生成可直接应用的 inline suggestion。\n\n{summary}",
     )
 
 
