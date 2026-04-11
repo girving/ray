@@ -41,12 +41,14 @@ public theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [Nor
   · rw [← hb]; exact add_nonneg (by norm_num) (_root_.trans (cs 0).1 (Finset.le_max' _ _ c0))
   · intro n x xs
     by_cases nN : n ≤ N
-    · have cn : c n ∈ bs := by simp [← hbs]; exists n; simp [Nat.lt_add_one_iff.mpr nN]
+    · have cn : c n ∈ bs := by
+        simpa [← hbs, Nat.lt_add_one_iff] using (show ∃ a ≤ N, c a = c n from ⟨n, nN, rfl⟩)
       exact _root_.trans ((cs n).2 x xs) (_root_.trans (Finset.le_max' _ _ cn)
         (by simp only [le_add_iff_nonneg_left, zero_le_one, ← hb]))
     · simp at nN
       specialize H N le_rfl n nN.le x xs
-      have cN : c N ∈ bs := by simp [← hbs]; exists N; simp
+      have cN : c N ∈ bs := by
+        simpa [← hbs, Nat.lt_add_one_iff] using (show ∃ a ≤ N, c a = c N from ⟨N, le_rfl, rfl⟩)
       have bN := _root_.trans ((cs N).2 x xs) (Finset.le_max' _ _ cN)
       rw [dist_eq_norm] at H
       calc ‖f n x‖ = ‖f N x - (f N x - f n x)‖ := by rw [sub_sub_cancel]

@@ -124,8 +124,8 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
     exact rs (Set.mk_mem_prod ts (Metric.ball_subset_ball ur wz.right))
   have wf : w.fst ∈ ball z.fst (r / 2) := Metric.ball_subset_ball ur wz.left
   have m : Set.MapsTo (fun t ↦ f (t, w.snd)) (ball z.fst (r / 2))
-      (ball (f (z.fst, w.snd)) (3 * b)) := by
-    intro t ts; simp only [dist_eq_norm, Metric.mem_ball]; apply lt_of_le_of_lt (norm_sub_le _ _)
+      (closedBall (f (z.fst, w.snd)) (3 * b)) := by
+    intro t ts; simp only [dist_eq_norm, Metric.mem_closedBall]; apply le_trans (norm_sub_le _ _)
     have f0 : ‖f (t, w.snd)‖ ≤ b := by
       apply_rules [rs, Set.mk_mem_prod, Metric.ball_subset_ball ur, fb, wz.right]
     have f1 : ‖f (z.fst, w.snd)‖ ≤ b := by
@@ -134,7 +134,7 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
     calc ‖f (t, w.snd)‖ + ‖f (z.fst, w.snd)‖
       _ ≤ b + b := by linarith
       _ = 2 * b := by ring
-      _ < 3 * b := mul_lt_mul_of_pos_right (by norm_num) bp
+      _ ≤ 3 * b := by nlinarith
   have L := Complex.dist_le_div_mul_dist_of_mapsTo_ball d m wf; simp only [Prod.mk.eta] at L
   refine _root_.trans L (_root_.trans ?_ ue); simp only [Metric.mem_ball] at wz
   rw [div_eq_mul_inv _ (2 : ℝ), div_mul_eq_div_div]; ring_nf
@@ -571,8 +571,8 @@ theorem HasFPowerSeriesAt.along0 {f : ℂ × ℂ → E} {c0 c1 : ℂ}
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
       ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id_eq,
       ContinuousLinearMap.zero_apply]
-    have w01r : (w0, (0 : ℂ)) ∈ EMetric.ball (0 : ℂ × ℂ) r := by
-      simpa only [Prod.edist_eq, EMetric.mem_ball, Prod.fst_zero, Prod.snd_zero, edist_self,
+    have w01r : (w0, (0 : ℂ)) ∈ Metric.eball (0 : ℂ × ℂ) r := by
+      simpa only [Prod.edist_eq, Metric.mem_eball, Prod.fst_zero, Prod.snd_zero, edist_self,
         ENNReal.max_zero_right] using w0r
     convert fpr.hasSum w01r; rw [Prod.mk_add_mk, add_zero]
 
@@ -608,26 +608,33 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
     have s'p : s' > 0 := by simp only [Metric.mem_ball] at z1s; bound
     have sp : s > 0 := by bound
     have sr : s ≤ r := by bound
-    have sb : EMetric.ball z1 s ⊆ ball c1 r1 := by
+    have sb : Metric.eball z1 s ⊆ ball c1 r1 := by
       rw [Set.subset_def]; intro x xs
-      simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, s] at xs z1s ⊢
+      have xs' : dist x z1 < s' := by
+        have hs : edist x z1 < ENNReal.ofReal s' :=
+          lt_of_lt_of_le (by simpa only [Metric.mem_eball, s] using xs) (min_le_right _ _)
+        have hs' : ENNReal.ofReal (dist x z1) < ENNReal.ofReal s' := by
+          exact Eq.mp (congrFun' (congrArg LT.lt (edist_dist x z1)) (ENNReal.ofReal s')) hs
+        exact (ENNReal.ofReal_lt_ofReal_iff_of_nonneg dist_nonneg).mp hs'
+      simp only [Metric.mem_ball] at z1s ⊢
       calc dist x c1
         _ ≤ dist x z1 + dist z1 c1 := by bound
-        _ < s' + dist z1 c1 := (add_lt_add_left xs.right _)
+        _ < s' + dist z1 c1 := by gcongr
         _ = r1 - dist z1 c1 + dist z1 c1 := rfl
         _ = r1 := by ring_nf
-    use EMetric.ball z1 s
-    refine ⟨?_, EMetric.isOpen_ball, EMetric.mem_ball_self sp⟩
+    use Metric.eball z1 s
+    refine ⟨?_, Metric.isOpen_eball, Metric.mem_eball_self sp⟩
     intro w1 w1s
     have p0 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (unevenSeries u w1) c0 := by
       have w1c : w1 ∈ closedBall c1 r1 := ball_subset_closedBall (sb w1s)
       refine (Uneven.has_series u u.r1p (le_refl _) w1c).hasFPowerSeriesAt
     have p1 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (p.changeOrigin (g w1)).along0 c0 := by
       have wz : ↑‖((0 : ℂ), w1 - z1)‖₊ < r := by
-        simp only [EMetric.mem_ball, edist_dist, Complex.dist_eq, ofReal_norm,
+        simp only [Metric.mem_eball, edist_dist, Complex.dist_eq, ofReal_norm,
           enorm_eq_nnnorm] at w1s
-        simp only [Prod.nnnorm_mk, nnnorm_zero, zero_le, sup_of_le_right]
-        exact lt_of_lt_of_le w1s sr
+        have hw : ↑‖w1 - z1‖₊ < r := lt_of_lt_of_le w1s sr
+        have hn : max 0 ‖w1 - z1‖₊ = ‖w1 - z1‖₊ := max_eq_right (zero_le _)
+        simpa only [Prod.nnnorm_mk, nnnorm_zero, hn] using hw
       convert (hp.changeOrigin wz).hasFPowerSeriesAt.along0
       · simp only [add_sub_cancel]
       · simp only [add_zero]
@@ -792,7 +799,8 @@ theorem uneven_bounded [CompleteSpace E] [SecondCountableTopology E]
   have ds : z.1 - c0 ∈ Metric.ball (0 : ℂ) s := by
     simp only [Complex.dist_eq] at zs
     simp only [zs.1, mem_ball_zero_iff]
-  have ds' : z.1 - c0 ∈ EMetric.ball (0 : ℂ) (ENNReal.ofReal s) := by rwa [Metric.emetric_ball]
+  have ds' : z.1 - c0 ∈ Metric.eball (0 : ℂ) (ENNReal.ofReal s) := by
+    simpa only [Metric.eball_ofReal] using ds
   have hs := (u.has_series sp sr.le z1r).hasSum ds'
   simp only [unevenSeries_eq u sp sr.le z1r,
     FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel, Prod.mk.eta] at hs

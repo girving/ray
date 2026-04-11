@@ -56,7 +56,7 @@ theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : 
     _ = π * ‖π‖⁻¹ * (r * r⁻¹) * wr := by ring
     _ = π * π⁻¹ * (r * r⁻¹) * wr := by rw [p3]
     _ = 1 * (r * r⁻¹) * wr := by rw [mul_inv_cancel₀ Real.pi_ne_zero]
-    _ = wr := by field_simp; norm_cast; field_simp; simp
+    _ = wr := by simpa [mul_assoc] using congrArg (fun t : ℝ => t * wr) (mul_inv_cancel₀ (by exact_mod_cast rp.ne' : (↑r : ℝ) ≠ 0))
 
 theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleIntegrable f c r)
     (gi : CircleIntegrable g c r) :
@@ -69,11 +69,8 @@ theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleInt
   generalize hfg : (fun θ : ℝ ↦ deriv (circleMap c r) θ • (f - g) (circleMap c r θ)) = fgc
   have hs : fc - gc = fgc := by
     rw [← hf, ← hg, ← hfg]; funext
-    simp only [deriv_circleMap, Pi.sub_apply, smul_sub]
-  rw [← hs]; clear hfg hs fgc; symm
-  have fci := CircleIntegrable.out fi; rw [hf] at fci
-  have gci := CircleIntegrable.out gi; rw [hg] at gci
-  exact intervalIntegral.integral_sub fci gci
+    simp only [Pi.sub_apply, smul_sub]
+  simpa only [Pi.sub_apply, smul_sub] using (intervalIntegral.integral_sub fi.out gi.out).symm
 
 theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
   simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
@@ -158,7 +155,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
     rw [← pp] at hp'
     refine hp'.r_le
   · intro y yr
-    rw [EMetric.ball, Set.mem_setOf] at yr
+    rw [Metric.mem_eball] at yr
     rcases exists_between yr with ⟨t, t0, t1⟩
     have t1' : t.toNNReal < r := by
       rw [← WithTop.coe_lt_coe]; exact lt_of_le_of_lt ENNReal.coe_toNNReal_le_self t1
@@ -170,7 +167,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
       HasFPowerSeriesAt.eq_formalMultilinearSeries ⟨↑(r / 2), ph⟩ ⟨t.toNNReal, hp'⟩
     rw [← pp] at hp'
     refine hp'.hasSum ?_
-    rw [EMetric.ball, Set.mem_setOf]
+    rw [Metric.mem_eball]
     calc edist y 0
       _ < t := t0
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm

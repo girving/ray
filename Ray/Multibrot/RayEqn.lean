@@ -98,8 +98,8 @@ public lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
     unfold f
     rw [toComplex_lift', f', mul_add, mul_pow, add_right_inj, ray'_eq_pray m,
       div_eq_inv_mul, ← mul_assoc, pow_sub₀ _ z0 (by bound), pow_one, pow_mul]
-    rw [ne_eq, s.ray_eq_a_iff em]
-    simp only [pow_eq_zero_iff', z0, ne_eq, not_and, not_not, false_and, not_false_eq_true]
+    exact by
+      simpa [ne_eq, pow_eq_zero_iff', z0] using (not_congr (s.ray_eq_a_iff em)).2 (by simp [z0])
 
 /-- The whole `cascade` is analytic -/
 public lemma cascade_analytic (m : z ∈ ball (0 : ℂ) 1) : ContDiffAt ℂ ⊤ (cascade d n) z := by

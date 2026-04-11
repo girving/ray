@@ -175,6 +175,7 @@ theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
   have hr : MDifferentiableAt I I (s.ray c) 0 :=
     (s.ray_mAnalytic (s.mem_ext c)).along_snd.mdifferentiableAt (by decide)
   rw [mfderiv_comp 0 hb hr, h, ContinuousLinearMap.comp_zero]
+  rfl
 
 -- `s.ray` is noncritical everywhere in `s.ext`
 public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
@@ -186,19 +187,22 @@ public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (
       (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter' post)
     rw [e.mfderiv_eq]; contrapose x0
     rw [mfderiv_eq_fderiv] at x0
-    have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
+    have hd := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
     apply_fun (fun x ↦ x 1) at x0
-    rw [x0] at d
-    replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+    rw [x0] at hd
+    have hd0 : deriv (fun y ↦ y ^ d ^ n) x = 0 := by
+      exact hd.trans rfl
     simp only [differentiableAt_fun_id, deriv_fun_pow, Nat.cast_pow, deriv_id'', mul_one,
-      mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
-    exact d.1
+      mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at hd0
+    exact hd0.1
   have d := mfderiv_comp x
       ((s.bottcherNearIter_mAnalytic (s.ray_near post)).along_snd.mdifferentiableAt (by decide))
       ((s.ray_mAnalytic post).along_snd.mdifferentiableAt (by decide))
   simp only [Function.comp_def, n] at d h
-  simp only [d, Ne, mderiv_comp_eq_zero_iff, not_or] at h
-  exact h.2
+  intro hx
+  apply h
+  rw [d, hx, ContinuousLinearMap.comp_zero]
+  rfl
 
 /-- `s.ray` is nontrivial, since it is noncritical at 0 and `s.ext` is connected -/
 public theorem Super.ray_nontrivial (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
@@ -288,10 +292,14 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     refine ((continuousAt_const.prodMk (Complex.continuous_ofReal.continuousAt.mul
         continuousAt_const)).eventually
         (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (.of_forall fun u e ↦ ?_)
-    · simp only [← hr]; rw [xe]; exact e
+    · rw [← hr]
+      change s.ray c (↑t * x0) = s.ray c (x1 / x0 * (↑t * x0))
+      rw [xe]
+      simpa [u] using e
     · rw [← hr] at e; simp only [uncurry] at e
-      rw [← mul_assoc, mul_comm _ (u:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at e
-      exact e
+      have xeu : x1 / x0 * (↑u * x0) = ↑u * x1 := by
+        rw [← mul_assoc, mul_comm _ (u : ℂ), mul_assoc, div_mul_cancel₀ _ x00]
+      simpa [xeu] using e
   · intro t ⟨m, e⟩; simp only [mem_closure_iff_frequently] at e ⊢
     have rc : ∀ {x : ℂ}, (c, x) ∈ s.ext → ContinuousAt (fun t : ℝ ↦ s.ray c (↑t * x)) t :=
       fun {x} p ↦

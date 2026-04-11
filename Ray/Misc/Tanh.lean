@@ -1,6 +1,7 @@
 module
 import Mathlib.Analysis.InnerProductSpace.Basic
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Ray.Misc.Bound
 
 /-!
@@ -15,27 +16,27 @@ variable {X : Type} [TopologicalSpace X]
 variable {x y : ℝ}
 
 lemma Real.contDiffAt_tanh : ContDiffAt ℝ ω tanh x := by
-  rw [contDiffAt_congr (.of_forall Real.tanh_eq_sinh_div_cosh)]
-  exact Real.analyticAt_sinh.div Real.analyticAt_cosh (Real.cosh_pos _).ne'
+  simpa only [funext Real.tanh_eq_sinh_div_cosh, id_eq] using
+    (ContDiffAt.div (n := ω) (x := x) (contDiffAt_id.sinh) (contDiffAt_id.cosh) (Real.cosh_pos _).ne')
 
 @[fun_prop] lemma Real.continuous_tanh : Continuous tanh := by
   rw [continuous_iff_continuousAt]
-  intro
-  exact Real.analyticAt_tanh.continuousAt
+  intro x
+  exact (Real.contDiffAt_tanh (x := x)).continuousAt
 
 @[fun_prop] lemma Continuous.tanh {f : X → ℝ} (fc : Continuous f) :
     Continuous (fun x ↦ tanh (f x)) := by
   fun_prop
 
-lemma Real.tanh_lt_one (x : ℝ) : tanh x < 1 := by
+lemma Real.tanh_lt_one' (x : ℝ) : tanh x < 1 := by
   simp only [Real.tanh_eq_sinh_div_cosh, div_lt_one (Real.cosh_pos _)]
   exact sinh_lt_cosh x
 
-lemma Real.neg_one_lt_tanh (x : ℝ) : -1 < tanh x := by
+lemma Real.neg_one_lt_tanh' (x : ℝ) : -1 < tanh x := by
   rw [neg_lt, ← Real.tanh_neg]
   apply tanh_lt_one
 
-lemma Real.abs_tanh_lt_one (x : ℝ) : |tanh x| < 1 :=
+lemma Real.abs_tanh_lt_one' (x : ℝ) : |tanh x| < 1 :=
   abs_lt.mpr ⟨Real.neg_one_lt_tanh x, Real.tanh_lt_one x⟩
 
 lemma Real.hasDerivAt_tanh {x : ℝ} : HasDerivAt tanh (1 / cosh x ^ 2) x := by

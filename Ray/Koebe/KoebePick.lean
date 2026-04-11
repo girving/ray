@@ -26,7 +26,10 @@ variable {f : ℂ → ℂ} {c : ℂ}
 public theorem koebe_pick (fa : ContDiffOn ℂ ω f (ball 0 1)) (inj : InjOn f (ball 0 1))
     (c1 : ‖c‖ < 1) : ball (f c) ((1 - ‖c‖ ^ 2) * ‖deriv f c‖ / 4) ⊆ f '' (ball 0 1) := by
   set g : ℂ → ℂ := f ∘ mobius c
-  have ga : ContDiffOn ℂ ω g (ball 0 1) := fa.comp (contDiffOn_mobius c1) (mapsTo_mobius c1)
+  have ga : ContDiffOn ℂ ω g (ball 0 1) := by
+    simpa [g] using
+      ((fa.analyticOnNhd isOpen_ball).comp ((contDiffOn_mobius c1).analyticOnNhd isOpen_ball)
+        (mapsTo_mobius c1)).contDiffOn isOpen_ball.uniqueDiffOn
   have gi : InjOn g (ball 0 1) := inj.comp (injOn_mobius c1) (mapsTo_mobius c1)
   have gim : g '' ball 0 1 = f '' ball 0 1 := by simp only [g, image_comp, image_mobius c1]
   have dg : deriv g 0 = deriv f c * (‖c‖ ^ 2 - 1) := by

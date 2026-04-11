@@ -204,13 +204,14 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
     ((continuousAt_const.prodMk continuousAt_id).eventually e).mp
       (.of_forall fun _ e ↦ e.eqn)
   rw [mfderiv_eq_fderiv, loc.fderiv_eq] at x0
-  have d := (differentiableAt_pow (𝕜 := ℂ) (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
+  have hd := (differentiableAt_pow (𝕜 := ℂ) (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
   apply_fun (fun x ↦ x 1) at x0
-  rw [x0] at d
-  replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+  rw [x0] at hd
+  have dz : deriv (fun x ↦ x ^ d ^ n) x = 0 := by
+    exact Eq.trans hd (show ((0 : ℂ →L[ℂ] ℂ) 1) = (0 : ℂ) from rfl)
   simp only [differentiableAt_fun_id, deriv_fun_pow, Nat.cast_pow, deriv_id'', mul_one, mul_eq_zero,
-    pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
-  exact d.1
+    pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at dz
+  exact dz.1
 
 /-- `p < 1` for any `p` in `Grow` -/
 theorem Grow.p1 (g : Grow s c p n r) : p < 1 := by

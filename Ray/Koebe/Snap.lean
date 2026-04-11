@@ -63,7 +63,8 @@ public lemma snap_eq_snap_iff {z w : ℂ} (z0 : z ≠ 0) (w0 : w ≠ 0) :
 
 @[simp] public lemma snap_of_pos {t : ℝ} (t0 : 0 < t) : snap (t : ℂ) = 1 := by
   simp only [snap, Complex.ofReal_eq_zero, t0.ne', ↓reduceDIte, Complex.norm_real, Real.norm_eq_abs,
-    abs_of_pos t0, ne_eq, not_false_eq_true, div_self, Circle.ext_iff, OneMemClass.coe_one]
+    abs_of_pos t0, ne_eq, not_false_eq_true, div_self, Circle.ext_iff]
+  rfl
 
 @[simp] public lemma snap_mul_of_pos {t : ℝ} (t0 : 0 < t) {z : ℂ} : snap (t * z) = snap z := by
   simp only [snap, mul_eq_zero, Complex.ofReal_eq_zero, t0.ne', false_or, Complex.norm_mul,
@@ -87,7 +88,8 @@ lemma snap_eq_restrict :
   all_goals simp [z0, coe_snap]
 
 public lemma continuousAt_snap {z : ℂ} (z0 : z ≠ 0) : ContinuousAt snap z := by
-  rw [snap_eq_restrict, continuousAt_codRestrict_iff]
+  rw [snap_eq_restrict]
+  refine ContinuousAt.codRestrict _ ?_
   have e : ∀ᶠ w : ℂ in 𝓝 z, (if w = 0 then 1 else w / ‖w‖) = w / ‖w‖ := by
     filter_upwards [eventually_ne_nhds z0]
     aesop

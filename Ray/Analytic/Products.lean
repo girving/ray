@@ -56,7 +56,7 @@ public theorem product_pow' {f : ℕ → ℂ} {p : ℕ} (h : ProdExists f) :
 theorem product_cons {a g : ℂ} {f : ℕ → ℂ} (h : HasProd f g) :
     HasProd (Stream'.cons a f) (a * g) := by
   rw [HasProd] at h ⊢
-  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_mul_left a) g) h
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_const_mul a) g) h
   have s : ((fun z ↦ a * z) ∘ fun N : Finset ℕ ↦ N.prod f) =
       (fun N : Finset ℕ ↦ N.prod (Stream'.cons a f)) ∘ push := by
     apply funext; intro N; simp; exact push_prod

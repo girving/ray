@@ -102,8 +102,7 @@ lemma hasFPowerSeriesOnBall (i : Gronwall f) :
     HasFPowerSeriesOnBall f (.ofScalars ℂ i.coeff) 0 1 := by
   have a0 := (i.fa 0 (by simp)).hasFPowerSeriesAt
   obtain ⟨p,a1⟩ := (analyticOnNhd_ball_iff_hasFPowerSeriesOnBall (by norm_num)).mp
-    (Metric.emetric_ball (α := ℂ) ▸ i.fa)
-  have pe := a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt
+    (Metric.eball_ofReal (α := ℂ) ▸ i.fa)
   unfold coeff
   simp only [a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt] at a0 ⊢
   simpa using a1
@@ -113,7 +112,7 @@ lemma norm_coeff_le (i : Gronwall f) (r0 : 0 < r) (r1 : r < 1) :
     ∃ a ∈ Set.Ioo 0 1, ∃ C : ℝ, 0 < C ∧ ∀ n, ‖i.coeff n‖ ≤ C * (a / r) ^ n := by
   have le := i.hasFPowerSeriesOnBall.r_le
   set r' : ℝ≥0 := ⟨r, r0.le⟩
-  have r'1 : r' < 1 := by rw [← NNReal.mk_one]; simp only [r', ← NNReal.coe_lt_coe]; simp [r1]
+  have r'1 : r' < 1 := by simpa [r'] using r1
   have r'r : r' < (FormalMultilinearSeries.ofScalars ℂ i.coeff).radius :=
     lt_of_lt_of_le (by simp only [ENNReal.coe_lt_one_iff, r'1]) le
   obtain ⟨a,am,C,C0,le⟩ :=
@@ -340,7 +339,10 @@ lemma closure_outer (i : Gronwall f) : ∀ᶠ r in atTop, closure (i.outer r) = 
         calc ‖a‖ + e
           _ = ‖z n - (z n - a)‖ + e := by ring_nf
           _ ≥ ‖z n‖ - ‖z n - a‖ + e := by bound
-          _ > ‖z n‖ - e + e := by bound
+          _ > ‖z n‖ - e + e := by
+            have hza : ‖z n - a‖ < e := by
+              simpa [Metric.mem_ball, dist_eq_norm, norm_sub_rev] using za
+            linarith
           _ = ‖z n‖ := by ring
           _ ≥ r := by bound [(m n).1]
       refine ⟨ra, ?_⟩
@@ -398,9 +400,11 @@ lemma wind (i : Gronwall f) : ∀ᶠ r in atTop, WindDiff (i.gc r) := by
       · apply g0; simp [r0.le]
     intro t
     refine DifferentiableAt.congr_of_eventuallyEq ?_ (.of_forall e)
-    apply ((i.ga ?_).differentiableAt.restrictScalars _).comp
-    · apply differentiable_circleMap
-    · simp [abs_of_pos r0, r1]
+    have hga : DifferentiableAt ℝ i.g (circleMap 0 r t) := by
+      exact (@AnalyticAt.restrictScalars ℝ inferInstance ℂ ℂ inferInstance inferInstance inferInstance
+        inferInstance ℂ inferInstance inferInstance inferInstance IsScalarTower.right inferInstance
+        IsScalarTower.right i.g (circleMap 0 r t) (i.ga (by simp [abs_of_pos r0, r1]))).differentiableAt
+    simpa [Function.comp] using hga.comp t (differentiable_circleMap 0 r).differentiableAt
 
 lemma gc_exp (i : Gronwall f) : ∀ᶠ r in atTop, ∀ t,
     (i.gc r (Circle.exp t)).val = i.g (circleMap 0 r t) := by
@@ -416,9 +420,12 @@ lemma analyticAt_fe (i : Gronwall f) : ∀ᶠ r in atTop, ∀ (w : WindDiff (i.g
   have r0 : 0 < r := by linarith
   unfold WindDiff.fe
   simp only [gc_exp]
-  refine (i.ga ?_).restrictScalars.comp ?_
-  · simp [abs_of_pos r0, r1]
-  · apply analyticOnNhd_circleMap; trivial
+  have hga : AnalyticAt ℝ i.g (circleMap 0 r t) := by
+    exact @AnalyticAt.restrictScalars ℝ inferInstance ℂ ℂ inferInstance inferInstance inferInstance
+      inferInstance ℂ inferInstance inferInstance inferInstance IsScalarTower.right inferInstance
+      IsScalarTower.right i.g (circleMap 0 r t) (i.ga (by simp [abs_of_pos r0, r1]))
+  have hcm : AnalyticAt ℝ (circleMap 0 r) t := analyticOnNhd_circleMap 0 r t (by simp)
+  simpa [Function.comp] using hga.comp hcm
 
 /-- Eventually, the two notions of spheres coincide -/
 lemma sphere_eq (i : Gronwall f) : ∀ᶠ r in atTop,
@@ -676,14 +683,20 @@ def term_diag (i : Gronwall f) (r : ℝ) (n : ℕ) : ℂ :=
 /-- Only the diagonal `i.term` integrals survive -/
 lemma integral_term_diag (i : Gronwall f) (r : ℝ) (n m : ℕ) :
     ∫ t in -π..π, i.term r n m t = if n = m then i.term_diag r n else 0 := by
-  have ce : (m - n : ℂ) = (m - n : ℤ) := by simp
-  simp only [term, term_diag, div_eq_mul_inv, intervalIntegral.integral_const_mul,
-    integral_exp_mul_I, ce, sub_eq_zero, Nat.cast_inj]
+  simp only [term, term_diag, div_eq_mul_inv]
   by_cases nm : n = m
-  · simp only [← nm, ↓reduceIte, ← Complex.conj_mul', ← two_mul, Complex.ofReal_mul,
-      Complex.ofReal_ofNat]
-    ring
-  · simp [nm, Ne.symm nm]
+  · subst nm
+    simp [← Complex.conj_mul', ← two_mul]
+    erw [_root_.Algebra.smul_def]
+    simp [mul_assoc, mul_left_comm, mul_comm]
+  · rw [if_neg nm, ← zero_smul ℂ _]
+    conv_lhs =>
+      congr
+      intro t
+      rw [mul_comm, ← smul_eq_mul]
+    rw [intervalIntegral.integral_smul_const]
+    congr 1
+    simpa [eq_comm, nm, sub_eq_zero, Nat.cast_inj] using integral_exp_mul_I ((m : ℤ) - n)
 
 /-- Drop all but the diagonal, if offdiagonals are zero -/
 @[simp] lemma tsum_diag {f : ι → ℂ} {d : (n m : ι) → Decidable (n = m)} :
@@ -765,14 +778,23 @@ lemma large_volume_eq (i : Gronwall f) : ∀ᶠ r in atTop,
   simp only [er, ← Complex.reCLM_apply]
   apply Complex.reCLM.hasSum
   simp only [Complex.ofReal_inv, Complex.ofReal_ofNat, map_mul, Complex.conj_I, mul_neg,
-    intervalIntegral.integral_neg, ← mul_assoc, intervalIntegral.integral_mul_const]
-  simp only [mul_comm _ I, ← mul_assoc, ← div_eq_mul_inv, ← neg_mul, ← neg_div]
-  simp only [←(is w _).tsum_eq, ← sum_integral_comm.tsum_eq, i.integral_term_diag, tsum_diag]
+    intervalIntegral.integral_neg, ← mul_assoc]
+  simp only [mul_comm _ I, ← mul_assoc, ← neg_mul]
+  conv in (∫ x in -π..π, I * w.dfe x * (starRingEnd ℂ) (w.fe x)) =>
+    enter [1, x]
+    simp only [mul_assoc, ← (is w x).tsum_eq]
+  conv in (∫ x in -π..π, I * ∑' (b : ℕ × ℕ), i.term r b.1 b.2 x) =>
+    tactic => exact (intervalIntegral.integral_const_mul I
+      (fun x : ℝ => ∑' (b : ℕ × ℕ), i.term r b.1 b.2 x))
+  simp only [mul_comm _ I, ← mul_assoc]
+  conv in (∫ _ in _.._, ∑' (_ : ℕ × ℕ), _) =>
+    tactic => exact sum_integral_comm.tsum_eq.symm
+  simp only [i.integral_term_diag, tsum_diag]
   rw [← tsum_mul_left]
-  simp only [term_diag, mul_comm _ I, ← mul_assoc, div_eq_mul_inv, mul_neg, Complex.I_mul_I,
-    neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)]
-  exact (i.summable_gronwall_c
-    (by rwa [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)])).hasSum
+  simpa only [term_diag, gronwall_c, mul_comm _ I, ← mul_assoc, div_eq_mul_inv, mul_neg,
+    neg_mul, Complex.I_mul_I, neg_neg, one_mul, inv_mul_cancel₀ (by norm_num : (2 : ℂ) ≠ 0)] using
+    (i.summable_gronwall_c
+      (by rwa [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)])).hasSum
 
 /-!
 ### Large areas restated as an analytic function
@@ -898,7 +920,10 @@ lemma small_volume_eq_integral (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
   have ga : AnalyticOnNhd ℂ i.g (annulus_cc 0 r s) := i.ga'.mono (annulus_cc_subset_norm_Ioi r1)
   have ga' := ga.mono annulus_oc_subset_annulus_cc
   have gd : ∀ z ∈ annulus_oc 0 r s, HasFDerivWithinAt i.g (fderiv ℝ i.g z) (annulus_oc 0 r s) z :=
-    fun z m ↦ (ga' z m).restrictScalars.hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
+    fun z m ↦ (show AnalyticAt ℝ i.g z from
+      @AnalyticAt.restrictScalars ℝ inferInstance ℂ ℂ inferInstance inferInstance inferInstance
+        inferInstance ℂ inferInstance inferInstance inferInstance IsScalarTower.right inferInstance
+        IsScalarTower.right i.g z (ga' z m)).hasStrictFDerivAt.hasFDerivAt.hasFDerivWithinAt
   have ed : ∀ z ∈ annulus_oc 0 r s, |(fderiv ℝ i.g z).det| = ‖deriv i.g z‖ ^ 2 :=
     fun z m ↦ by simp only [Complex.fderiv_det (ga' z m).differentiableAt, abs_sq]
   have ae : annulus_oc 0 r s =ᵐ[volume] annulus_cc 0 r s := by
@@ -923,7 +948,7 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
     simp only [mul_one, map_one, integrand, ← real_inner_self_eq_norm_sq, Complex.inner,
       ← Complex.ofReal_pow, Complex.mul_conj, Complex.ofReal_re]
   simp only [i.small_volume_eq_integral r1 rs, volume_integral_c, volume_integral,
-    ← MeasureTheory.integral_const_mul, ← Complex.ofRealCLM_apply]
+    ← Complex.ofRealCLM_apply]
   rw [← ContinuousLinearMap.integral_comp_comm]
   · set t : ℂ → ℂ := fun w ↦ w * z
     have tn : ∀ w, ‖t w‖ = ‖w‖ * z := by simp [t, z0.le]
@@ -940,13 +965,17 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
         simp only [t, u, v, norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos z0,
           div_mul_cancel₀ _ z0.ne', div_mul_cancel₀ _ z0', and_true]
     have dt : ∀ w, HasDerivAt t z w := fun w ↦ hasDerivAt_mul_const (z : ℂ)
-    have dt' := fun w ↦ (dt w).hasFDerivAt.restrictScalars ℝ
+    have dt' := fun w ↦ @HasFDerivAt.restrictScalars ℝ _ ℂ _ _ ℂ _ _ _
+      IsScalarTower.right ℂ _ _ _ IsScalarTower.right _ _ _ (dt w).hasFDerivAt
     rw [← ti, MeasureTheory.integral_image_eq_integral_abs_det_fderiv_smul (μ := volume)
       (hf' := fun w _ ↦ (dt' w).hasFDerivWithinAt)]
-    · simp only [Real.norm_eq_abs, Complex.real_smul, abs_of_pos z0]
-      apply congr_arg₂ _ rfl
+    · simp only [Complex.restrictScalars_toSpanSingleton, ContinuousLinearMap.det,
+        Real.norm_eq_abs, abs_of_pos z0, MeasureTheory.integral_smul]
+      refine congr_arg₂ (fun a b => a * b) (by norm_num) ?_
+      apply congrArg
       ext w
-      simp [ContinuousLinearMap.det, LinearMap.det_restrictScalars, integrand, t, si]
+      simpa only [Complex.ofRealCLM_apply, Complex.ofReal_pow, integrand, t, map_one,
+        Complex.conj_ofReal, mul_assoc, mul_one] using si (w * ↑z)
     · exact measurableSet_annulus_cc
     · exact (mul_left_injective₀ z0').injOn
   · exact i.integrable_sq_norm r1

@@ -23,8 +23,7 @@ noncomputable section
 variable {A B C : Type}
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
-/-- `flip` is an involution -/
-public theorem flip_flip (f : A → B → C) : flip (flip f) = f := rfl
+-- `flip_flip` is already provided by `Init.Core`.
 
 /-- `swap` is an involution -/
 public theorem swap_swap (s : Set (A × B)) : swap '' (swap '' s) = s := by

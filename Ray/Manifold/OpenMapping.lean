@@ -132,7 +132,7 @@ public theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ �
   have er : ∃ r, 0 < r ∧ closedBall (c, z) r ⊆ s ∧ f c z ∉ f c '' sphere z r := by
     have h := n.eventually_ne; contrapose h
     simp only [not_exists, not_not, not_and, not_exists] at h
-    simp only [_root_.not_imp, not_not, Filter.eventually_iff, Metric.mem_nhds_iff, not_exists,
+    simp only [Classical.not_imp, not_not, Filter.eventually_iff, Metric.mem_nhds_iff, not_exists,
       not_subset, mem_setOf, not_and]
     intro r rp; specialize h (min (e/2) (r/2)) ?_ ?_
     · bound
@@ -168,8 +168,9 @@ public theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ �
     simp only [Complex.dist_eq, Prod.forall, mem_closedBall, Prod.dist_eq, max_le_iff, max_lt_iff,
       Function.uncurry, and_imp] at ft
     simp only [mem_ball, Complex.dist_eq, lt_min_iff] at dt
+    have wr' : ‖w - z‖ = r := by simpa [mem_sphere, Complex.dist_eq] using wr
     have a1 : ‖f d w - f c w‖ ≤ e / 4 :=
-      (ft d w dt.2.le (le_of_eq wr) c w (norm_sub_self_lt rp).le (le_of_eq wr) dt.1
+      (ft d w dt.2.le (le_of_eq wr') c w (norm_sub_self_lt rp).le (le_of_eq wr') dt.1
         (norm_sub_self_lt tp)).le
     have a2 : ‖f c z - f d z‖ ≤ e / 4 := by
       refine (ft c z (norm_sub_self_lt rp).le (norm_sub_self_lt rp).le d z

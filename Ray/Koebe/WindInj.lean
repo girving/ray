@@ -87,7 +87,7 @@ lemma WindInj.inj_near (i : WindInj f r) {a b : ℝ} (ab : a < b) (ba : b ≤ a 
     · apply HasDerivAt.const_mul
       apply HasDerivAt.comp
       · exact (i.fa _ (by simp [i.r0.le])).differentiableAt.hasDerivAt
-      · exact (hasDerivAt_circleMap 0 r (a + t)).scomp t ((hasDerivAt_id _).const_add _)
+      · simpa using (hasDerivAt_circleMap 0 r (a + t)).comp_const_add a t
     · simp only [Complex.mem_slitPlane_iff]
       left
       apply re_mul_inv_pos_of_close

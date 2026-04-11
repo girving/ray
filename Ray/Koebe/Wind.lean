@@ -133,9 +133,9 @@ public lemma continuous_fe (i : Wind f) : Continuous i.fe := by
     simp only [z0, dist_zero_right, fe, Complex.real_smul, norm_zero, snap_zero, zero_smul,
       Complex.norm_mul, Complex.norm_real, norm_norm, lt_div_iff₀ i.max_pos] at wz ⊢
     exact lt_of_le_of_lt (by bound) wz
-  · apply ContinuousAt.smul
-    · exact continuous_norm.continuousAt
-    · exact Units.continuous_val.continuousAt.comp (i.fc.continuousAt.comp (continuousAt_snap z0))
+  · simpa [Wind.fe, Complex.real_smul] using
+      (Complex.continuous_ofReal.continuousAt.comp continuous_norm.continuousAt).mul
+        (Units.continuous_val.continuousAt.comp (i.fc.continuousAt.comp (continuousAt_snap z0)))
 
 public lemma continuous_fi (i : Wind f) : Continuous i.fi := by
   rw [continuous_iff_continuousAt]

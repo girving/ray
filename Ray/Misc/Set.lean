@@ -1,5 +1,6 @@
 module
 public import Mathlib.Data.Set.Basic
+public import Mathlib.Tactic
 
 /-!
 ## `Set` facts

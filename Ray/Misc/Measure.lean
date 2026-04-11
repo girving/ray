@@ -1,5 +1,6 @@
 module
 public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 public import Mathlib.Analysis.Normed.Group.Basic
 public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
@@ -337,9 +338,7 @@ public theorem set_lintegral_mono_aEMeasurable {s : Set M} {f g : M → ENNReal}
 public lemma measure_union_eq_left {s t : Set M} (t0 : μ t = 0) : μ (s ∪ t) = μ s := by
   have tm := NullMeasurableSet.of_null t0
   have r := MeasureTheory.measure_union_add_inter₀ (μ := μ) s tm
-  have i0 : μ (s ∩ t) = 0 := by
-    rw [← le_zero_iff] at t0 ⊢
-    exact le_trans (MeasureTheory.measure_mono Set.inter_subset_right) t0
+  have i0 : μ (s ∩ t) = 0 := measure_mono_null Set.inter_subset_right t0
   simpa only [t0, i0, add_zero] using r
 
 public lemma measure_union_eq_right {s t : Set M} (s0 : μ s = 0) : μ (s ∪ t) = μ t := by

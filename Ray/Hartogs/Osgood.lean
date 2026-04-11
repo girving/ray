@@ -94,7 +94,8 @@ theorem Separate.rs' (h : Separate f c0 c1 r b s) : sphere c0 r ×ˢ sphere c1 r
   le_trans spheres_subset_closedBall h.rs
 
 theorem mem_sphere_closed {z c : ℂ} {r : ℝ} : z ∈ sphere c r → z ∈ closedBall c r := by
-  simp only [mem_sphere_iff_norm, Metric.mem_closedBall]; exact le_of_eq
+  simp only [mem_sphere_iff_norm, Metric.mem_closedBall, Complex.dist_eq]
+  intro hz; exact hz.le
 
 /-- Spheres don't contain their center -/
 theorem center_not_in_sphere {c z : ℂ} {r : ℝ} (rp : r > 0) (zs : z ∈ sphere c r) : z - c ≠ 0 := by
@@ -375,7 +376,7 @@ theorem series2_norm (h : Separate f c0 c1 r b s) (n : ℕ) :
     intro n0 n0n; simp at n0n
     apply le_trans (termCmmap_norm ℂ n n0 (h.series2Coeff n0 (n - n0)))
     have sb := series2Coeff_bound h n0 (n - n0)
-    rw [← Nat.add_sub_assoc (Nat.le_of_lt_succ n0n) n0, Nat.add_sub_cancel_left] at sb
+    rw [Nat.add_sub_of_le n0n] at sb
     assumption
   trans (Finset.range (n + 1)).sum fun n0 ↦ ‖termCmmap ℂ n n0 (h.series2Coeff n0 (n - n0))‖
   · bound
@@ -560,7 +561,7 @@ theorem osgood_h (h : Separate f c0 c1 r b s) :
   { r_le := cauchy2_radius h
     r_pos := by simp; exact h.rp
     hasSum := by
-      simp only [Metric.emetric_ball, Metric.mem_ball, dist_zero_right, Prod.forall]
+      simp only [Metric.eball_ofReal, Metric.mem_ball, dist_zero_right, Prod.forall]
       intro w0 w1 wr; rw [Prod.norm_def] at wr
       simp only [max_lt_iff] at wr
       have w0m : w0 ∈ ball (0 : ℂ) r := by simp; exact wr.left

@@ -172,19 +172,22 @@ public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊) := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
-  · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ ContinuousLinearMap.zero_apply _
-    simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
+  · simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
       if_pos, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
       writtenInExtChartAt_coe_f, RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply,
-      toComplex_coe, coe_eq_zero, coe_eq_inf_iff, or_false, ← toSpanSingleton_deriv, deriv_f',
-      ContinuousLinearMap.ext_iff, zx, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul,
-      mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, ne_eq, (d_minus_one_pos _).ne', not_false_eq_true,
-      pow_eq_zero_iff, false_or]
+      toComplex_coe, coe_eq_zero, coe_eq_inf_iff, or_false, ← toSpanSingleton_deriv, deriv_f']
     constructor
     · intro h
-      specialize h 1
-      simpa only [one_ne_zero, false_or] using h
-    · exact fun h x ↦ Or.inr h
+      have h0 : ContinuousLinearMap.toSpanSingleton ℂ (↑d * z ^ (d - 1)) =
+          ContinuousLinearMap.toSpanSingleton ℂ 0 := by simpa using h
+      have h' := ContinuousLinearMap.toSpanSingleton_inj.mp h0
+      have hz : z ^ (d - 1) = 0 := by
+        simpa only [mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, false_or] using h'
+      exact (pow_eq_zero_iff ((d_minus_one_pos _).ne')).mp hz
+    · intro h
+      subst h
+      rw [zero_pow (d_minus_one_pos _).ne', mul_zero, ContinuousLinearMap.toSpanSingleton_zero]
+      rfl
 
 /-- The multibrot set is all `c`'s s.t. `0` doesn't reach `∞` -/
 theorem multibrot_basin' : c ∈ multibrot d ↔ (c, (c : 𝕊)) ∉ (superF d).basin := by

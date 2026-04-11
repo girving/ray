@@ -4,6 +4,7 @@ public import Mathlib.MeasureTheory.MeasurableSpace.Defs
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
 public import Mathlib.Topology.Connected.PathConnected
 import Mathlib.Analysis.Calculus.MeanValue
+public import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Complex
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Metric
 import Mathlib.MeasureTheory.Measure.MeasureSpaceDef

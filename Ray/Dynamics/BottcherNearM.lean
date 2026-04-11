@@ -524,8 +524,8 @@ public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
-    rw [u, mfderiv_sub, mfderiv_const, sub_zero]
-    · exact extChartAt_mderiv_ne_zero a
+    rw [u, mfderiv_sub, mfderiv_const]
+    · exact fun h ↦ extChartAt_mderiv_ne_zero a (sub_eq_zero.mp h)
     · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt one_ne_zero
     · apply mdifferentiableAt_const
 

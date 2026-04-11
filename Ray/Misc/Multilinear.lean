@@ -216,10 +216,8 @@ public theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMul
     by_cases nk : n < k
     · simp [nk]
       rw [fstCmmap_apply]
-      have nsk : n.succ ≤ k := Nat.succ_le_iff.mpr nk
-      rw [min_eq_right nk.le, min_eq_right nsk, Nat.sub_eq_zero_of_le nk.le,
-        Nat.sub_eq_zero_of_le nsk]
-      simp only [pow_zero, one_smul, ← smul_assoc, smul_eq_mul, Nat.succ_eq_add_one, pow_succ']
+      rw [min_eq_right nk.le, Nat.sub_eq_zero_of_le nk.le]
+      simp [pow_succ', smul_smul]
     · simp [nk]; simp at nk
       rw [sndCmmap_apply]
       have nsk : k ≤ n.succ := Nat.le_succ_of_le nk
@@ -241,8 +239,10 @@ public theorem termCmmap_norm (𝕜 : Type) [NontriviallyNormedField 𝕜] [Norm
 public def conjCLM : ℂ →L[ℝ] ℂ where
   toFun z := conj z
   map_add' := by simp only [map_add, forall_const]
-  map_smul' := by simp only [Complex.real_smul, map_mul, RingHom.id_apply, Complex.conj_ofReal,
-    implies_true]
+  map_smul' := by
+    intro m x
+    change (starRingEnd ℂ) ((m : ℂ) * x) = m * (starRingEnd ℂ) x
+    rw [map_mul, Complex.conj_ofReal]
 
 public theorem conjCLM_apply (z : ℂ) : conjCLM z = conj z := by rfl
 
@@ -275,8 +275,8 @@ public lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [Topo
     c.smulRight f ≠ 0 := by
   rcases ContinuousLinearMap.exists_ne_zero c0 with ⟨x,cx⟩
   simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
-    ContinuousLinearMap.smulRight_apply, smul_eq_zero, not_or]
-  use x
+    ContinuousLinearMap.smulRight_apply]
+  use x; exact fun h ↦ by rcases (noZeroSMulDivisors_iff R B).mp inferInstance h with hc | hf <;> first | exact cx hc | exact f0 hf
 
 /-- `1 ≠ 0`, `ContinuousLinearMap` case -/
 public lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A]

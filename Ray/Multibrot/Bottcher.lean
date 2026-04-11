@@ -385,10 +385,12 @@ public theorem potential_approx_strong_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 �
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
 public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
-  rw [HasDerivAt, HasDerivAtFilter, bottcher_inv_def, bottcher, hasFDerivAtFilter_iff_isLittleO,
-    coe_zero, inv_zero', fill_inf]
-  simp only [sub_zero, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
-  rw [Asymptotics.isLittleO_iff]
+  rw [hasDerivAt_iff_isLittleO]
+  simp [bottcher_inv_def, bottcher, bottcher_inv_zero, smul_eq_mul, sub_eq_add_neg, add_comm]
+  have h : (fun x' : ℂ ↦ -x' + fill (bottcher' d) 0 (↑x')⁻¹) = fun x' : ℂ ↦
+      fill (bottcher' d) 0 (↑x')⁻¹ - x' := by
+    funext x'; ring
+  rw [h, Asymptotics.isLittleO_iff]
   intro k k0; rw [Metric.eventually_nhds_iff]
   refine ⟨min 16⁻¹ (k / 16), by bound, ?_⟩; intro z le
   simp only [dist_eq_norm, sub_zero, lt_min_iff] at le
@@ -415,7 +417,7 @@ public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [← bottcher_inv_def, bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
-  rw [Ne, ContinuousLinearMap.ext_iff, not_forall]; use 1
-  simp only [ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
-  convert one_ne_zero
-  exact NeZero.one
+  intro h
+  have h' : LinearMap.toSpanSingleton ℂ ℂ (1 : ℂ) = 0 := by
+    simpa using congrArg ContinuousLinearMap.toLinearMap h
+  exact one_ne_zero ((LinearMap.toSpanSingleton_eq_zero_iff ℂ ℂ).mp h')

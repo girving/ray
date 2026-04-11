@@ -70,7 +70,7 @@ theorem CNonpos.degenerate {f : ℕ → ℂ → G} {s : Set ℂ} {c a : ℝ} (c0
 theorem sum_cons {a g : G} {f : ℕ → G} (h : HasSum f g) :
     HasSum (Stream'.cons a f) (a + g) := by
   rw [HasSum] at h ⊢
-  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_add_left a) g) h
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_const_add a) g) h
   have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum f) =
       (fun N : Finset ℕ ↦ N.sum (Stream'.cons a f)) ∘ push := by
     apply funext; intro N; simp; exact push_sum
