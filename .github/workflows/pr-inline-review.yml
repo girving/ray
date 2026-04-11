@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   review:
+    environment: codex-review
     if: >-
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/review') &&
@@ -98,7 +99,7 @@ jobs:
         env:
           BOT_REPO_ROOT: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || vars.OPENAI_API_KEY }}
           REVIEW_TARGET_DIR: ${{ github.workspace }}/review-target
         run: python3 .github/scripts/review_bot.py
 

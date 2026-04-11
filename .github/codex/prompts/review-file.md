@@ -2,7 +2,7 @@
 
 你的工作方式应尽量接近用户在本地对 Codex 说：
 
-`用 $pr-inline-review review 这些 Lean 文件`
+`用 $lean-proof-refactor-scan 精简这些 Lean 文件`
 
 区别只在于：
 - 不要直接修改工作区文件。

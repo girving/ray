@@ -1,37 +1,262 @@
-name: pr-inline-review
-description: 对指定 Lean 文件做高置信度 PR review, 尽量产出可直接应用的 inline suggestion.
+---
+name: lean-proof-refactor-scan
+description: 扫描当前 Lean 源文件, 避免重复造轮子.
 ---
 
-# pr-inline-review
+# Lean-proof-refactor-scan
 
-你的任务是对给定的 Lean 文件做 PR review, 目标是少而准地给出高价值、可落地的修改建议。
+ 你的任务是扫描
 
-1. 优先检查正确性风险、明显重复造轮子、可显著简化的证明结构、以及局部可安全替换的实现。
+1. 检查当前文件的证明中有没有重复造轮子, 推荐用 lean-lsp-mcp 进行检索. 对于重复造轮子的代码进行重构, 希望重构完行数减少.
 
-2. 推荐优先使用 `lean_lsp` MCP 检索已有 lemma / theorem / tactic, 尤其是能替代手写证明样板的结果。
+2. 注意, 希望重构的地方证明有本质性改变, 单纯调整缩进, 或者语法糖/风格的压行的压行是没有必要的.
 
-3. 强烈偏向“少而准”的评论:
-   - 没有高把握时不要评论。
-   - 不要提出纯格式化、纯措辞、纯风格偏好类意见。
-   - 只有当你能给出完整替换文本时, 才输出 inline suggestion。
+   例如, 下面的修改是语法糖/风格
 
-4. 如果是 Lean 证明重构:
-   - 不要新增新的 theorem / lemma。
-   - 优先寻找“本质性”改动, 而不是压行、换语法糖、调缩进。
-   - 只有当建议确实更稳、更短、更清晰时, 才考虑 `grind`。
+   ```Lean4
+   - have hd : DifferentiableOn ℝ (iteratedDerivWithin n f (uIcc x₀ x)) (uIcc x₀ x) := by
+   -   refine hf.differentiableOn_iteratedDerivWithin ?_ hu
+   -   norm_cast
+   -   simp
+   - obtain ⟨x', h1, h2⟩ := taylor_mean_remainder_lagrange hx hf.of_succ (hd.mono Ioo_subset_Icc_self)
+   - use x', h1
+   + obtain ⟨x', h1, h2⟩ := taylor_mean_remainder_lagrange hx hf.of_succ
+   +     ((hf.differentiableOn_iteratedDerivWithin (by norm_cast; simp) hu).mono Ioo_subset_Icc_self)
+   + refine ⟨x', h1, ?_⟩
+   ```
 
-5. `review_scope = "diff"` 时:
-   - 重点看 patch 和 changed RIGHT-side lines。
-   - 可以阅读全文拿上下文, 但只应对 diff 中能合法锚定的位置输出 inline suggestion。
+3. 注意, 不要在文件里增加新的定理.
 
-6. `review_scope = "file"` 时:
-   - 先完整阅读被点名的文件。
-   - 如果最佳修改点也在 diff 中, 可以输出 inline suggestion。
-   - 如果最佳修改点不在 diff 中, 不要伪造锚点, 把结论写进 summary。
+4. 最后你只呈现减少行数 $> 3$ 的修改. 如果没有合适的修改地方就告诉我"没处下手"
 
-7. 如果没有高价值、可直接应用的修改, 返回空 comments, 并在 summary 里简要说明。
+5. 看看有没有地方能用 `grind` 精简掉, `grind` 的用法见下面.
 
-8. 如果建议里涉及多行替换, 只在你能给出完整、可直接应用的 replacement text 时才输出。
+---
+
+syntax "grind"... [Lean.Parser.Tactic.grind]
+  `grind` is a tactic inspired by modern SMT solvers. **Picture a virtual whiteboard**:
+  every time grind discovers a new equality, inequality, or logical fact,
+  it writes it on the board, groups together terms known to be equal,
+  and lets each reasoning engine read from and contribute to the shared workspace.
+  These engines work together to handle equality reasoning, apply known theorems,
+  propagate new facts, perform case analysis, and run specialized solvers
+  for domains like linear arithmetic and commutative rings.
+
+  See [the reference manual's chapter on `grind`](https://lean-lang.org/doc/reference/4.30.0-rc1/find/?domain=Verso.Genre.Manual.section&name=grind-tactic) for more information.
+
+  `grind` is *not* designed for goals whose search space explodes combinatorially,
+  think large pigeonhole instances, graph‑coloring reductions, high‑order N‑queens boards,
+  or a 200‑variable Sudoku encoded as Boolean constraints.  Such encodings require
+   thousands (or millions) of case‑splits that overwhelm `grind`’s branching search.
+
+  For **bit‑level or combinatorial problems**, consider using **`bv_decide`**.
+  `bv_decide` calls a state‑of‑the‑art SAT solver (CaDiCaL) and then returns a
+  *compact, machine‑checkable certificate*.
+
+  ### Equality reasoning
+
+  `grind` uses **congruence closure** to track equalities between terms.
+  When two terms are known to be equal, congruence closure automatically deduces
+  equalities between more complex expressions built from them.
+  For example, if `a = b`, then congruence closure will also conclude that `f a` = `f b`
+  for any function `f`. This forms the foundation for efficient equality reasoning in `grind`.
+  Here is an example:
+  ```
+  example (f : Nat → Nat) (h : a = b) : f (f b) = f (f a) := by
+    grind
+  ```
+
+  ### Applying theorems using E-matching
+
+  To apply existing theorems, `grind` uses a technique called **E-matching**,
+  which finds matches for known theorem patterns while taking equalities into account.
+  Combined with congruence closure, E-matching helps `grind` discover
+  non-obvious consequences of theorems and equalities automatically.
+
+  Consider the following functions and theorems:
+  ```
+  def f (a : Nat) : Nat :=
+    a + 1
+
+  def g (a : Nat) : Nat :=
+    a - 1
+
+  @[grind =]
+  theorem gf (x : Nat) : g (f x) = x := by
+    simp [f, g]
+  ```
+  The theorem `gf` asserts that `g (f x) = x` for all natural numbers `x`.
+  The attribute `[grind =]` instructs `grind` to use the left-hand side of the equation,
+  `g (f x)`, as a pattern for E-matching.
+  Suppose we now have a goal involving:
+  ```
+  example {a b} (h : f b = a) : g a = b := by
+    grind
+  ```
+  Although `g a` is not an instance of the pattern `g (f x)`,
+  it becomes one modulo the equation `f b = a`. By substituting `a`
+  with `f b` in `g a`, we obtain the term `g (f b)`,
+  which matches the pattern `g (f x)` with the assignment `x := b`.
+  Thus, the theorem `gf` is instantiated with `x := b`,
+  and the new equality `g (f b) = b` is asserted.
+  `grind` then uses congruence closure to derive the implied equality
+  `g a = g (f b)` and completes the proof.
+
+  The pattern used to instantiate theorems affects the effectiveness of `grind`.
+  For example, the pattern `g (f x)` is too restrictive in the following case:
+  the theorem `gf` will not be instantiated because the goal does not even
+  contain the function symbol `g`.
+
+  ```
+  example (h₁ : f b = a) (h₂ : f c = a) : b = c := by
+    grind
+  ```
+
+  You can use the command `grind_pattern` to manually select a pattern for a given theorem.
+  In the following example, we instruct `grind` to use `f x` as the pattern,
+  allowing it to solve the goal automatically:
+  ```
+  grind_pattern gf => f x
+
+  example {a b c} (h₁ : f b = a) (h₂ : f c = a) : b = c := by
+    grind
+  ```
+  You can enable the option `trace.grind.ematch.instance` to make `grind` print a
+  trace message for each theorem instance it generates.
+
+  You can also specify a **multi-pattern** to control when `grind` should apply a theorem.
+  A multi-pattern requires that all specified patterns are matched in the current context
+  before the theorem is applied. This is useful for theorems such as transitivity rules,
+  where multiple premises must be simultaneously present for the rule to apply.
+  The following example demonstrates this feature using a transitivity axiom for a binary relation `R`:
+  ```
+  opaque R : Int → Int → Prop
+  axiom Rtrans {x y z : Int} : R x y → R y z → R x z
+
+  grind_pattern Rtrans => R x y, R y z
+
+  example {a b c d} : R a b → R b c → R c d → R a d := by
+    grind
+  ```
+  By specifying the multi-pattern `R x y, R y z`, we instruct `grind` to
+  instantiate `Rtrans` only when both `R x y` and `R y z` are available in the context.
+  In the example, `grind` applies `Rtrans` to derive `R a c` from `R a b` and `R b c`,
+  and can then repeat the same reasoning to deduce `R a d` from `R a c` and `R c d`.
+
+  Instead of using `grind_pattern` to explicitly specify a pattern,
+  you can use the `@[grind]` attribute or one of its variants, which will use a heuristic to
+  generate a (multi-)pattern. The complete list is available in the reference manual. The main ones are:
+
+  - `@[grind →]` will select a multi-pattern from the hypotheses of the theorem (i.e. it will use the theorem for forwards reasoning).
+    In more detail, it will traverse the hypotheses of the theorem from left-to-right, and each time it encounters a minimal indexable
+    (i.e. has a constant as its head) subexpression which "covers" (i.e. fixes the value of) an argument which was not
+    previously covered, it will add that subexpression as a pattern, until all arguments have been covered.
+  - `@[grind ←]` will select a multi-pattern from the conclusion of theorem (i.e. it will use the theorem for backwards reasoning).
+    This may fail if not all the arguments to the theorem appear in the conclusion.
+  - `@[grind]` will traverse the conclusion and then the hypotheses left-to-right, adding patterns as they increase the coverage,
+    stopping when all arguments are covered.
+  - `@[grind =]` checks that the conclusion of the theorem is an equality, and then uses the left-hand-side of the equality as a pattern.
+    This may fail if not all of the arguments appear in the left-hand-side.
+
+  Here is the previous example again but using the attribute `[grind →]`
+  ```
+  opaque R : Int → Int → Prop
+  @[grind →] axiom Rtrans {x y z : Int} : R x y → R y z → R x z
+
+  example {a b c d} : R a b → R b c → R c d → R a d := by
+    grind
+  ```
+
+  To control theorem instantiation and avoid generating an unbounded number of instances,
+  `grind` uses a generation counter. Terms in the original goal are assigned generation zero.
+  When `grind` applies a theorem using terms of generation `≤ n`, any new terms it creates
+  are assigned generation `n + 1`. This limits how far the tactic explores when applying
+  theorems and helps prevent an excessive number of instantiations.
+
+  #### Key options:
+  - `grind (ematch := <num>)` controls the number of E-matching rounds.
+  - `grind [<name>, ...]` instructs `grind` to use the declaration `name` during E-matching.
+  - `grind only [<name>, ...]` is like `grind [<name>, ...]` but does not use theorems tagged with `@[grind]`.
+  - `grind (gen := <num>)` sets the maximum generation.
+
+  ### Linear integer arithmetic (`lia`)
+
+  `grind` can solve goals that reduce to **linear integer arithmetic (LIA)** using an
+  integrated decision procedure called **`lia`**.  It understands
+
+  * equalities   `p = 0`
+  * inequalities  `p ≤ 0`
+  * disequalities `p ≠ 0`
+  * divisibility  `d ∣ p`
+
+  The solver incrementally assigns integer values to variables; when a partial
+  assignment violates a constraint it adds a new, implied constraint and retries.
+  This *model-based* search is **complete for LIA**.
+
+  #### Key options:
+
+  * `grind -lia` disable the solver (useful for debugging)
+  * `grind +qlia` accept rational models (shrinks the search space but is incomplete for ℤ)
+
+  #### Examples:
+
+  ```
+  -- Even + even is never odd.
+  example {x y : Int} : 2 * x + 4 * y ≠ 5 := by
+    grind
+
+  -- Mixing equalities and inequalities.
+  example {x y : Int} :
+      2 * x + 3 * y = 0 → 1 ≤ x → y < 1 := by
+    grind
+
+  -- Reasoning with divisibility.
+  example (a b : Int) :
+      2 ∣ a + 1 → 2 ∣ b + a → ¬ 2 ∣ b + 2 * a := by
+    grind
+
+  example (x y : Int) :
+      27 ≤ 11*x + 13*y →
+      11*x + 13*y ≤ 45 →
+      -10 ≤ 7*x - 9*y →
+      7*x - 9*y ≤ 4 → False := by
+    grind
+
+  -- Types that implement the `ToInt` type-class.
+  example (a b c : UInt64)
+      : a ≤ 2 → b ≤ 3 → c - a - b = 0 → c ≤ 5 := by
+    grind
+  ```
+
+  ### Algebraic solver (`ring`)
+
+  `grind` ships with an algebraic solver nick-named **`ring`** for goals that can
+  be phrased as polynomial equations (or disequations) over commutative rings,
+  semirings, or fields.
+
+  *Works out of the box*
+  All core numeric types and relevant Mathlib types already provide the required
+  type-class instances, so the solver is ready to use in most developments.
+
+  What it can decide:
+
+  * equalities of the form `p = q`
+  * disequalities `p ≠ q`
+  * basic reasoning under field inverses (`a / b := a * b⁻¹`)
+  * goals that mix ring facts with other `grind` engines
+
+  #### Key options:
+
+  * `grind -ring` turn the solver off (useful when debugging)
+  * `grind (ringSteps := n)` cap the number of steps performed by this procedure.
+
+  #### Examples
+
+  ```
+  open Lean Grind
+
+  example [CommRing α] (x : α) : (x + 1) * (x - 1) = x^2 - 1 := by
+    grind
 
   -- Characteristic 256 means 16 * 16 = 0.
   example [CommRing α] [IsCharP α 256] (x : α) :
