@@ -1,0 +1,111 @@
+name: pr-inline-review
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pr-inline-review-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/review') &&
+      github.event.comment.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout trusted automation code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Preflight PR safety check
+        id: preflight
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPOSITORY']}/pulls/{os.environ['PR_NUMBER']}",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "codex-pr-inline-review-bot",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              pr = json.load(response)
+
+          same_repo = str(pr["head"]["repo"]["full_name"] == os.environ["REPOSITORY"]).lower()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"same_repo={same_repo}\n")
+          PY
+
+      - name: Materialize PR head in a separate worktree
+        if: steps.preflight.outputs.same_repo == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git fetch --no-tags --depth=1 origin "pull/${PR_NUMBER}/head:refs/remotes/origin/pr-review-${PR_NUMBER}"
+          git worktree add --detach review-target "refs/remotes/origin/pr-review-${PR_NUMBER}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Codex CLI
+        if: steps.preflight.outputs.same_repo == 'true'
+        run: npm install -g @openai/codex
+
+      - name: Set up uv
+        if: steps.preflight.outputs.same_repo == 'true'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Lean toolchain
+        if: steps.preflight.outputs.same_repo == 'true'
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: review-target
+          test: false
+
+      - name: Prepare Codex home
+        if: steps.preflight.outputs.same_repo == 'true'
+        run: |
+          mkdir -p "${HOME}/.codex"
+          cp .github/codex/config.toml "${HOME}/.codex/config.toml"
+          mkdir -p "${HOME}/.codex/skills/pr-inline-review"
+          cp .agents/skills/pr-inline-review/SKILL.md "${HOME}/.codex/skills/pr-inline-review/SKILL.md"
+
+      - name: Run inline review bot
+        if: steps.preflight.outputs.same_repo == 'true'
+        env:
+          BOT_REPO_ROOT: ${{ github.workspace }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          REVIEW_TARGET_DIR: ${{ github.workspace }}/review-target
+        run: python3 .github/scripts/review_bot.py
+
+      - name: Explain why external fork PRs are skipped
+        if: steps.preflight.outputs.same_repo != 'true'
+        env:
+          BOT_REPO_ROOT: ${{ github.workspace }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW_TARGET_DIR: ${{ github.workspace }}/review-target
+        run: python3 .github/scripts/review_bot.py
