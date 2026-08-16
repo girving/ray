@@ -62,7 +62,7 @@ public theorem analytic_f' {d : ℕ} : AnalyticOnNhd ℂ (uncurry (f' d)) univ :
 
 theorem tendsto_f'_cobounded (c : ℂ) :
     Tendsto (uncurry (f' d)) (𝓝 c ×ˢ cobounded ℂ) (cobounded ℂ) := by
-  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, Set.mem_setOf_eq,
+  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, Set.mem_ofPred_eq,
     forall_true_left, uncurry, Metric.eventually_nhds_prod_iff]
   intro r; use 1, zero_lt_one, fun z ↦ max r 0 + ‖c‖ + 1 < ‖z‖; constructor
   · refine (eventually_cobounded (max r 0 + ‖c‖ + 1)).mp (.of_forall fun w h ↦ ?_)

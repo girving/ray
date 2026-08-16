@@ -116,7 +116,7 @@ theorem norm_eq_duals_supr' {g : ℝ → ℝ} {k : NNReal} (gm : Monotone g) (gk
 /-- Norms are suprs over `duals` -/
 theorem norm_eq_duals_iSup (x : E) : ‖x‖ = ⨆ n, ‖duals n x‖ := by
   have h := norm_eq_duals_supr' (@monotone_id ℝ _) LipschitzWith.id x
-  simpa only using h
+  simpa only [id_eq] using h
 
 /-- Norms are suprs over `duals` (`maxLog` version) -/
 theorem maxLog_norm_eq_duals_iSup (b : ℝ) (x : E) : maxLog b ‖x‖ = ⨆ n, maxLog b ‖duals n x‖ :=
@@ -149,6 +149,6 @@ public theorem duals_lim_tendsto_maxLog_norm (b : ℝ) (x : E) :
 
 /-- Partial sups of `maxLog b ‖duals k x‖` converge to `maxLog b ‖x‖` -/
 theorem maxLog_norm_eq_duals_limUnder (b : ℝ) (x : E) :
-    maxLog b ‖x‖ = limUnder atTop (partialSups fun k ↦ maxLog b ‖duals k x‖) :=
+    maxLog b ‖x‖ = Filter.limUnder atTop (partialSups fun k ↦ maxLog b ‖duals k x‖) :=
   haveI a := duals_lim_tendsto_maxLog_norm b x
   tendsto_nhds_unique a (tendsto_nhds_limUnder ⟨_, a⟩)

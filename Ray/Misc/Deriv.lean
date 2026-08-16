@@ -22,11 +22,17 @@ public lemma hasFDeriv_zero_of_comp_right {f : F → G} {g : E → F} {y : F} {x
     (df : DifferentiableAt 𝕜 f y) (dg : HasFDerivAt g (0 : E →L[𝕜] F) x) (e : g x = y) :
     HasFDerivAt (fun x ↦ f (g x)) (0 : E →L[𝕜] G) x := by
   convert df.hasFDerivAt.comp_of_eq _ dg e
-  simp only [ContinuousLinearMap.comp_zero]
+  · rfl
+  · rw [ContinuousLinearMap.comp_zero]
 
 /-- Version of `HasDerivAt.inv` that works nicely over field towers -/
 public theorem HasDerivAt.inv_tower [NormedAlgebra 𝕜 𝕝] {x : 𝕜} {c : 𝕜 → 𝕝} {c' : 𝕝}
     (dc : HasDerivAt c c' x) (c0 : c x ≠ 0) : HasDerivAt c⁻¹ (-c' / c x ^ 2) x := by
   have di := (hasFDerivAt_inv c0).restrictScalars 𝕜
   have d := (di.comp x dc.hasFDerivAt).hasDerivAt
-  simpa [Function.comp_def, ← neg_div, ← div_eq_mul_inv] using d
+  simp only [Function.comp_def] at d
+  have e : c⁻¹ = fun x ↦ (c x)⁻¹ := rfl
+  rw [e]
+  convert d using 1
+  · rfl
+  · simp [ContinuousLinearMap.toSpanSingleton_apply, div_eq_mul_inv, mul_neg]

@@ -35,7 +35,8 @@ public lemma Complex.norm_log_one_add_le' {z : ℂ} (z1 : ‖z‖ < 1) :
       HasDerivAt (fun t : ℝ ↦ -Real.log (1 - t * ‖z‖)) (- (-‖z‖ / (1 - t * ‖z‖))) t := by
     intro t m
     simp only [zero_le_one, uIcc_of_le, mem_Icc] at m
-    exact (((hasDerivAt_mul_const _).const_sub _).log ((sub_pos.mpr (m1 _ m.2)).ne')).neg
+    exact (((hasDerivAt_mul_const (x := t) ‖z‖).const_sub 1).log
+      ((sub_pos.mpr (m1 _ m.2)).ne')).neg
   have ic : IntervalIntegrable (fun t ↦ z / (1 + t*z)) MeasureTheory.volume 0 1 := by
     apply ContinuousOn.intervalIntegrable_of_Icc zero_le_one
     apply continuousOn_const.div (Continuous.continuousOn (by continuity))

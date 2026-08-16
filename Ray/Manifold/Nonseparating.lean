@@ -46,7 +46,7 @@ theorem Nonseparating.univ_prod [LocallyConnectedSpace X] {t : Set Y} (n : Nonse
     rcases locallyConnectedSpace_iff_subsets_isOpen_isConnected.mp (by infer_instance) a u0 n0 with
       ⟨c0, cs0, co0, cm0, cc0⟩
     use c0 ×ˢ c1; refine ⟨?_, ?_, ?_⟩
-    · intro ⟨b, y⟩ m'; simp only [mem_prod_eq, mem_diff, mem_univ, true_and] at m' ⊢
+    · intro ⟨b, y⟩ m'; simp only [mem_prod_eq, mem_sdiff, mem_univ, true_and] at m' ⊢
       refine ⟨?_, (cs1 m'.2).2⟩; apply uu; use cs0 m'.1, (cs1 m'.2).1
     · rw [e, nhdsWithin_prod_eq, nhdsWithin_univ]; exact Filter.prod_mem_prod (co0.mem_nhds cm0) cn1
     · exact cc0.isPreconnected.prod cp1
@@ -86,13 +86,13 @@ theorem Nonseparating.complexManifold {t : Set S}
         apply Set.ext; intro x; simp only [mem_inter_iff, mem_preimage, mem_image]; constructor
         · intro ⟨xz, xc⟩; refine ⟨_, xc, ?_⟩; simp only [PartialEquiv.left_inv _ xz]
         · intro ⟨y, yc, yx⟩; rw [← yx]
-          have xc := cs yc; simp only [mem_diff, mem_inter_iff, mem_preimage] at xc
+          have xc := cs yc; simp only [mem_sdiff, mem_inter_iff, mem_preimage] at xc
           have yz := xc.1.1; use PartialEquiv.map_target _ yz
           simp only [PartialEquiv.right_inv _ yz, yc]
       use(extChartAt I z).source ∩ extChartAt I z ⁻¹' c; refine ⟨?_, ?_, ?_⟩
       · intro x xm; simp only [mem_inter_iff, mem_preimage] at xm; rcases xm with ⟨xz, xc⟩
         replace xc := cs xc
-        simp only [mem_diff, mem_inter_iff, mem_preimage, PartialEquiv.map_source _ xz, true_and,
+        simp only [mem_sdiff, mem_inter_iff, mem_preimage, PartialEquiv.map_source _ xz, true_and,
           PartialEquiv.left_inv _ xz] at xc
         exact xc
       · rw [e]; convert Filter.image_mem_map cn
@@ -111,7 +111,7 @@ theorem Nonseparating.complexManifold {t : Set S}
         · intro ⟨⟨y, ⟨⟨yz, yt⟩, yx⟩⟩, _⟩
           simp only [← yx, yt, PartialEquiv.map_target _ yz, not_false_iff, true_and]
       · rw [e]; apply cp.image; apply (continuousOn_extChartAt_symm z).mono
-        exact _root_.trans cs (_root_.trans diff_subset inter_subset_left) }
+        exact _root_.trans cs (_root_.trans sdiff_subset inter_subset_left) }
 
 /-- A sufficient condition on `t` for `s \ t` to be preconnected, for `s` open and preconnected.
     Roughly, `t` has empty interior and there are arbitrarily small connected rings around each
@@ -129,22 +129,22 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
       exact (o.eventually_mem xu).mp (.of_forall fun q m ↦ subset_union_left m)
     by_cases xt : x ∉ t
     · contrapose xu; clear xu
-      simp only [mem_union, mem_setOf, xt, false_and, and_false, or_false, ← hf] at m
+      simp only [mem_union, mem_ofPred, xt, false_and, and_false, or_false, ← hf] at m
       exact m
     simp only [not_not] at xt
     have n := m
-    simp only [mem_union, xt, xu, false_or, true_and, mem_setOf,
+    simp only [mem_union, xt, xu, false_or, true_and, mem_ofPred,
       eventually_nhdsWithin_iff, ← hf] at n
     refine (so.eventually_mem n.1).mp (n.2.eventually_nhds.mp (.of_forall fun y n m ↦ ?_))
     by_cases yt : y ∈ t
-    simp only [mem_union, mem_setOf, eventually_nhdsWithin_iff, ← hf]; right; use m, yt, n
+    simp only [mem_union, mem_ofPred, eventually_nhdsWithin_iff, ← hf]; right; use m, yt, n
     exact mono _ (n.self_of_nhds yt)
   have mem : ∀ {x u c}, x ∈ s → x ∈ t → c ∈ 𝓝[tᶜ] x → c ⊆ u → x ∈ f u := by
     intro x u c m xt cn cu; rw [← hf]; right; use m, xt
-    simp only [Filter.eventually_iff, setOf_mem_eq]; exact Filter.mem_of_superset cn cu
+    simp only [Filter.eventually_iff, ofPred_mem_eq]; exact Filter.mem_of_superset cn cu
   have cover : s ⊆ f u ∪ f v := by
     intro x m
-    by_cases xt : x ∉ t; exact union_subset_union (mono _) (mono _) (suv (mem_diff_of_mem m xt))
+    by_cases xt : x ∉ t; exact union_subset_union (mono _) (mono _) (suv (mem_sdiff_of_mem m xt))
     simp only [not_not] at xt
     rcases ts.loc x s xt (so.mem_nhds m) with ⟨c, cst, cn, cp⟩
     have d := inter_subset_inter_left (u ∩ v) cst; rw [duv, subset_empty_iff] at d
@@ -152,11 +152,11 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     exact subset_union_left (mem m xt cn cu)
     exact subset_union_right (mem m xt cn cv)
   have fdiff : ∀ {u}, f u \ t ⊆ u := by
-    intro u x m; simp only [mem_diff, mem_union, mem_setOf, ← hf] at m
+    intro u x m; simp only [mem_sdiff, mem_union, mem_ofPred, ← hf] at m
     simp only [m.2, false_and, and_false, or_false, not_false_iff, and_true] at m
     exact m
   have fnon : ∀ {x u}, IsOpen u → x ∈ f u → ∀ᶠ y in 𝓝[tᶜ] x, y ∈ u := by
-    intro x u o m; simp only [mem_union, mem_setOf, ← hf] at m
+    intro x u o m; simp only [mem_union, mem_ofPred, ← hf] at m
     cases' m with xu m; exact (o.eventually_mem xu).filter_mono nhdsWithin_le_nhds; exact m.2.2
   have disj : s ∩ (f u ∩ f v) = ∅ := by
     contrapose duv; simp only [← ne_eq, ← nonempty_iff_ne_empty] at duv ⊢
@@ -166,11 +166,11 @@ theorem IsPreconnected.open_diff {s t : Set X} (sc : IsPreconnected s) (so : IsO
     simp only [eventually_nhdsWithin_iff] at b
     rcases eventually_nhds_iff.mp b with ⟨n, h, no, xn⟩
     rcases ts.dense.exists_mem_open no ⟨_, xn⟩ with ⟨y, yt, yn⟩
-    use y; simp only [mem_inter_iff, mem_diff, ← mem_compl_iff]; specialize h y yn yt
+    use y; simp only [mem_inter_iff, mem_sdiff, ← mem_compl_iff]; specialize h y yn yt
     exact ⟨⟨h.1,yt⟩,h.2.1,h.2.2⟩
   cases' sc (f u) (f v) (fopen uo) (fopen vo) cover disj with su sv
-  left; exact _root_.trans (diff_subset_diff_left su) fdiff
-  right; exact _root_.trans (diff_subset_diff_left sv) fdiff
+  left; exact _root_.trans (sdiff_subset_sdiff_left su) fdiff
+  right; exact _root_.trans (sdiff_subset_sdiff_left sv) fdiff
 
 /-- ∅ is nonseparating -/
 theorem Nonseparating.empty : Nonseparating (∅ : Set X) :=
@@ -179,13 +179,13 @@ theorem Nonseparating.empty : Nonseparating (∅ : Set X) :=
 
 /-- Punctured complex balls are preconnected -/
 theorem IsPreconnected.ball_diff_center {a : ℂ} {r : ℝ} : IsPreconnected (ball a r \ {a}) := by
-  by_cases rp : r ≤ 0; simp only [Metric.ball_eq_empty.mpr rp, empty_diff]
+  by_cases rp : r ≤ 0; simp only [Metric.ball_eq_empty.mpr rp, empty_sdiff]
   exact isPreconnected_empty
   simp only [not_le] at rp
   have e : ball a r \ {a} =
       (fun p : ℝ × ℝ ↦ a + p.1 * Complex.exp (p.2 * Complex.I)) '' Ioo 0 r ×ˢ univ := by
     apply Set.ext; intro z
-    simp only [mem_diff, mem_ball, Complex.dist_eq, mem_singleton_iff, mem_image, Prod.exists,
+    simp only [mem_sdiff, mem_ball, Complex.dist_eq, mem_singleton_iff, mem_image, Prod.exists,
       mem_prod_eq, mem_Ioo, mem_univ, and_true]
     constructor
     · intro ⟨zr, za⟩
@@ -217,8 +217,8 @@ theorem Complex.nonseparating_singleton (a : ℂ) : Nonseparating ({a} : Set ℂ
     loc := by
       intro z u m n; simp only [mem_singleton_iff] at m; simp only [m] at n ⊢; clear m z
       rcases Metric.mem_nhds_iff.mp n with ⟨r, rp, rs⟩
-      use ball a r \ {a}; refine ⟨diff_subset_diff_left rs, ?_, IsPreconnected.ball_diff_center⟩
-      exact diff_mem_nhdsWithin_compl (Metric.ball_mem_nhds _ rp) _ }
+      use ball a r \ {a}; refine ⟨sdiff_subset_sdiff_left rs, ?_, IsPreconnected.ball_diff_center⟩
+      exact sdiff_mem_nhdsWithin_compl (Metric.ball_mem_nhds _ rp) _ }
 
 /-- `{z}ᶜ` is nonseparating in 1D complex manifolds -/
 theorem AnalyticManifold.nonseparating_singleton (a : S) : Nonseparating ({a} : Set S) := by
@@ -244,5 +244,5 @@ theorem IsPreconnected.open_diff_line {s : Set (ℂ × S)} (sc : IsPreconnected 
   apply IsPreconnected.open_diff sc so
   have e : {p : ℂ × S | p.2 = a} = univ ×ˢ {a} := by
     apply Set.ext; intro ⟨c, z⟩
-    simp only [mem_prod_eq, mem_setOf, mem_univ, true_and, mem_singleton_iff]
+    simp only [mem_prod_eq, mem_ofPred, mem_univ, true_and, mem_singleton_iff]
   rw [e]; exact Nonseparating.univ_prod (AnalyticManifold.nonseparating_singleton _)

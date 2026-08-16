@@ -108,7 +108,7 @@ public theorem isConnected_compl_multibrot (d : ℕ) [Fact (2 ≤ d)] :
   have e : (_root_.multibrot d)ᶜ = (fun z : 𝕊 ↦ z.toComplex) '' (multibrotExt d \ {∞}) := by
     apply Set.ext; intro z; simp only [mem_compl_iff, mem_image]; constructor
     · intro m; use z
-      simp only [multibrotExt_coe, m, toComplex_coe, not_false_iff, mem_diff, and_true,
+      simp only [multibrotExt_coe, m, toComplex_coe, not_false_iff, mem_sdiff, and_true,
         mem_singleton_iff, coe_ne_inf]
     · intro ⟨w, ⟨m, wi⟩, wz⟩; induction w using OnePoint.rec
       · contrapose wi; clear wi; simp only [mem_singleton_iff]

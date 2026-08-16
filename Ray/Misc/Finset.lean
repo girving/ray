@@ -41,22 +41,36 @@ public theorem push_pop {N : Finset ℕ} : push (pop N) = insert 0 N := by
 
 /-- `push` is monotone -/
 theorem push_le_push {A B : Finset ℕ} : push A ≤ push B ↔ A ≤ B := by
-  simp; rw [push]; rw [push]
+  rw [push, push]
   constructor
   · intro AB; rw [Finset.subset_iff] at AB ⊢; intro x xA
     have h : x + 1 ∈ insert 0 (Finset.image (fun n : ℕ ↦ n + 1) A) := by simpa
     specialize AB h; simp at AB; assumption
   · intro AB; apply Finset.insert_subset_insert; apply Finset.image_mono; assumption
 
+/-- `push` and sums interact nicely, `Stream'.get` version to keep terms type-correct
+    at low transparency -/
+public theorem push_sum_get {X : Type} [AddCommGroup X] {a : X} {g : Stream' X} {N : Finset ℕ} :
+    a + N.sum g.get = (push N).sum (cons a g).get := by
+  rw [push, Finset.sum_insert (by simp), Finset.sum_image (fun x _ y _ h ↦ by omega)]
+  rfl
+
 /-- `push` and sums interact nicely -/
 public theorem push_sum {X : Type} [AddCommGroup X] {a : X} {f : ℕ → X} {N : Finset ℕ} :
-    a + N.sum f = (push N).sum (cons a f) := by
-  rw [push]; simp; rfl
+    a + N.sum f = (push N).sum (cons a f) :=
+  push_sum_get
+
+/-- `push` and products interact nicely, `Stream'.get` version to keep terms type-correct
+    at low transparency -/
+public theorem push_prod_get {a : H} {g : Stream' H} {N : Finset ℕ} :
+    a * N.prod g.get = (push N).prod (cons a g).get := by
+  rw [push, Finset.prod_insert (by simp), Finset.prod_image (fun x _ y _ h ↦ by omega)]
+  rfl
 
 /-- `push` and products interact nicely -/
 public theorem push_prod {a : H} {f : ℕ → H} {N : Finset ℕ} :
-    a * N.prod f = (push N).prod (cons a f) := by
-  rw [push]; simp; rfl
+    a * N.prod f = (push N).prod (cons a f) :=
+  push_prod_get
 
 /-- The range of `push` is `Finset`s containing 0 -/
 theorem push_range : Set.range push = {N : Finset ℕ | 0 ∈ N} := by

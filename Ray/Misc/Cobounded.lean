@@ -29,7 +29,7 @@ variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 public lemma hasBasis_cobounded_norm_lt :
     (cobounded X).HasBasis (fun _ ↦ True) (fun r ↦ {x | r < ‖x‖}) := by
   have b := Filter.hasBasis_cobounded_norm (E := X)
-  simp only [Filter.hasBasis_iff, setOf_subset, true_and] at b ⊢
+  simp only [Filter.hasBasis_iff, ofPred_subset, true_and] at b ⊢
   intro s
   rw [b s]
   constructor
@@ -39,19 +39,19 @@ public lemma hasBasis_cobounded_norm_lt :
 public theorem tendsto_cobounded {f : α → X} {l : Filter α} :
     Tendsto f l (cobounded X) ↔ ∀ r, ∀ᶠ x in l, r < ‖f x‖ := by
   rw [hasBasis_cobounded_norm_lt.tendsto_right_iff]
-  simp only [true_imp_iff, mem_setOf]
+  simp only [true_imp_iff, mem_ofPred]
 
 /-- Characterization of `atTop → cobounded` convergence -/
 theorem tendsto_atTop_cobounded {f : ℕ → X} :
     Tendsto f atTop (cobounded X) ↔ ∀ r, ∃ N, ∀ n, N ≤ n → r < ‖f n‖ := by
-  simpa only [mem_Ici, mem_setOf_eq, exists_true_left, forall_true_left, true_and] using
+  simpa only [mem_Ici, mem_ofPred_eq, exists_true_left, forall_true_left, true_and] using
     Filter.HasBasis.tendsto_iff (f := f) Filter.atTop_basis hasBasis_cobounded_norm_lt
 
 /-- `cobounded` convergence in terms of norm convergence -/
 public theorem tendsto_cobounded_iff_norm_tendsto_atTop {f : Filter α} {g : α → X} :
     Tendsto (fun x ↦ g x) f (cobounded X) ↔ Tendsto (fun x ↦ ‖g x‖) f atTop := by
   rw [Filter.atTop_basis_Ioi.tendsto_right_iff]
-  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, true_imp_iff, mem_setOf, mem_Ioi]
+  simp only [hasBasis_cobounded_norm_lt.tendsto_right_iff, true_imp_iff, mem_ofPred, mem_Ioi]
 
 /-- Characterization of `s ∈ cobounded` -/
 theorem mem_cobounded_iff {s : Set X} : s ∈ cobounded X ↔ ∃ r, {x | r < ‖x‖} ⊆ s := by
@@ -69,14 +69,14 @@ public theorem eventually_cobounded_iff_nhds_zero {p : 𝕜 → Prop} :
   · intro ⟨r,_,h⟩
     refine ⟨(max r 1)⁻¹, by bound, fun x ⟨m,x0⟩ ↦ ?_⟩
     refine @h x⁻¹ ?_
-    simp only [Metric.mem_ball, dist_zero_right, mem_compl_iff, mem_singleton_iff, mem_setOf_eq,
+    simp only [Metric.mem_ball, dist_zero_right, mem_compl_iff, mem_singleton_iff, mem_ofPred_eq,
       norm_inv] at m x0 ⊢
     rw [← lt_inv_comm₀ (by bound) (by simpa)] at m
     exact lt_of_le_of_lt (le_max_left _ _) m
   · intro ⟨i,i0,h⟩
     refine ⟨i⁻¹, trivial, fun x m ↦ ?_⟩
     refine inv_inv x ▸ @h x⁻¹ ?_
-    simp only [mem_setOf_eq, mem_inter_iff, Metric.mem_ball, dist_zero_right, norm_inv,
+    simp only [mem_ofPred_eq, mem_inter_iff, Metric.mem_ball, dist_zero_right, norm_inv,
       mem_compl_iff, mem_singleton_iff, inv_eq_zero] at m ⊢
     have x0 : x ≠ 0 := by have : 0 < ‖x‖ := lt_trans (by bound) m; simpa
     rw [← inv_lt_comm₀ i0 (by simpa)]
@@ -92,13 +92,13 @@ public theorem tendsto_cobounded_iff_tendsto_nhds_zero {l : Filter α}
     by_cases rp : 0 < r
     · use r⁻¹; simp only [rp, inv_pos, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
-      simp only [← lt_inv_comm₀ (norm_pos_iff.mpr xs.2) rp, xs.1, mem_setOf_eq, norm_inv]
+      simp only [← lt_inv_comm₀ (norm_pos_iff.mpr xs.2) rp, xs.1, mem_ofPred_eq, norm_inv]
     · use 1; simp only [zero_lt_one, true_and]; intro x xs; refine m ?_
       simp only [mem_inter_iff, mem_ball_zero_iff, mem_compl_iff, mem_singleton_iff] at xs
-      simp only [mem_setOf_eq, norm_inv]; simp only [not_lt] at rp
+      simp only [mem_ofPred_eq, norm_inv]; simp only [not_lt] at rp
       exact lt_of_le_of_lt rp (inv_pos.mpr (norm_pos_iff.mpr xs.2))
   · intro h t tl; rcases h t tl with ⟨r, rp, m⟩; use r⁻¹; simp only [true_and]
-    intro x xs; simp only [mem_setOf_eq] at xs
+    intro x xs; simp only [mem_ofPred_eq] at xs
     have m := @m x⁻¹ ?_; · simp only [inv_inv] at m; exact m
     simp only [mem_inter_iff, mem_ball_zero_iff, norm_inv, mem_compl_iff, mem_singleton_iff,
       inv_eq_zero]

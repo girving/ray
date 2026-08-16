@@ -75,15 +75,15 @@ public theorem Super.fla (s : Super f d a) (c : ℂ) : AnalyticAt ℂ (uncurry s
   refine ((analyticAt_id.sub analyticAt_const).mAnalyticAt I I).comp _ ?_
   refine (contMDiffAt_extChartAt' ?_).comp _ ?_
   · simp only [s.f0, extChartAt, OpenPartialHomeomorph.extend, PartialEquiv.coe_trans, zero_add,
-      ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_coe, Function.comp_apply,
-      PartialEquiv.coe_trans_symm, OpenPartialHomeomorph.coe_coe_symm,
+      ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_toPartialEquiv, Function.comp_apply,
+      PartialEquiv.coe_trans_symm, OpenPartialHomeomorph.coe_toPartialEquiv_symm,
       ModelWithCorners.toPartialEquiv_coe_symm, ModelWithCorners.left_inv,
       OpenPartialHomeomorph.left_inv, mem_chart_source]
   · refine (s.fa _).comp₂ contMDiffAt_fst ?_
     refine ((contMDiffOn_extChartAt_symm _).contMDiffAt
       (extChartAt_target_mem_nhds' ?_)).comp _ ?_
     · simp only [extChartAt, OpenPartialHomeomorph.extend, PartialEquiv.coe_trans, zero_add,
-        ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_coe, Function.comp_apply,
+        ModelWithCorners.toPartialEquiv_coe, OpenPartialHomeomorph.coe_toPartialEquiv, Function.comp_apply,
         PartialEquiv.trans_target, ModelWithCorners.target_eq,
         ModelWithCorners.toPartialEquiv_coe_symm, Set.mem_inter_iff, Set.mem_range_self,
         Set.mem_preimage, ModelWithCorners.left_inv, OpenPartialHomeomorph.map_source,
@@ -142,13 +142,13 @@ theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
   simp only [sub_zero, smul_eq_mul, Super.fl, s.fd, s.fc, mul_one, uncurry] at p
   generalize hg : _root_.fl f a c = g; rw [hg] at p
   have g0 : g 0 = 0 := by rw [← hg]; exact s.fl0
-  apply HasFDerivAt.fderiv
+  apply HasFDerivAt.fderiv (f' := (0 : ℂ →L[ℂ] ℂ))
   simp only [hasFDerivAt_iff_isLittleO_nhds_zero, sub_zero, zero_add, g0]
   have od : (fun z : ℂ ↦ z ^ d) =o[𝓝 0] (fun z ↦ z) := by
     rw [Asymptotics.isLittleO_iff]; intro e ep
     apply ((@Metric.isOpen_ball ℂ _ 0 (min 1 e)).eventually_mem (mem_ball_self (by bound))).mp
     refine .of_forall fun z b ↦ ?_
-    simp only at b; rw [mem_ball_zero_iff, lt_min_iff] at b
+    rw [mem_ball_zero_iff, lt_min_iff] at b
     simp only [norm_pow]
     rw [← Nat.sub_add_cancel s.d2, pow_add, pow_two]
     calc ‖z‖ ^ (d - 2) * (‖z‖ * ‖z‖)
@@ -293,7 +293,7 @@ public theorem Super.isOpen_near (s : Super f d a) : IsOpen s.near := by
 @[simp] public theorem Super.mem_near (s : Super f d a) (c : ℂ) : (c, a) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
     mem_extChartAt_source, extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and,
-    Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq, sub_self]
+    Set.mem_preimage, PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_ofPred_eq, sub_self]
   exact (s.superNearC.s (Set.mem_univ _)).t0
 
 /-- `s.near` stays within the chart -/
@@ -315,7 +315,7 @@ public theorem Super.stays_near (s : Super f d a) {c : ℂ} {z : S} (m : (c, z) 
     (c, f c z) ∈ s.near := by
   simp only [Super.near, extChartAt_prod, PartialEquiv.prod_source, Set.mem_prod, Set.mem_inter_iff,
     extChartAt_eq_refl, PartialEquiv.refl_source, Set.mem_univ, true_and, Set.mem_preimage,
-    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_setOf_eq] at m ⊢
+    PartialEquiv.prod_coe, PartialEquiv.refl_coe, id, Set.mem_ofPred_eq] at m ⊢
   rcases mem_iUnion.mp (s.near_subset' m.2) with ⟨b, mb⟩
   simp only [mem_ball_iff_norm, Prod.norm_def, max_lt_iff, Prod.fst_sub, Prod.snd_sub,
     sub_zero] at mb
@@ -380,7 +380,7 @@ public lemma Super.basin_iff_near (s : Super f d a) {p : ℂ × S} :
     p ∈ s.basin ↔ ∃ n, (p.1, (f p.1)^[n] p.2) ∈ s.near := by
   constructor
   · intro m
-    simp only [basin, mem_setOf_eq] at m
+    simp only [basin, mem_ofPred_eq] at m
     have e : ∀ᶠ n in atTop, (f p.1)^[n] p.2 ∈ {x : S | (p.1, x) ∈ s.near} :=
       m.eventually_mem ((s.isOpen_near.snd_preimage p.1).mem_nhds (by simp))
     exact e.exists
@@ -524,8 +524,12 @@ public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
         extChartAt I a - fun _ : S ↦ extChartAt I a a := rfl
-    rw [u, mfderiv_sub, mfderiv_const, sub_zero]
-    · exact extChartAt_mderiv_ne_zero a
+    rw [u, mfderiv_sub, mfderiv_const]
+    · intro h
+      apply extChartAt_mderiv_ne_zero a
+      apply ContinuousLinearMap.ext
+      intro v
+      exact (sub_zero _).symm.trans (ContinuousLinearMap.ext_iff.mp h v)
     · exact (contMDiffAt_extChartAt' (mem_chart_source _ a)).mdifferentiableAt one_ne_zero
     · apply mdifferentiableAt_const
 
@@ -593,9 +597,9 @@ public theorem Super.isClosed_critical_not_a (s : Super f d a) :
   rw [← isOpen_compl_iff]; rw [isOpen_iff_eventually]; intro ⟨c, z⟩ m
   by_cases za : z = a
   · rw [za]; refine (s.f_noncritical_near_a c).mp (.of_forall ?_); intro ⟨e, w⟩ h
-    simp only [mem_compl_iff, mem_setOf, not_and, not_not] at h ⊢; exact h.1
+    simp only [mem_compl_iff, mem_ofPred, not_and, not_not] at h ⊢; exact h.1
   · have o := isOpen_iff_eventually.mp (isOpen_noncritical s.fa)
-    simp only [za, mem_compl_iff, mem_setOf, not_and, not_not, imp_false] at m o ⊢
+    simp only [za, mem_compl_iff, mem_ofPred, not_and, not_not, imp_false] at m o ⊢
     refine (o (c, z) m).mp (.of_forall ?_); intro ⟨e, w⟩ a b; exfalso; exact a b
 
 /-- If `z ∈ s.basin`, iterating enough takes us to a noncritical point of `s.bottcherNear` -/

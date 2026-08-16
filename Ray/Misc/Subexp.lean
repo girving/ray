@@ -6,7 +6,7 @@ public import Mathlib.Analysis.Normed.Ring.Basic
 public import Mathlib.Topology.Algebra.InfiniteSum.Defs
 import Mathlib.Analysis.CStarAlgebra.Basic
 import Mathlib.Analysis.SpecificLimits.Normed
-import Mathlib.Data.Real.Sqrt
+import Mathlib.Analysis.Real.Sqrt
 
 /-!
 ## Sequences that grow subexponentially

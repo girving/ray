@@ -38,7 +38,8 @@ theorem NNReal.hasSum_ciSup {f : ℕ → ι → ℝ≥0} {a : ℕ → ℝ≥0} (
     apply mono nm
   have sum' : ∀ n, HasSum (f' n) (a' n) := by
     intro n
-    simpa [Function.comp_def] using ENNReal.continuous_coe.continuousAt.tendsto.comp (sum n)
+    simpa [HasSum, f', a', Function.comp_def] using
+      ENNReal.continuous_coe.continuousAt.tendsto.comp (sum n)
   have bdd_f : ∀ {i}, BddAbove (range (fun n ↦ f n i)) := by
     refine fun {i} ↦ bound.range_mono _ fun n ↦ ?_
     trans ∑ i ∈ {i}, f n i
@@ -46,7 +47,7 @@ theorem NNReal.hasSum_ciSup {f : ℕ → ι → ℝ≥0} {a : ℕ → ℝ≥0} (
     · exact sum_le_hasSum _ (by simp) (sum n)
   have h := (ENNReal.continuousAt_toNNReal ?_).tendsto.comp (ENNReal.hasSum_iSup mono')
   · simpa only [(sum' _).tsum_eq, HasSum, f', a', Function.comp_def, ← ENNReal.coe_iSup bdd_f,
-      ← ENNReal.coe_finset_sum, ENNReal.toNNReal_coe, ← ENNReal.coe_iSup bound] using h
+      ← ENNReal.ofNNReal_finsetSum, ENNReal.toNNReal_coe, ← ENNReal.coe_iSup bound] using h
   · simp [f', ENNReal.tsum_coe_eq (sum _), ENNReal.iSup_coe_eq_top.not, bound]
 
 /-- Monotone convergence theorem for series, `ℝ` `HasSum` version -/
@@ -66,7 +67,7 @@ theorem Real.hasSum_ciSup [Nonempty ι] {f : ℕ → ι → ℝ} {a : ℕ → �
   have sum' : ∀ n, HasSum (f' n) (a' n) := fun n ↦ ((sum n).sub (sum 0)).toNNReal (by bound)
   have mono' : Monotone f' := by intro n m nm; simp only [Pi.le_def]; bound
   have bound_a' : BddAbove (range a') :=
-    bound_a.range_comp (g := fun x ↦ (x - a 0).toNNReal) fun x y xy ↦ by bound
+    bound_a.range_comp_left (g := fun x ↦ (x - a 0).toNNReal) fun x y xy ↦ by bound
   have s := NNReal.hasSum_ciSup sum' mono' bound_a'
   simp [← NNReal.hasSum_coe, f', a', max_eq_left a_nonneg, max_eq_left f_nonneg,
     ← ciSup_sub bound_a, ← ciSup_sub (bound_f _)] at s

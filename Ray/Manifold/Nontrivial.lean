@@ -134,24 +134,25 @@ theorem allRootsOfUnity.ne_zero {z : ℂ} (m : z ∈ allRootsOfUnity) : z ≠ 0 
 /-- Roots of unity are totally disconnected -/
 theorem IsTotallyDisconnected.allRootsOfUnity : IsTotallyDisconnected allRootsOfUnity := by
   apply IsCountable.isTotallyDisconnected
-  simp only [_root_.allRootsOfUnity, setOf_exists]; apply countable_iUnion; intro n
+  simp only [_root_.allRootsOfUnity, ofPred_exists]; apply countable_iUnion; intro n
   by_cases n0 : n = 0
-  simp only [n0, Ne, not_true, false_and, setOf_false, countable_empty]
+  simp only [n0, Ne, not_true, false_and, ofPred_false, countable_empty]
   simp only [Ne, n0, not_false_iff, true_and]
   have np : 0 < n := Nat.pos_of_ne_zero n0
   generalize hn' : (⟨n, np⟩ : ℕ+) = n'
   have e : {z : ℂ | z ^ n = 1} ⊆ (fun x : ℂˣ ↦ (x : ℂ)) '' (rootsOfUnity n' ℂ : Set ℂˣ) := by
-    intro z e; simp only [mem_setOf] at e
+    intro z e; simp only [mem_ofPred] at e
     simp only [mem_image, SetLike.mem_coe]
     by_cases z0 : z = 0
     · simp only [z0, zero_pow n0, zero_ne_one] at e
     · use Units.mk0 z z0
       simp [← hn', ← Units.val_inj, Units.val_pow_eq_pow_val, Units.val_mk0, e, Units.val_one,
         and_self]
-  apply Set.Countable.mono e; clear e; apply Countable.image; apply Set.Finite.countable
-  rw [Set.finite_def]
-  refine ⟨@_root_.rootsOfUnity.fintype ℂ _ ?_ _ _⟩
-  simpa only [neZero_iff, ← hn', ne_eq]
+  apply Set.Countable.mono e; clear e; apply Countable.image
+  have : NeZero (n' : ℕ) := ⟨n'.2.ne'⟩
+  have h : (rootsOfUnity (n' : ℕ) ℂ : Set ℂˣ).Finite :=
+    Set.finite_coe_iff.mp (inferInstanceAs (Finite (rootsOfUnity (n' : ℕ) ℂ)))
+  exact h.countable
 
 /-- Given continuous `p : X → ℂ` on preconnected `X`, `p` is const if `f ∘ p` is const -/
 theorem NontrivialAnalyticOn.const (n : NontrivialAnalyticOn f s) {p : X → ℂ} {t : Set X}
@@ -213,7 +214,7 @@ public theorem ContMDiffAt.eventually_eq_or_eventually_ne [T2Space T] {f g : S �
     apply (gc.eventually_mem (extChartAt_source_mem_nhds (I := I) (g z))).mp
     refine eventually_nhds_iff.mpr ⟨(_root_.extChartAt I z).source,
       fun x m gm fm ↦ ?_, isOpen_extChartAt_source _, mem_extChartAt_source z⟩
-    simp only at fm gm; rw [← fg] at gm
+    rw [← fg] at gm
     simp only [← fg, PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ fm,
       PartialEquiv.left_inv _ gm]
   · right; clear fa ga
@@ -237,7 +238,7 @@ public theorem ContMDiffOn.const_of_locally_const [T2Space T] {f : S → T} {s :
   refine p.subset_of_closure_inter_subset ?_ ?_ ?_
   · rw [isOpen_iff_eventually]
     intro z m
-    simp only [Set.mem_setOf_eq, ← ht] at m ⊢
+    simp only [Set.mem_ofPred_eq, ← ht] at m ⊢
     exact ((o.eventually_mem m.1).and m.2.eventually_nhds).mp (.of_forall fun y h ↦ h)
   · use z; simp only [Set.mem_inter_iff, ← ht]; exact ⟨zs, zs, c⟩
   · intro z m; simp only [Set.mem_inter_iff, mem_closure_iff_frequently] at m
@@ -445,7 +446,7 @@ public theorem ContMDiffOnNhd.eq_of_locally_eq [CompleteSpace F] {f g : M → N}
       apply ((isOpen_extChartAt_target x).eventually_mem (mem_extChartAt_target x)).mp
       refine .of_forall fun y m e ↦ ?_; simp only [← ht] at e
       apply ((continuousAt_extChartAt_symm'' m).eventually e).mp
-      refine .of_forall fun z e ↦ ?_; simp only at e
+      refine .of_forall fun z e ↦ ?_
       simp only [← hd, Pi.zero_apply, sub_eq_zero, ex, e]
     have da : AnalyticAt ℂ d z := by
       rw [← hd, ← hz]

@@ -41,7 +41,7 @@ lemma HasFPowerSeriesOnBall.conj_conj (fa : HasFPowerSeriesOnBall f p (conj z) r
   r_pos := fa.r_pos
   hasSum := by
     intro y m
-    simp only [EMetric.mem_ball, edist_zero_right] at m
+    simp only [Metric.mem_eball, edist_zero_right] at m
     simpa only [FormalMultilinearSeries.conj_conj, ContinuousMultilinearMap.conj_conj_apply, map_add,
       conjCLM_apply] using conjCLM.hasSum (@fa.hasSum (conj y) (by simpa))
 

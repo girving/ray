@@ -60,7 +60,8 @@ lemma ContDiffOn.norm_le_norm_of_mapsTo_closedBall (fa : ContDiffOn ℂ ω f (ba
   · have w0 := f0 ▸ c 0 (by simp [r0])
     rw [c _ (by simp [zr]), ← w0, norm_zero]
     bound
-  · exact Complex.norm_le_norm_of_mapsTo_ball_self (fa.differentiableOn (by decide)) m f0 zr
+  · exact Complex.norm_le_norm_of_mapsTo_ball (fa.differentiableOn (by decide))
+      (m.mono_right Metric.ball_subset_closedBall) f0 zr
 
 /-!
 ### Unit ball versions
@@ -85,7 +86,8 @@ public lemma ContDiffOn.dist_le_mul_mobius_of_mapsTo_unit_ball (fa : ContDiffOn 
   have u1 : ‖u‖ < 1 := norm_mobius_lt_one z1 w1
   simpa only [g, Function.comp_apply, mobius_def (f z), u, mobius_mobius z1 w1, norm_div,
     div_le_iff₀ (norm_mobius_denom_pos fz1 fw1), mul_comm ‖mobius _ _‖] using
-    Complex.norm_le_norm_of_mapsTo_ball_self (ga.differentiableOn (by decide)) gm g0 u1
+    Complex.norm_le_norm_of_mapsTo_ball (ga.differentiableOn (by decide))
+      (gm.mono_right Metric.ball_subset_closedBall) g0 u1
 
 /-- Derivative version of Schwarz-Pick for the unit disk -/
 public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn ℂ ω f (ball 0 1))
@@ -109,6 +111,7 @@ public lemma ContDiffOn.norm_deriv_le_div_of_mapsTo_unit_ball (fa : ContDiffOn �
     simp only [mobius_def, Complex.norm_div, ← mul_div_assoc, mul_div_right_comm] at s
     rw [← div_le_iff₀ (norm_pos_iff.mpr (by grind))] at s
     simpa [slope, ← div_eq_inv_mul, norm_sub_rev (f w), norm_sub_rev w]
+  have fc : ContinuousAt f z := df.continuousAt
   have dc : ContinuousAt (fun w ↦ ‖1 - conj (f z) * f w‖ / ‖1 - conj z * w‖) z :=
     ContinuousAt.div (by fun_prop) (by fun_prop) (norm_mobius_denom_pos z1 z1).ne'
   have t1 := (continuous_norm.tendsto _).comp df.hasDerivAt.tendsto_slope

@@ -213,10 +213,12 @@ public def invHomeomorph : 𝕊 ≃ₜ 𝕊 where
 @[simp] public lemma invEquiv_symm : invEquiv.symm = invEquiv := by
   simp only [Equiv.ext_iff, invEquiv, Equiv.coe_fn_symm_mk, Equiv.coe_fn_mk, forall_const]
 @[simp] public lemma invHomeomorph_apply (z : 𝕊) : invHomeomorph z = z⁻¹ := by
-  simp only [invHomeomorph, Homeomorph.homeomorph_mk_coe, invEquiv_apply]
+  simp only [invHomeomorph]
+  exact invEquiv_apply z
 @[simp] public lemma invHomeomorph_symm : invHomeomorph.symm = invHomeomorph := Homeomorph.ext (by
-  simp only [invHomeomorph, Homeomorph.homeomorph_mk_coe_symm, invEquiv_symm,
-    Homeomorph.homeomorph_mk_coe, forall_const])
+  intro x
+  show invEquiv.symm x = invEquiv x
+  rw [invEquiv_symm])
 
 /-- `coe : ℂ → 𝕊` as an equivalence -/
 public def coePartialEquiv : PartialEquiv ℂ 𝕊 where
@@ -248,7 +250,7 @@ public def invCoeOpenPartialHomeomorph : OpenPartialHomeomorph ℂ 𝕊 :=
 @[simp] lemma invCoeOpenPartialHomeomorph_target : invCoeOpenPartialHomeomorph.target = {0}ᶜ := by
   ext z; simp only [invCoeOpenPartialHomeomorph, OpenPartialHomeomorph.trans_toPartialEquiv,
     PartialEquiv.trans_target, Homeomorph.toOpenPartialHomeomorph_target,
-    OpenPartialHomeomorph.coe_coe_symm, Homeomorph.toOpenPartialHomeomorph_symm_apply,
+    OpenPartialHomeomorph.coe_toPartialEquiv_symm, Homeomorph.toOpenPartialHomeomorph_symm_apply,
     invHomeomorph_symm, coeOpenPartialHomeomorph_target, preimage_compl, univ_inter, mem_compl_iff,
     mem_preimage, invHomeomorph_apply, mem_singleton_iff, inv_eq_inf]
 @[simp] public lemma coePartialEquiv_apply (z : ℂ) : coePartialEquiv z = ↑z := by rfl
@@ -273,8 +275,8 @@ public instance : ChartedSpace ℂ 𝕊 where
         not_false_eq_true]
   chart_mem_atlas := by
     intro z; induction z using OnePoint.rec
-    · simp only [rec_inf, mem_setOf_eq, or_true]
-    · simp only [rec_coe, mem_setOf_eq, true_or]
+    · simp only [rec_inf, mem_ofPred_eq, or_true]
+    · simp only [rec_coe, mem_ofPred_eq, true_or]
 
 /-- There are just two charts on `𝕊` -/
 theorem two_charts {e : OpenPartialHomeomorph 𝕊 ℂ} (m : e ∈ atlas ℂ 𝕊) :
@@ -296,25 +298,31 @@ public theorem extChartAt_inf :
     simp only [extChartAt, invCoeOpenPartialHomeomorph, coeOpenPartialHomeomorph, invHomeomorph,
       OpenPartialHomeomorph.extend, chartAt_inf, OpenPartialHomeomorph.symm_toPartialEquiv,
       OpenPartialHomeomorph.trans_toPartialEquiv, modelWithCornersSelf_partialEquiv,
-      PartialEquiv.trans_refl, PartialEquiv.coe_trans_symm, OpenPartialHomeomorph.coe_coe_symm,
+      PartialEquiv.trans_refl, PartialEquiv.coe_trans_symm,
+      OpenPartialHomeomorph.coe_toPartialEquiv_symm,
       Homeomorph.toOpenPartialHomeomorph_symm_apply, Homeomorph.homeomorph_mk_coe_symm,
-      invEquiv_symm, PartialEquiv.coe_trans, Equiv.toPartialEquiv_apply]
+      invEquiv_symm, PartialEquiv.coe_trans, Equiv.toPartialEquiv_apply, Function.comp_apply]
+    show coePartialEquiv.symm (invEquiv.symm z) = coePartialEquiv.symm (invEquiv z)
+    rw [invEquiv_symm]
   · intro z
     simp only [extChartAt, invCoeOpenPartialHomeomorph, coeOpenPartialHomeomorph, invHomeomorph,
       invEquiv, OpenPartialHomeomorph.extend, chartAt_inf,
       OpenPartialHomeomorph.symm_toPartialEquiv, OpenPartialHomeomorph.trans_toPartialEquiv,
       modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, PartialEquiv.symm_symm,
-      PartialEquiv.coe_trans, OpenPartialHomeomorph.coe_coe,
+      PartialEquiv.coe_trans, OpenPartialHomeomorph.coe_toPartialEquiv,
       Homeomorph.toOpenPartialHomeomorph_apply, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk,
       PartialEquiv.coe_trans_symm, Equiv.toPartialEquiv_symm_apply, Equiv.coe_fn_symm_mk]
   · simp only [extChartAt, invCoeOpenPartialHomeomorph, coeOpenPartialHomeomorph, invHomeomorph,
       OpenPartialHomeomorph.extend, chartAt_inf, OpenPartialHomeomorph.symm_toPartialEquiv,
       OpenPartialHomeomorph.trans_toPartialEquiv, modelWithCornersSelf_partialEquiv,
       PartialEquiv.trans_refl, PartialEquiv.symm_source, PartialEquiv.trans_target,
-      Homeomorph.toOpenPartialHomeomorph_target, OpenPartialHomeomorph.coe_coe_symm,
+      Homeomorph.toOpenPartialHomeomorph_target, OpenPartialHomeomorph.coe_toPartialEquiv_symm,
       Homeomorph.toOpenPartialHomeomorph_symm_apply, Homeomorph.homeomorph_mk_coe_symm,
       invEquiv_symm, PartialEquiv.trans_source, Equiv.toPartialEquiv_source,
       Equiv.toPartialEquiv_apply]
+    show univ ∩ ⇑invEquiv.symm ⁻¹' coePartialEquiv.target
+      = univ ∩ ⇑invEquiv ⁻¹' coePartialEquiv.target
+    rw [invEquiv_symm]
 public theorem extChartAt_inf_apply {x : 𝕊} : extChartAt I ∞ x = x⁻¹.toComplex := by
   simp only [extChartAt_inf, PartialEquiv.trans_apply, coePartialEquiv_symm_apply,
     Equiv.toPartialEquiv_apply, invEquiv_apply]
@@ -525,7 +533,7 @@ public theorem mAnalyticAt_fill_inf [IsManifold I ⊤ T] {f : ℂ → T} {y : T}
     modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl, chartAt_inf,
     OpenPartialHomeomorph.symm_toPartialEquiv, PartialEquiv.symm_symm,
     OpenPartialHomeomorph.toFun_eq_coe, invCoeOpenPartialHomeomorph_apply,
-    OpenPartialHomeomorph.coe_coe_symm, invCoeOpenPartialHomeomorph_symm_apply, inv_inf,
+    OpenPartialHomeomorph.coe_toPartialEquiv_symm, invCoeOpenPartialHomeomorph_symm_apply, inv_inf,
     toComplex_zero]
   have e : (fun z : ℂ ↦ chartAt ℂ y (OnePoint.rec y f (↑z)⁻¹)) = fun z : ℂ ↦
       extChartAt I y (if z = 0 then y else f z⁻¹) := by

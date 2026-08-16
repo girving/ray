@@ -52,36 +52,51 @@ public theorem product_pow' {f : ℕ → ℂ} {p : ℕ} (h : ProdExists f) :
     tprod f ^ p = tprod fun n ↦ f n ^ p := by
   rcases h with ⟨g, h⟩; rw [HasProd.tprod_eq h]; rw [HasProd.tprod_eq _]; exact product_pow p h
 
-/-- Adding one more term to a product multiplies by it -/
-theorem product_cons {a g : ℂ} {f : ℕ → ℂ} (h : HasProd f g) :
-    HasProd (Stream'.cons a f) (a * g) := by
+/-- Adding one more term to a product multiplies by it, `Stream'.get` version to keep terms
+    type-correct at low transparency -/
+theorem product_cons_get {a t : ℂ} {q : Stream' ℂ} (h : HasProd q.get t) :
+    HasProd (Stream'.cons a q).get (a * t) := by
   rw [HasProd] at h ⊢
-  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_mul_left a) g) h
-  have s : ((fun z ↦ a * z) ∘ fun N : Finset ℕ ↦ N.prod f) =
-      (fun N : Finset ℕ ↦ N.prod (Stream'.cons a f)) ∘ push := by
-    apply funext; intro N; simp; exact push_prod
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_const_mul a) t) h
+  have s : ((fun z ↦ a * z) ∘ fun N : Finset ℕ ↦ N.prod q.get) =
+      (fun N : Finset ℕ ↦ N.prod (Stream'.cons a q).get) ∘ push := by
+    apply funext; intro N
+    simp only [Function.comp_apply]
+    exact push_prod_get
   rw [s] at ha
   exact tendsto_comp_push.mp ha
+
+/-- Adding one more term to a product multiplies by it -/
+theorem product_cons {a g : ℂ} {f : ℕ → ℂ} (h : HasProd f g) :
+    HasProd (Stream'.cons a f) (a * g) :=
+  product_cons_get (q := f) h
 
 /-- Adding one more term to a product multiplies by it (`tprod` version) -/
 theorem product_cons' {a : ℂ} {f : ℕ → ℂ} (h : ProdExists f) :
     tprod (Stream'.cons a f) = a * tprod f := by
-  rcases h with ⟨g, h⟩; rw [HasProd.tprod_eq h]; rw [HasProd.tprod_eq _]; exact product_cons h
+  rcases h with ⟨g, h⟩; rw [HasProd.tprod_eq h]; exact HasProd.tprod_eq (product_cons h)
 
-/-- Dropping a nonzero term divides by it -/
-theorem product_drop {f : ℕ → ℂ} {g : ℂ} (f0 : f 0 ≠ 0) (h : HasProd f g) :
-    HasProd (fun n ↦ f (n + 1)) (g / f 0) := by
-  have c := @product_cons (f 0)⁻¹ _ _ h
+/-- Dropping a nonzero term divides by it, `Stream'.get` version -/
+theorem product_drop_get {q : Stream' ℂ} {t : ℂ} (q0 : q.head ≠ 0) (h : HasProd q.get t) :
+    HasProd q.tail.get (t / q.head) := by
+  have c := product_cons_get (a := q.head⁻¹) h
   rw [HasProd]
   rw [inv_mul_eq_div, HasProd, SummationFilter.unconditional_filter, ← tendsto_comp_push,
     ← tendsto_comp_push] at c
-  have s : ((fun N : Finset ℕ ↦ N.prod fun n ↦ (Stream'.cons (f 0)⁻¹ f) n) ∘ push) ∘ push =
-      fun N : Finset ℕ ↦ N.prod fun n ↦ f (n + 1) := by
-    clear c h g; apply funext; intro N; simp
-    nth_rw 2 [← Stream'.eta f]
-    simp only [←push_prod, Stream'.head, Stream'.tail, Stream'.get, ←mul_assoc, inv_mul_cancel₀ f0,
-      one_mul]
-  rw [s] at c; assumption
+  have s : ((fun N : Finset ℕ ↦ N.prod (Stream'.cons q.head⁻¹ q).get) ∘ push) ∘ push =
+      fun N : Finset ℕ ↦ N.prod q.tail.get := by
+    apply funext; intro N
+    simp only [Function.comp_apply]
+    have e1 := push_prod_get (a := q.head⁻¹) (g := q) (N := push N)
+    have e2 := push_prod_get (a := q.head) (g := q.tail) (N := N)
+    rw [Stream'.eta q] at e2
+    rw [← e1, ← e2, ← mul_assoc, inv_mul_cancel₀ q0, one_mul]
+  rw [s] at c; exact c
+
+/-- Dropping a nonzero term divides by it -/
+theorem product_drop {f : ℕ → ℂ} {g : ℂ} (f0 : f 0 ≠ 0) (h : HasProd f g) :
+    HasProd (fun n ↦ f (n + 1)) (g / f 0) :=
+  product_drop_get (q := f) f0 h
 
 /-- Dropping a nonzero term divides by it (`tprod` version) -/
 theorem product_drop' {f : ℕ → ℂ} (f0 : f 0 ≠ 0) (h : ProdExists f) :

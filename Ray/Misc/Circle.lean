@@ -23,36 +23,20 @@ noncomputable section
 
 variable {X : Type} [TopologicalSpace X]
 
-instance : Neg Circle where
-  neg z := Circle.exp π * z
+/-- `-z = Circle.exp π * z` (Mathlib now provides `Neg Circle` and `HasDistribNeg Circle`) -/
+lemma Circle.neg_def (z : Circle) : -z = Circle.exp π * z := by
+  apply Circle.ext
+  simp only [Circle.coe_neg, Circle.coe_mul, Circle.coe_exp, Complex.exp_pi_mul_I, neg_one_mul]
 
-lemma Circle.neg_def (z : Circle) : -z = Circle.exp π * z := rfl
-
-instance : InvolutiveNeg Circle where
-  neg_neg z := by
-    have e : π + π = 2 * π := by ring
-    simp only [Circle.neg_def, ← mul_assoc, ← Circle.exp_add, mul_eq_right, e, Circle.exp_two_pi]
-
-instance : HasDistribNeg Circle where
-  neg_mul z w := by simp only [Circle.neg_def, mul_assoc]
-  mul_neg z w := by simp only [Circle.neg_def, ← mul_assoc, mul_comm _ (Circle.exp _)]
-
-@[simp] lemma Circle.neg_ne (z : Circle) : -z ≠ z := by
-  simp only [neg_def, ne_eq, mul_eq_right, exp_eq_one, ← mul_assoc, eq_comm (a := π), not_exists]
-  simp only [ne_eq, Real.pi_ne_zero, not_false_eq_true, mul_eq_right₀,
-    (by norm_num : (2 : ℝ) = (2 : ℤ)), ← Int.cast_one (R := ℝ), ← Int.cast_mul, Int.cast_inj]
-  omega
-
-@[simp] lemma Circle.coe_neg (z : Circle) : (-z).val = -z.val := by
-  simp only [neg_def, coe_mul, coe_exp, Complex.exp_pi_mul_I, neg_mul, one_mul]
+@[simp] lemma Circle.neg_ne (z : Circle) : -z ≠ z := Circle.neg_ne_self z
 
 lemma Circle.arg_neg_one : arg (-1 : Circle).val = π := by
-  simp only [neg_def, mul_one, coe_exp, Complex.exp_pi_mul_I, Complex.arg_neg_one]
+  simp only [Circle.coe_neg, Circle.coe_one, Complex.arg_neg_one]
 
 @[simp] lemma Circle.mem_slitPlane (z : Circle) : z.val ∈ slitPlane ↔ z ≠ -1 := by
   simp only [Complex.mem_slitPlane_iff_arg, ne_eq, Circle.ext_iff, Complex.ext_norm_arg_iff,
     norm_zero, Complex.arg_zero, Circle.norm_coe, true_and, one_ne_zero, false_and, not_false_iff,
-    and_true, coe_neg, norm_neg, OneMemClass.coe_one, Complex.arg_neg_one, norm_one]
+    and_true, coe_neg, norm_neg, Circle.coe_one, Complex.arg_neg_one, norm_one]
 
 @[fun_prop] lemma Continuous.circle_exp {f : X → ℝ} (fc : Continuous f) :
     Continuous (fun x ↦ Circle.exp (f x)) := by fun_prop

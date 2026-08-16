@@ -47,7 +47,7 @@ public lemma ray_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray d z = (z / pray d z 
 
 /-- `ray` in terms of `pray`, `norm_Ioi` version -/
 lemma ray_inv_eq_pray (m : z ∈ norm_Ioi 1) : ray d z⁻¹ = z * pray d z⁻¹ := by
-  simp only [norm_Ioi, mem_setOf_eq] at m
+  simp only [norm_Ioi, mem_ofPred_eq] at m
   have m' : z⁻¹ ∈ ball (0 : ℂ) 1 := by simp only [mem_ball, dist_zero_right, norm_inv]; bound
   rw [ray_eq_pray m', RiemannSphere.inv_coe]
   · simp [mul_comm]
@@ -91,21 +91,21 @@ lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' no
       · exact norm_bottcher_lt_one m
       · simp only [norm_pos_iff, ne_eq, bottcher_coe_ne_zero, not_false_eq_true]
     refine ⟨(bottcher d z)⁻¹, ?_, ?_⟩
-    · simp only [norm_Ioi, mem_setOf_eq, norm_inv, b1]
+    · simp only [norm_Ioi, mem_ofPred_eq, norm_inv, b1]
     · rw [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray, inv_inv, ray_bottcher m]
-      simp only [norm_Ioi, mem_setOf_eq, norm_inv, b1]
+      simp only [norm_Ioi, mem_ofPred_eq, norm_inv, b1]
   · intro ⟨w,w1,wz⟩
     rw [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray w1] at wz
     rw [← wz]
     apply ray_mem_multibrotExt
-    simp only [norm_Ioi, mem_setOf_eq, mem_ball, dist_zero_right, norm_inv] at w1 ⊢
+    simp only [norm_Ioi, mem_ofPred_eq, mem_ball, dist_zero_right, norm_inv] at w1 ⊢
     exact inv_lt_one_of_one_lt₀ w1
 
 /-- `ray` in terms of `pray` is injective -/
 lemma pray_inj : InjOn (fun z ↦ z * pray d z⁻¹) (norm_Ioi 1) := by
   intro z z1 w w1 e
   simp only [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray, z1, w1] at e
-  simp only [norm_Ioi, mem_setOf_eq] at z1 w1
+  simp only [norm_Ioi, mem_ofPred_eq] at z1 w1
   rwa [ray_inj.eq_iff, inv_inj] at e
   all_goals rw [mem_ball, dist_zero_right, norm_inv]; exact inv_lt_one_of_one_lt₀ (by assumption)
 

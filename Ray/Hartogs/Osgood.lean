@@ -93,8 +93,8 @@ theorem spheres_subset_closedBall {c0 c1 : ℂ} {r : ℝ} :
 theorem Separate.rs' (h : Separate f c0 c1 r b s) : sphere c0 r ×ˢ sphere c1 r ⊆ s :=
   le_trans spheres_subset_closedBall h.rs
 
-theorem mem_sphere_closed {z c : ℂ} {r : ℝ} : z ∈ sphere c r → z ∈ closedBall c r := by
-  simp only [mem_sphere_iff_norm, Metric.mem_closedBall]; exact le_of_eq
+theorem mem_sphere_closed {z c : ℂ} {r : ℝ} : z ∈ sphere c r → z ∈ closedBall c r := fun h ↦
+  Metric.mem_closedBall.mpr (le_of_eq (Metric.mem_sphere.mp h))
 
 /-- Spheres don't contain their center -/
 theorem center_not_in_sphere {c z : ℂ} {r : ℝ} (rp : r > 0) (zs : z ∈ sphere c r) : z - c ≠ 0 := by
@@ -375,7 +375,7 @@ theorem series2_norm (h : Separate f c0 c1 r b s) (n : ℕ) :
     intro n0 n0n; simp at n0n
     apply le_trans (termCmmap_norm ℂ n n0 (h.series2Coeff n0 (n - n0)))
     have sb := series2Coeff_bound h n0 (n - n0)
-    rw [← Nat.add_sub_assoc (Nat.le_of_lt_succ n0n) n0, Nat.add_sub_cancel_left] at sb
+    rw [← Nat.add_sub_assoc n0n n0, Nat.add_sub_cancel_left] at sb
     assumption
   trans (Finset.range (n + 1)).sum fun n0 ↦ ‖termCmmap ℂ n n0 (h.series2Coeff n0 (n - n0))‖
   · bound
@@ -413,7 +413,7 @@ theorem cauchy1 {r : ℝ} {c w : ℂ} {f : ℂ → E} (wm : w ∈ ball c r)
     (2*π*I : ℂ)⁻¹ • (∮ z in C(c, r), (z - w)⁻¹ • f z) = f w := by
   refine Complex.two_pi_I_inv_smul_circleIntegral_sub_inv_smul_of_differentiable_on_off_countable
     Set.countable_empty wm fc ?_
-  intro z zm; apply fd z _; simp only [Metric.mem_ball, Set.diff_empty] at zm ⊢; assumption
+  intro z zm; apply fd z _; simp only [Metric.mem_ball, Set.sdiff_empty] at zm ⊢; assumption
 
 /-- The 2D Cauchy integral formula -/
 theorem cauchy2 (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball c0 r) (w1m : w1 ∈ ball c1 r) :
@@ -516,7 +516,7 @@ theorem cauchy2_hasSum_2d (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : �
     · intro n; simp only [Pi.zero_apply, div_pow]; bound
     · intro n; simp only [Pi.zero_apply, div_pow]; bound
   have fs' : HasSum f a' := by rw [← ha']; exact sf.hasSum
-  have gs' := HasSum.prod_fiberwise fs' fs; simp at gs'
+  have gs' := HasSum.prod_fiberwise fs' fs
   rwa [HasSum.unique gs gs']
 
 /-- We convert the 2D sum to a 1D outer sum with an inner finite antidiagonal -/
@@ -524,10 +524,10 @@ theorem HasSum.antidiagonal_of_2d {V : Type} [AddCommMonoid V] [TopologicalSpace
     [ContinuousAdd V] [RegularSpace V] {f : ℕ × ℕ → V} {a : V} (h : HasSum f a) :
     HasSum (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) a := by
   generalize hg : (fun n ↦ (Finset.range (n + 1)).sum fun n1 ↦ f (n1, n - n1)) = g
-  rw [←Finset.sigmaAntidiagonalEquivProd.hasSum_iff] at h
+  rw [←Finset.HasAntidiagonal.sigmaAntidiagonalEquivProd.hasSum_iff] at h
   have fg : ∀ n, HasSum (fun d : Finset.antidiagonal n ↦
-      (f ∘ Finset.sigmaAntidiagonalEquivProd) ⟨n, d⟩) (g n) := by
-    intro n; simp only [Function.comp_apply, Finset.sigmaAntidiagonalEquivProd_apply]
+      (f ∘ Finset.HasAntidiagonal.sigmaAntidiagonalEquivProd) ⟨n, d⟩) (g n) := by
+    intro n; simp only [Function.comp_apply, Finset.HasAntidiagonal.sigmaAntidiagonalEquivProd_apply]
     have fs := hasSum_fintype fun d : ↥(Finset.antidiagonal n) ↦ f ↑d
     -- simp at fs,
     have e : (Finset.univ.sum fun d : ↥(Finset.antidiagonal n) ↦ f ↑d) = g n := by
@@ -545,7 +545,7 @@ theorem cauchy2_hasSum (h : Separate f c0 c1 r b s) (w0m : w0 ∈ ball (0 : ℂ)
       (Finset.range (n + 1)).sum fun n1 ↦ w0 ^ (n - n1) • w1 ^ n1 • h.series2Coeff (n - n1) n1) =
       fun n ↦ series2 h n fun _ : Fin n ↦ (w0, w1) := by
     clear sum; funext n
-    rw [series2]; simp only [ContinuousMultilinearMap.sum_apply]
+    rw [series2]; simp only [_root_.sum_apply]
     simp_rw [termCmmap_apply]
     nth_rw 1 [← Finset.sum_range_reflect]; simp
     apply Finset.sum_congr rfl
@@ -560,7 +560,7 @@ theorem osgood_h (h : Separate f c0 c1 r b s) :
   { r_le := cauchy2_radius h
     r_pos := by simp; exact h.rp
     hasSum := by
-      simp only [Metric.emetric_ball, Metric.mem_ball, dist_zero_right, Prod.forall]
+      simp only [Metric.eball_ofReal, Metric.mem_ball, dist_zero_right, Prod.forall]
       intro w0 w1 wr; rw [Prod.norm_def] at wr
       simp only [max_lt_iff] at wr
       have w0m : w0 ∈ ball (0 : ℂ) r := by simp; exact wr.left

@@ -207,7 +207,7 @@ public theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
     have fc := (s.fa (c, a)).along_snd.continuousAt; simp only [ContinuousAt, s.f0] at fc
     apply e.mp; apply (fc.eventually e).mp
     apply ((s.isOpen_near.snd_preimage c).eventually_mem (s.mem_near c)).mp
-    refine .of_forall fun w m e0 e1 ↦ ?_; simp only at m e0 e1
+    refine .of_forall fun w m e0 e1 ↦ ?_
     simp only [e0, e1]; exact s.bottcherNear_eqn m
   by_cases p : (c, z) ∈ s.post; simp only [h0 p]
   by_cases m : (c, z) ∈ s.basin
@@ -263,7 +263,7 @@ public theorem Super.norm_bottcher (s : Super f d a) [OnePreimage s] :
 public theorem Super.bottcher_lt_one (s : Super f d a) [OnePreimage s] (m : (c, z) ∈ s.post) :
     ‖s.bottcher c z‖ < 1 := by
   replace m := s.bottcher_ext m
-  simp only [Super.ext, mem_setOf] at m
+  simp only [Super.ext, mem_ofPred] at m
   exact lt_of_lt_of_le m s.p_le_one
 
 /-- Functional equation for `s.ray` -/
@@ -277,7 +277,7 @@ omit [T3Space S] in
 /-- Raising to powers stays in `s.ext` -/
 public lemma Super.pow_ext (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) (n : ℕ) :
     (c, x ^ d ^ n) ∈ s.ext := by
-  simp only [ext, mem_setOf_eq, norm_pow] at post ⊢
+  simp only [ext, mem_ofPred_eq, norm_pow] at post ⊢
   refine lt_of_le_of_lt (pow_le_of_le_one (by bound) ?_ (by simp [s.d0])) post
   exact le_trans post.le s.p_le_one
 

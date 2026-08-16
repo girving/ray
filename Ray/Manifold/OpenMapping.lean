@@ -78,7 +78,7 @@ theorem AnalyticOnNhd.ball_subset_image_closedBall_param {f : ℂ → ℂ → �
     (fun p : ℂ × ℂ ↦ (p.1, f p.1 p.2)) '' u ×ˢ closedBall z r ∈ 𝓝 (c, f c z) := by
   have fn : ∀ d, d ∈ u → ∃ᶠ w in 𝓝 z, f d w ≠ f d z := by
     refine fun d m ↦ (nontrivial_local_of_global (fa.along_snd.mono ?_) rp ep (ef d m)).nonconst
-    simp only [mem_prod_eq, setOf_mem_eq, (iff_true _).mpr m, true_and, subset_refl]
+    simp only [mem_prod_eq, ofPred_mem_eq, (iff_true _).mpr m, true_and, subset_refl]
   have op : ∀ d, d ∈ u → ball (f d z) (e / 2) ⊆ f d '' closedBall z r := by
     intro d du; refine DiffContOnCl.ball_subset_image_closedBall ?_ rp (ef d du) (fn d du)
     have e : f d = uncurry f ∘ fun w ↦ (d, w) := rfl
@@ -132,8 +132,8 @@ public theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ �
   have er : ∃ r, 0 < r ∧ closedBall (c, z) r ⊆ s ∧ f c z ∉ f c '' sphere z r := by
     have h := n.eventually_ne; contrapose h
     simp only [not_exists, not_not, not_and, not_exists] at h
-    simp only [_root_.not_imp, not_not, Filter.eventually_iff, Metric.mem_nhds_iff, not_exists,
-      not_subset, mem_setOf, not_and]
+    simp only [Classical.not_imp, not_not, Filter.eventually_iff, Metric.mem_nhds_iff, not_exists,
+      not_subset, mem_ofPred, not_and]
     intro r rp; specialize h (min (e/2) (r/2)) ?_ ?_
     · bound
     · exact _root_.trans (Metric.closedBall_subset_ball (lt_of_le_of_lt (min_le_left _ _)
@@ -169,7 +169,7 @@ public theorem NontrivialMAnalyticAt.nhds_le_map_nhds_param' {f : ℂ → ℂ �
       Function.uncurry, and_imp] at ft
     simp only [mem_ball, Complex.dist_eq, lt_min_iff] at dt
     have a1 : ‖f d w - f c w‖ ≤ e / 4 :=
-      (ft d w dt.2.le (le_of_eq wr) c w (norm_sub_self_lt rp).le (le_of_eq wr) dt.1
+      (ft d w dt.2.le (le_of_eq (mem_sphere_iff_norm.mp wr)) c w (norm_sub_self_lt rp).le (le_of_eq (mem_sphere_iff_norm.mp wr)) dt.1
         (norm_sub_self_lt tp)).le
     have a2 : ‖f c z - f d z‖ ≤ e / 4 := by
       refine (ft c z (norm_sub_self_lt rp).le (norm_sub_self_lt rp).le d z
@@ -200,7 +200,6 @@ theorem NontrivialMAnalyticAt.inCharts {f : S → T} {z : S} (n : NontrivialMAna
   apply ((isOpen_extChartAt_source z).eventually_mem (mem_extChartAt_source (I := I) z)).mp
   apply (n.mAnalyticAt.continuousAt.eventually_mem (extChartAt_source_mem_nhds (I := I) (f z))).mp
   refine .of_forall fun w fm m fn ↦ ?_
-  simp only at fm m fn
   rw [PartialEquiv.left_inv _ m, PartialEquiv.left_inv _ (mem_extChartAt_source z)] at fn
   exact ((PartialEquiv.injOn _).eq_iff fm (mem_extChartAt_source _)).mp fn
 

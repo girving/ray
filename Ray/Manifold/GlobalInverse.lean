@@ -62,9 +62,9 @@ public theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S
     rw [left] at e; exact (Prod.ext_iff.mp e).2
   have ge : ∀ (p : ℂ × S) (m : p ∈ s), ∀ᶠ q : ℂ × T in 𝓝 (p.1, f p.1 p.2),
       g q.1 q.2 = (i p m).g q.1 q.2 := by
-    intro ⟨c, z⟩ m; simp only
+    intro ⟨c, z⟩ m
     have n := nontrivialMAnalyticAt_of_mfderiv_ne_zero
-      (fa.contMDiffAt (so.mem_nhds m)).along_snd (nc _ m); simp only at n
+      (fa.contMDiffAt (so.mem_nhds m)).along_snd (nc _ m)
     simp only [n.nhds_eq_map_nhds_param (fa.contMDiffAt (so.mem_nhds m)), Filter.eventually_map]
     apply (i _ m).left_inv.mp; apply (so.eventually_mem m).mp
     refine .of_forall fun ⟨e, w⟩ wm gf ↦ ?_

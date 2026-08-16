@@ -188,7 +188,6 @@ theorem smulCmmap_norm [NormedAddCommGroup A] [NormedSpace 𝕜 A] [NormedAddCom
   simp only [Finset.univ_unique, Fin.default_eq_zero, Finset.prod_const, Finset.card_singleton,
     pow_one] at xb xsb
   have e0 := Fin.prod_cons ‖z 0‖ fun i : Fin n ↦ ‖z i.succ‖
-  simp only at e0
   have e1 : ‖z 0‖ = (fun i : Fin (n + 1) ↦ ‖z i‖) 0 := rfl
   have e2 : (fun i : Fin n ↦ ‖z i.succ‖) = Fin.tail fun i : Fin (n + 1) ↦ ‖z i‖ := rfl
   nth_rw 1 [e1] at e0; nth_rw 1 [e2] at e0; rw [Fin.cons_self_tail (fun i ↦ ‖z i‖)] at e0
@@ -214,12 +213,10 @@ public theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMul
     zero_tsub, one_smul]
   · rw [termCmmap, smulCmmap_apply, h]
     by_cases nk : n < k
-    · simp [nk]
-      rw [fstCmmap_apply]
-      have nsk : n.succ ≤ k := Nat.succ_le_iff.mpr nk
-      rw [min_eq_right nk.le, min_eq_right nsk, Nat.sub_eq_zero_of_le nk.le,
-        Nat.sub_eq_zero_of_le nsk]
-      simp only [pow_zero, one_smul, ← smul_assoc, smul_eq_mul, Nat.succ_eq_add_one, pow_succ']
+    · have nsk : n.succ ≤ k := Nat.succ_le_iff.mpr nk
+      simp only [nk, if_true, fstCmmap_apply, min_eq_right nk.le, min_eq_right nsk,
+        Nat.sub_eq_zero_of_le nk.le, Nat.sub_eq_zero_of_le nsk, pow_zero, one_smul, smul_smul,
+        pow_succ']
     · simp [nk]; simp at nk
       rw [sndCmmap_apply]
       have nsk : k ≤ n.succ := Nat.le_succ_of_le nk
@@ -274,15 +271,15 @@ public lemma ContinuousLinearMap.smulRight_ne_zero {R A B : Type} [Ring R] [Topo
     (c0 : c ≠ 0) (f0 : f ≠ 0) :
     c.smulRight f ≠ 0 := by
   rcases ContinuousLinearMap.exists_ne_zero c0 with ⟨x,cx⟩
-  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
-    ContinuousLinearMap.smulRight_apply, smul_eq_zero, not_or]
-  use x
+  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, _root_.zero_apply,
+    ContinuousLinearMap.smulRight_apply]
+  exact ⟨x, fun h ↦ (eq_zero_or_eq_zero_of_smul_eq_zero h).elim cx f0⟩
 
 /-- `1 ≠ 0`, `ContinuousLinearMap` case -/
 public lemma ContinuousLinearMap.one_ne_zero {R A : Type} [Ring R] [TopologicalSpace A]
     [AddCommMonoid A] [Module R A] [Nontrivial A] : (1 : A →L[R] A) ≠ 0 := by
-  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, ContinuousLinearMap.zero_apply,
-    ContinuousLinearMap.one_apply]
+  simp only [Ne, ContinuousLinearMap.ext_iff, not_forall, _root_.zero_apply,
+    _root_.one_apply_eq_self]
   apply exists_ne
 
 /-- `mkPiRing` is continuous -/
@@ -296,7 +293,7 @@ public lemma ContinuousMultilinearMap.continuous_mkPiRing {𝕜 ι E : Type} [No
   refine lt_of_le_of_lt (b := e / 2) ?_ (by bound)
   rw [dist_eq_norm, ContinuousMultilinearMap.opNorm_le_iff (by bound)]
   intro m
-  simp only [ContinuousMultilinearMap.sub_apply, ContinuousMultilinearMap.mkPiRing_apply,
+  simp only [_root_.sub_apply, ContinuousMultilinearMap.mkPiRing_apply,
     ← smul_sub]
   refine le_trans (norm_smul_le _ _) ?_
   rw [mul_comm]

@@ -80,7 +80,7 @@ public lemma small_mem_ext (xc : ‖x‖ < rinv 4⁻¹ c / 4) : (c, x) ∈ (supe
   obtain ⟨z,_,_,zp,zx⟩ := sbottcher_inv_small_mem_preimage (d := d) xc
   simp only [sbottcher_inv_def] at zx
   have t := ((superF d).homeomorphSlice c).map_target (x := z⁻¹)
-  simp only [Super.target_homeomorphSlice, mem_setOf_eq, zp, Super.source_homeomorphSlice,
+  simp only [Super.target_homeomorphSlice, mem_ofPred_eq, zp, Super.source_homeomorphSlice,
     Super.invFun_homeomorphSlice, forall_const] at t
   simpa [zx] using t
 

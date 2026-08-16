@@ -41,18 +41,18 @@ public theorem UniformCauchySeqOn.bounded {X Y : Type} [TopologicalSpace X] [Nor
   · rw [← hb]; exact add_nonneg (by norm_num) (_root_.trans (cs 0).1 (Finset.le_max' _ _ c0))
   · intro n x xs
     by_cases nN : n ≤ N
-    · have cn : c n ∈ bs := by simp [← hbs]; exists n; simp [Nat.lt_add_one_iff.mpr nN]
+    · have cn : c n ∈ bs := by simp [← hbs]; exists n
       exact _root_.trans ((cs n).2 x xs) (_root_.trans (Finset.le_max' _ _ cn)
         (by simp only [le_add_iff_nonneg_left, zero_le_one, ← hb]))
     · simp at nN
       specialize H N le_rfl n nN.le x xs
-      have cN : c N ∈ bs := by simp [← hbs]; exists N; simp
+      have cN : c N ∈ bs := by simp [← hbs]; exists N
       have bN := _root_.trans ((cs N).2 x xs) (Finset.le_max' _ _ cN)
       rw [dist_eq_norm] at H
       calc ‖f n x‖ = ‖f N x - (f N x - f n x)‖ := by rw [sub_sub_cancel]
         _ ≤ ‖f N x‖ + ‖f N x - f n x‖ := norm_sub_le _ _
         _ ≤ bs.max' _ + 1 := add_le_add bN H.le
-        _ = 1 + bs.max' _ := by ring
+        _ = 1 + bs.max' ⟨_, c0⟩ := by rw [add_comm]
         _ = b := by simp only [hb]
 
 /-- `{b | (a,b) ∈ s}` is open if `s` is open -/
@@ -213,7 +213,7 @@ lemma eventuallyEq_inter {X : Type} [TopologicalSpace X] {s t u : Set X} {x : X}
 public lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s : Set X} {x : X}
     {r : ℝ} (sub : closedBall x r ⊆ s) (o : IsOpen s) : ∃ t, r < t ∧ ball x t ⊆ s := by
   by_cases n : closedBall x (r + 1) \ s = ∅
-  · simp only [diff_eq_empty] at n
+  · simp only [sdiff_eq_empty] at n
     exact ⟨r + 1, by linarith, subset_trans Metric.ball_subset_closedBall n⟩
   simp only [← nonempty_iff_ne_empty] at n
   have c : IsCompact (closedBall x (r + 1) \ s) := (isCompact_closedBall x (r + 1)).diff o
@@ -226,7 +226,8 @@ public lemma exists_ball_superset {X : Type} [MetricSpace X] [ProperSpace X] {s 
     simpa only [Metric.mem_closedBall, dist_comm]
   · intro z m
     by_contra zs
-    simp only [isMinOn_iff, mem_diff, Metric.mem_closedBall, dist_comm, and_imp, mem_ball] at h m yr
+    simp only [isMinOn_iff, Set.mem_sdiff, Metric.mem_closedBall, dist_comm, and_imp,
+      mem_ball] at h m yr
     specialize h z (le_trans m.le yr) zs
     linarith
 
@@ -300,4 +301,4 @@ public lemma ENNReal.continuousAt_toNNReal {x : ℝ≥0∞} (h : x ≠ ⊤) :
     ContinuousAt (fun x ↦ x.toNNReal) x := by
   apply ENNReal.continuousOn_toNNReal.continuousAt
   apply ENNReal.isOpen_ne_top.mem_nhds
-  simpa only [ne_eq, Set.mem_setOf_eq]
+  simpa only [ne_eq, Set.mem_ofPred_eq]
