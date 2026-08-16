@@ -54,7 +54,7 @@ variable {d : ℕ} [Fact (2 ≤ d)]
 
 /-- `z⁻¹` is in the `superNearC` region for large `z` -/
 lemma inv_mem_t (z3 : 3 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) : z⁻¹ ∈ superNearT d c := by
-  simp only [mem_setOf, norm_inv, superNearT, one_div]
+  simp only [mem_ofPred, norm_inv, superNearT, one_div]
   refine ⟨by bound, ?_⟩
   by_cases c0 : c = 0
   · simp [c0]
@@ -385,17 +385,16 @@ public theorem potential_approx_strong_10 (d : ℕ) [Fact (2 ≤ d)] (z10 : 10 �
 
 /-- bottcher is monic at `∞` (has derivative 1) -/
 public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
-  rw [HasDerivAt, HasDerivAtFilter, bottcher_inv_def, bottcher, hasFDerivAtFilter_iff_isLittleO,
-    coe_zero, inv_zero', fill_inf]
-  simp only [sub_zero, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
+  rw [hasDerivAt_iff_isLittleO]
+  simp only [bottcher_inv_zero, sub_zero, smul_eq_mul, mul_one]
   rw [Asymptotics.isLittleO_iff]
   intro k k0; rw [Metric.eventually_nhds_iff]
   refine ⟨min 16⁻¹ (k / 16), by bound, ?_⟩; intro z le
   simp only [dist_eq_norm, sub_zero, lt_min_iff] at le
   by_cases z0 : z = 0
-  · simp only [z0, coe_zero, inv_zero', fill_inf, sub_zero, norm_zero,
+  · simp only [z0, bottcher_inv_zero, sub_zero, norm_zero,
       MulZeroClass.mul_zero, le_refl]
-  simp only [inv_coe z0, fill_coe]
+  simp only [bottcher_inv_def, bottcher, inv_coe z0, fill_coe]
   have b := bottcher_approx d (c := z⁻¹) ?_
   · simp only [inv_inv] at b; apply le_trans b
     simp only [norm_inv, inv_inv, pow_two, ← mul_assoc]
@@ -415,7 +414,8 @@ public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0
     PartialEquiv.symm_symm, coePartialEquiv_apply, Equiv.toPartialEquiv_symm_apply, invEquiv_symm,
     ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ]
   rw [← bottcher_inv_def, bottcher_hasDerivAt_one.hasFDerivAt.fderiv]
-  rw [Ne, ContinuousLinearMap.ext_iff, not_forall]; use 1
-  simp only [ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one]
-  convert one_ne_zero
-  exact NeZero.one
+  intro h
+  have h1 : (ContinuousLinearMap.toSpanSingleton ℂ (1 : ℂ)) (1 : ℂ) = 0 :=
+    ContinuousLinearMap.ext_iff.mp h (1 : ℂ)
+  simp only [ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul, mul_one] at h1
+  exact one_ne_zero h1

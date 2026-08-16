@@ -141,7 +141,7 @@ theorem domain_open' {p : ℝ} {t : Set ℂ} (sub : closedBall (0 : ℂ) p ⊆ t
     ∃ q, p < q ∧ closedBall 0 q ⊆ t := by
   set u := norm '' (closedBall 0 (p + 1) \ t)
   by_cases ne : u = ∅
-  · refine ⟨p + 1, by bound, ?_⟩; rw [image_eq_empty, diff_eq_empty] at ne; exact ne
+  · refine ⟨p + 1, by bound, ?_⟩; rw [image_eq_empty, sdiff_eq_empty] at ne; exact ne
   replace ne := nonempty_iff_ne_empty.mpr ne
   have uc : IsClosed u :=
     (((isCompact_closedBall _ _).diff ot).image continuous_norm).isClosed
@@ -156,16 +156,16 @@ theorem domain_open' {p : ℝ} {t : Set ℂ} (sub : closedBall (0 : ℂ) p ⊆ t
   intro z m; simp only [mem_closedBall, Complex.dist_eq, sub_zero, le_min_iff] at m
   rcases m with ⟨zq, zp⟩; have zi := lt_of_le_of_lt zq qi
   contrapose zi; simp only [not_lt]; refine csInf_le ub (mem_image_of_mem _ ?_)
-  simp only [mem_diff, mem_closedBall, Complex.dist_eq, sub_zero]; use zp, zi
+  simp only [mem_sdiff, mem_closedBall, Complex.dist_eq, sub_zero]; use zp, zi
 
 /-- If `{c} ×ˢ closedBall 0 p ⊆ t`, we can increase `p` bit without leaving `t` -/
 theorem domain_open {p : ℝ} {t : Set (ℂ × ℂ)} (sub : {c} ×ˢ closedBall 0 p ⊆ t) (o : IsOpen t) :
     ∃ q, p < q ∧ {c} ×ˢ closedBall 0 q ⊆ t := by
   have sub : closedBall 0 p ⊆ {b | (c, b) ∈ t} := by
-    intro z m; simp only [mem_setOf]; apply sub; exact ⟨mem_singleton _, m⟩
+    intro z m; simp only [mem_ofPred]; apply sub; exact ⟨mem_singleton _, m⟩
   rcases domain_open' sub (o.snd_preimage c) with ⟨q, pq, sub⟩
   use q, pq; intro ⟨e, z⟩ ⟨ec, m⟩; simp only [mem_singleton_iff] at ec
-  replace m := sub m; simp only [← ec, mem_setOf] at m; exact m
+  replace m := sub m; simp only [← ec, mem_ofPred] at m; exact m
 
 /-- `Grow` is local -/
 theorem Grow.congr {r0 r1 : ℂ → ℂ → S} (g : Grow s c p n r0)
@@ -205,9 +205,10 @@ theorem eqn_noncritical {x : ℂ × ℂ} (e : ∀ᶠ y in 𝓝 x, Eqn s n r y) (
       (.of_forall fun _ e ↦ e.eqn)
   rw [mfderiv_eq_fderiv, loc.fderiv_eq] at x0
   have d := (differentiableAt_pow (𝕜 := ℂ) (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
-  apply_fun (fun x ↦ x 1) at x0
+  replace x0 := ContinuousLinearMap.ext_iff.mp x0 1
   rw [x0] at d
-  replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+  have z1 : (0 : ℂ →L[ℂ] ℂ) 1 = (0 : ℂ) := rfl
+  replace d := d.trans z1
   simp only [differentiableAt_fun_id, deriv_fun_pow, Nat.cast_pow, deriv_id'', mul_one, mul_eq_zero,
     pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
   exact d.1
@@ -259,7 +260,7 @@ theorem Super.grow_start (s : Super f d a) (c : ℂ) : ∃ p r, 0 < p ∧ Grow s
 theorem Grow.open (g : Grow s c p n r) : ∃ p', p < p' ∧ ∀ᶠ c' in 𝓝 c, Grow s c' p' n r := by
   have e := g.eqn; simp only [isCompact_singleton.nhdsSet_prod_eq (isCompact_closedBall _ _)] at e
   rcases Filter.mem_prod_iff.mp e with ⟨a', an, b', bn, sub⟩
-  simp only [subset_setOf] at sub
+  simp only [subset_ofPred] at sub
   rcases eventually_nhds_iff.mp (nhdsSet_singleton.subst an) with ⟨a, aa, ao, am⟩
   rcases eventually_nhdsSet_iff_exists.mp bn with ⟨b, bo, bp, bb⟩
   rcases domain_open' bp bo with ⟨q, pq, qb⟩
@@ -546,7 +547,7 @@ theorem join_r (s : Super f d a) {p : ℕ → ℝ} {n : ℕ → ℕ} {ps : ℝ} 
       · have m : (e, x) ∈ u0 ×ˢ u1 := by
           refine mk_mem_prod eu (subset_of_mem_nhdsSet n1 ?_)
           simp only [mem_closedBall, Complex.dist_eq, sub_zero, xk0.le]
-        specialize eq m; simp only [mem_setOf, uncurry] at eq
+        specialize eq m; simp only [mem_ofPred, uncurry] at eq
         rw [h _ xk0, eq]
       · have xe : ∃ k, ‖x‖ < p k := ⟨k + 1, xk1⟩
         have n := (Nat.find_eq_iff xe).mpr ⟨xk1, ?_⟩
@@ -627,7 +628,7 @@ theorem Super.grow (s : Super f d a) [OnePreimage s] :
     have eq := le_antisymm le (not_lt.mp lt); rw [eq]; clear eq lt le q0 q
     -- Piece together a single r that works < Sup t, then close to Sup t
     rcases exists_seq_tendsto_sSup ne above with ⟨p, mono, tend, sub⟩
-    simp only [mem_setOf, t] at sub
+    simp only [mem_ofPred, t] at sub
     set pr := fun k ↦ choose (self (sub k))
     have pg : ∀ k, Grow s c (p k) (s.np c (sSup t)) (pr k) := fun k ↦
       (choose_spec (self (sub k))).mono

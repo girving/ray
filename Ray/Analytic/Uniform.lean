@@ -26,7 +26,7 @@ theorem analyticOn_small_cball {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (h : Anal
   intro x hx
   rw [closedBall] at hx; simp at hx
   have hb : x ∈ ball z r := by
-    rw [ball]; simp only [dist_lt_coe, Set.mem_setOf_eq]; exact lt_of_le_of_lt hx sr
+    rw [ball]; simp only [dist_lt_coe, Set.mem_ofPred_eq]; exact lt_of_le_of_lt hx sr
   exact h x hb
 
 theorem cauchy_bound {f : ℂ → E} {c : ℂ} {r : ℝ≥0} {d : ℝ≥0} {w : ℂ} {n : ℕ} (rp : r > 0)
@@ -77,7 +77,7 @@ theorem circleIntegral_sub {f g : ℂ → E} {c : ℂ} {r : ℝ} (fi : CircleInt
 
 theorem circleMap_nz {c : ℂ} {r : ℝ≥0} {θ : ℝ} (rp : r > 0) : circleMap c r θ - c ≠ 0 := by
   simp only [circleMap_sub_center, Ne, circleMap_eq_center_iff, NNReal.coe_eq_zero]
-  intro h; rw [h] at rp; simp only [gt_iff_lt, not_lt_zero'] at rp
+  intro h; rw [h] at rp; simp only [gt_iff_lt, not_lt_zero] at rp
 
 theorem cauchy_is_circleIntegrable {f : ℂ → E} {c : ℂ} {r : ℝ≥0} (n : ℕ) (w : ℂ) (rp : r > 0)
     (h : ContinuousOn f (closedBall c r)) :
@@ -158,7 +158,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
     rw [← pp] at hp'
     refine hp'.r_le
   · intro y yr
-    rw [EMetric.ball, Set.mem_setOf] at yr
+    rw [Metric.mem_eball] at yr
     rcases exists_between yr with ⟨t, t0, t1⟩
     have t1' : t.toNNReal < r := by
       rw [← WithTop.coe_lt_coe]; exact lt_of_le_of_lt ENNReal.coe_toNNReal_le_self t1
@@ -170,7 +170,7 @@ theorem analyticOn_ball_radius {f : ℂ → E} {z : ℂ} {r : ℝ≥0} (rp : r >
       HasFPowerSeriesAt.eq_formalMultilinearSeries ⟨↑(r / 2), ph⟩ ⟨t.toNNReal, hp'⟩
     rw [← pp] at hp'
     refine hp'.hasSum ?_
-    rw [EMetric.ball, Set.mem_setOf]
+    rw [Metric.mem_eball]
     calc edist y 0
       _ < t := t0
       _ = ↑t.toNNReal := (ENNReal.coe_toNNReal <| ne_top_of_lt t1).symm

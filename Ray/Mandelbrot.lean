@@ -27,7 +27,7 @@ noncomputable section
 /-- The Mandelbrot set is the `d = 2` Multibrot set -/
 public theorem mandelbrot_eq_multibrot : mandelbrot = multibrot 2 := by
   ext c
-  simp only [mandelbrot, mem_setOf_eq, multibrot, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
+  simp only [mandelbrot, mem_ofPred_eq, multibrot, f_f'_iter, tendsto_inf_iff_tendsto_cobounded,
     tendsto_cobounded_iff_norm_tendsto_atTop]
   rfl
 

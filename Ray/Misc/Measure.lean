@@ -8,7 +8,7 @@ public import Mathlib.MeasureTheory.Integral.Average
 public import Mathlib.MeasureTheory.Integral.IntegrableOn
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
-public import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
+public import Mathlib.MeasureTheory.Measure.Typeclasses.NullSingletonClass
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Prod
 import Mathlib.MeasureTheory.Group.Measure
@@ -47,12 +47,12 @@ variable {μ : Measure M}
 theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
   simp only [Filter.EventuallyEq, Pi.sdiff_apply, eq_iff_iff]
   have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
-    intro x h; simp only [Set.mem_diff, h, not_false_iff, and_true]
+    intro x h; simp only [Set.mem_sdiff, h, not_false_iff, and_true]
   refine Filter.Eventually.mono ?_ e
   exact measure_eq_zero_iff_ae_notMem.mp tz
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
-public theorem ae_minus_point [NoAtoms (volume : Measure M)] {s : Set M} {x : M} :
+public theorem ae_minus_point [NullSingletonClass (volume : Measure M)] {s : Set M} {x : M} :
     s =ᵐ[volume] (s \ {x} : Set M) :=
   ae_minus_null (measure_singleton x)
 
@@ -88,12 +88,12 @@ public instance Complex.isAddHaarMeasure_volume : (volume : Measure ℂ).IsAddHa
   · rw [←e]; exact Complex.equivRealProdCLM.symm.toHomeomorph.toCocompactMap.cocompact_tendsto'
 
 /-- `ℂ` has no atoms -/
-public instance Complex.noAtoms_volume : NoAtoms (volume : Measure ℂ) where
+public instance Complex.noAtoms_volume : NullSingletonClass (volume : Measure ℂ) where
   measure_singleton := by
     intro z
     rw [← (MeasurePreserving.symm _ Complex.volume_preserving_equiv_real_prod).measure_preimage]
     · rw [← MeasurableEquiv.image_eq_preimage_symm, Set.image_singleton,
-        MeasureTheory.NoAtoms.measure_singleton]
+        MeasureTheory.measure_singleton]
     · apply MeasurableSet.singleton
 
 /-- The property that a set has finite, positive measure.
@@ -246,7 +246,7 @@ public theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolu
   have tf : volume t < ⊤ := lt_of_le_of_lt (measure_mono ts) sn.finite
   have tm : MeasurableSet t := by
     rw [← ht]; exact MeasurableSet.inter sn.measurable measurableSet_ball
-  have sc : s \ t ∪ t = s := Set.diff_union_of_subset ts
+  have sc : s \ t ∪ t = s := Set.sdiff_union_of_subset ts
   nth_rw 2 [← sc]
   rw [setIntegral_union]
   simp only [MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter, gt_iff_lt]
@@ -261,12 +261,12 @@ public theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolu
         _ < (b + b) / 2 := (div_lt_div_iff_of_pos_right (by norm_num)).mpr (by bound)
         _ = b := by ring
     have i0 : ∫ x in s \ t, f x ≤ (vs - vt) * b := by
-      have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono Set.diff_subset) sn.finite
+      have df : volume (s \ t) < ⊤ := lt_of_le_of_lt (measure_mono Set.sdiff_subset) sn.finite
       have dm : MeasurableSet (s \ t) := MeasurableSet.diff sn.measurable tm
       have fb := setIntegral_mono_on (μ := volume) (f := f) (g := fun _ ↦ b) (s := s \ t)
-        (fi.mono Set.diff_subset (le_refl _)) (integrableOn_const df.ne_top) dm ?_
+        (fi.mono Set.sdiff_subset (le_refl _)) (integrableOn_const df.ne_top) dm ?_
       · simp only [integral_const, MeasurableSet.univ, measureReal_restrict_apply, Set.univ_inter,
-          MeasureTheory.measureReal_diff ts tm sn.ne_top, smul_eq_mul] at fb
+          MeasureTheory.measureReal_sdiff ts tm sn.ne_top, smul_eq_mul] at fb
         exact fb
       · intro y yd; simp at yd; exact hi y yd.left
     have i1 : ∫ x in t, f x ≤ vt * m := by
@@ -289,7 +289,7 @@ public theorem mean_squeeze {f : X → ℝ} {s : Set X} {b : ℝ} (sn : NiceVolu
       _ = b * vs := by ring
   · rw [disjoint_comm]; exact Set.disjoint_sdiff_right
   · exact tm
-  · exact fi.mono Set.diff_subset (le_refl _)
+  · exact fi.mono Set.sdiff_subset (le_refl _)
   · exact fi.mono ts (le_refl _)
 
 public theorem ContinuousOn.intervalIntegral {M : Type} [TopologicalSpace M]

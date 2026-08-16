@@ -4,6 +4,7 @@ import Mathlib.Geometry.Manifold.Algebra.Structures
 import Mathlib.Geometry.Manifold.ContMDiff.Atlas
 import Mathlib.Geometry.Manifold.MFDeriv.FDeriv
 import Mathlib.RingTheory.RootsOfUnity.Complex
+import Mathlib.SetTheory.Cardinal.NatCard
 import Ray.Analytic.Analytic
 import Ray.Dynamics.BottcherNear
 import Ray.Manifold.Analytic
@@ -47,7 +48,7 @@ variable {T : Type} [TopologicalSpace T] [ChartedSpace ℂ T] [IsManifold I ω T
 theorem exist_root_of_unity {d : ℕ} (d2 : 2 ≤ d) : ∃ a : ℂ, a ≠ 1 ∧ a ^ d = 1 := by
   set n : ℕ+ := ⟨d, lt_of_lt_of_le (by norm_num) d2⟩
   have two : Nontrivial (rootsOfUnity n ℂ) := by
-    rw [← Fintype.one_lt_card_iff_nontrivial, Complex.card_rootsOfUnity]
+    rw [← Finite.one_lt_card_iff_nontrivial, Complex.card_rootsOfUnity]
     simp only [PNat.mk_coe, n]; exact lt_of_lt_of_le (by norm_num) d2
   rcases two with ⟨⟨a, am⟩, ⟨b, bm⟩, ab⟩
   simp only [Ne, Subtype.mk_eq_mk, mem_rootsOfUnity] at am bm ab
@@ -77,8 +78,8 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
     have d0 : mfderiv I I (fun z : ℂ ↦ z) 0 ≠ 0 := id_mderiv_ne_zero
     rw [(Filter.EventuallyEq.symm ib).mfderiv_eq] at d0
     rw [←Function.comp_def, mfderiv_comp 0 _ ba.differentiableAt.mdifferentiableAt] at d0
-    simp only [Ne, mderiv_comp_eq_zero_iff, nc, or_false] at d0
-    rw [bottcherNear_zero] at d0; exact d0
+    rw [bottcherNear_zero] at d0
+    exact fun h ↦ d0 (ContinuousLinearMap.ext fun v ↦ by rw [h]; rfl)
     rw [bottcherNear_zero]; exact ia.mdifferentiableAt (by decide)
   rcases exist_root_of_unity s.d2 with ⟨a, a1, ad⟩
   refine ⟨fun z ↦ i (a * bottcherNear f d z), ?_, ?_, ?_⟩
@@ -193,7 +194,10 @@ public theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDi
       mfderiv_comp _ ((contMDiffAt_extChartAt' _).mdifferentiableAt one_ne_zero) _,
       mfderiv_comp _ fd (((contMDiffOn_extChartAt_symm _).contMDiffAt
       (extChartAt_target_mem_nhds' _)).mdifferentiableAt one_ne_zero),
-      PartialEquiv.left_inv, df, ContinuousLinearMap.zero_comp, ContinuousLinearMap.comp_zero]
+      PartialEquiv.left_inv, df]
+    · apply ContinuousLinearMap.ext
+      intro v
+      exact ContinuousLinearMap.map_zero _
     · apply mem_extChartAt_source
     · apply mem_extChartAt_target
     · simp
@@ -201,9 +205,11 @@ public theorem not_local_inj_of_mfderiv_zero {f : S → T} {c : S} (fa : ContMDi
         (((contMDiffOn_extChartAt_symm _).contMDiffAt
         (extChartAt_target_mem_nhds' (mem_extChartAt_target c))).mdifferentiableAt one_ne_zero)
   simp only [mAnalyticAt_iff_of_boundaryless, Function.comp_def, hg] at fa
-  have dg' := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
-  rw [dg, hasMFDerivAt_iff_hasFDerivAt] at dg'
-  replace dg := dg'.hasDerivAt; clear dg'
+  have dg' : HasFDerivAt g (0 : ℂ →L[ℂ] ℂ) (extChartAt I c c) := by
+    have h := fa.2.differentiableAt.mdifferentiableAt.hasMFDerivAt
+    rw [dg] at h
+    exact hasMFDerivAt_iff_hasFDerivAt.mp h
+  replace dg : HasDerivAt g 0 (extChartAt I c c) := dg'.hasDerivAt
   rcases not_local_inj_of_deriv_zero fa.2 dg with ⟨h, ha, h0, e⟩
   refine ⟨fun z ↦ (extChartAt I c).symm (h (extChartAt I c z)), ?_, ?_, ?_⟩
   · apply ((contMDiffOn_extChartAt_symm _).contMDiffAt

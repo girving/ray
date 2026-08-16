@@ -39,9 +39,9 @@ public theorem extChartAt_eq_refl [NormedAddCommGroup E] [NormedSpace 𝕜 E] [T
 /-- `extChartAt = refl` for `I = modelWithCornersSelf 𝕜 E` -/
 public instance extChartEqReflSelf [NormedAddCommGroup E] [NormedSpace 𝕜 E] :
     ExtChartEqRefl (modelWithCornersSelf 𝕜 E) := ⟨by
-  simp only [OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq,
-    OpenPartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source, forall_const, extChartAt,
-    OpenPartialHomeomorph.extend, modelWithCornersSelf_partialEquiv, PartialEquiv.refl_trans]⟩
+  simp only [extChartAt, OpenPartialHomeomorph.extend, chartAt_self_eq,
+    OpenPartialHomeomorph.refl_partialEquiv, modelWithCornersSelf_partialEquiv,
+    PartialEquiv.trans_refl, forall_const]⟩
 
 /-- `extChartAt = refl` extends to products -/
 public instance extChartEqReflProd [NormedAddCommGroup E] [NormedSpace 𝕜 E] [TopologicalSpace A]

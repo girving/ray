@@ -139,7 +139,7 @@ lemma h_inj (b : Bier f) : InjOn (fun z ↦ z * b.h z⁻¹) (norm_Ioi 1) := by
   intro z zm w wm e
   have n : ∀ {x}, x ∈ norm_Ioi 1 → (x ^ 2)⁻¹ ∈ ball 0 1 := by
     intro x m
-    simp only [norm_Ioi, mem_setOf_eq, Metric.mem_ball, dist_zero_right, norm_inv, norm_pow] at m ⊢
+    simp only [norm_Ioi, mem_ofPred_eq, Metric.mem_ball, dist_zero_right, norm_inv, norm_pow] at m ⊢
     exact inv_lt_one_of_one_lt₀ (by exact one_lt_pow₀ (by bound) (by norm_num))
   have e2 : (z * b.h z⁻¹) ^ 2 = (w * b.h w⁻¹) ^ 2 := by simp only at e; simp [e]
   rw [← inv_inj] at e2

@@ -71,7 +71,7 @@ public theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Co
   generalize hR : {r | ∃ x y : X, dist x y = r} = R
   have rc : R.Countable := by
     have e : R = range (uncurry (dist (α := X))) := by
-      apply Set.ext; intro r; simp only [mem_setOf, mem_range, Prod.exists, uncurry, ← hR]
+      apply Set.ext; intro r; simp only [mem_ofPred, mem_range, Prod.exists, uncurry, ← hR]
     rw [e]; exact countable_range _
   refine @TotallySeparatedSpace.totallyDisconnectedSpace _ _ ?_
   rw [totallySeparatedSpace_iff_exists_isClopen]
@@ -81,7 +81,7 @@ public theorem Countable.totallyDisconnectedSpace {X : Type} [MetricSpace X] [Co
   simp only [not_subset, mem_Ioo] at h; rcases h with ⟨r, ⟨rp, rxy⟩, rr⟩
   have e : ball x r = closedBall x r := by
     apply Set.ext; intro z; simp only [mem_ball, mem_closedBall]
-    simp only [mem_setOf, not_exists, ← hR] at rr; simp only [Ne.le_iff_lt (rr z x)]
+    simp only [mem_ofPred, not_exists, ← hR] at rr; simp only [Ne.le_iff_lt (rr z x)]
   refine ⟨ball x r, ⟨?_, isOpen_ball⟩, ?_⟩
   rw [e]; exact isClosed_closedBall; use mem_ball_self rp
   simp only [mem_compl_iff, mem_ball, dist_comm, not_lt]

@@ -44,7 +44,7 @@ variable {s : Super f d a}
 
 /-- `s.ps c` is nonempty (since it contains 1) -/
 public theorem Super.nonempty_ps (s : Super f d a) : (s.ps c).Nonempty :=
-  ⟨1, by simp only [Super.ps, mem_setOf, true_or]⟩
+  ⟨1, by simp only [Super.ps, mem_ofPred, true_or]⟩
 
 /-- `s.ps c` is compact -/
 public theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] :
@@ -53,7 +53,7 @@ public theorem Super.compact_ps (s : Super f d a) [OnePreimage s] [T2Space S] :
   have c1 : IsCompact {(1 : ℝ)} := isCompact_singleton
   convert c1.union ((s.isClosed_critical_not_a.snd_preimage c).isCompact.image pc)
   apply Set.ext; intro p
-  simp only [mem_setOf, Super.ps, mem_singleton_iff, mem_union, mem_image, Ne, ←
+  simp only [mem_ofPred, Super.ps, mem_singleton_iff, mem_union, mem_image, Ne, ←
     s.potential_eq_zero_of_onePreimage c]
   apply or_congr_right; constructor
   intro ⟨p0, z, e, c⟩; rw [← e] at p0; exact ⟨z, ⟨c, p0⟩, e⟩
@@ -145,7 +145,7 @@ public theorem Super.isOpen_post (s : Super f d a) [OnePreimage s] [T2Space S] :
       (Continuous.potential s).neg.lowerSemicontinuous
   have e : s.post = f ⁻¹' Ioi 0 :=
     Set.ext fun _ ↦ by
-      simp only [Super.post, mem_setOf, Postcritical, mem_preimage, mem_Ioi, sub_pos, f]
+      simp only [Super.post, mem_ofPred, Postcritical, mem_preimage, mem_Ioi, sub_pos, f]
   rw [e]; exact fc.isOpen_preimage _
 
 /-- Postcritical holds locally -/
@@ -164,12 +164,12 @@ theorem Super.postPostcritical (s : Super f d a) {p : ℂ × S} (m : p ∈ s.pos
 /-- `a` is postcritical -/
 @[simp] public lemma Super.post_a (s : Super f d a) [OnePreimage s] [T2Space S] (c : ℂ) :
     (c, a) ∈ s.post := by
-  simp only [Super.post, Postcritical, s.potential_a, mem_setOf]; exact s.p_pos c
+  simp only [Super.post, Postcritical, s.potential_a, mem_ofPred]; exact s.p_pos c
 
 /-- `f` maps `s.post` into itself -/
 public theorem Super.stays_post (s : Super f d a) {p : ℂ × S} (m : p ∈ s.post) :
     (p.1, f p.1 p.2) ∈ s.post := by
-  rcases p with ⟨c, z⟩; simp only [Super.post, mem_setOf, Postcritical, s.potential_eqn]
+  rcases p with ⟨c, z⟩; simp only [Super.post, mem_ofPred, Postcritical, s.potential_eqn]
   exact lt_of_le_of_lt (pow_le_of_le_one s.potential_nonneg s.potential_le_one s.d0) m
 
 /-- Iterating `f` maps `s.post` into itself -/
@@ -183,7 +183,7 @@ public theorem Super.basin_post (s : Super f d a) [OnePreimage s] [T2Space S]
     (m : (c, z) ∈ s.basin) : ∃ n, (c, (f c)^[n] z) ∈ s.post := by
   rcases tendsto_atTop_nhds.mp (s.basin_attracts m) {z | (c, z) ∈ s.post} (s.post_a c)
       (s.isOpen_post.snd_preimage c) with ⟨n, h⟩
-  specialize h n (le_refl n); simp only [mem_setOf] at h; use n, h
+  specialize h n (le_refl n); simp only [mem_ofPred] at h; use n, h
 
 /-- `s.potential` has postcritical minima only at `z = a` -/
 public theorem Super.potential_minima_only_a (s : Super f d a) [OnePreimage s] [T2Space S]

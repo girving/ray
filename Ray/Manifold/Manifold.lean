@@ -109,18 +109,13 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
   have fh := fd.hasMFDerivAt; rw [hdf] at fh
   suffices e : df = df0.comp fst + df1.comp snd by rw [e] at fh; exact fh
   apply ContinuousLinearMap.ext; intro ⟨u, v⟩
-  simp only [Function.uncurry_apply_pair, ContinuousLinearMap.add_apply,
-    ContinuousLinearMap.comp_apply]
   have hu : ∀ u : TangentSpace J y, df (u, 0) = df0 u := by
     intro u
     have d : HasMFDerivAt J L (uncurry f ∘ fun x ↦ (x, z)) y
         (df.comp ((ContinuousLinearMap.id 𝕜 (TangentSpace J y)).prod 0)) :=
       fh.comp y ((hasMFDerivAt_id _).prodMk (hasMFDerivAt_const _ _))
     simp only [hasMFDerivAt_unique fh0 d]
-    refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
-    refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
-    simp only [ContinuousLinearMap.zero_apply, Prod.mk.injEq, and_true]
-    exact rfl
+    rfl
   have hv : ∀ v : TangentSpace K z, df (0, v) = df1 v := by
     intro v
     have d : HasMFDerivAt K L (uncurry f ∘ fun x ↦ (y, x)) z (df.comp
@@ -128,14 +123,10 @@ theorem MDifferentiableAt.hasMFDerivAt_uncurry {f : N → O → P} {y : N} {z : 
           (ContinuousLinearMap.id 𝕜 (TangentSpace K z)))) :=
       fh.comp z ((hasMFDerivAt_const _ _).prodMk (hasMFDerivAt_id _))
     rw [hasMFDerivAt_unique fh1 d]
-    refine Eq.trans (congr_arg _ ?_) (ContinuousLinearMap.comp_apply _ _ _).symm
-    refine Eq.trans ?_ (ContinuousLinearMap.prod_apply _ _ _).symm
-    simp only [Prod.mk.injEq]
-    exact ⟨(ContinuousLinearMap.zero_apply _).symm, rfl⟩
+    rfl
   have e : (u, v) = (u, 0) + (0, v) := by simp only [Prod.mk_add_mk, add_zero, zero_add]
   nth_rw 1 [e]
-  rw [map_add]
-  exact congr_arg₂ _ (hu u) (hv v)
+  exact (map_add df _ _).trans (by rw [hu u, hv v]; rfl)
 
 /-- `HasMFDerivAt` composition for curried functions -/
 public theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M → N} {h : M → O} {x : M}
@@ -148,7 +139,6 @@ public theorem MDifferentiableAt.hasMFDerivAt_comp2 {f : N → O → P} {g : M �
     (fh1 : HasMFDerivAt K L (fun y ↦ f (g x) y) (h x) df1) :
     HasMFDerivAt I L (fun y ↦ f (g y) (h y)) x (df0.comp dg + df1.comp dh) := by
   have fh := (fd.hasMFDerivAt_uncurry fh0 fh1).comp x (gh.prodMk hh)
-  simp only [ContinuousLinearMap.add_comp, ContinuousLinearMap.comp_assoc] at fh
   exact fh
 
 /-- More general version of `hasMFDerivAt_iff_hasDerivAt`.
@@ -158,10 +148,11 @@ public theorem hasMFDerivAt_iff_hasFDerivAt' {I : ModelWithCorners 𝕜 E A} [I.
     {J : ModelWithCorners 𝕜 F B} [J.Boundaryless] [ChartedSpace B F] [IsManifold J ⊤ F]
     [ExtChartEqRefl J] {f : E → F} {x : E} {f' : E →L[𝕜] F} :
     HasMFDerivAt I J f x f' ↔ HasFDerivAt f f' x := by
-  simp only [HasMFDerivAt, ModelWithCorners.range_eq_univ, hasFDerivWithinAt_univ,
+  simp only [HasMFDerivAt, ModelWithCorners.range_eq_univ,
     writtenInExtChartAt, extChartAt_eq_refl, Function.comp_def, PartialEquiv.refl_coe,
     PartialEquiv.refl_symm, id]
-  exact ⟨fun x ↦ x.2, fun d ↦ ⟨d.continuousAt, d⟩⟩
+  exact ⟨fun x ↦ hasFDerivWithinAt_univ.mp x.2,
+    fun d ↦ ⟨d.continuousAt, hasFDerivWithinAt_univ.mpr d⟩⟩
 
 /-- Variant of `mfderiv_comp` that doesn't use `∘` for better inference -/
 theorem mfderiv_comp' {f : M → N} (x : M) {g : N → O} (hg : MDifferentiableAt J K g (f x))

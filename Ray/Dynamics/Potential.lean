@@ -284,10 +284,10 @@ theorem Super.barrier (s : Super f d a) [OnePreimage s] [T2Space S] (n : Set (�
   simp only [Set.subset_inter_iff] at ii
   set t := u \ univ ×ˢ i1
   have ta : ∀ e, (e, a) ∉ t := fun e ↦
-    Set.notMem_diff_of_mem (Set.mk_mem_prod (Set.mem_univ _) i1m)
+    Set.notMem_sdiff_of_mem (Set.mk_mem_prod (Set.mem_univ _) i1m)
   use t
-  refine ⟨uc.diff (isOpen_univ.prod i1o), subset_trans diff_subset us.1,
-      subset_trans diff_subset us.2, ta, ?_⟩
+  refine ⟨uc.diff (isOpen_univ.prod i1o), subset_trans sdiff_subset us.1,
+      subset_trans sdiff_subset us.2, ta, ?_⟩
   rw [eventually_nhds_iff]; use i0; refine ⟨?_, i0o, i0m⟩
   intro e em z zm za
   rcases tendsto_atTop_nhds.mp za i1 i1m i1o with ⟨m, mh⟩
@@ -300,7 +300,7 @@ theorem Super.barrier (s : Super f d a) [OnePreimage s] [T2Space S] (n : Set (�
     simp only [zm, Function.iterate_zero, id_eq] at ni1
     exact us.1 (ii.1 (Set.mk_mem_prod em ni1))
   have nt : (f e)^[n-1] z ∉ i1 := Nat.find_min en (Nat.pred_lt n0)
-  apply Set.mem_diff_of_mem
+  apply Set.mem_sdiff_of_mem
   · apply interior_subset; apply ih (e, (f e)^[n] z) (ii.2 (Set.mk_mem_prod em ni1))
     simp only [Super.fp]; rw [← Function.iterate_succ_apply' (f e) (n - 1)]
     simp only [Nat.succ_eq_add_one, Nat.sub_add_cancel (Nat.one_le_of_lt (Nat.pos_of_ne_zero n0))]
@@ -405,7 +405,7 @@ public theorem Continuous.potential (s : Super f d a) [OnePreimage s] [T2Space S
   rcases en with ⟨n, h⟩
   rcases eventually_nhds_iff.mp h with ⟨v, vh, vo, vc⟩
   have ev : ∀ᶠ p : ℂ × S in 𝓝 (c, z), p ∈ u ∩ v ×ˢ univ := by
-    simp only [Filter.eventually_iff, Set.setOf_mem_eq]
+    simp only [Filter.eventually_iff, Set.ofPred_mem_eq]
     exact Filter.inter_mem un ((vo.prod isOpen_univ).mem_nhds (Set.mk_mem_prod vc (Set.mem_univ _)))
   have ef : ∃ᶠ p in 𝓝 (c, z), p ∈ b.fast n := by
     refine (re.and_eventually ev).mp (.of_forall ?_)

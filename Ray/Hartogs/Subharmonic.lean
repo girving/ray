@@ -246,7 +246,7 @@ theorem AnalyticOnNhd.circle_mean_eq [CompleteSpace H] {f : ℂ → H} {c : ℂ}
     rw [← smul_assoc, Complex.real_smul]
     field_simp [Real.pi_ne_zero]
     simp
-  · intro z zs; rw [Set.diff_empty] at zs
+  · intro z zs; rw [Set.sdiff_empty] at zs
     exact (fa z (Metric.ball_subset_closedBall zs)).differentiableAt
 
 /-- Analytic functions are harmonic -/
@@ -573,7 +573,7 @@ theorem IsClosed.extendable {s : Set C(Real.Angle, ℂ)} (e : ∀ f, f ∈ s →
     have m := Extension.maximum_principle eab fab rp z zs
     simp only [Complex.dist_eq, Pi.sub_apply] at m ⊢
     exact lt_of_le_of_lt m (by linarith)
-  set G := fun z ↦ limUnder atTop fun n ↦ g n z
+  set G := fun z ↦ Filter.limUnder atTop fun n ↦ g n z
   have gG : TendstoUniformlyOn g G atTop (closedBall c r) := by
     apply UniformCauchySeqOn.tendstoUniformlyOn_of_tendsto cauchy
     intro z zs; exact (cauchy.cauchySeq zs).tendsto_limUnder
@@ -656,12 +656,15 @@ theorem fourierExtend {f : C(Real.Angle, ℂ)} (rp : r > 0)
 
 /-- All continuous functions on the circle extend to harmonic functions on the disk -/
 theorem continuousExtend (f : C(Real.Angle, ℂ)) (c : ℂ) (rp : r > 0) : Extendable f c r := by
-  set s : Submodule ℂ C(Real.Angle, ℂ) := Submodule.span ℂ (Set.range (@fourier (2 * π)))
+  set s : Submodule ℂ C(Real.Angle, ℂ) := Submodule.span ℂ (Set.range (@fourier (2 * π))) with hs
   have se : ∀ f, f ∈ s.carrier → Extendable f c r := fun f fs ↦ fourierExtend rp fs
   have ce : ∀ f, f ∈ closure s.carrier → Extendable f c r := IsClosed.extendable se rp
   have e : closure s.carrier = s.topologicalClosure.carrier := rfl
-  rw [e, @span_fourier_closure_eq_top _ (fact_iff.mpr Real.two_pi_pos)] at ce
-  apply ce; simp only [Submodule.mem_carrier]; trivial
+  rw [e] at ce
+  apply ce
+  have et : s.topologicalClosure = ⊤ := @span_fourier_closure_eq_top _ (fact_iff.mpr Real.two_pi_pos)
+  rw [et]
+  trivial
 
 end HarmonicExtension
 
@@ -691,7 +694,7 @@ theorem continuous_to_harmonic_complex {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
     · exact continuous_const.add
         (continuous_const.mul (continuous_subtype_val.comp AddCircle.continuous_toCircle))
     · simp only [mem_sphere_iff_norm, add_sub_cancel_left, Complex.norm_mul, Complex.norm_real,
-        Real.norm_eq_abs, norm_eq_of_mem_sphere, mul_one, abs_eq_self, rp.le, implies_true]
+        Real.norm_eq_abs, Circle.norm_coe, mul_one, abs_eq_self, rp.le, implies_true]
   rcases continuousExtend ⟨f', fc'⟩ c rp with ⟨g, e⟩
   use g, e.gh; intro z zs
   generalize hz' : (↑r)⁻¹ * (z - c) = z'
@@ -702,10 +705,11 @@ theorem continuous_to_harmonic_complex {f : ℂ → ℂ} {c : ℂ} {r : ℝ}
   rcases mem_addCircle_iff_abs.mp za' with ⟨t, tz⟩
   have rr : c + r * t.toCircle = z := by rw [← tz, ← hz']; exact rri rp _
   have h := e.b t
-  simp only [ContinuousMap.coe_mk] at h
   nth_rw 2 [← rr]
   rw [← h]
-  simp only [← hf', rr]
+  simp only [← hf']
+  show f z = f (c + ↑r * ↑t.toCircle)
+  rw [rr]
 
 /-- Continuous functions on the sphere extend to harmonic functions on the ball (`ℝ` case) -/
 theorem continuous_to_harmonic_real {f : ℂ → ℝ} {c : ℂ} {r : ℝ} (fc : ContinuousOn f (sphere c r)) :
@@ -866,7 +870,7 @@ theorem SubharmonicOn.monotone_lim {f : ℕ → ℂ → ℝ} {g : ℂ → ℝ} {
           _ ≤ -(|f 0 z| + 0) := by rw [←hz]; bound
           _ = -|f 0 z| := by simp only [add_zero]
           _ ≤ f 0 z := (neg_abs_le _)
-          _ ≤ f n z := fm (by simp only [zero_le']) _
+          _ ≤ f n z := fm (by simp only [zero_le]) _
       · have mn : Monotone fun n ↦ f n z := fun _ _ ab ↦ fm ab z
         calc f n z
           _ ≤ g z := Monotone.ge_of_tendsto (f := fun n ↦ f n z) mn (ft z zs) n
@@ -897,7 +901,7 @@ theorem Limsup.neg {f : ℕ → ℝ} : (atTop.limsup fun n ↦ f n) = -atTop.lim
   rw [Filter.limsup_eq]; rw [Filter.liminf_eq]; rw [Real.sInf_def]
   have ns : -{a | ∀ᶠ n in atTop, a ≤ -f n} = {a | ∀ᶠ n in atTop, f n ≤ a} := by
     apply Set.ext
-    simp only [Set.mem_neg, Set.mem_setOf_eq, neg_le_neg_iff, iff_self, forall_const]
+    simp only [Set.mem_neg, Set.mem_ofPred_eq, neg_le_neg_iff, iff_self, forall_const]
   simp_rw [← ns]; simp only [neg_neg]
 
 /-- `p : ENNReal → Prop` is true for all `ENNReal`s if it is true for `⊤` and positive reals -/
@@ -917,14 +921,14 @@ theorem le_liminf.simple {L : Type} [CompleteLinearOrder L] [DenselyOrdered L] {
     c ≤ atTop.liminf f ↔ ∀ d, d < c → ∀ᶠ n in atTop, d ≤ f n := by
   constructor
   · intro h d dc; rw [Filter.liminf_eq, le_sSup_iff, upperBounds] at h
-    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_setOf_eq, forall_exists_index] at h
+    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_ofPred_eq, forall_exists_index] at h
     specialize h d; contrapose h
     simp only [dc, not_forall, not_le, exists_prop, and_true, Filter.eventually_atTop,
       ge_iff_le, not_exists] at h ⊢
     intro a n an; rcases h n with ⟨m, nm, fmd⟩
     exact _root_.trans (an m nm) fmd.le
   · intro h; rw [Filter.liminf_eq, le_sSup_iff, upperBounds]
-    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_setOf_eq, forall_exists_index]
+    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_ofPred_eq, forall_exists_index]
     intro a ah; apply le_of_lt_imp_le; intro d dc
     rcases Filter.eventually_atTop.mp (h d dc) with ⟨n, hn⟩; exact ah n hn
 
@@ -975,7 +979,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   -- Prepare d and c
   intro d dc
   by_cases dz : d = 0
-  · simp only [dz, ge_iff_le, zero_le', imp_true_iff, Filter.eventually_atTop, exists_const]
+  · simp only [dz, ge_iff_le, zero_le, imp_true_iff, Filter.eventually_atTop, exists_const]
   have dp : d > 0 := pos_iff_ne_zero.mpr dz
   have df : d ≠ ⊤ := ne_top_of_lt dc
   have drp : d.toReal > 0 := ENNReal.toReal_pos dz df
@@ -1039,7 +1043,7 @@ theorem SuperharmonicOn.hartogs {f : ℕ → ℂ → ENNReal} {s k : Set ℂ} {c
   set fi := fun z ↦ atTop.liminf fun n ↦ f n z
   have fm : ∀ n, _root_.AEMeasurable (f n) (volume.restrict (closedBall z r1)) := fun n ↦
     AEMeasurable.mono_set r1s (fs n).AEMeasurable
-  have fatou' := @lintegral_liminf_le' _ _ (volume.restrict (closedBall z r1)) f fm
+  have fatou' := lintegral_liminf_le' (u := Filter.atTop) fm
   have im := @set_lintegral_mono_aEMeasurable _ _ (closedBall z r1) (fun _ ↦ c) _
     measurableSet_closedBall fun _ zs ↦ fc _ (r1s zs)
   simp only [lintegral_const, Measure.restrict_apply, MeasurableSet.univ, Set.univ_inter] at im

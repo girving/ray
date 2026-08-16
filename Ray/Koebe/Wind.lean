@@ -48,10 +48,10 @@ public def h (i : Wind f) : Homeomorph Circle Circle := i.isHomeomorph.homeomorp
 
 lemma f_h_symm (i : Wind f) (z : Circle) :
     f (i.h.symm z) = ‖(f (i.h.symm z)).val‖ • z.val := by
-  have h := i.h.apply_symm_apply z
-  simp only [Wind.h_apply, Circle.ext_iff, Complex.real_smul, snap_unit] at h ⊢
-  rwa [mul_comm, ← div_eq_iff]
-  simp
+  have h := congrArg Subtype.val (i.h.apply_symm_apply z)
+  rw [Wind.h_apply, coe_snap (Units.ne_zero _)] at h
+  rw [Complex.real_smul, mul_comm, ← div_eq_iff (by simp)]
+  exact h
 
 @[simp] lemma h_symm_f (i : Wind f) (z : Circle) : i.h.symm (snap (f z)) = z :=
   i.h.symm_apply_apply z
@@ -117,7 +117,7 @@ public lemma right_inv (i : Wind f) : Function.RightInverse i.fi i.fe := by
   by_cases w0 : w = 0
   · simp only [w0, fe_zero, fi_zero]
   · simp only [fe, fi, norm_mul, norm_div, Complex.norm_real, Real.norm_eq_abs,
-      abs_norm, norm_eq_of_mem_sphere, mul_one, Complex.real_smul, Complex.ofReal_div]
+      abs_norm, Circle.norm_coe, mul_one, Complex.real_smul, Complex.ofReal_div]
     rw [← Complex.ofReal_div, snap_mul, snap_of_pos, one_mul, i.f_h_symm]
     all_goals simp [Complex.real_smul, Complex.norm_real, ne_eq, w0, not_false_eq_true, mul_one,
       Complex.ofReal_div]
@@ -133,8 +133,10 @@ public lemma continuous_fe (i : Wind f) : Continuous i.fe := by
     simp only [z0, dist_zero_right, fe, Complex.real_smul, norm_zero, snap_zero, zero_smul,
       Complex.norm_mul, Complex.norm_real, norm_norm, lt_div_iff₀ i.max_pos] at wz ⊢
     exact lt_of_le_of_lt (by bound) wz
-  · apply ContinuousAt.smul
-    · exact continuous_norm.continuousAt
+  · show ContinuousAt (fun z : ℂ ↦ ‖z‖ • ((f (snap z)).val : ℂ)) z
+    simp only [Complex.real_smul]
+    apply ContinuousAt.mul
+    · exact Complex.continuous_ofReal.continuousAt.comp continuous_norm.continuousAt
     · exact Units.continuous_val.continuousAt.comp (i.fc.continuousAt.comp (continuousAt_snap z0))
 
 public lemma continuous_fi (i : Wind f) : Continuous i.fi := by
@@ -144,7 +146,7 @@ public lemma continuous_fi (i : Wind f) : Continuous i.fi := by
   · refine Metric.continuousAt_iff.mpr fun ε ε0 ↦ ⟨ε * i.min, by bound, fun z zw ↦ ?_⟩
     simp only [w0, dist_zero_right, ← div_lt_iff₀ i.min_pos, fi, norm_zero, Complex.ofReal_zero,
       snap_zero, zero_div, zero_mul, Complex.norm_mul, Complex.norm_div, Complex.norm_real,
-      norm_norm, norm_eq_of_mem_sphere, mul_one] at zw ⊢
+      norm_norm, Circle.norm_coe, mul_one] at zw ⊢
     exact lt_of_le_of_lt (by bound) zw
   · apply ContinuousAt.mul (ContinuousAt.div ?_ ?_ ?_) ?_
     · fun_prop
@@ -196,7 +198,7 @@ public lemma sphere_eq (i : Wind f) : i.g '' sphere 0 1 = range (fun z ↦ (f z)
     simp only [x1, Complex.ofReal_one, one_mul] at e
     exact ⟨_, e⟩
   · intro ⟨x,e⟩
-    exact ⟨x.val, by simp, by simp [e]⟩
+    exact ⟨x.val, by simp [Circle.norm_coe], by simp [Circle.norm_coe, e]⟩
 
 lemma frontier_disk (i : Wind f) : frontier i.disk = i.g '' sphere 0 1 := by
   simp only [disk, ← Homeomorph.image_frontier]
@@ -209,7 +211,7 @@ public lemma frontier_outer (i : Wind f) : frontier i.outer = i.g '' sphere 0 1 
 
 public lemma compl_outer (i : Wind f) : i.outerᶜ = i.disk := by
   simp only [outer, disk, norm_Ioi, ← Equiv.image_compl, ← Homeomorph.coe_toEquiv,
-    Equiv.image_eq_iff_eq, compl_setOf, not_lt]
+    Equiv.image_eq_iff_eq, compl_ofPred, not_lt]
   ext z
   simp
 
@@ -230,7 +232,7 @@ public lemma large_mem_outer (i : Wind f) : ∀ᶠ z in cobounded ℂ, z ∈ i.o
   intro z lt
   simp only [outer, mem_image]
   refine ⟨i.g.symm z, ?_, by simp only [i.g.apply_symm_apply]⟩
-  simp only [norm_Ioi, i.g_symm_apply, mem_setOf_eq, Complex.norm_mul, Complex.norm_div,
-    Complex.norm_real, norm_norm, norm_eq_of_mem_sphere, mul_one]
+  simp only [norm_Ioi, i.g_symm_apply, mem_ofPred_eq, Complex.norm_mul, Complex.norm_div,
+    Complex.norm_real, norm_norm, Circle.norm_coe, mul_one]
   rw [one_lt_div₀ (by simp)]
   exact lt_of_le_of_lt i.le_max lt

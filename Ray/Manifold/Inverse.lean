@@ -131,7 +131,7 @@ lemma Cinv.dei_de (i : Cinv f c z) : ∀ t, i.dei (i.de t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp
     (extChartAt_mderiv_right_inverse' (mem_extChartAt_source (I := I) z)) t
-  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
+  exact h
 
 variable [cmt : IsManifold I ω T]
 
@@ -173,21 +173,21 @@ lemma Cinv.de_dei' (i : Cinv f c z) : ∀ t, i.de' (i.dei' t) = t := by
   intro t
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse'
     (mem_extChartAt_source (I := I) (f c z))) t
-  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.id_apply] at h; exact h
+  exact h
 
 lemma Cinv.dhi_dh (i : Cinv f c z) : ∀ t, i.dhi (i.dh t) = t := by
   intro ⟨u, v⟩
   simp only [Cinv.dh, Cinv.dhi, dc, dz, Cinv.dfi', Cinv.df', Cinv.df, i.dei_de', i.dei_de,
     i.dfzi_dfz, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
-    ContinuousLinearMap.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
-    ContinuousLinearMap.add_apply, ContinuousLinearMap.map_add, add_sub_cancel_left]
+    _root_.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
+    _root_.add_apply, ContinuousLinearMap.map_add, add_sub_cancel_left]
 
 lemma Cinv.dh_dhi (i : Cinv f c z) : ∀ t, i.dh (i.dhi t) = t := by
   intro ⟨u, v⟩
   simp only [Cinv.dh, Cinv.dhi, dc, dz, Cinv.dfi', Cinv.df', Cinv.df, i.de_dei', i.de_dei,
     i.dfz_dfzi, ContinuousLinearMap.comp_apply, ContinuousLinearMap.prod_apply,
-    ContinuousLinearMap.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
-    ContinuousLinearMap.add_apply, ContinuousLinearMap.map_add, ContinuousLinearMap.map_sub,
+    _root_.sub_apply, ContinuousLinearMap.coe_fst', ContinuousLinearMap.coe_snd',
+    _root_.add_apply, ContinuousLinearMap.map_add, ContinuousLinearMap.map_sub,
     add_sub_cancel_left, ← add_sub_assoc]
 
 /-- `dh` as a `ContinuousLinearEquiv` -/

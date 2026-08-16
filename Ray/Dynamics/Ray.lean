@@ -55,7 +55,7 @@ variable {y : ℂ × ℂ}
 /-- The `c`-slice of `s.ext` is `ball 0 (s.p c)` -/
 theorem Super.ext_slice (s : Super f d a) (c : ℂ) :
     {x | (c, x) ∈ s.ext} = ball (0 : ℂ) (s.p c) := by
-  apply Set.ext; intro x; simp only [Super.ext, mem_ball, mem_setOf, Complex.dist_eq, sub_zero]
+  apply Set.ext; intro x; simp only [Super.ext, mem_ball, mem_ofPred, Complex.dist_eq, sub_zero]
 
 variable [T2Space S]
 
@@ -71,13 +71,13 @@ public theorem Super.isOpen_ext (s : Super f d a) [OnePreimage s] : IsOpen s.ext
     (s.lowerSemicontinuous_p.comp continuous_fst).add
       (continuous_norm.comp continuous_snd).neg.lowerSemicontinuous
   have e : s.ext = f ⁻¹' Ioi 0 :=
-    Set.ext fun _ ↦ by simp only [Super.ext, mem_setOf, mem_preimage, mem_Ioi, sub_pos, f]
+    Set.ext fun _ ↦ by simp only [Super.ext, mem_ofPred, mem_preimage, mem_Ioi, sub_pos, f]
   rw [e]; exact fc.isOpen_preimage _
 
 /-- `(c,0) ∈ s.ext` -/
 @[simp] public theorem Super.mem_ext (s : Super f d a) [OnePreimage s] (c : ℂ) :
     (c, (0 : ℂ)) ∈ s.ext := by
-  simp only [Super.ext, mem_setOf, norm_zero, s.p_pos c]
+  simp only [Super.ext, mem_ofPred, norm_zero, s.p_pos c]
 
 /-- `c`-slices of `s.ext` are connected -/
 public theorem Super.ext_slice_connected (s : Super f d a) [OnePreimage s] (c : ℂ) :
@@ -89,10 +89,10 @@ public theorem Super.ext_slice_connected (s : Super f d a) [OnePreimage s] (c : 
 public theorem Super.ext_connected (s : Super f d a) [OnePreimage s] : IsConnected s.ext := by
   refine ⟨⟨(0, 0), s.mem_ext 0⟩, isPreconnected_of_forall (0, 0) ?_⟩; intro ⟨c, x⟩ m
   use(fun x ↦ (c, x)) '' {x | (c, x) ∈ s.ext} ∪ univ ×ˢ {0}
-  simp only [mem_image, mem_union, union_subset_iff, mem_setOf, mem_prod_eq, mem_univ, true_and,
+  simp only [mem_image, mem_union, union_subset_iff, mem_ofPred, mem_prod_eq, mem_univ, true_and,
     mem_singleton_iff, or_true]
   refine ⟨⟨?_, ?_⟩, ?_, ?_⟩
-  · intro y n; simp only [mem_image, mem_setOf] at n; rcases n with ⟨x, m, e⟩; rw [e] at m; exact m
+  · intro y n; simp only [mem_image, mem_ofPred] at n; rcases n with ⟨x, m, e⟩; rw [e] at m; exact m
   · intro ⟨c, x⟩ m; simp only [mem_prod_eq, mem_singleton_iff] at m; rw [m.2]; exact s.mem_ext c
   · left; exact ⟨x, m, rfl⟩
   · refine IsPreconnected.union (c, 0) ?_ ?_ ?_ ?_
@@ -159,7 +159,7 @@ public theorem Super.ray_potential (s : Super f d a) [OnePreimage s] (post : (c,
 /-- `s.ray` maps `s.ext` into `s.post` -/
 public theorem Super.ray_post (s : Super f d a) [OnePreimage s] (post : (c, x) ∈ s.ext) :
     (c, s.ray c x) ∈ s.post := by
-  simp only [Super.post, Postcritical, mem_setOf, s.ray_potential post]; exact post
+  simp only [Super.post, Postcritical, mem_ofPred, s.ray_potential post]; exact post
 
 /-- `s.ray` is noncritical at 0 -/
 theorem Super.ray_noncritical_zero (s : Super f d a) [OnePreimage s] (c : ℂ) :
@@ -187,9 +187,10 @@ public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (
     rw [e.mfderiv_eq]; contrapose x0
     rw [mfderiv_eq_fderiv] at x0
     have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
-    apply_fun (fun x ↦ x 1) at x0
+    replace x0 := ContinuousLinearMap.ext_iff.mp x0 1
     rw [x0] at d
-    replace d := Eq.trans d (ContinuousLinearMap.zero_apply _)
+    have z1 : (0 : ℂ →L[ℂ] ℂ) 1 = (0 : ℂ) := rfl
+    replace d := d.trans z1
     simp only [differentiableAt_fun_id, deriv_fun_pow, Nat.cast_pow, deriv_id'', mul_one,
       mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
     exact d.1
@@ -227,7 +228,7 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     Complex.continuous_ofReal.continuousAt.mul continuousAt_const
   have pt : ∀ {x : ℂ} {t : ℝ}, (c, x) ∈ s.ext → t ∈ Ioc (0 : ℝ) 1 → (c, ↑t * x) ∈ s.ext := by
     intro x t p m
-    simp only [Super.ext, mem_setOf, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    simp only [Super.ext, mem_ofPred, norm_mul, Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos m.1] at p ⊢
     exact lt_of_le_of_lt (mul_le_of_le_one_left (norm_nonneg _) m.2) p
   -- It suffices to show that the set of t's where the x0 and x1 rays match
@@ -249,13 +250,13 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     exact mul_left_cancel₀ (Complex.ofReal_ne_zero.mpr t0.ne') inj
   refine isPreconnected_Ioc.relative_clopen ?_ ?_ ?_
   · use 1, right_mem_Ioc.mpr zero_lt_one
-    simp only [mem_setOf, Complex.ofReal_one, one_mul, e, u]
+    simp only [mem_ofPred, Complex.ofReal_one, one_mul, e, u]
   · intro t ⟨m, e⟩
     simp only [mem_interior_iff_mem_nhds] at e ⊢
     generalize hn : s.np c ‖↑t * x0‖ = n
     have t0 : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr m.1.ne'
     have pe : ‖↑t * x0‖ = ‖↑t * x1‖ := by
-      simp only [mem_setOf_eq, u] at e
+      simp only [mem_ofPred_eq, u] at e
       simp only [← s.ray_potential (pt p0 m), e, ← s.ray_potential (pt p1 m)]
     have e0 := (s.ray_spec (norm_nonneg _) (pt p0 m)).eqn.filter_mono
       (nhds_le_nhdsSet mem_domain_self)
@@ -265,7 +266,7 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     have de : (↑t * x0) ^ d ^ n = (↑t * x1) ^ d ^ n := by
       have e0 := e0.self_of_nhds.eqn
       have e1 := e1.self_of_nhds.eqn
-      simp only [mem_setOf_eq, u] at e
+      simp only [mem_ofPred_eq, u] at e
       simp only [← e] at e0 e1
       exact e0.symm.trans e1
     simp only [mul_pow] at de
@@ -288,8 +289,9 @@ public theorem Super.ray_inj (s : Super f d a) [OnePreimage s] {x0 x1 : ℂ} :
     refine ((continuousAt_const.prodMk (Complex.continuous_ofReal.continuousAt.mul
         continuousAt_const)).eventually
         (eqn_unique e0 er ?_ (mul_ne_zero t0 x00))).mp (.of_forall fun u e ↦ ?_)
-    · simp only [← hr]; rw [xe]; exact e
+    · simp only [← hr]; simp only [Pi.mul_apply]; rw [xe]; exact e
     · rw [← hr] at e; simp only [uncurry] at e
+      simp only [Pi.mul_apply] at e ⊢
       rw [← mul_assoc, mul_comm _ (u:ℂ), mul_assoc, div_mul_cancel₀ _ x00] at e
       exact e
   · intro t ⟨m, e⟩; simp only [mem_closure_iff_frequently] at e ⊢
@@ -321,7 +323,7 @@ public theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   intro z0 m0
   by_contra i0; simp only [not_exists, not_and] at i0
   set p0 := s.potential c z0
-  simp only [Super.post, mem_setOf, Postcritical] at m0
+  simp only [Super.post, mem_ofPred, Postcritical] at m0
   rcases exists_between m0 with ⟨p1, p01, post⟩
   set i := s.ray c '' {x | (c, x) ∈ s.ext}
   set j := {z | s.potential c z ≤ p1} ∩ i
@@ -336,7 +338,7 @@ public theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
   have jc : IsClosed j := by
     have e : j = s.ray c '' closedBall 0 p1 := by
       refine Set.ext fun z ↦ ?_
-      simp only [mem_inter_iff, mem_setOf, mem_image, mem_closedBall, Complex.dist_eq, sub_zero, j]
+      simp only [mem_inter_iff, mem_ofPred, mem_image, mem_closedBall, Complex.dist_eq, sub_zero, j]
       constructor
       · intro ⟨zp1, x, xp, xz⟩; rw [← xz, s.ray_potential xp] at zp1; use x, zp1, xz
       · intro ⟨x, xp, xz⟩; have zp1 := lt_of_le_of_lt xp post; rw [← xz, s.ray_potential zp1]
@@ -346,11 +348,11 @@ public theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     exact (s.ray_mAnalytic (lt_of_le_of_lt m post)).along_snd.continuousAt.continuousWithinAt
   have uc : IsCompact u := ((isClosed_le pc continuous_const).sdiff io).isCompact
   have z0u : z0 ∈ u := by
-    simp only [mem_diff, mem_setOf, u]; use p01.le; contrapose i0
+    simp only [mem_sdiff, mem_ofPred, u]; use p01.le; contrapose i0
     simp only [not_not, not_forall, exists_prop] at i0 ⊢; exact i0
   have ne : u.Nonempty := ⟨z0, z0u⟩
   rcases uc.exists_isMinOn ne pc.continuousOn with ⟨z, zu, zm⟩
-  simp only [mem_diff, mem_setOf, u] at zu
+  simp only [mem_sdiff, mem_ofPred, u] at zu
   replace zm : ∀ᶠ w in 𝓝 z, s.potential c z ≤ s.potential c w := by
     have m : z ∈ jᶜ := by rw [compl_inter]; right; exact zu.2
     have lt : s.potential c z < p1 := lt_of_le_of_lt (zm z0u) p01
@@ -358,9 +360,9 @@ public theorem Super.ray_surj (s : Super f d a) [OnePreimage s] :
     apply ((Continuous.potential s).along_snd.continuousAt.eventually_lt continuousAt_const lt).mp
     refine .of_forall fun w lt m ↦ ?_
     rw [compl_inter] at m; cases' m with m m
-    · simp only [compl_setOf, mem_setOf, not_le] at m; linarith
-    · apply zm; simp only [mem_diff, mem_setOf, u]; use lt.le, m
-  simp only [mem_setOf, mem_image, not_exists, not_and, i] at zu
+    · simp only [compl_ofPred, mem_ofPred, not_le] at m; linarith
+    · apply zm; simp only [mem_sdiff, mem_ofPred, u]; use lt.le, m
+  simp only [mem_ofPred, mem_image, not_exists, not_and, i] at zu
   have za := s.potential_minima_only_a (lt_of_le_of_lt zu.1 post) zm
   have h := zu.2 0 (s.mem_ext c); simp only [s.ray_zero] at h; exact h za.symm
 

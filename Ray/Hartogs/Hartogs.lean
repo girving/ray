@@ -135,7 +135,8 @@ theorem Bounded.dist0 (h : Har f s) {z w : ℂ × ℂ} {b e r : ℝ} (bp : 0 < b
       _ ≤ b + b := by linarith
       _ = 2 * b := by ring
       _ < 3 * b := mul_lt_mul_of_pos_right (by norm_num) bp
-  have L := Complex.dist_le_div_mul_dist_of_mapsTo_ball d m wf; simp only [Prod.mk.eta] at L
+  have L := Complex.dist_le_div_mul_dist_of_mapsTo_ball d
+    (m.mono_right Metric.ball_subset_closedBall) wf; simp only [Prod.mk.eta] at L
   refine _root_.trans L (_root_.trans ?_ ue); simp only [Metric.mem_ball] at wz
   rw [div_eq_mul_inv _ (2 : ℝ), div_mul_eq_div_div]; ring_nf
   bound
@@ -218,7 +219,7 @@ theorem forall_const_and_distrib {A : Type} [Nonempty A] {p : Prop} {q : A → P
 theorem ContinuousOn.isClosed_le {A B : Type} [TopologicalSpace A] [TopologicalSpace B] [Preorder B]
     [OrderClosedTopology B] {s : Set A} {f g : A → B} (sc : IsClosed s) (fc : ContinuousOn f s)
     (gc : ContinuousOn g s) : IsClosed {x | x ∈ s ∧ f x ≤ g x} := by
-  rw [Set.setOf_and]; simp only [Set.setOf_mem_eq]
+  rw [Set.ofPred_and]; simp only [Set.ofPred_mem_eq]
   set t := {p : B × B | p.fst ≤ p.snd}
   set fg := fun x ↦ (f x, g x)
   have e : {x | f x ≤ g x} = fg ⁻¹' t := by aesop
@@ -238,9 +239,9 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
     {z0 | z0 ∈ closedBall c0 re ∧ ∀ z1, z1 ∈ closedBall c1 r → ‖f (z0, z1)‖ ≤ b}) = S
   have hc : ∀ b, IsClosed (S b) := by
     intro b; rw [← hS]; simp only [← forall_const_and_distrib]
-    rw [Set.setOf_forall]; apply isClosed_iInter; intro z1
+    rw [Set.ofPred_forall]; apply isClosed_iInter; intro z1
     by_cases z1r : z1 ∉ closedBall c1 r
-    · simp only [z1r, false_imp_iff, and_true, Set.setOf_mem_eq, Metric.isClosed_closedBall]
+    · simp only [z1r, false_imp_iff, and_true, Set.ofPred_mem_eq, Metric.isClosed_closedBall]
     · rw [Set.not_notMem] at z1r
       simp only [z1r, true_imp_iff]
       refine ContinuousOn.isClosed_le Metric.isClosed_closedBall ?_ continuousOn_const
@@ -253,7 +254,7 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
     have z0s' := esub (ball_subset_closedBall z0s)
     rcases (isCompact_closedBall _ _).bddAbove_image (h.on1 z0s').continuousOn.norm with ⟨b, fb⟩
     simp only [mem_upperBounds, Set.forall_mem_image] at fb
-    use Nat.ceil b; rw [← hS]; simp only [Set.mem_setOf]
+    use Nat.ceil b; rw [← hS]; simp only [Set.mem_ofPred]
     refine ⟨ball_subset_closedBall z0s, ?_⟩
     simp only [Metric.mem_closedBall] at fb ⊢; intro z1 z1r
     exact _root_.trans (fb z1r) (Nat.le_ceil _)
@@ -264,7 +265,7 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
   have tr : ball c0' t ⊆ closedBall c0 re := by
     rw [Set.subset_def]; intro z0 z0t
     have z0b := _root_.trans ts s's z0t
-    rw [← hS] at z0b; simp only [Set.setOf_and, Set.setOf_mem_eq, Set.mem_inter_iff] at z0b
+    rw [← hS] at z0b; simp only [Set.ofPred_and, Set.ofPred_mem_eq, Set.mem_inter_iff] at z0b
     exact z0b.left
   have c0e : c0' ∈ closedBall c0 e :=
     _root_.trans tr (Metric.closedBall_subset_closedBall (min_le_right _ _))
@@ -273,7 +274,7 @@ theorem on_subdisk [CompleteSpace E] (h : Har f (closedBall (c0, c1) r)) (rp : r
     intro z zs; rw [Set.mem_prod] at zs
     have zb := _root_.trans ts s's zs.left
     rw [← hS] at zb
-    simp only [Metric.mem_ball, Metric.mem_closedBall, Set.mem_setOf_eq] at zb zs
+    simp only [Metric.mem_ball, Metric.mem_closedBall, Set.mem_ofPred_eq] at zb zs
     have zb' := zb.right z.snd zs.right.le
     simp only [Prod.mk.eta] at zb'; exact zb'
   use t, tp, c0e
@@ -512,7 +513,7 @@ theorem Along0.norm {n : ℕ} (p : ContinuousMultilinearMap ℂ (fun _ : Fin n �
   have e : ∀ i : Fin n, ‖m i‖ = ‖idZeroLm (m i)‖ := by
     intro i
     simp only [idZeroLm, ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id_eq,
-      ContinuousLinearMap.zero_apply, Prod.norm_def, norm_zero, norm_nonneg, sup_of_le_left]
+      _root_.zero_apply, Prod.norm_def, norm_zero, norm_nonneg, sup_of_le_left]
   simp_rw [e]
   exact ContinuousMultilinearMap.le_opNorm p _
 
@@ -525,12 +526,12 @@ def Along0.linearMap (n : ℕ) :
     intro p q; simp_rw [ContinuousMultilinearMap.along0]
     apply ContinuousMultilinearMap.ext; intro m
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
-      ContinuousMultilinearMap.add_apply]
+      _root_.add_apply]
   map_smul' := by
     intro s p; simp_rw [ContinuousMultilinearMap.along0]
     apply ContinuousMultilinearMap.ext; intro m
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
-      ContinuousMultilinearMap.smul_apply, RingHom.id_apply]
+      _root_.smul_apply, RingHom.id_apply]
 
 /-- `.along0` is continuous linear -/
 def Along0.continuousLinearMap (n : ℕ) :
@@ -570,11 +571,12 @@ theorem HasFPowerSeriesAt.along0 {f : ℂ × ℂ → E} {c0 c1 : ℂ}
     simp_rw [FormalMultilinearSeries.along0, ContinuousMultilinearMap.along0, idZeroLm]
     simp only [ContinuousMultilinearMap.compContinuousLinearMap_apply,
       ContinuousLinearMap.prod_apply, ContinuousLinearMap.coe_id', id_eq,
-      ContinuousLinearMap.zero_apply]
-    have w01r : (w0, (0 : ℂ)) ∈ EMetric.ball (0 : ℂ × ℂ) r := by
-      simpa only [Prod.edist_eq, EMetric.mem_ball, Prod.fst_zero, Prod.snd_zero, edist_self,
-        ENNReal.max_zero_right] using w0r
-    convert fpr.hasSum w01r; rw [Prod.mk_add_mk, add_zero]
+      _root_.zero_apply]
+    have w01r : (w0, (0 : ℂ)) ∈ Metric.eball (0 : ℂ × ℂ) r := by
+      simpa only [Prod.edist_eq, Metric.mem_eball, Prod.fst_zero, Prod.snd_zero, edist_self,
+        max_zero] using w0r
+    convert fpr.hasSum w01r
+    all_goals simp
 
 /-- The map `p ↦ p.along0` is analytic -/
 theorem Along0.analyticAt (n : ℕ) : ∀ {p},
@@ -608,23 +610,23 @@ theorem unevenSeries_analytic [CompleteSpace E] (u : Uneven f c0 c1 r0 r1) (n : 
     have s'p : s' > 0 := by simp only [Metric.mem_ball] at z1s; bound
     have sp : s > 0 := by bound
     have sr : s ≤ r := by bound
-    have sb : EMetric.ball z1 s ⊆ ball c1 r1 := by
+    have sb : Metric.eball z1 s ⊆ ball c1 r1 := by
       rw [Set.subset_def]; intro x xs
-      simp only [Metric.mem_ball, EMetric.mem_ball, lt_min_iff, edist_lt_ofReal, s] at xs z1s ⊢
+      simp only [Metric.mem_ball, Metric.mem_eball, lt_min_iff, edist_lt_ofReal, s] at xs z1s ⊢
       calc dist x c1
         _ ≤ dist x z1 + dist z1 c1 := by bound
         _ < s' + dist z1 c1 := (add_lt_add_left xs.right _)
         _ = r1 - dist z1 c1 + dist z1 c1 := rfl
         _ = r1 := by ring_nf
-    use EMetric.ball z1 s
-    refine ⟨?_, EMetric.isOpen_ball, EMetric.mem_ball_self sp⟩
+    use Metric.eball z1 s
+    refine ⟨?_, Metric.isOpen_eball, Metric.mem_eball_self sp⟩
     intro w1 w1s
     have p0 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (unevenSeries u w1) c0 := by
       have w1c : w1 ∈ closedBall c1 r1 := ball_subset_closedBall (sb w1s)
       refine (Uneven.has_series u u.r1p (le_refl _) w1c).hasFPowerSeriesAt
     have p1 : HasFPowerSeriesAt (fun z0 ↦ f (z0, w1)) (p.changeOrigin (g w1)).along0 c0 := by
       have wz : ↑‖((0 : ℂ), w1 - z1)‖₊ < r := by
-        simp only [EMetric.mem_ball, edist_dist, Complex.dist_eq, ofReal_norm,
+        simp only [Metric.mem_eball, edist_dist, Complex.dist_eq, ofReal_norm,
           enorm_eq_nnnorm] at w1s
         simp only [Prod.nnnorm_mk, nnnorm_zero, zero_le, sup_of_le_right]
         exact lt_of_lt_of_le w1s sr
@@ -792,7 +794,7 @@ theorem uneven_bounded [CompleteSpace E] [SecondCountableTopology E]
   have ds : z.1 - c0 ∈ Metric.ball (0 : ℂ) s := by
     simp only [Complex.dist_eq] at zs
     simp only [zs.1, mem_ball_zero_iff]
-  have ds' : z.1 - c0 ∈ EMetric.ball (0 : ℂ) (ENNReal.ofReal s) := by rwa [Metric.emetric_ball]
+  have ds' : z.1 - c0 ∈ Metric.eball (0 : ℂ) (ENNReal.ofReal s) := by rwa [Metric.eball_ofReal]
   have hs := (u.has_series sp sr.le z1r).hasSum ds'
   simp only [unevenSeries_eq u sp sr.le z1r,
     FormalMultilinearSeries.apply_eq_pow_smul_coeff, add_sub_cancel, Prod.mk.eta] at hs

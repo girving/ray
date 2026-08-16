@@ -157,7 +157,7 @@ lemma measurableSet_gs_square (i : WindDiff f) : MeasurableSet (i.gs '' square) 
 public theorem volume_eq (i : WindDiff f) :
     volume.real i.wind.disk = 2⁻¹ * ∫ t in (-π)..π, |inner ℝ (i.fe t * I) (i.dfe t)| := by
   simp only [i.disk_eq, image_union, MeasureTheory.Measure.real, image_singleton,
-    measure_union_eq_right, MeasureTheory.NoAtoms.measure_singleton]
+    measure_union_eq_right, MeasureTheory.measure_singleton]
   rw [MeasurableEquiv.image_symm, Complex.volume_preserving_equiv_real_prod.measure_preimage
     i.measurableSet_gs_square.nullMeasurableSet]
   have ie : ∫ z in i.gs '' square, (1 : ℝ) = volume.real (i.gs '' square) • 1 :=

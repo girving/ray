@@ -117,11 +117,11 @@ theorem square_eq {c : ℂ} {r0 r1 : ℝ} (r0p : 0 ≤ r0) :
       simp only [square, prodMk_mem_set_prod_eq, mem_Ioc] at ss
       rw [← tz]
       have s0 : 0 < s := by linarith
-      simp only [circleMap, add_comm c, annulus_oc, mem_diff, Metric.mem_closedBall,
+      simp only [circleMap, add_comm c, annulus_oc, mem_sdiff, Metric.mem_closedBall,
         dist_add_self_left, norm_mul, Complex.norm_real, Real.norm_eq_abs,
         Complex.norm_exp_ofReal_mul_I, mul_one, not_le, abs_of_pos s0, ss.1, true_and]
     · intro zr
-      simp only [mem_diff, Metric.mem_closedBall, annulus_oc, not_le] at zr
+      simp only [mem_sdiff, Metric.mem_closedBall, annulus_oc, not_le] at zr
       rw [dist_comm] at zr
       have zz : z ∈ sphere c (dist c z) := by
         simp only [Complex.dist_eq, mem_sphere_iff_norm, norm_sub_rev]
@@ -240,7 +240,7 @@ public theorem fubini_annulus {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ
       intro x xs
       simp only [Icc_prod_Icc, mem_Icc, Prod.le_def] at xs
       have x0 : 0 ≤ x.1 := by linarith
-      simp only [circleMap, annulus_cc, mem_diff, Metric.mem_closedBall, dist_self_add_left,
+      simp only [circleMap, annulus_cc, mem_sdiff, Metric.mem_closedBall, dist_self_add_left,
         norm_mul, Complex.norm_real, abs_of_nonneg x0, Real.norm_eq_abs,
         Complex.norm_exp_ofReal_mul_I, mul_one, xs.2.1, Metric.mem_ball, not_lt, xs.1.1, and_self]
   exact fi.mono_set (prod_mono Ioc_subset_Icc_self Ioc_subset_Icc_self)
@@ -254,7 +254,7 @@ public theorem fubini_ball {E : Type} [NormedAddCommGroup E] [NormedSpace ℝ E]
   rw [MeasureTheory.setIntegral_congr_set center]; clear center
   rw [← Metric.closedBall_zero, ← annulus_oc]
   apply fubini_annulus
-  · simpa only [annulus_cc, Metric.ball_zero, diff_empty]
+  · simpa only [annulus_cc, Metric.ball_zero, sdiff_empty]
   · rfl
 
 /-- The volume of the complex closed ball is `π r^2` -/

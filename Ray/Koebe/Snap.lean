@@ -26,8 +26,8 @@ public def snap (z : ℂ) : Circle :=
 public lemma coe_snap {z : ℂ} (z0 : z ≠ 0) : (snap z).val = z / ‖z‖ := by
   simp only [snap, z0, ↓reduceDIte, div_eq_mul_inv]
 
-@[simp] public lemma norm_snap {z : ℂ} : ‖(snap z).val‖ = 1 := by
-  simp only [snap, norm_eq_of_mem_sphere]
+@[simp] public lemma norm_snap {z : ℂ} : ‖(snap z).val‖ = 1 :=
+  Circle.norm_coe _
 
 @[simp] public lemma arg_snap {z : ℂ} (z0 : z ≠ 0) : arg (snap z) = arg z := by
   simp only [snap, z0, ↓reduceDIte, div_eq_mul_inv]
@@ -47,32 +47,39 @@ public lemma snap_eq_snap_iff {z w : ℂ} (z0 : z ≠ 0) (w0 : w ≠ 0) :
 
 @[simp] public lemma snap_mul {z w : ℂ} (z0 : z ≠ 0) (w0 : w ≠ 0) :
     snap (z * w) = snap z * snap w := by
-  simp only [snap, mul_eq_zero, z0, w0, or_self, ↓reduceDIte, Complex.norm_mul, Complex.ofReal_mul,
-    div_eq_mul_inv, mul_inv_rev, Circle.ext_iff, Circle.coe_mul]
-  ring
+  apply Circle.ext
+  simp only [Circle.coe_mul, coe_snap z0, coe_snap w0, coe_snap (mul_ne_zero z0 w0),
+    Complex.norm_mul, Complex.ofReal_mul]
+  rw [div_mul_div_comm]
 
 @[simp] public lemma snap_div {z w : ℂ} (z0 : z ≠ 0) (w0 : w ≠ 0) :
     snap (z / w) = snap z / snap w := by
-  simp only [snap, div_eq_mul_inv, mul_eq_zero, z0, inv_eq_zero, w0, or_self, ↓reduceDIte, norm_mul,
-    norm_inv, Complex.ofReal_mul, Complex.ofReal_inv, mul_inv_rev, inv_inv, Circle.ext_iff,
-    Circle.coe_mul, Circle.coe_inv]
-  ring
+  apply Circle.ext
+  simp only [Circle.coe_div, coe_snap z0, coe_snap w0, coe_snap (div_ne_zero z0 w0),
+    Complex.norm_div, Complex.ofReal_div]
+  rw [div_div_div_comm]
 
 @[simp] public lemma snap_zero : snap 0 = 1 := by
   simp only [snap, ↓reduceDIte]
 
 @[simp] public lemma snap_of_pos {t : ℝ} (t0 : 0 < t) : snap (t : ℂ) = 1 := by
-  simp only [snap, Complex.ofReal_eq_zero, t0.ne', ↓reduceDIte, Complex.norm_real, Real.norm_eq_abs,
-    abs_of_pos t0, ne_eq, not_false_eq_true, div_self, Circle.ext_iff, OneMemClass.coe_one]
+  apply Circle.ext
+  have n : (t : ℂ) ≠ 0 := by exact_mod_cast t0.ne'
+  simp only [coe_snap n, Complex.norm_real, Real.norm_eq_abs, abs_of_pos t0, Circle.coe_one]
+  rw [div_self n]
 
 @[simp] public lemma snap_mul_of_pos {t : ℝ} (t0 : 0 < t) {z : ℂ} : snap (t * z) = snap z := by
-  simp only [snap, mul_eq_zero, Complex.ofReal_eq_zero, t0.ne', false_or, Complex.norm_mul,
-    Complex.norm_real, Real.norm_eq_abs, abs_of_pos t0, Complex.ofReal_mul, div_mul_eq_div_div,
-    ne_eq, not_false_eq_true, mul_div_cancel_left₀]
+  rcases eq_or_ne z 0 with rfl | z0
+  · simp only [mul_zero]
+  · have n : (t : ℂ) ≠ 0 := by exact_mod_cast t0.ne'
+    apply Circle.ext
+    simp only [coe_snap (mul_ne_zero n z0), coe_snap z0, Complex.norm_mul, Complex.norm_real,
+      Real.norm_eq_abs, abs_of_pos t0, Complex.ofReal_mul, div_mul_eq_div_div, ne_eq,
+      not_false_eq_true, mul_div_cancel_left₀, n]
 
 @[simp] public lemma snap_circle (z : Circle) : snap z.val = z := by
-  simp only [snap, Circle.coe_ne_zero, ↓reduceDIte, norm_eq_of_mem_sphere, Complex.ofReal_one,
-    div_one, Subtype.coe_eta]
+  apply Circle.ext
+  simp only [coe_snap z.coe_ne_zero, Circle.norm_coe, Complex.ofReal_one, div_one]
 
 @[simp] public lemma norm_mul_snap {z : ℂ} (z0 : z ≠ 0) : ‖z‖ * (snap z).val = z := by
   have n : (‖z‖ : ℂ) ≠ 0 := by simpa
@@ -81,16 +88,17 @@ public lemma snap_eq_snap_iff {z w : ℂ} (z0 : z ≠ 0) (w0 : w ≠ 0) :
 /-- Alternative definition using `Set.codRestrict` -/
 lemma snap_eq_restrict :
     snap = codRestrict (fun z : ℂ ↦ if z = 0 then 1 else z / ‖z‖) (Submonoid.unitSphere ℂ)
-      (by intro z; simp only; split_ifs with h; all_goals simp [h]) := by
+      (by intro z; split_ifs with h; all_goals simp [h]) := by
   ext z
   by_cases z0 : z = 0
   all_goals simp [z0, coe_snap]
 
 public lemma continuousAt_snap {z : ℂ} (z0 : z ≠ 0) : ContinuousAt snap z := by
-  rw [snap_eq_restrict, continuousAt_codRestrict_iff]
-  have e : ∀ᶠ w : ℂ in 𝓝 z, (if w = 0 then 1 else w / ‖w‖) = w / ‖w‖ := by
-    filter_upwards [eventually_ne_nhds z0]
-    aesop
+  have i : Topology.IsInducing ((↑) : Circle → ℂ) := Topology.IsInducing.subtypeVal
+  refine i.continuousAt_iff.mpr ?_
+  have e : (fun w : ℂ ↦ (snap w).val) =ᶠ[𝓝 z] fun w ↦ w / ‖w‖ := by
+    filter_upwards [eventually_ne_nhds z0] with w w0
+    exact coe_snap w0
   refine ContinuousAt.congr_of_eventuallyEq ?_ e
   exact continuousAt_id.div (Complex.continuous_ofReal.comp continuous_norm).continuousAt
     (by simpa only [ne_eq, Complex.ofReal_eq_zero, norm_eq_zero])
@@ -108,11 +116,14 @@ public lemma continuousAt_snap {z : ℂ} (z0 : z ≠ 0) : ContinuousAt snap z :=
 
 public lemma snap_unit (z : ℂˣ) : snap z = ⟨z / ‖z.val‖, by simp [Submonoid.unitSphere]⟩ := by
   simp only [snap, Units.ne_zero, ↓reduceDIte]
+  rfl
 
 @[simp] public lemma snap_exp_mul_I {t : ℝ} : snap (Complex.exp (t * I)) = Circle.exp t := by
   simp [Circle.ext_iff, coe_snap]
 
-@[simp] lemma snap_one : snap 1 = 1 := by simp [snap, Circle.ext_iff]
+@[simp] lemma snap_one : snap 1 = 1 := by
+  simp only [snap, one_ne_zero, ↓reduceDIte, norm_one, Complex.ofReal_one, div_one]
+  rfl
 
 /-!
 ### Snap calculus

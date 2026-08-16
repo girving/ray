@@ -66,36 +66,35 @@ theorem CNonpos.degenerate {f : ℕ → ℂ → G} {s : Set ℂ} {c a : ℝ} (c0
   have ca : c * a ^ n ≤ 0 := mul_nonpos_iff.mpr (Or.inr ⟨c0, by bound⟩)
   exact norm_eq_zero.mp (le_antisymm (le_trans hf ca) (norm_nonneg _))
 
-/-- Adding one more term to a sum adds it -/
-theorem sum_cons {a g : G} {f : ℕ → G} (h : HasSum f g) :
-    HasSum (Stream'.cons a f) (a + g) := by
+/-- Adding one more term to a sum adds it, `Stream'.get` version to keep terms type-correct
+    at low transparency -/
+theorem sum_cons_get {a t : G} {q : Stream' G} (h : HasSum q.get t) :
+    HasSum (Stream'.cons a q).get (a + t) := by
   rw [HasSum] at h ⊢
-  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_add_left a) g) h
-  have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum f) =
-      (fun N : Finset ℕ ↦ N.sum (Stream'.cons a f)) ∘ push := by
-    apply funext; intro N; simp; exact push_sum
+  have ha := Filter.Tendsto.comp (Continuous.tendsto (continuous_const_add a) t) h
+  have s : ((fun z ↦ a + z) ∘ fun N : Finset ℕ ↦ N.sum q.get) =
+      (fun N : Finset ℕ ↦ N.sum (Stream'.cons a q).get) ∘ push := by
+    apply funext; intro N
+    simp only [Function.comp_apply]
+    exact push_sum_get
   rw [s] at ha
   exact tendsto_comp_push.mp ha
+
+/-- Adding one more term to a sum adds it -/
+theorem sum_cons {a g : G} {f : ℕ → G} (h : HasSum f g) :
+    HasSum (Stream'.cons a f) (a + g) :=
+  sum_cons_get (q := f) h
 
 /-- Adding one more term to a sum adds it (`tprod` version) -/
 lemma sum_cons' {a : G} {f : ℕ → G} (h : Summable f) :
     tsum (Stream'.cons a f) = a + tsum f := by
-  rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; rw [HasSum.tsum_eq _]; exact sum_cons h
+  rcases h with ⟨g, h⟩; rw [HasSum.tsum_eq h]; exact HasSum.tsum_eq (sum_cons h)
 
 /-- Dropping the first term subtracts it -/
 public lemma sum_drop {f : ℕ → G} {g : G} (h : HasSum f g) :
     HasSum (fun n ↦ f (n + 1)) (g - f 0) := by
-  have c := sum_cons (a := -f 0) h
-  rw [HasSum]
-  rw [neg_add_eq_sub, HasSum, SummationFilter.unconditional_filter, ← tendsto_comp_push,
-    ← tendsto_comp_push] at c
-  have s : ((fun N : Finset ℕ ↦ N.sum fun n ↦ (Stream'.cons (-f 0) f) n) ∘ push) ∘ push =
-      fun N : Finset ℕ ↦ N.sum fun n ↦ f (n + 1) := by
-    clear c h g; apply funext; intro N; simp
-    nth_rw 2 [← Stream'.eta f]
-    simp only [←push_sum, Stream'.head, Stream'.tail, Stream'.get]
-    abel
-  rw [s] at c; assumption
+  rw [hasSum_nat_add_iff (f := f) 1]
+  simpa using h
 
 /-- Dropping the first term subtracts it (`tsum` version) -/
 public lemma tsum_drop {f : ℕ → G} (h : Summable f) :
@@ -153,7 +152,7 @@ theorem uniformVanishing_to_tendsto_uniformly_on {f : ℕ → ℂ → G} {s : Se
 theorem fast_series_converge_uniformly_on {f : ℕ → ℂ → G} {s : Set ℂ} {c a : ℝ} (a0 : 0 ≤ a)
     (a1 : a < 1) (hf : ∀ n z, z ∈ s → ‖f n z‖ ≤ c * a ^ n) : HasUniformSum f (tsumOn f) s := by
   by_cases c0 : c ≤ 0
-  · have fz := CNonpos.degenerate c0 a0 hf; simp only at fz
+  · have fz := CNonpos.degenerate c0 a0 hf
     rw [HasUniformSum, Metric.tendstoUniformlyOn_iff]
     intro e ep; refine .of_forall ?_; intro n z zs
     rw [tsumOn]
@@ -187,7 +186,6 @@ theorem fast_series_converge_at {f : ℕ → G} {c a : ℝ} (a0 : 0 ≤ a) (a1 :
   set g : ℕ → ℂ → G := fun n _ ↦ f n
   have hg : ∀ n z, z ∈ s → ‖g n z‖ ≤ c * a ^ n := fun n z _ ↦ hf n
   have u := fast_series_converge_uniformly_on a0 a1 hg
-  simp at u
   rw [HasUniformSum] at u
   rw [tendstoUniformlyOn_singleton_iff_tendsto] at u
   apply HasSum.summable; assumption

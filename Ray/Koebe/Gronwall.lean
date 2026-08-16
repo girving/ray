@@ -27,6 +27,8 @@ import Ray.Misc.MonotoneSeries
 import Ray.Misc.Subexp
 import Ray.Misc.Topology
 
+attribute [local simp] Circle.norm_coe
+
 /-!
 ## Grönwall's area theorem
 
@@ -102,7 +104,7 @@ lemma hasFPowerSeriesOnBall (i : Gronwall f) :
     HasFPowerSeriesOnBall f (.ofScalars ℂ i.coeff) 0 1 := by
   have a0 := (i.fa 0 (by simp)).hasFPowerSeriesAt
   obtain ⟨p,a1⟩ := (analyticOnNhd_ball_iff_hasFPowerSeriesOnBall (by norm_num)).mp
-    (Metric.emetric_ball (α := ℂ) ▸ i.fa)
+    (Metric.eball_ofReal (α := ℂ) ▸ i.fa)
   have pe := a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt
   unfold coeff
   simp only [a0.eq_formalMultilinearSeries a1.hasFPowerSeriesAt] at a0 ⊢
@@ -113,7 +115,9 @@ lemma norm_coeff_le (i : Gronwall f) (r0 : 0 < r) (r1 : r < 1) :
     ∃ a ∈ Set.Ioo 0 1, ∃ C : ℝ, 0 < C ∧ ∀ n, ‖i.coeff n‖ ≤ C * (a / r) ^ n := by
   have le := i.hasFPowerSeriesOnBall.r_le
   set r' : ℝ≥0 := ⟨r, r0.le⟩
-  have r'1 : r' < 1 := by rw [← NNReal.mk_one]; simp only [r', ← NNReal.coe_lt_coe]; simp [r1]
+  have r'1 : r' < 1 := by
+    have h : (r' : ℝ) < 1 := r1
+    exact_mod_cast h
   have r'r : r' < (FormalMultilinearSeries.ofScalars ℂ i.coeff).radius :=
     lt_of_lt_of_le (by simp only [ENNReal.coe_lt_one_iff, r'1]) le
   obtain ⟨a,am,C,C0,le⟩ :=
@@ -121,7 +125,9 @@ lemma norm_coeff_le (i : Gronwall f) (r0 : 0 < r) (r1 : r < 1) :
   refine ⟨a, am, C, C0, fun n ↦ ?_⟩
   specialize le n
   rw [div_pow, ← mul_div_assoc, le_div_iff₀ (by bound)]
-  simpa [r'] using le
+  have le'' : ‖i.coeff n‖ * (r' : ℝ) ^ n ≤ C * a ^ n := by
+    simpa only [FormalMultilinearSeries.ofScalars_norm] using le
+  exact le''
 def norm_prop (i : Gronwall f) (r : ℝ) : Prop :=
   ∃ ac : ℝ × ℝ, ac.1 ∈ Set.Ioo 0 1 ∧ 0 < ac.2 ∧ ∀ n, ‖i.coeff n‖ ≤ ac.2 * (ac.1 * r) ^ n
 def a (i : Gronwall f) (r : ℝ) : ℝ := if p : i.norm_prop r then (choose p).1 else 1
@@ -245,7 +251,7 @@ lemma disk_subset_disk (i : Gronwall f) (rs : r ≤ s) : i.disk r ⊆ i.disk s :
 lemma disk_diff_disk (i : Gronwall f) (r1 : 1 ≤ r) (rs : r ≤ s) :
     i.disk s \ i.disk r = i.g '' annulus_oc 0 r s := by
   simp only [disk, compl_sdiff_compl, outer]
-  rw [← (i.inj.mono _).image_diff_subset]
+  rw [← (i.inj.mono _).image_sdiff_subset]
   · apply congr_arg₂ _ rfl
     ext w
     simp [norm_Ioi, annulus_oc, and_comm]
@@ -274,7 +280,7 @@ lemma g_open (i : Gronwall f) : ∀ s ⊆ norm_Ioi 1, IsOpen s → IsOpen (i.g '
 lemma isOpen_outer (i : Gronwall f) (r1 : 1 < r) : IsOpen (i.outer r) := by
   refine i.g_open _ ?_ isOpen_norm_Ioi
   intro z m
-  simp only [norm_Ioi, mem_setOf_eq] at m ⊢
+  simp only [norm_Ioi, mem_ofPred_eq] at m ⊢
   linarith
 
 -- Measurability of `i.outer` and `i.disk`
@@ -291,7 +297,7 @@ lemma g_tendsto (i : Gronwall f) : Tendsto i.g (cobounded ℂ) (cobounded ℂ) :
   obtain ⟨s,s0,sh⟩ := f0 (1/2) (by simp)
   simp only [dist_zero_right, Complex.dist_eq, one_div] at sh
   simp only [tendsto_cobounded, Complex.norm_mul, hasBasis_cobounded_norm_lt.eventually_iff,
-    mem_setOf_eq, true_and]
+    mem_ofPred_eq, true_and]
   intro r
   use max (2 * r) s⁻¹
   intro z lt
@@ -313,7 +319,7 @@ lemma closure_outer (i : Gronwall f) : ∀ᶠ r in atTop, closure (i.outer r) = 
   filter_upwards [Filter.eventually_gt_atTop 1] with r r1
   apply subset_antisymm
   · intro w m
-    simp only [outer, mem_closure_iff_frequently, mem_image, norm_Ioi, norm_Ici, mem_setOf_eq,
+    simp only [outer, mem_closure_iff_frequently, mem_image, norm_Ioi, norm_Ici, mem_ofPred_eq,
       Filter.frequently_iff_seq_forall, Classical.skolem] at m ⊢
     obtain ⟨s,st,z,m⟩ := m
     rcases tendsto_cobounded_or_mapClusterPt z atTop with t | ⟨a,c⟩
@@ -340,7 +346,7 @@ lemma closure_outer (i : Gronwall f) : ∀ᶠ r in atTop, closure (i.outer r) = 
         calc ‖a‖ + e
           _ = ‖z n - (z n - a)‖ + e := by ring_nf
           _ ≥ ‖z n‖ - ‖z n - a‖ + e := by bound
-          _ > ‖z n‖ - e + e := by bound
+          _ > ‖z n‖ - e + e := by bound [mem_ball_iff_norm.mp za]
           _ = ‖z n‖ := by ring
           _ ≥ r := by bound [(m n).1]
       refine ⟨ra, ?_⟩
@@ -364,7 +370,7 @@ lemma frontier_outer (i : Gronwall f) : ∀ᶠ r in atTop,
     frontier (i.outer r) = i.g '' sphere 0 r := by
   filter_upwards [Filter.eventually_gt_atTop 1, i.closure_outer] with r r1 close
   rw [frontier, (i.isOpen_outer r1).interior_eq, close, outer,
-    ← (i.inj.mono (norm_Ici_subset_norm_Ioi r1)).image_diff_subset norm_Ioi_subset_norm_Ici,
+    ← (i.inj.mono (norm_Ici_subset_norm_Ioi r1)).image_sdiff_subset norm_Ioi_subset_norm_Ici,
     norm_Ici_diff_norm_Ioi]
 
 /-!
@@ -389,7 +395,7 @@ lemma wind (i : Gronwall f) : ∀ᶠ r in atTop, WindDiff (i.gc r) := by
     · exact (i.ga (by simp [abs_of_pos r0, r1])).continuousAt.comp (by fun_prop)
   · intro x y e
     simp only [gc, Units.snap_mk1] at e
-    simpa only [mul_eq_mul_left_iff, SetLike.coe_eq_coe, Complex.ofReal_eq_zero, r0.ne',
+    simpa only [mul_eq_mul_left_iff, Circle.coe_inj, Complex.ofReal_eq_zero, r0.ne',
       or_false] using (inj.eq_iff (by simp [r0.le]) (by simp [r0.le])).mp e
   · have e : ∀ t, (i.gc r (Circle.exp t)).val = i.g (circleMap 0 r t) := by
       intro t
@@ -666,7 +672,7 @@ lemma sum_integral_comm (i : Gronwall f) : ∀ᶠ r in atTop,
   · intro n; apply Continuous.aestronglyMeasurable; fun_prop
   · simp [i.le_ut r1]
   · simp [i.summable_ut r1]
-  · apply intervalIntegrable_const; simp
+  · apply intervalIntegrable_const
   · simp [(hasSum_inner w _).summable.hasSum]
 
 /-- Diagonal term integrals -/
@@ -824,7 +830,7 @@ lemma analyticAt_series (i : Gronwall f) {z : ℂ} (z1 : 1 < ‖z‖) :
 
 lemma volume_diff_eq (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) :
     volume.real (i.disk s \ i.disk r) = volume.real (i.disk s) - volume.real (i.disk r) := by
-  rw [← MeasureTheory.measureReal_diff (i.disk_subset_disk rs) (i.measurableSet_disk r1)]
+  rw [← MeasureTheory.measureReal_sdiff (i.disk_subset_disk rs) (i.measurableSet_disk r1)]
 
 /-!
 ### Area within small annuli as an integral
@@ -846,7 +852,7 @@ def volume_integral_c (i : Gronwall f) (r s : ℝ) (z : ℂ) : ℂ :=
   ∫ w in annulus_cc 0 r s, i.integrand w z
 
 lemma wz_norm (r1 : 1 < r) (wm : w ∈ annulus_cc 0 r s) (zr : r⁻¹ < ‖z‖) : 1 < ‖w‖ * ‖z‖ := by
-  simp only [annulus_cc, mem_diff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball,
+  simp only [annulus_cc, mem_sdiff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball,
     not_lt] at wm zr
   calc ‖w‖ * ‖z‖
     _ > r * r⁻¹ := mul_lt_mul' wm.2 zr (by bound) (by linarith)
@@ -877,7 +883,7 @@ lemma integrable_sq_norm (i : Gronwall f) (r1 : 1 < r) :
     IntegrableOn (fun w ↦ ‖deriv i.g w‖ ^ 2) (annulus_cc 0 r s) := by
   apply ContinuousOn.integrableOn_compact isCompact_annulus_cc
   intro z m
-  simp only [annulus_cc, mem_diff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball,
+  simp only [annulus_cc, mem_sdiff, Metric.mem_closedBall, dist_zero_right, Metric.mem_ball,
     not_lt] at m
   exact ((i.ga (by linarith)).deriv.continuousAt.norm.pow 2).continuousWithinAt
 
@@ -929,7 +935,7 @@ lemma small_volume_eq_integral_c (i : Gronwall f) (r1 : 1 < r) (rs : r ≤ s) (z
     have tn : ∀ w, ‖t w‖ = ‖w‖ * z := by simp [t, z0.le]
     have ti : t '' annulus_cc 0 (r / ‖z‖) (s / ‖z‖) = annulus_cc 0 r s := by
       ext a
-      simp only [annulus_cc, mem_image, mem_diff, Metric.mem_closedBall, dist_zero_right,
+      simp only [annulus_cc, mem_image, mem_sdiff, Metric.mem_closedBall, dist_zero_right,
         Metric.mem_ball, not_lt, le_div_iff₀ z0, div_le_iff₀ z0, Real.norm_eq_abs, abs_of_pos z0]
       constructor
       · intro ⟨b,⟨bs,rb⟩,ba⟩
@@ -1004,7 +1010,7 @@ lemma small_volume_eq_c (i : Gronwall f) (r1 : 1 < r) :
     rwa [← sub_eq_zero]
   have ua : AnalyticOnNhd ℂ u (norm_Ioi r⁻¹) := by
     intro z zr
-    simp only [norm_Ioi, mem_setOf_eq] at zr
+    simp only [norm_Ioi, mem_ofPred_eq] at zr
     have zr' := (inv_lt_iff_one_lt_mul₀' r0).mp zr
     refine AnalyticAt.sub (AnalyticAt.sub ?_ ?_) ?_
     · refine (i.analyticAt_series (lt_of_lt_of_le zr' ?_)).comp (by fun_prop)
@@ -1029,12 +1035,12 @@ lemma small_volume_eq_c (i : Gronwall f) (r1 : 1 < r) :
       bound
   have ue : EqOn u 0 (norm_Ioi r⁻¹) := by
     refine ua.eqOn_zero_of_preconnected_of_frequently_eq_zero isPreconnected_norm_Ioi ?_ u0
-    simp only [norm_Ioi, Complex.ofReal_div, mem_setOf_eq, Complex.norm_div, Complex.norm_real,
+    simp only [norm_Ioi, Complex.ofReal_div, mem_ofPred_eq, Complex.norm_div, Complex.norm_real,
       Real.norm_eq_abs, abs_of_pos s0, abs_of_pos r0]
     rw [div_eq_mul_inv]
     bound
   apply ue
-  simp only [norm_Ioi, mem_setOf_eq, one_mem, CStarRing.norm_of_mem_unitary]
+  simp only [norm_Ioi, mem_ofPred_eq, one_mem, CStarRing.norm_of_mem_unitary]
   bound
 
 /-- Our large radius formula holds for small radii, real version -/
@@ -1094,7 +1100,7 @@ lemma volume_one_sum (i : Gronwall f) :
       · simp only [disk, ← compl_iUnion, compl_subset_compl, outer, ← image_iUnion]
         apply image_mono
         intro z m
-        simp only [norm_Ioi, mem_setOf_eq, mem_iUnion] at m ⊢
+        simp only [norm_Ioi, mem_ofPred_eq, mem_iUnion] at m ⊢
         obtain ⟨n, lt⟩ := exists_nat_gt (‖z‖ - 1)⁻¹
         refine ⟨n, ?_⟩
         simp only [r, add_comm (1 : ℝ), ← lt_sub_iff_add_lt, one_div]
@@ -1113,7 +1119,7 @@ lemma volume_one_sum (i : Gronwall f) :
   have rm : ∀ {c}, Tendsto (fun n ↦ c * r n ^ 2) atTop (𝓝 c) := fun {c} ↦ by
     simpa using tendsto_const_nhds.mul (tr.pow 2)
   have rd : ∀ {c k}, Tendsto (fun n ↦ c / r n ^ k) atTop (𝓝 c) := fun {c k} ↦ by
-    simpa using tendsto_const_nhds.div (tr.pow k)
+    simpa [Pi.div_def] using tendsto_const_nhds.div (tr.pow k)
   have s := fun n ↦ i.small_volume_sum_nonneg (r1 n)
   have mono : Monotone fun n ↦ i.gronwall_nonneg (r n) := by
     intro n m nm

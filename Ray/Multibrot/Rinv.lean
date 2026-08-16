@@ -51,11 +51,11 @@ public lemma le_rinv : x ≤ rinv r c ↔ x ≤ r ∧ ‖c‖ * x ≤ 1 := by
   simp only [div_eq_mul_inv, inv_rinv r0]
 
 @[simp] public lemma mem_ball_rinv : z ∈ ball 0 (rinv r c) ↔ ‖z‖ < r ∧ ‖c‖ * ‖z‖ < 1 := by
-  simp only [ball, dist_zero_right, lt_rinv, mem_setOf_eq]
+  simp only [ball, dist_zero_right, lt_rinv, mem_ofPred_eq]
 
 @[simp] public lemma mem_closedBall_rinv :
     z ∈ closedBall 0 (rinv r c) ↔ ‖z‖ ≤ r ∧ ‖c‖ * ‖z‖ ≤ 1 := by
-  simp only [closedBall, dist_zero_right, le_rinv, mem_setOf_eq]
+  simp only [closedBall, dist_zero_right, le_rinv, mem_ofPred_eq]
 
 @[simp] public lemma zero_mem_ball_rinv (r0 : 0 < r := by norm_num) :
     0 ∈ ball (0 : ℂ) (rinv r c) := by simp; bound

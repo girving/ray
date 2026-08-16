@@ -190,7 +190,7 @@ theorem hasFPowerSeriesOnBall_integral (i : Holo f μ s c r) :
     simp only [series, ContinuousMultilinearMap.integral_apply i.integrableOn_cauchyPowerSeries]
     apply MeasureTheory.hasSum_integral_of_summable_integral_norm
     · exact fun _ ↦ i.integrableOn_cauchyPowerSeries_apply
-    · simp only [Metric.emetric_ball_nnreal, Metric.mem_ball, dist_zero_right] at ym
+    · simp only [Metric.eball_coe, Metric.mem_ball, dist_zero_right] at ym
       exact i.summable_cauchyPowerSeries_apply ym
 
 end Holo
@@ -205,7 +205,7 @@ theorem AnalyticOnNhd.integral_ball {r : ℝ} (fc : ContinuousOn (uncurry f) (s 
     (μs : μ s ≠ ⊤ := by finiteness) : AnalyticOnNhd ℂ (fun z ↦ ∫ x in s, f x z ∂μ) (ball c r) := by
   set r' : ℝ≥0 := ⟨r, r0.le⟩
   set i : Holo f μ s c r' := ⟨r0, sc, μs, fc, fd⟩
-  have e : ball c r = EMetric.ball c r' := by simp [r']
+  have e : ball c r = Metric.eball c r' := by rw [Metric.eball_coe]; rfl
   rw [e]
   exact i.hasFPowerSeriesOnBall_integral.analyticOnNhd
 

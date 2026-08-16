@@ -73,8 +73,8 @@ public theorem bottcher_inj : InjOn (bottcher d) (multibrotExt d) := by
   set t2 := {q : 𝕊 × 𝕊 | q.1 ≠ q.2 ∧ q ∈ t1}
   have t2ne : t2.Nonempty := by
     refine ⟨⟨x, y⟩, xy, bxy, ?_, ?_⟩
-    · simp only [mem_setOf, ← hb, le_refl, u]
-    · simp only [mem_setOf, ← hb, ← norm_bottcher, bxy, le_refl, u]
+    · simp only [mem_ofPred, ← hb, le_refl, u]
+    · simp only [mem_ofPred, ← hb, ← norm_bottcher, bxy, le_refl, u]
   clear x xm y ym bxy xy hb
   have ue : u ⊆ multibrotExt d := by intro c m; rw [← potential_lt_one]; exact lt_of_le_of_lt m b1
   have t01 : t1 ⊆ t0 := inter_subset_right

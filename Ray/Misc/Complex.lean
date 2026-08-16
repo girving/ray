@@ -120,6 +120,7 @@ lemma AnalyticAt.norm {𝕜 E : Type} [RCLike 𝕜] [NormedAddCommGroup E] [Norm
 lemma Complex.real_hasFDerivAt {f : ℂ → ℂ} {z : ℂ} {f' : ℂ} (h : HasDerivAt f f' z) :
     HasFDerivAt f (lsmul ℝ ℂ f') z := by
   convert h.hasFDerivAt.restrictScalars ℝ
+  all_goals try rfl
   ext
   exact mul_comm _ _
 
@@ -139,6 +140,7 @@ lemma hasFDerivAt_arg {z : ℂ} (m : z ∈ slitPlane) :
 public lemma HasDerivAt.arg {p : ℝ → ℂ} {p' : ℂ} {t : ℝ} (h : HasDerivAt p p' t)
     (m : p t ∈ slitPlane) : HasDerivAt (fun t ↦ arg (p t)) ((p t)⁻¹ * p').im t := by
   convert ((hasFDerivAt_arg m).comp t h.hasFDerivAt).hasDerivAt
+  all_goals try rfl
   simp
 
 /-!

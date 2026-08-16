@@ -108,14 +108,14 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
   suffices h : AnalyticOnNhd ℂ (g f d) t by rw [← ht] at h; exact h _ (mem_ball_self rp)
   have ga : DifferentiableOn ℂ (g f d) (t \ {0}) := by
     have e : ∀ z : ℂ, z ∈ t \ {0} → g f d z = f z / z ^ d := by
-      intro z zs; simp only [Set.mem_diff, Set.mem_singleton_iff] at zs
+      intro z zs; simp only [Set.mem_sdiff, Set.mem_singleton_iff] at zs
       simp only [g, zs.2, if_false]
     rw [differentiableOn_congr e]
-    apply DifferentiableOn.div (fa.mono diff_subset).differentiableOn
+    apply DifferentiableOn.div (fa.mono sdiff_subset).differentiableOn
     exact (Differentiable.pow differentiable_id _).differentiableOn
-    intro z zs; exact pow_ne_zero _ (Set.mem_diff_singleton.mp zs).2
+    intro z zs; exact pow_ne_zero _ (Set.mem_sdiff_singleton.mp zs).2
   rw [Complex.analyticOnNhd_iff_differentiableOn o]
-  by_cases t0 : (0 : ℂ) ∉ t; · rw [Set.diff_singleton_eq_self t0] at ga; exact ga
+  by_cases t0 : (0 : ℂ) ∉ t; · rw [Set.sdiff_singleton_eq_self t0] at ga; exact ga
   simp only [Set.not_notMem] at t0
   have gc : ContinuousAt (g f d) 0 := by
     rw [Metric.continuousAt_iff]; intro e ep
@@ -539,7 +539,7 @@ theorem SuperNearC.union {I : Type} {u : I → Set ℂ} {t : I → Set (ℂ × �
   have sm : ∀ {c z : ℂ},
       (c, z) ∈ tu → ∃ u, z ∈ u ∧ u ⊆ {z | (c, z) ∈ tu} ∧ SuperNear (f c) d u a b := by
     intro c z m; rcases Set.mem_iUnion.mp m with ⟨i, m⟩; use{z | (c, z) ∈ t i}
-    simp only [Set.mem_setOf_eq, m, Set.mem_iUnion, Set.setOf_subset_setOf, true_and, tu]
+    simp only [Set.mem_ofPred_eq, m, Set.mem_iUnion, Set.ofPred_subset_ofPred, true_and, tu]
     constructor
     · exact fun z m ↦ ⟨i, m⟩
     · exact (s i).s ((s i).tc m)
@@ -622,7 +622,7 @@ public theorem SuperAtC.superNearC' (s : SuperAtC f d u) {w : Set (ℂ × ℂ)} 
     apply Set.iUnion_subset; intro i; rcases choose_spec (h _ i.mem) with ⟨_, _, rw, _⟩; exact rw
   have si : ∀ c : u, SuperNearC f d (v c) (t c) (1 / 2) (1 / 4) := by
     intro i; rcases choose_spec (h _ i.mem) with ⟨_, _, _, s⟩; exact s
-  have s := SuperNearC.union si; simp only at s; rw [← e] at s
+  have s := SuperNearC.union si; rw [← e] at s
   exact ⟨tw, s⟩
 
 /-- `SuperAtC → SuperNearC` -/

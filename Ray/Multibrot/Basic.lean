@@ -132,7 +132,7 @@ public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
         · exact isOpen_lt continuous_norm continuous_const
         · exact isOpen_lt (continuous_norm.comp (by continuity)) continuous_const
       t0 := by
-        simp only [superNearT, one_div, mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+        simp only [superNearT, one_div, mem_ofPred_eq, norm_zero, inv_pos, Nat.ofNat_pos,
           zero_pow (d_ne_zero d), mul_zero, div_pos_iff_of_pos_left, and_self]
       t2 := fun {z} m ↦ le_trans (zb m).le (by norm_num)
       fa := by
@@ -147,7 +147,7 @@ public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
         intro z m
         specialize cz1 m
         specialize zb m
-        simp only [fl_f, mem_setOf, norm_div, norm_pow, superNearT] at m ⊢
+        simp only [fl_f, mem_ofPred, norm_div, norm_pow, superNearT] at m ⊢
         have le : ‖z‖ ^ d / ‖1 + c * z ^ d‖ ≤ 5 / 27 := by
           calc ‖z‖ ^ d / ‖1 + c * z ^ d‖
             _ ≤ (1 / 3) ^ d / (3 / 5) := by bound
@@ -172,7 +172,7 @@ public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊) := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
-  · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ ContinuousLinearMap.zero_apply _
+  · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ rfl
     simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
       if_pos, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
       writtenInExtChartAt_coe_f, RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply,
@@ -182,17 +182,30 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
       pow_eq_zero_iff, false_or]
     constructor
     · intro h
-      specialize h 1
-      simpa only [one_ne_zero, false_or] using h
-    · exact fun h x ↦ Or.inr h
+      have h1 : (if True then ContinuousLinearMap.toSpanSingleton ℂ ((d : ℂ) * z ^ (d - 1))
+          else 0 : ℂ →L[ℂ] ℂ) (1 : ℂ) = 0 := h (1 : ℂ)
+      rw [if_pos trivial] at h1
+      have h2 : (1 : ℂ) • ((d : ℂ) * z ^ (d - 1)) = 0 := h1
+      rw [one_smul, mul_eq_zero] at h2
+      rcases h2 with h2 | h2
+      · exact absurd (Nat.cast_eq_zero.mp h2) (d_ne_zero _)
+      · exact (pow_eq_zero_iff (d_minus_one_pos _).ne').mp h2
+    · intro h x
+      have e : ∀ y : ℂ, (if True then ContinuousLinearMap.toSpanSingleton ℂ ((d : ℂ) * z ^ (d - 1))
+          else 0 : ℂ →L[ℂ] ℂ) y = 0 := by
+        intro y
+        rw [if_pos trivial]
+        show y • ((d : ℂ) * z ^ (d - 1)) = 0
+        simp only [h, zero_pow (d_minus_one_pos _).ne', mul_zero, smul_zero]
+      exact e x
 
 /-- The multibrot set is all `c`'s s.t. `0` doesn't reach `∞` -/
 theorem multibrot_basin' : c ∈ multibrot d ↔ (c, (c : 𝕊)) ∉ (superF d).basin := by
-  simp only [multibrot, mem_setOf, Super.basin_iff_attracts, Attracts]
+  simp only [multibrot, mem_ofPred, Super.basin_iff_attracts, Attracts]
 
 theorem multibrot_basin : c ∈ multibrot d ↔ (c, (0 : 𝕊)) ∉ (superF d).basin := by
   set s := superF d
-  simp only [multibrot_basin', not_iff_not, Super.basin, mem_setOf]
+  simp only [multibrot_basin', not_iff_not, Super.basin, mem_ofPred]
   have e : ∀ n, (f d c)^[n] c = (f d c)^[n + 1] 0 := by
     intro n; induction' n with n h
     · simp only [Function.iterate_zero_apply, zero_add, Function.iterate_one, f_0]
@@ -205,7 +218,7 @@ public theorem multibrot_p : (superF d).p c = (superF d).potential c 0 := by
   set s := superF d
   have e : s.ps c = {1, s.potential c 0} := by
     apply Set.ext; intro p
-    simp only [Super.ps, mem_singleton_iff, mem_setOf, critical_f, Ne, mem_insert_iff,
+    simp only [Super.ps, mem_singleton_iff, mem_ofPred, critical_f, Ne, mem_insert_iff,
       mem_singleton_iff]
     constructor
     · intro h; cases' h with h h; left; exact h; right; rcases h with ⟨p0, z, e, h⟩
@@ -281,7 +294,7 @@ public theorem f_f'_iter {d : ℕ} (n : ℕ) {z : ℂ} : (f d c)^[n] ↑z = ↑(
 
 public theorem multibrot_coe {d : ℕ} :
     c ∈ multibrot d ↔ ¬Tendsto (fun n ↦ (f' d c)^[n] c) atTop (cobounded ℂ) := by
-  simp only [multibrot, mem_setOf, f_f'_iter, tendsto_inf_iff_tendsto_cobounded]
+  simp only [multibrot, mem_ofPred, f_f'_iter, tendsto_inf_iff_tendsto_cobounded]
 
 /-- Closed Julia sets are not outside radius `max 2 (abs c)` -/
 public theorem julia_two_lt {z : ℂ} (z2 : 2 < ‖z‖) (cz : ‖c‖ ≤ ‖z‖) :
@@ -335,7 +348,7 @@ public theorem multibrot_of_repeat {d a b : ℕ} (ab : a < b) (h : (f d c)^[a] c
       use k + 1, Nat.succ_le_iff.mpr (Ne.lt_of_le e kb)
       rw [← hg, ← hg, Function.iterate_succ_apply', Function.iterate_succ_apply', hg, hg, nk]
   simp only [multibrot_coe, hasBasis_cobounded_norm_lt.tendsto_right_iff, true_imp_iff, not_forall,
-    Filter.not_eventually, mem_setOf, not_lt, hg]
+    Filter.not_eventually, mem_ofPred, not_lt, hg]
   use partialSups (fun k ↦ ‖g k‖) b
   refine .of_forall ?_; intro k; rcases lo k with ⟨l, lb, kl⟩
   rw [kl]; exact le_partialSups_of_le (fun k ↦ ‖g k‖) lb
@@ -414,7 +427,7 @@ public theorem isOpen_multibrotExt : IsOpen (multibrotExt d) := by
 -/
 
 lemma mem_superNearT {c : ℂ} (lo : 3 < ‖c‖) : c⁻¹ ∈ superNearT d c := by
-  simp only [superNearT, one_div, mem_setOf_eq, norm_inv, inv_pow]
+  simp only [superNearT, one_div, mem_ofPred_eq, norm_inv, inv_pow]
   refine ⟨by bound, ?_⟩
   calc ‖c‖ * (‖c‖ ^ d)⁻¹
     _ ≤ ‖c‖ * (‖c‖ ^ 2)⁻¹ := by bound
@@ -473,7 +486,7 @@ theorem bottcher_tendsto_zero : Tendsto (bottcher' d) (cobounded ℂ) (𝓝 0) :
   intro r rp
   rw [hasBasis_cobounded_norm_lt.eventually_iff]
   use max 3 (superK / r)
-  simp only [true_and, mem_setOf, Complex.dist_eq, sub_zero, max_lt_iff]
+  simp only [true_and, mem_ofPred, Complex.dist_eq, sub_zero, max_lt_iff]
   intro z ⟨lo, rz⟩; apply lt_of_le_of_lt (bottcher_bound lo)
   rw [div_lt_iff₀ rp] at rz
   rw [norm_inv, mul_inv_lt_iff₀ (lt_trans (by norm_num) lo)]
@@ -493,7 +506,7 @@ public theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
   intro c m; induction c using OnePoint.rec
   · refine mAnalyticAt_fill_inf ?_ bottcher_tendsto_zero
     rw [hasBasis_cobounded_norm_lt.eventually_iff]; use 2
-    simp only [true_and, mem_setOf]
+    simp only [true_and, mem_ofPred]
     intro z a; exact (bottcher_analytic _ (multibrot_two_lt a)).mAnalyticAt I I
   · simp only [multibrotExt_coe] at m
     exact mAnalyticAt_fill_coe ((bottcher_analytic (d := d) _ m).mAnalyticAt I I)
@@ -534,7 +547,7 @@ public theorem potential_lt_one {c : 𝕊} : potential d c < 1 ↔ c ∈ multibr
   · constructor
     · intro h; contrapose h
       simp only [not_not, not_lt, multibrot_basin', potential, fill_coe, Super.basin,
-        mem_setOf, multibrotExt_coe] at h ⊢
+        mem_ofPred, multibrotExt_coe] at h ⊢
       rw [s.potential_eq_one]; exact h
     · intro m; rw [← norm_bottcher]; simp only [bottcher, fill_coe]
       simp only [multibrotExt_coe] at m
@@ -666,7 +679,7 @@ public theorem bottcher_large_approx (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
   have m := bottcherNear_monic (s.superNearC.s (mem_univ c))
   simp only [hasDerivAt_iff_tendsto, sub_zero, bottcherNear_zero, smul_eq_mul, mul_one,
     Metric.tendsto_nhds_nhds, Real.dist_eq, Complex.dist_eq] at m
-  simp only [Metric.tendsto_nhds, hasBasis_cobounded_norm_lt.eventually_iff, true_and, mem_setOf,
+  simp only [Metric.tendsto_nhds, hasBasis_cobounded_norm_lt.eventually_iff, true_and, mem_ofPred,
     Complex.dist_eq]
   intro e ep; rcases m e ep with ⟨r, rp, h⟩; use 1 / r; intro z zr
   have az0 : ‖z‖ ≠ 0 := (lt_trans (one_div_pos.mpr rp) zr).ne'
