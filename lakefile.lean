@@ -13,21 +13,18 @@ require "leanprover-community" / "mathlib" @ git "v4.33.0"
 
 require trustless from ".." / "trustless"
 
--- `Ray.Mandelbrot`'s `trustless import` needs the bridge olean and the
--- lean4export binary, edges Lake cannot see; build them first.
+-- The trusted `Mandelbrot`'s `const import` reads `Ray.Mandelbrot`'s olean, an
+-- edge Lake cannot see; build it first. (`extraDepTargets` is best-effort
+-- ordering; a cold build may need `lake build RayMandelbrotSource` first.)
 @[default_target]
 lean_lib Ray where
-  extraDepTargets := #[`RayMandelbrotBridge, `lean4exportBin]
+  -- `Mandelbrot` (the trusted file) lives at the package root, outside the `Ray`
+  -- namespace, so it must be named as a root for Lake to build it.
+  roots := #[`Ray, `Mandelbrot, `Mandelbrot2]
+  extraDepTargets := #[`RayMandelbrotSource]
 
--- The lean4export exe as a package-local target (`extraDepTargets` cannot name
--- targets of other packages).
-target lean4exportBin _pkg : System.FilePath := do
-  let some l4e := (← getWorkspace).packages.find? (·.name == `lean4export)
-    | error "lean4export package not found in workspace"
-  let some exe := l4e.findLeanExe? `lean4export
-    | error "lean4export executable target not found"
-  exe.exe.fetch
-
--- The untrusted bridge, kept out of `Ray`'s import closure.
-lean_lib RayMandelbrotBridge where
-  roots := #[`Ray.MandelbrotBridge]
+-- The untrusted proof (`Ray.Mandelbrot`), kept out of `Ray`'s import closure so
+-- its results arrive only through the trusted `Mandelbrot`'s `const import`,
+-- never as a second copy.
+lean_lib RayMandelbrotSource where
+  roots := #[`Ray.Mandelbrot, `Ray.Mandelbrot2]
