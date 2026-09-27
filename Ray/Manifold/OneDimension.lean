@@ -155,7 +155,7 @@ theorem has_mfderiv_at_of_mderiv_ne_zero {f : S → T} {x : S} (d0 : mfderiv I I
     MDifferentiableAt I I f x := by
   contrapose d0
   simp only [mfderiv, d0]
-  exact if_neg fun h ↦ h
+  exact ite_eq_right fun h ↦ h
 
 /-- If two functions have nonzero derivative, their composition has nonzero derivative -/
 public theorem mderiv_comp_ne_zero' {f : T → U} {g : S → T} {x : S} :
@@ -231,7 +231,7 @@ public theorem mderivEquiv_eq {z : S} {w : T} (f : TangentSpace I z →L[ℂ] Ta
 /-- Identity derivatives are nonzero -/
 public theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := by
   have d : MDifferentiableAt I I (fun z ↦ z) z := mdifferentiableAt_id
-  simp only [mfderiv, d, if_true, writtenInExtChartAt, ModelWithCorners.Boundaryless.range_eq_univ,
+  simp only [mfderiv, d, ite_true, writtenInExtChartAt, ModelWithCorners.Boundaryless.range_eq_univ,
     fderivWithin_univ]
   have e : (fun w ↦ extChartAt I z ((extChartAt I z).symm w)) =ᶠ[𝓝 (extChartAt I z z)] id := by
     apply ((isOpen_extChartAt_target z).eventually_mem (mem_extChartAt_target z)).mp

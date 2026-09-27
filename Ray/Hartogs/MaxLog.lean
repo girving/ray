@@ -1,8 +1,8 @@
 module
 public import Ray.Misc.Defs
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Complex.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Bound
 import all Ray.Misc.Defs
 

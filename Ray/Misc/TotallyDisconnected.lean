@@ -2,7 +2,7 @@ module
 public import Mathlib.Topology.Connected.TotallyDisconnected
 public import Mathlib.Topology.MetricSpace.Defs
 import Mathlib.Analysis.Real.Cardinality
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Topology.MetricSpace.Basic
 
@@ -23,11 +23,11 @@ def Set.Nonempty.invCoe {X : Type} {s : Set X} (ne : s.Nonempty) : X → s := fu
 
 theorem Set.Nonempty.left_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
     ∀ x : s, ne.invCoe x = x := by
-  intro ⟨x, m⟩; simp only [Set.Nonempty.invCoe, m, dif_pos]
+  intro ⟨x, m⟩; simp only [Set.Nonempty.invCoe, m, dite_eq_left]
 
 theorem Set.Nonempty.right_invCoe {X : Type} {s : Set X} (ne : s.Nonempty) :
     ∀ x, x ∈ s → ↑(ne.invCoe x) = x := by
-  intro x m; simp only [Set.Nonempty.invCoe, m, dif_pos, Subtype.coe_mk]
+  intro x m; simp only [Set.Nonempty.invCoe, m, dite_eq_left, Subtype.coe_mk]
 
 theorem Set.Nonempty.continuousOn_invCoe {X : Type} {s : Set X} (ne : s.Nonempty)
     [TopologicalSpace X] : ContinuousOn ne.invCoe s := by

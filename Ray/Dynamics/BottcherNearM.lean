@@ -14,6 +14,7 @@ import Ray.Manifold.Nontrivial
 import Ray.Manifold.OneDimension
 import Ray.Misc.Multilinear
 import Ray.Misc.Topology
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 
 /-!
 ## Böttcher map near a superattracting fixed point

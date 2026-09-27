@@ -1,5 +1,5 @@
 module
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 public import Mathlib.Order.PartialSups
 public import Ray.Misc.Defs
 import Mathlib.Analysis.Complex.Basic

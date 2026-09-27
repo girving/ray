@@ -12,7 +12,7 @@ import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
 import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Tactic.Cases
@@ -82,7 +82,7 @@ public lemma HasFPowerSeriesAt.coeff_eq_iteratedDeriv_div [CompleteSpace 𝕜] [
 public theorem HasFPowerSeriesAt.orderAt_unique {f : 𝕜 → E} {p : FormalMultilinearSeries 𝕜 𝕜 E}
     {c : 𝕜} (fp : HasFPowerSeriesAt f p c) : orderAt f c = p.order := by
   have fa : AnalyticAt 𝕜 f c := ⟨p, fp⟩
-  simp only [orderAt, fa, dif_pos]
+  simp only [orderAt, fa, dite_eq_left]
   have s := choose_spec fa
   generalize hq : choose fa = q
   simp_rw [hq] at s
@@ -118,7 +118,7 @@ public theorem deriv_ne_zero_of_orderAt_eq_one {f : 𝕜 → E} {c : 𝕜} (o : 
     rw [o] at p0
     simpa only [fp.deriv, FormalMultilinearSeries.apply_eq_pow_smul_coeff, one_pow, one_smul,
       FormalMultilinearSeries.coeff_eq_zero, Ne]
-  · simp only [orderAt, fa] at o; rw [dif_neg] at o; norm_num at o; exact not_false
+  · simp only [orderAt, fa] at o; rw [dite_eq_right] at o; norm_num at o; exact not_false
 
 /-- `leadingCoeff` for nonzeros -/
 public theorem leadingCoeff_of_ne_zero {f : 𝕜 → E} {c : 𝕜} (f0 : f c ≠ 0) :
@@ -185,13 +185,13 @@ lemma FormalMultilinearSeries.unshiftIter_coeff (p : FormalMultilinearSeries �
     (i : ℕ) : (p.unshiftIter n).coeff i = if i < n then 0 else p.coeff (i - n) := by
   revert i; induction' n with n h
   · simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_zero, id_eq, not_lt_zero,
-    tsub_zero, if_false, forall_const]
+    tsub_zero, ite_false, forall_const]
   · simp_rw [FormalMultilinearSeries.unshiftIter] at h
     simp only [FormalMultilinearSeries.unshiftIter, Function.iterate_succ', Function.comp]
     generalize hq : (fun p : FormalMultilinearSeries 𝕜 𝕜 E ↦ p.unshift' 0)^[n] p = q
     rw [hq] at h; clear hq
     intro i; induction' i with i _
-    · simp only [FormalMultilinearSeries.unshift_coeff_zero, Nat.succ_pos', if_true]
+    · simp only [FormalMultilinearSeries.unshift_coeff_zero, Nat.succ_pos', ite_true]
     · simp only [Nat.succ_lt_succ_iff, h i, FormalMultilinearSeries.unshift_coeff_succ,
         Nat.succ_sub_succ_eq_sub]
 
@@ -284,7 +284,7 @@ public theorem AnalyticAt.monomial_mul_orderAt {f : 𝕜 → E} {c : 𝕜} (fa :
   · have s := Nat.find_spec pe
     simp only [← p.coeff_eq_zero, Ne] at s
     simp only [p.unshiftIter_coeff, ← FormalMultilinearSeries.coeff_eq_zero, s, Ne,
-      add_lt_iff_neg_left, not_lt_zero, add_tsub_cancel_left, if_false, not_false_iff]
+      add_lt_iff_neg_left, not_lt_zero, add_tsub_cancel_left, ite_false, not_false_iff]
   · intro m mp; simp [← FormalMultilinearSeries.coeff_eq_zero, p.unshiftIter_coeff]; intro mn
     generalize ha : m - n = a; have hm : m = n + a := by rw [← ha, add_comm, Nat.sub_add_cancel mn]
     simp only [hm, add_lt_add_iff_left, Nat.lt_find_iff, not_not] at mp
@@ -360,7 +360,7 @@ public theorem orderAt_const_smul {f : 𝕜 → E} {c a : 𝕜} (a0 : a ≠ 0) :
     simp only [fp.orderAt_unique, fp.const_fun_smul.orderAt_unique,
       FormalMultilinearSeries.order, e]
   · have ga := fa; rw [← analyticAt_iff_const_smul a0] at ga
-    simp only [orderAt, fa, ga]; rw [dif_neg, dif_neg]
+    simp only [orderAt, fa, ga]; rw [dite_eq_right, dite_eq_right]
     exact not_false; exact not_false
 
 /-- The leading coefficient of zero is zero -/

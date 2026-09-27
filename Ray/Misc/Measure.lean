@@ -45,11 +45,8 @@ variable {μ : Measure M}
 
 /-- Removing a null set isn't significant measure-wise -/
 theorem ae_minus_null {s t : Set M} (tz : volume t = 0) : s =ᵐ[volume] s \ t := by
-  simp only [Filter.EventuallyEq, Pi.sdiff_apply, eq_iff_iff]
-  have e : ∀ x, x ∉ t → (x ∈ s ↔ x ∈ s \ t) := by
-    intro x h; simp only [Set.mem_sdiff, h, not_false_iff, and_true]
-  refine Filter.Eventually.mono ?_ e
-  exact measure_eq_zero_iff_ae_notMem.mp tz
+  filter_upwards [measure_eq_zero_iff_ae_notMem.mp tz] with x h
+  simp [h]
 
 /-- Removing a point isn't significant measure-wise (if there are no atoms) -/
 public theorem ae_minus_point [NullSingletonClass (volume : Measure M)] {s : Set M} {x : M} :

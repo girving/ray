@@ -13,6 +13,7 @@ import Ray.Manifold.LocalInj
 import Ray.Manifold.Manifold
 import Ray.Manifold.OneDimension
 import Ray.Misc.Multilinear
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 
 /-!
 ## Non-injectivity near multiple roots

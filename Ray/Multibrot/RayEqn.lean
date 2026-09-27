@@ -92,7 +92,7 @@ public lemma cascade_succ (m : z ∈ ball (0 : ℂ) 1) :
   set s := superF d
   by_cases z0 : z = 0
   · simp [z0, cascade_z0, Nat.sub_eq_zero_iff_le, s.d1]
-  · simp only [cascade, z0, if_false, pow_succ, pow_mul]
+  · simp only [cascade, z0, ite_false, pow_succ, pow_mul]
     have em : (ray' d z, z ^ d ^ n) ∈ s.ext := ray'_mem_ext z0 m
     rw [← s.ray_eqn em]
     unfold f

@@ -51,7 +51,7 @@ public theorem global_complex_inverse_fun_open {f : ℂ → S → T} [Nonempty S
   have left : ∀ c z, (c, z) ∈ s → g c (f c z) = z := by
     intro c z m
     have h : ∃ x, (c, x) ∈ s ∧ f c x = f c z := ⟨z, m, rfl⟩
-    simp only [← hg, dif_pos h]
+    simp only [← hg, dite_eq_left h]
     rcases choose_spec h with ⟨m0, w0⟩
     have left := (i _ m).left_inv.self_of_nhds
     simp only at left

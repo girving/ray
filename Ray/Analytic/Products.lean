@@ -6,8 +6,8 @@ import Mathlib.Analysis.Analytic.Basic
 import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Complex.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Stream.Init
@@ -262,7 +262,7 @@ public lemma HasProd.norm_sub_one_le {f : ℕ → ℂ} {g : ℂ} (fg : HasProd f
   have le1 : ‖∏ i ∈ .range n, f i - 1‖ ≤ ∏ i, (1 + b i) - 1 := by
     refine le_trans Finset.norm_prod_sub_one_le ?_
     simp only [Finset.prod_fin_eq_prod_range]
-    refine tsub_le_tsub_right (Finset.prod_le_prod (by bound) fun i m ↦ ?_) _
+    refine tsub_le_tsub_right (Finset.prod_le_prod₀ (by bound) fun i m ↦ ?_) _
     specialize lo ⟨i, by simpa using m⟩
     grind
   rw [le_sub_iff_add_le, add_comm] at le1

@@ -135,7 +135,7 @@ public lemma integral_exp_mul_I (n : ℤ) :
       ext t
       rw [deriv_div_const, (hd t).deriv, mul_div_cancel_left₀ _ (by simp [n0])]
     rw [intervalIntegral.integral_deriv_eq_sub' (E := ℂ) _ d (a := -π) (b := π)]
-    · simp only [n0, if_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
+    · simp only [n0, ite_false, mul_assoc, Complex.exp_int_mul, Complex.ofReal_neg, neg_mul,
         Complex.exp_neg, Complex.exp_pi_mul_I, inv_neg, inv_one, sub_self, Complex.ofReal_zero]
     · exact fun t _ ↦ (hd t).differentiableAt.div_const _
     · fun_prop

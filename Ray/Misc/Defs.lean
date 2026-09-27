@@ -2,7 +2,7 @@ module
 public import Mathlib.Analysis.Complex.Exponential
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Data.Finset.Defs
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 
 /-!
 ## Shared defs, to minimise public imports

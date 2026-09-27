@@ -174,7 +174,7 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
   · simp only [(superF d).critical_a, or_true]
   · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ rfl
     simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
-      if_pos, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
+      ite_eq_left, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
       writtenInExtChartAt_coe_f, RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply,
       toComplex_coe, coe_eq_zero, coe_eq_inf_iff, or_false, ← toSpanSingleton_deriv, deriv_f',
       ContinuousLinearMap.ext_iff, zx, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul,
@@ -184,7 +184,7 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
     · intro h
       have h1 : (if True then ContinuousLinearMap.toSpanSingleton ℂ ((d : ℂ) * z ^ (d - 1))
           else 0 : ℂ →L[ℂ] ℂ) (1 : ℂ) = 0 := h (1 : ℂ)
-      rw [if_pos trivial] at h1
+      rw [ite_eq_left trivial] at h1
       have h2 : (1 : ℂ) • ((d : ℂ) * z ^ (d - 1)) = 0 := h1
       rw [one_smul, mul_eq_zero] at h2
       rcases h2 with h2 | h2
@@ -194,7 +194,7 @@ theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊
       have e : ∀ y : ℂ, (if True then ContinuousLinearMap.toSpanSingleton ℂ ((d : ℂ) * z ^ (d - 1))
           else 0 : ℂ →L[ℂ] ℂ) y = 0 := by
         intro y
-        rw [if_pos trivial]
+        rw [ite_eq_left trivial]
         show y • ((d : ℂ) * z ^ (d - 1)) = 0
         simp only [h, zero_pow (d_minus_one_pos _).ne', mul_zero, smul_zero]
       exact e x

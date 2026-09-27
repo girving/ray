@@ -407,7 +407,7 @@ public theorem bottcher_hasDerivAt_one : HasDerivAt (bottcher_inv d) 1 0 := by
 
 /-- bottcher is nonsingular at `∞` -/
 public theorem bottcher_mfderiv_inf_ne_zero : mfderiv I I (bottcher d) ∞ ≠ 0 := by
-  simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt (by decide), if_pos,
+  simp only [mfderiv, (bottcherMAnalytic d _ multibrotExt_inf).mdifferentiableAt (by decide), ite_eq_left,
     writtenInExtChartAt, bottcher_inf, extChartAt_inf, extChartAt_eq_refl, Function.comp_def,
     PartialEquiv.refl_coe, id, PartialEquiv.trans_apply, Equiv.toPartialEquiv_apply, invEquiv_apply,
     RiemannSphere.inv_inf, coePartialEquiv_symm_apply, toComplex_zero, PartialEquiv.coe_trans_symm,
