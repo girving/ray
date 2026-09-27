@@ -126,7 +126,7 @@ lemma volume_real_smul {r : ℝ} (r0 : 0 ≤ r) (A : Set ℂ) :
   simp only [Measure.real, Measure.addHaar_smul_of_nonneg _ r0, Complex.finrank_real_complex,
     ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity : 0 ≤ r ^ 2)]
 
-lemma volume_compl_psi_ne_top {R : ℝ} (R1 : 1 ≤ R) : volume (psi d '' norm_Ioi R)ᶜ ≠ ⊤ := by
+public lemma volume_compl_psi_ne_top {R : ℝ} (R1 : 1 ≤ R) : volume (psi d '' norm_Ioi R)ᶜ ≠ ⊤ := by
   have fin := gronwall_volume_ne_top (prayR_analytic (d := d) R1) prayR_zero (prayR_inj R1)
   rw [compl_image_prayR R1, Measure.addHaar_smul_of_nonneg _ (by positivity)] at fin
   have R0 : (0 : ℝ) < R⁻¹ ^ Module.finrank ℝ ℂ := by
@@ -155,7 +155,7 @@ lemma hasSum_R {R : ℝ} (R1 : 1 ≤ R) :
   · field_simp
 
 /-- The area series of the Mandelbrot set, in terms of `bcoeff` -/
-lemma hasSum_one : HasSum (fun n ↦ π * n * ‖bcoeff d n‖ ^ 2) (π - volume.real (multibrot d)) := by
+public lemma hasSum_one : HasSum (fun n ↦ π * n * ‖bcoeff d n‖ ^ 2) (π - volume.real (multibrot d)) := by
   simpa [bcoeff] using multibrot_volume_sum (d := d)
 
 /-- The area of the shell `(ψ(|w| > R))ᶜ \ M` is `π (R^2 - 1) + ∑ π n |b_n|^2 (1 - R^{-2n})` -/

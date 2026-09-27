@@ -30,5 +30,6 @@ import Ray.Multibrot.PotentialLower
 import Ray.Multibrot.RayBound
 import Ray.Multibrot.RayEqn
 import Ray.Multibrot.Shell
+import Ray.Multibrot.Tail
 import Ray.Schwarz.Mobius
 import Ray.Schwarz.SchwarzPick
