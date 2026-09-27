@@ -19,6 +19,7 @@ import Ray.Multibrot.BottcherDeriv
 import Ray.Multibrot.BottcherInv
 import Ray.Multibrot.Connected
 import Ray.Multibrot.Cusp
+import Ray.Multibrot.CuspArea
 import Ray.Multibrot.InvRay
 import Ray.Multibrot.Isomorphism
 import Ray.Multibrot.Iterates

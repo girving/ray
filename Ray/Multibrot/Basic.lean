@@ -367,7 +367,7 @@ public theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multi
 @[simp] public theorem multibrotExt_zero : (0 : 𝕊) ∉ multibrotExt d := by
   simp only [← coe_zero, multibrotExt_coe, not_not, multibrot_zero]
 
-theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
+public theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
   by_cases c2 : 2 < ‖c‖; exact multibrot_two_lt c2
   simp only [multibrot_coe, not_not]; simp only [not_lt] at c2
   generalize hs : ‖((f' d c)^[n] c)‖ = s; rw [hs] at h
@@ -518,6 +518,10 @@ public theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
 /-- The potential map on 𝕊, defined as the diagonal of `s.potential` -/
 public def potential (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℝ :=
   fill (fun c ↦ (superF d).potential c c) 0
+
+/-- On `ℂ`, the Multibrot potential is the dynamical potential at the critical value -/
+public lemma potential_coe {c : ℂ} : potential d c = (superF d).potential c c := by
+  simp only [potential, fill_coe]
 
 public theorem norm_bottcher {c : 𝕊} : ‖bottcher d c‖ = potential d c := by
   set s := superF d
