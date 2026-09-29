@@ -300,8 +300,7 @@ public theorem extChartAt_inf :
       OpenPartialHomeomorph.trans_toPartialEquiv, modelWithCornersSelf_partialEquiv,
       PartialEquiv.trans_refl, PartialEquiv.coe_trans_symm,
       OpenPartialHomeomorph.coe_toPartialEquiv_symm,
-      Homeomorph.toOpenPartialHomeomorph_symm_apply, Homeomorph.homeomorph_mk_coe_symm,
-      invEquiv_symm, PartialEquiv.coe_trans, Equiv.toPartialEquiv_apply, Function.comp_apply]
+      Homeomorph.toOpenPartialHomeomorph_symm_apply, PartialEquiv.coe_trans, Equiv.toPartialEquiv_apply, Function.comp_apply]
     show coePartialEquiv.symm (invEquiv.symm z) = coePartialEquiv.symm (invEquiv z)
     rw [invEquiv_symm]
   · intro z
@@ -317,8 +316,7 @@ public theorem extChartAt_inf :
       OpenPartialHomeomorph.trans_toPartialEquiv, modelWithCornersSelf_partialEquiv,
       PartialEquiv.trans_refl, PartialEquiv.symm_source, PartialEquiv.trans_target,
       Homeomorph.toOpenPartialHomeomorph_target, OpenPartialHomeomorph.coe_toPartialEquiv_symm,
-      Homeomorph.toOpenPartialHomeomorph_symm_apply, Homeomorph.homeomorph_mk_coe_symm,
-      invEquiv_symm, PartialEquiv.trans_source, Equiv.toPartialEquiv_source,
+      Homeomorph.toOpenPartialHomeomorph_symm_apply, PartialEquiv.trans_source, Equiv.toPartialEquiv_source,
       Equiv.toPartialEquiv_apply]
     show univ ∩ ⇑invEquiv.symm ⁻¹' coePartialEquiv.target
       = univ ∩ ⇑invEquiv ⁻¹' coePartialEquiv.target
@@ -677,7 +675,7 @@ public instance : PathConnectedSpace 𝕊 := by
     intro x y
     have p := PathConnectedSpace.somePath x y
     use p.map continuous_coe
-    repeat simp only [ContinuousMap.toFun_eq_coe, ContinuousMap.coe_coe, Path.source, Path.target]
+    repeat simp only [Path.source, Path.target]
   replace ic : ∀ x : ℂ, Joined ∞ (x : 𝕊) := fun x ↦ i1.trans (cc _ _)
   intro x y; induction x using OnePoint.rec
   · induction y using OnePoint.rec

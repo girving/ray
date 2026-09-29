@@ -238,7 +238,7 @@ public theorem id_mderiv_ne_zero {z : S} : mfderiv I I (fun z ↦ z) z ≠ 0 := 
     refine .of_forall fun w m ↦ ?_
     simp only [id, PartialEquiv.right_inv _ m]
   simp only [e.fderiv_eq, fderiv_id, Ne, ContinuousLinearMap.ext_iff, not_forall,
-    ContinuousLinearMap.id_apply, Function.comp_def]
+    Function.comp_def]
   refine ⟨(1 : ℂ), ?_⟩
   show ¬(1 : ℂ) = 0
   exact one_ne_zero
@@ -264,7 +264,7 @@ public theorem extChartAt_mderiv_ne_zero' {z w : S} (m : w ∈ (extChartAt I z).
   rcases exists_ne (0 : TangentSpace I w) with ⟨t, t0⟩
   rw [← mderiv_ne_zero_iff' t0]; contrapose t0
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_left_inverse m) t
-  simp only [ContinuousLinearMap.comp_apply, t0, map_zero, ContinuousLinearMap.id_apply] at h
+  simp only [ContinuousLinearMap.comp_apply, t0, map_zero] at h
   exact h.symm
 
 /-- Chart derivatives are nonzero -/
@@ -273,7 +273,7 @@ public theorem extChartAt_symm_mderiv_ne_zero' {z : S} {w : ℂ} (m : w ∈ (ext
   rcases exists_ne (0 : TangentSpace I w) with ⟨t, t0⟩
   rw [← mderiv_ne_zero_iff' t0]; contrapose t0
   have h := ContinuousLinearMap.ext_iff.mp (extChartAt_mderiv_right_inverse m) t
-  simp only [ContinuousLinearMap.comp_apply, t0, map_zero, ContinuousLinearMap.id_apply] at h
+  simp only [ContinuousLinearMap.comp_apply, t0, map_zero] at h
   exact h.symm
 
 /-- Chart derivatives are nonzero -/
