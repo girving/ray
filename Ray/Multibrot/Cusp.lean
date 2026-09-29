@@ -20,7 +20,7 @@ We prove:
 3. `shadow`: complex orbits of `c + h` with `|h| ≲ s^3` stay within `τ_n φ(u_n)` of the real orbit,
    where `τ_n = |h| ∑_{k ≤ n} 1 / φ(u_k)`.
 
-These show that a rectangle of area `≍ s^5` outside the Mandelbrot set escapes only after `≍ 1/s`
+These show that a disk of area `≍ s^6` outside the Mandelbrot set escapes only after `≍ 1/s`
 steps.  This lower-bounds the area near the set with small Green's function, and so lower-bounds
 the tail of the Grönwall series.
 -/
@@ -291,12 +291,10 @@ lemma sum_shift_le (s0 : 0 < s) (n : ℕ) :
 /-- `18 (1 + π) + 1 ≤ 76` -/
 lemma const_le : 18 * (1 + π) + 1 ≤ 76 := by linarith [Real.pi_lt_d2]
 
-/-- While the real orbit stays below `7/5` through step `n`, `τ_n ≤ 1/100` -/
-lemma τ_le (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h‖ ≤ s ^ 3 / 10000) {n : ℕ}
-    (un : ∀ k < n, u s k ≤ 7 / 5) (last : 1 ≤ φ s (u s n)) : τ s h n ≤ 1 / 100 := by
-  have sum : ∑ k ∈ Finset.range (n + 1), 1 / φ s (u s k) ≤ 18 * (1 + π) / s ^ 3 + 1 := by
-    rw [Finset.sum_range_succ]
-    exact add_le_add (sum_inv_φ_le s4 s0 un) ((div_le_one (φ_pos s0 _)).mpr last)
+/-- `τ_n ≤ 1/100` once the sum through step `n` is at most `18 (1 + π) / s^3 + 1` -/
+lemma τ_le_of_sum (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h‖ ≤ s ^ 3 / 10000) {n : ℕ}
+    (sum : ∑ k ∈ Finset.range (n + 1), 1 / φ s (u s k) ≤ 18 * (1 + π) / s ^ 3 + 1) :
+    τ s h n ≤ 1 / 100 := by
   have s3 : s ^ 3 ≤ 1 := by
     have : s ^ 3 ≤ (1 / 4) ^ 3 := by gcongr
     linarith
@@ -307,6 +305,13 @@ lemma τ_le (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h‖ ≤ s ^ 3 / 
     _ = (18 * (1 + π) + s ^ 3) / 10000 := by field_simp
     _ ≤ 1 / 100 := by linarith [const_le]
 
+/-- While the real orbit stays below `7/5` before step `n`, and `φ(u_n) ≥ 1`, `τ_n ≤ 1/100` -/
+lemma τ_le (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h‖ ≤ s ^ 3 / 10000) {n : ℕ}
+    (un : ∀ k < n, u s k ≤ 7 / 5) (last : 1 ≤ φ s (u s n)) : τ s h n ≤ 1 / 100 := by
+  refine τ_le_of_sum s0 s4 hs ?_
+  rw [Finset.sum_range_succ]
+  exact add_le_add (sum_inv_φ_le s4 s0 un) ((div_le_one (φ_pos s0 _)).mpr last)
+
 /-- During the slow passage (`n s ≤ 1`), the perturbed orbit stays in the unit disk -/
 public lemma norm_zc_le_one (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h‖ ≤ s ^ 3 / 10000) {n : ℕ}
     (ns : n * s ≤ 1) : ‖zc s h n‖ ≤ 1 := by
@@ -315,19 +320,10 @@ public lemma norm_zc_le_one (s0 : 0 < s) (s4 : s ≤ 1 / 4) {h : ℂ} (hs : ‖h
   have lo := neg_half_le_u s0 n
   have un := ul n le_rfl
   have ph : φ s (u s n) ≤ 1 / 4 + s ^ 2 := by unfold φ; nlinarith
-  -- The sum bound only needs the orbit below 7/5, which holds since u ≤ s; pad `last` via φ ≥ s^2
+  -- The sum bound only needs the orbit below 7/5, which holds through step n since u ≤ s
   have t : τ s h n ≤ 1 / 100 := by
-    have sum : ∑ k ∈ Finset.range (n + 1), 1 / φ s (u s k) ≤ 18 * (1 + π) / s ^ 3 :=
-      sum_inv_φ_le s4 s0 fun k kn ↦ (ul k (Nat.lt_succ_iff.mp kn)).trans (by linarith)
-    have s3 : s ^ 3 ≤ 1 := by
-      have : s ^ 3 ≤ (1 / 4) ^ 3 := by gcongr
-      linarith
-    calc τ s h n ≤ s ^ 3 / 10000 * (18 * (1 + π) / s ^ 3) := by
-          unfold τ
-          refine mul_le_mul hs ((sum_shift_le s0 n).trans sum) ?_ (by positivity)
-          exact Finset.sum_nonneg fun k _ ↦ (one_div_pos.mpr (φ_pos s0 _)).le
-      _ = 18 * (1 + π) / 10000 := by field_simp
-      _ ≤ 1 / 100 := by linarith [const_le]
+    refine τ_le_of_sum s0 s4 hs ((sum_inv_φ_le s4 s0 fun k kn ↦ ?_).trans (by linarith))
+    exact (ul k (Nat.lt_succ_iff.mp kn)).trans (by linarith)
   have e := shadow s0 h n (t.trans (by norm_num))
   have r := z_nonneg s0 n
   calc ‖zc s h n‖ = ‖(zc s h n - ((u s n + 1 / 2 : ℝ) : ℂ)) + ((u s n + 1 / 2 : ℝ) : ℂ)‖ := by ring_nf

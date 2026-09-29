@@ -81,8 +81,9 @@ lemma shell_le {R : ℝ} (R1 : 1 ≤ R) (N : ℕ) :
       π * (2 * N * Real.log R * x n + tailTerm N n) := by
     intro n
     have xn := x_nonneg n
-    have t0 : 0 ≤ R⁻¹ ^ (2 * n) := by have : 0 < R := by linarith
-                                      positivity
+    have t0 : 0 ≤ R⁻¹ ^ (2 * n) := by
+      have : 0 < R := by linarith
+      positivity
     have e : π * n * ‖bcoeff 2 n‖ ^ 2 * (1 - R⁻¹ ^ (2 * n)) = π * (x n * (1 - R⁻¹ ^ (2 * n))) := by
       unfold x; ring
     rw [e]
