@@ -172,14 +172,11 @@ public theorem superNearF (d : ℕ) [Fact (2 ≤ d)] (c : ℂ) :
 theorem critical_f {z : 𝕊} : Critical (f d c) z ↔ z = 0 ∨ z = (∞ : 𝕊) := by
   induction' z using OnePoint.rec with z
   · simp only [(superF d).critical_a, or_true]
-  · have zx : ∀ x : ℂ, (0 : ℂ →L[ℂ] ℂ) x = 0 := fun x ↦ rfl
-    simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
+  · simp only [Critical, mfderiv, (mAnalyticAt_f (c, z)).along_snd.mdifferentiableAt (by decide),
       ite_eq_left, ModelWithCorners.Boundaryless.range_eq_univ, fderivWithin_univ,
       writtenInExtChartAt_coe_f, RiemannSphere.extChartAt_coe, coePartialEquiv_symm_apply,
       toComplex_coe, coe_eq_zero, coe_eq_inf_iff, or_false, ← toSpanSingleton_deriv, deriv_f',
-      ContinuousLinearMap.ext_iff, zx, ContinuousLinearMap.toSpanSingleton_apply, smul_eq_mul,
-      mul_eq_zero, Nat.cast_eq_zero, d_ne_zero, ne_eq, (d_minus_one_pos _).ne', not_false_eq_true,
-      pow_eq_zero_iff, false_or]
+      ContinuousLinearMap.ext_iff]
     constructor
     · intro h
       have h1 : (if True then ContinuousLinearMap.toSpanSingleton ℂ ((d : ℂ) * z ^ (d - 1))
@@ -367,7 +364,7 @@ public theorem multibrot_of_zero {n : ℕ} (h : (f d c)^[n] c = 0) : c ∈ multi
 @[simp] public theorem multibrotExt_zero : (0 : 𝕊) ∉ multibrotExt d := by
   simp only [← coe_zero, multibrotExt_coe, not_not, multibrot_zero]
 
-theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
+public theorem not_multibrot_of_two_lt {n : ℕ} (h : 2 < ‖(f' d c)^[n] c‖) : c ∉ multibrot d := by
   by_cases c2 : 2 < ‖c‖; exact multibrot_two_lt c2
   simp only [multibrot_coe, not_not]; simp only [not_lt] at c2
   generalize hs : ‖((f' d c)^[n] c)‖ = s; rw [hs] at h
@@ -518,6 +515,10 @@ public theorem bottcherMAnalytic (d : ℕ) [Fact (2 ≤ d)] :
 /-- The potential map on 𝕊, defined as the diagonal of `s.potential` -/
 public def potential (d : ℕ) [Fact (2 ≤ d)] : 𝕊 → ℝ :=
   fill (fun c ↦ (superF d).potential c c) 0
+
+/-- On `ℂ`, the Multibrot potential is the dynamical potential at the critical value -/
+public lemma potential_coe {c : ℂ} : potential d c = (superF d).potential c c := by
+  simp only [potential, fill_coe]
 
 public theorem norm_bottcher {c : 𝕊} : ‖bottcher d c‖ = potential d c := by
   set s := superF d

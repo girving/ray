@@ -49,9 +49,9 @@ structure Bier (f : ℂ → ℂ) : Prop where
 
 namespace Bier
 
-private def m0 : 0 ∈ ball (0 : ℂ) 1 := by simp
+private theorem m0 : 0 ∈ ball (0 : ℂ) 1 := by simp
 
-def f_eq_zero_iff (b : Bier f) (m : z ∈ ball 0 1) : f z = 0 ↔ z = 0 := by
+theorem f_eq_zero_iff (b : Bier f) (m : z ∈ ball 0 1) : f z = 0 ↔ z = 0 := by
   simpa only [b.f0] using b.inj.eq_iff m (y := 0) (by simp)
 
 /-- Pull a factor of `z` out of `f` -/
@@ -72,7 +72,9 @@ lemma df'0 (b : Bier f) : deriv b.f' 0 = deriv (deriv f) 0 / 2 := by
     fp.coeff_eq_iteratedDeriv_div, iteratedDeriv_eq_iterate]
 
 /-- The square root of `f'`: `sf z = sqrt (f' z)` -/
-def exists_sf (b : Bier f) :=
+theorem exists_sf (b : Bier f) :
+    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g (ball 0 1) ∧ g 0 = Complex.exp (Complex.log (b.f' 0) / (2 : ℕ)) ∧
+      ∀ z ∈ ball (0 : ℂ) 1, b.f' z = g z ^ 2 :=
   b.analytic_f'.exists_root (fun z m ↦ b.f'_ne_zero m) (n := 2) (by norm_num)
 def sf (b : Bier f) : ℂ → ℂ := choose b.exists_sf
 lemma analytic_sf (b : Bier f) : AnalyticOnNhd ℂ b.sf (ball 0 1) := (choose_spec b.exists_sf).1

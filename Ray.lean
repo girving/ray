@@ -18,6 +18,8 @@ import Ray.Multibrot.Bottcher
 import Ray.Multibrot.BottcherDeriv
 import Ray.Multibrot.BottcherInv
 import Ray.Multibrot.Connected
+import Ray.Multibrot.Cusp
+import Ray.Multibrot.CuspArea
 import Ray.Multibrot.InvRay
 import Ray.Multibrot.Isomorphism
 import Ray.Multibrot.Iterates
@@ -27,5 +29,7 @@ import Ray.Multibrot.Potential
 import Ray.Multibrot.PotentialLower
 import Ray.Multibrot.RayBound
 import Ray.Multibrot.RayEqn
+import Ray.Multibrot.Shell
+import Ray.Multibrot.Tail
 import Ray.Schwarz.Mobius
 import Ray.Schwarz.SchwarzPick
