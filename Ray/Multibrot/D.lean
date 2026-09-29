@@ -1,6 +1,5 @@
 module
-public import Mathlib.Data.Real.Basic
-public import Mathlib.Logic.Basic
+public import Mathlib.Basic.Real.Basic
 import Mathlib.Analysis.RCLike.Basic
 
 /-!

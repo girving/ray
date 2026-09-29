@@ -1,7 +1,7 @@
 module
 public import Mathlib.Analysis.Normed.Field.Basic
 public import Mathlib.Analysis.Normed.Group.Bounded
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.Order.Filter.Basic
 public import Mathlib.Topology.Bornology.Basic
 import Mathlib.Analysis.Normed.Group.Basic

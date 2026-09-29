@@ -56,11 +56,11 @@ lemma pc (i : Holo f μ s c r) : IsCompact (s ×ˢ closedBall c r) :=
 lemma bounded (i : Holo f μ s c r) : ∃ C, ∀ x ∈ s ×ˢ closedBall c r, ‖uncurry f x‖ ≤ C :=
   i.pc.exists_bound_of_continuousOn i.fc
 def C (i : Holo f μ s c r) : ℝ := choose i.bounded
-def le_C (i : Holo f μ s c r) (m : p ∈ s ×ˢ closedBall c r) : ‖uncurry f p‖ ≤ i.C :=
+theorem le_C (i : Holo f μ s c r) (m : p ∈ s ×ˢ closedBall c r) : ‖uncurry f p‖ ≤ i.C :=
   choose_spec i.bounded _ m
-def le_C' (i : Holo f μ s c r) (xs : x ∈ s) (zm : z ∈ closedBall c r) : ‖f x z‖ ≤ i.C :=
+theorem le_C' (i : Holo f μ s c r) (xs : x ∈ s) (zm : z ∈ closedBall c r) : ‖f x z‖ ≤ i.C :=
   i.le_C (p := (x, z)) ⟨xs, zm⟩
-@[bound] def comp_le_C (i : Holo f μ s c r) (xs : x ∈ s) : ‖f x (circleMap c r t)‖ ≤ i.C :=
+@[bound] theorem comp_le_C (i : Holo f μ s c r) (xs : x ∈ s) : ‖f x (circleMap c r t)‖ ≤ i.C :=
   i.le_C' xs (by simp [circleMap])
 
 /-- The inner cauchy series is bounded -/

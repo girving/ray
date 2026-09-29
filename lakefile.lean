@@ -9,7 +9,7 @@ package ray where
     ⟨`experimental.module, true⟩,
   ]
 
-require "leanprover-community" / "mathlib" @ git "v4.33.0"
+require "leanprover-community" / "mathlib" @ git "v4.34.1"
 
 @[default_target]
 lean_lib Ray

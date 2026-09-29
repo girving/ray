@@ -15,6 +15,7 @@ import Ray.Manifold.OneDimension
 import Ray.Manifold.OpenMapping
 import Ray.Misc.Connected
 import Ray.Misc.Topology
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 
 /-
 ## The external ray map
@@ -186,14 +187,12 @@ public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (
       (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter' post)
     rw [e.mfderiv_eq]; contrapose x0
     rw [mfderiv_eq_fderiv] at x0
-    have d := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
-    replace x0 := ContinuousLinearMap.ext_iff.mp x0 1
-    rw [x0] at d
-    have z1 : (0 : ℂ →L[ℂ] ℂ) 1 = (0 : ℂ) := rfl
-    replace d := d.trans z1
+    have dp := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
+    replace x0 := ContinuousLinearMap.ext_iff.mp x0 (1 : ℂ)
+    rw [show (fderiv ℂ (fun x ↦ x ^ d ^ n) x) 1 = 0 from x0] at dp
     simp only [differentiableAt_fun_id, deriv_fun_pow, Nat.cast_pow, deriv_id'', mul_one,
-      mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at d
-    exact d.1
+      mul_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero, s.d0, ne_eq, false_and, false_or] at dp
+    exact dp.1
   have d := mfderiv_comp x
       ((s.bottcherNearIter_mAnalytic (s.ray_near post)).along_snd.mdifferentiableAt (by decide))
       ((s.ray_mAnalytic post).along_snd.mdifferentiableAt (by decide))

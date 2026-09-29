@@ -71,7 +71,7 @@ theorem Super.potential_eq (s : Super f d a) (m : (c, (f c)^[n] z) ∈ s.near) :
     s.potential c z = ‖s.bottcherNear c ((f c)^[n] z)‖ ^ (d ^ n : ℝ)⁻¹ := by
   have mb : (c, z) ∈ s.basin := s.basin_iff_near.mpr ⟨_, m⟩
   have ep := s.exists_potential mb
-  simp only [Super.potential, mb, ep, true_and, dif_pos]
+  simp only [Super.potential, mb, ep, true_and, dite_eq_left]
   obtain ⟨p0, ph⟩ := choose_spec ep
   generalize hp : choose ep = p at ph p0
   clear hp ep

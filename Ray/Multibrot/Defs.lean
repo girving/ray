@@ -121,8 +121,8 @@ public lemma fl_f : fl (f d) ∞ = fun c z : ℂ ↦ z^d / (1 + c * z^d) := by
 public theorem gl_f {z : ℂ} : g (fl (f d) ∞ c) d z = gl d c z := by
   simp only [fl_f, gl, g]
   by_cases z0 : z = 0
-  simp only [if_pos, z0, zero_pow (d_ne_zero _), MulZeroClass.mul_zero, add_zero, inv_one]
-  rw [if_neg z0, div_eq_mul_inv _ (_ + _), mul_comm, mul_div_assoc, div_self (pow_ne_zero _ z0),
+  simp only [ite_eq_left, z0, zero_pow (d_ne_zero _), MulZeroClass.mul_zero, add_zero, inv_one]
+  rw [ite_eq_right z0, div_eq_mul_inv _ (_ + _), mul_comm, mul_div_assoc, div_self (pow_ne_zero _ z0),
     mul_one]
 
 theorem analyticAt_gl : AnalyticAt ℂ (gl d c) 0 := by

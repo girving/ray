@@ -214,7 +214,7 @@ public theorem termCmmap_apply [NormedAddCommGroup E] [NormedSpace 𝕜 E] [SMul
   · rw [termCmmap, smulCmmap_apply, h]
     by_cases nk : n < k
     · have nsk : n.succ ≤ k := Nat.succ_le_iff.mpr nk
-      simp only [nk, if_true, fstCmmap_apply, min_eq_right nk.le, min_eq_right nsk,
+      simp only [nk, ite_true, fstCmmap_apply, min_eq_right nk.le, min_eq_right nsk,
         Nat.sub_eq_zero_of_le nk.le, Nat.sub_eq_zero_of_le nsk, pow_zero, one_smul, smul_smul,
         pow_succ']
     · simp [nk]; simp at nk

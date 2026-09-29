@@ -173,7 +173,7 @@ public def Base.u (b : Base p s f) : E → α := fun z ↦
 /-- The continuation `u` is equal to each `g` -/
 theorem Base.ug (b : Base p s f) (x : closure s) :
     EqOn b.u (b.g x) (b.t ∩ Metric.ball (x : E) (b.r x)) := by
-  intro z ⟨zt, m⟩; simp only [Base.u, zt, dif_pos]
+  intro z ⟨zt, m⟩; simp only [Base.u, zt, dite_eq_left]
   refine b.unique (isOpen_ball.inter isOpen_ball)
     ((convex_ball _ _).inter (convex_ball _ _)).isPreconnected
     (fun _ m ↦ b.gp _ (inter_subset_left m)) (fun _ m ↦ b.gp _ (inter_subset_right m))

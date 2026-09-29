@@ -90,7 +90,7 @@ public lemma deriv_sbottcher_z_approx (c3z : sqrt 3 * max 4 ‖c‖ ≤ ‖z‖)
       bound
     · exact le_trans (by bound) c3z
   have z0 : z ≠ 0 := norm_pos_iff.mp (by linarith)
-  have e : (fun z ↦ s.bottcher c z) =ᶠ[𝓝 z] sbottcher_inv d c ∘ fun z ↦ z⁻¹ := by
+  have e : (fun z : ℂ ↦ s.bottcher c z) =ᶠ[𝓝 z] sbottcher_inv d c ∘ fun z ↦ z⁻¹ := by
     filter_upwards [eventually_ne_nhds z0] with w w0
     simp [sbottcher_inv_def, ← inv_coe w0]
   rw [e.deriv_eq, deriv_comp _ _ (differentiableAt_inv z0)]

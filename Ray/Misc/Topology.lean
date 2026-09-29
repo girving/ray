@@ -7,8 +7,8 @@ public import Mathlib.Topology.MetricSpace.Defs
 public import Mathlib.Topology.MetricSpace.ProperSpace
 public import Mathlib.Topology.Order.Real
 import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Complex.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.MetricSpace.Basic
 
@@ -192,16 +192,16 @@ public theorem Ne.eventually_ne {X : Type} [TopologicalSpace X] [T2Space X] {x y
 public lemma ClusterPt.bot {X : Type} [TopologicalSpace X] {x : X} : ¬ClusterPt x ⊥ := fun h ↦
   (h.neBot.mono inf_le_right).ne rfl
 
-/-- Version of `nhdsWithin_eq_iff_eventuallyEq` that doesn't misuse eventual equality -/
-lemma nhdsWithin_eq_iff_eventuallyEq' {X : Type} [TopologicalSpace X] {s t : Set X} {x : X} :
+/-- Version of `nhdsWithin_eq_iff_eventuallyEqSet` that doesn't misuse eventual equality -/
+lemma nhdsWithin_eq_iff_eventuallyEqSet' {X : Type} [TopologicalSpace X] {s t : Set X} {x : X} :
     𝓝[s] x = 𝓝[t] x ↔ (· ∈ s) =ᶠ[𝓝 x] (· ∈ t) :=
-  nhdsWithin_eq_iff_eventuallyEq
+  nhdsWithin_eq_iff_eventuallyEqSet
 
 /-- `ContinuousWithinAt` depends only locally on the set -/
 lemma ContinuousWithinAt.congr_set'' {X Y : Type} [TopologicalSpace X] [TopologicalSpace Y]
     {f : X → Y} {s t : Set X} {x : X} (fc : ContinuousWithinAt f s x)
     (hst : (· ∈ s) =ᶠ[𝓝 x] (· ∈ t)) : ContinuousWithinAt f t x := by
-  simpa only [ContinuousWithinAt, nhdsWithin_eq_iff_eventuallyEq'.mpr hst] using fc
+  simpa only [ContinuousWithinAt, nhdsWithin_eq_iff_eventuallyEqSet'.mpr hst] using fc
 
 /-- Turn eventual equality into an intersection into eventual equality w.r.t. `𝓝[s] x` -/
 lemma eventuallyEq_inter {X : Type} [TopologicalSpace X] {s t u : Set X} {x : X} :

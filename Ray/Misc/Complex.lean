@@ -120,7 +120,6 @@ lemma AnalyticAt.norm {𝕜 E : Type} [RCLike 𝕜] [NormedAddCommGroup E] [Norm
 lemma Complex.real_hasFDerivAt {f : ℂ → ℂ} {z : ℂ} {f' : ℂ} (h : HasDerivAt f f' z) :
     HasFDerivAt f (lsmul ℝ ℂ f') z := by
   convert h.hasFDerivAt.restrictScalars ℝ
-  all_goals try rfl
   ext
   exact mul_comm _ _
 

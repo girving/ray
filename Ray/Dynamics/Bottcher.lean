@@ -80,7 +80,7 @@ theorem Super.bottcher_eq_bottcherPost (s : Super f d a) [OnePreimage s] (m : (c
     s.bottcher c z = s.bottcherPost c z := by
   have h : ∃ n, (c, (f c)^[n] z) ∈ s.post := ⟨0, by simpa only [Function.iterate_zero_apply]⟩
   have h0 := (Nat.find_eq_zero h).mpr m
-  simp only [Super.bottcher, h, dif_pos, h0, Function.iterate_zero_apply]
+  simp only [Super.bottcher, h, dite_eq_left, h0, Function.iterate_zero_apply]
 
 /-- `bottcher = bottcherPost` on `s.post` -/
 theorem Super.eqOn_bottcher_bottcherPost (s : Super f d a) [OnePreimage s] :
@@ -186,7 +186,7 @@ theorem Super.bottcher_not_basin (s : Super f d a) [OnePreimage s] (m : (c, z) �
     rcases s.basin_iff_near.mp (s.post_basin m) with ⟨k, m⟩
     simp only [← Function.iterate_add_apply] at m
     exact s.basin_iff_near.mpr ⟨k + n, m⟩
-  simp only [Super.bottcher, p]; rw [dif_neg]; exact not_false
+  simp only [Super.bottcher, p]; rw [dite_eq_right]; exact not_false
 
 /-- `s.bottcher` satifies the Böttcher equation everywhere
 
@@ -216,7 +216,7 @@ public theorem Super.bottcher_eqn (s : Super f d a) [OnePreimage s] :
       rcases e0 with ⟨n, e0⟩; use n
       simp only [← Function.iterate_succ_apply, Function.iterate_succ_apply']
       exact s.stays_post e0
-    simp only [Super.bottcher, e0, e1, dif_pos]
+    simp only [Super.bottcher, e0, e1, dite_eq_left]
     generalize hk0 : Nat.find e0 = k0
     generalize hk1 : Nat.find e1 = k1
     have kk : k0 = k1 + 1 := by

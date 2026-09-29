@@ -20,6 +20,7 @@ import Ray.Misc.Connected
 import Ray.Misc.Continuation
 import Ray.Misc.Topology
 import all Ray.Dynamics.Potential
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 
 /-!
 ## Analytic continuation of external rays for all postcritical values
@@ -536,7 +537,7 @@ theorem join_r (s : Super f d a) {p : ℕ → ℝ} {n : ℕ → ℕ} {ps : ℝ} 
     intro k; induction' k with k h
     · refine .of_forall fun e x x0 ↦ ?_
       have xe : ∃ k, ‖x‖ < p k := ⟨0, x0⟩
-      simp only [← hrs, lt_of_lt_of_le x0 (above _), dif_pos, (Nat.find_eq_zero xe).mpr x0]
+      simp only [← hrs, lt_of_lt_of_le x0 (above _), dite_eq_left, (Nat.find_eq_zero xe).mpr x0]
     · have eq := (g k).unique (g (k + 1)) (mono (Nat.lt_succ_self _).le)
       simp only [isCompact_singleton.nhdsSet_prod_eq (isCompact_closedBall _ _)] at eq
       apply h.mp
@@ -551,7 +552,7 @@ theorem join_r (s : Super f d a) {p : ℕ → ℝ} {n : ℕ → ℕ} {ps : ℝ} 
         rw [h _ xk0, eq]
       · have xe : ∃ k, ‖x‖ < p k := ⟨k + 1, xk1⟩
         have n := (Nat.find_eq_iff xe).mpr ⟨xk1, ?_⟩
-        simp only [← hrs, lt_of_lt_of_le xk1 (above _), dif_pos, n]
+        simp only [← hrs, lt_of_lt_of_le xk1 (above _), dite_eq_left, n]
         intro j jk; simp only [not_lt, Nat.lt_succ_iff] at jk xk0 ⊢
         exact _root_.trans (mono jk) xk0
   -- rs is locally each r, final form
@@ -671,7 +672,7 @@ public theorem Super.has_ray (s : Super f d a) [OnePreimage s] :
     · intro ⟨e, x⟩ ⟨⟨et0, et1⟩, xq⟩; simp only [uncurry] at et0 et1 xq ⊢
       simp only [mem_ball, Complex.dist_eq, sub_zero] at xq
       have hx : 0 ≤ ‖x‖ ∧ ‖x‖ < s.p e := ⟨norm_nonneg _, _root_.trans xq (lo _ et1)⟩
-      simp only [← hray, dif_pos hx.2]
+      simp only [← hray, dite_eq_left hx.2]
       refine ((g hx).unique (gh _ et0) xq.le).self_of_nhdsSet (x := ⟨e, x⟩) ⟨rfl, ?_⟩
       simp only [mem_closedBall, Complex.dist_eq, sub_zero, le_refl]
   use ray; intro c p p0 h

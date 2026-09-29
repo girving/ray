@@ -1,4 +1,8 @@
 module
+public import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
+public import Mathlib.MeasureTheory.Measure.Real
+public import Ray.Misc.Annuli
 public import Ray.Multibrot.Isomorphism
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Ray.Koebe.Gronwall
@@ -46,7 +50,7 @@ public lemma ray_eq_pray (m : z ∈ ball (0 : ℂ) 1) : ray d z = (z / pray d z 
   rw [← inv_ray_eq_pray, inv_ray, RiemannSphere.coe_toComplex (by simp [m]), inv_inv]
 
 /-- `ray` in terms of `pray`, `norm_Ioi` version -/
-lemma ray_inv_eq_pray (m : z ∈ norm_Ioi 1) : ray d z⁻¹ = z * pray d z⁻¹ := by
+public lemma ray_inv_eq_pray (m : z ∈ norm_Ioi 1) : ray d z⁻¹ = z * pray d z⁻¹ := by
   simp only [norm_Ioi, mem_ofPred_eq] at m
   have m' : z⁻¹ ∈ ball (0 : ℂ) 1 := by simp only [mem_ball, dist_zero_right, norm_inv]; bound
   rw [ray_eq_pray m', RiemannSphere.inv_coe]
@@ -81,7 +85,7 @@ public lemma pray_analyticOnNhd : AnalyticOnNhd ℂ (pray d) (ball 0 1) := by
   exact (pray_analytic m).analyticAt
 
 /-- The exterior of the multibrot set in terms of `pray` -/
-lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' norm_Ioi 1 := by
+public lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' norm_Ioi 1 := by
   ext z
   simp only [mem_compl_iff, ← multibrotExt_coe, mem_image]
   constructor
@@ -102,7 +106,7 @@ lemma multibrot_eq_pray : (multibrot d)ᶜ = (fun z ↦ z * pray d z⁻¹) '' no
     exact inv_lt_one_of_one_lt₀ w1
 
 /-- `ray` in terms of `pray` is injective -/
-lemma pray_inj : InjOn (fun z ↦ z * pray d z⁻¹) (norm_Ioi 1) := by
+public lemma pray_inj : InjOn (fun z ↦ z * pray d z⁻¹) (norm_Ioi 1) := by
   intro z z1 w w1 e
   simp only [← RiemannSphere.coe_eq_coe, ← ray_inv_eq_pray, z1, w1] at e
   simp only [norm_Ioi, mem_ofPred_eq] at z1 w1
@@ -110,7 +114,7 @@ lemma pray_inj : InjOn (fun z ↦ z * pray d z⁻¹) (norm_Ioi 1) := by
   all_goals rw [mem_ball, dist_zero_right, norm_inv]; exact inv_lt_one_of_one_lt₀ (by assumption)
 
 /-- Grönwall area series for `multibrot d` -/
-theorem multibrot_volume_sum :
+public theorem multibrot_volume_sum :
     HasSum (fun n ↦ π * n * ‖iteratedDeriv (n + 1) (pray d) 0 / (n + 1).factorial‖ ^ 2)
       (π - volume.real (multibrot d)) := by
   rw [← compl_compl (multibrot d), multibrot_eq_pray]

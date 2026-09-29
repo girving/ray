@@ -87,17 +87,17 @@ public def Super.np (s : Super f d a) (c : ℂ) (p : ℝ) : ℕ :=
 public theorem Super.nice_np (s : Super f d a) (c : ℂ) (p1 : p < 1) [op : OnePreimage s] :
     s.IsNiceN c p (s.np c p) := by
   have q : p < 1 ∧ OnePreimage s := ⟨p1, op⟩
-  simp only [Super.np, q, true_and, dif_pos]
+  simp only [Super.np, q, true_and, dite_eq_left]
   exact Nat.find_spec (s.has_nice_n c p1)
 
 theorem Super.np_zero (s : Super f d a) (c : ℂ) [op : OnePreimage s] : s.np c 0 = 0 := by
-  simp only [Super.np, zero_lt_one, op, true_and, dif_pos, Nat.find_eq_zero, Super.isNice_zero]
+  simp only [Super.np, zero_lt_one, op, true_and, dite_eq_left, Nat.find_eq_zero, Super.isNice_zero]
 
 public theorem Super.np_mono (s : Super f d a) (c : ℂ) {p0 p1 : ℝ} (le : p0 ≤ p1) (p11 : p1 < 1)
     [op : OnePreimage s] : s.np c p0 ≤ s.np c p1 := by
   have p01 : p0 < 1 := lt_of_le_of_lt le p11
   have e : s.np c p0 = Nat.find (s.has_nice_n c p01) := by
-    simp only [Super.np, p01, op, true_and, dif_pos]
+    simp only [Super.np, p01, op, true_and, dite_eq_left]
   rw [e]; apply Nat.find_min'; exact fun z zp ↦ s.nice_np c p11 _ (_root_.trans zp le)
 
 /-- An `n` such that `(f c)^[n]` sends everything with potential < `s.potential c z` to `s.near` -/

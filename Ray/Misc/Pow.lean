@@ -2,7 +2,7 @@ module
 public import Mathlib.Analysis.Normed.Group.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 import Mathlib.Analysis.Convex.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv

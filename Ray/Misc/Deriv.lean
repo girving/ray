@@ -34,5 +34,4 @@ public theorem HasDerivAt.inv_tower [NormedAlgebra 𝕜 𝕝] {x : 𝕜} {c : �
   have e : c⁻¹ = fun x ↦ (c x)⁻¹ := rfl
   rw [e]
   convert d using 1
-  · rfl
-  · simp [ContinuousLinearMap.toSpanSingleton_apply, div_eq_mul_inv, mul_neg]
+  simp [ContinuousLinearMap.toSpanSingleton_apply, div_eq_mul_inv, mul_neg]

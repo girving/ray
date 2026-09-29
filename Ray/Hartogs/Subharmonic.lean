@@ -921,14 +921,14 @@ theorem le_liminf.simple {L : Type} [CompleteLinearOrder L] [DenselyOrdered L] {
     c ≤ atTop.liminf f ↔ ∀ d, d < c → ∀ᶠ n in atTop, d ≤ f n := by
   constructor
   · intro h d dc; rw [Filter.liminf_eq, le_sSup_iff, upperBounds] at h
-    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_ofPred_eq, forall_exists_index] at h
+    simp only [Filter.eventually_atTop, Set.mem_ofPred_eq, forall_exists_index] at h
     specialize h d; contrapose h
     simp only [dc, not_forall, not_le, exists_prop, and_true, Filter.eventually_atTop,
-      ge_iff_le, not_exists] at h ⊢
+      not_exists] at h ⊢
     intro a n an; rcases h n with ⟨m, nm, fmd⟩
     exact _root_.trans (an m nm) fmd.le
   · intro h; rw [Filter.liminf_eq, le_sSup_iff, upperBounds]
-    simp only [Filter.eventually_atTop, ge_iff_le, Set.mem_ofPred_eq, forall_exists_index]
+    simp only [Filter.eventually_atTop, Set.mem_ofPred_eq, forall_exists_index]
     intro a ah; apply le_of_lt_imp_le; intro d dc
     rcases Filter.eventually_atTop.mp (h d dc) with ⟨n, hn⟩; exact ah n hn
 

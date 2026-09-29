@@ -79,7 +79,7 @@ attribute [bound_forward] SuperAt.d2 SuperAt.dp SuperAt.dr2 SuperNear.toSuperAt 
 @[bound] public lemma SuperNear.c_le_one (s : SuperNear f d t a b) : s.c ≤ 1 := by bound
 
 /-- g 0 = 1 -/
-theorem g0 {f : ℂ → ℂ} {d : ℕ} : g f d 0 = 1 := by simp only [g, if_true]
+theorem g0 {f : ℂ → ℂ} {d : ℕ} : g f d 0 = 1 := by simp only [g, ite_true]
 
 /-- Asymptotic bound on `f` based on the order `d` zero -/
 theorem SuperAt.approx (s : SuperAt f d) : (fun z ↦ f z - z ^ d) =o[𝓝 0] fun z ↦ z ^ d := by
@@ -96,7 +96,7 @@ public theorem SuperAt.f0 (s : SuperAt f d) : f 0 = 0 :=
 theorem SuperAt.fg (s : SuperAt f d) (z : ℂ) : f z = z ^ d * g f d z := by
   by_cases z0 : z = 0
   · simp only [z0, zero_pow s.d0, s.f0, MulZeroClass.zero_mul]
-  · simp only [g, z0, if_false]; field_simp [z0]
+  · simp only [g, z0, ite_false]; field_simp [z0]
 
 /-- `g` is analytic where `f` is -/
 theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
@@ -109,7 +109,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
   have ga : DifferentiableOn ℂ (g f d) (t \ {0}) := by
     have e : ∀ z : ℂ, z ∈ t \ {0} → g f d z = f z / z ^ d := by
       intro z zs; simp only [Set.mem_sdiff, Set.mem_singleton_iff] at zs
-      simp only [g, zs.2, if_false]
+      simp only [g, zs.2, ite_false]
     rw [differentiableOn_congr e]
     apply DifferentiableOn.div (fa.mono sdiff_subset).differentiableOn
     exact (Differentiable.pow differentiable_id _).differentiableOn
@@ -125,7 +125,7 @@ theorem SuperAt.ga_of_fa (s : SuperAt f d) {c : ℂ} (fa : AnalyticAt ℂ f c) :
     use t, tp; intro z zs; specialize h zs
     simp only [g, Complex.dist_eq]
     by_cases z0 : z = 0; · simp only [z0, sub_self, norm_zero]; exact ep
-    simp only [z0, if_false, if_true]
+    simp only [z0, ite_false, ite_true]
     calc ‖f z / z ^ d - 1‖
       _ = ‖f z * (z ^ d)⁻¹ - 1‖ := by rw [div_eq_mul_inv]
       _ = ‖(f z - z ^ d) * (z ^ d)⁻¹‖ := by
@@ -152,7 +152,7 @@ theorem SuperAt.super_on_ball (s : SuperAt f d) {r : ℝ} (rp : 0 < r) (r2 : r �
     intro z z0 zs
     simp only [mem_ball_zero_iff] at zs
     specialize gs zs
-    simp only [g, z0, if_false] at gs
+    simp only [g, z0, ite_false] at gs
     exact gs.le
   { d2 := s.d2
     fa0 := s.fa0
@@ -215,7 +215,7 @@ public theorem SuperAt.superNear (s : SuperAt f d) : ∃ t, SuperNear f d t (1 /
 theorem SuperNear.gs (s : SuperNear f d t a b) {z : ℂ} (zt : z ∈ t) : ‖g f d z - 1‖ ≤ b := by
   by_cases z0 : z = 0
   · simp only [z0, g0, sub_self, norm_zero, s.b0]
-  · simp only [g, z0, if_false, s.gs' z0 zt]
+  · simp only [g, z0, ite_false, s.gs' z0 zt]
 
 /-- `g` is nonzero -/
 theorem SuperNear.g_ne_zero (s : SuperNear f d t a b) {z : ℂ} (zt : z ∈ t) : g f d z ≠ 0 := by
@@ -466,7 +466,7 @@ public theorem bottcherNear_le (s : SuperNear f d t a b) (zt : z ∈ t) :
     fun _ ↦ by apply add_pos_of_pos_of_nonneg <;> bound
   have lb : ∀ n : ℕ, Real.log ((1 : ℝ) + s.kt * (1 / 2 : ℝ) ^ n) ≤ s.kt * (1 / 2 : ℝ) ^ n :=
     fun n ↦ le_trans (Real.log_le_sub_one_of_pos (p n)) (le_of_eq (by ring))
-  refine le_trans (Finset.prod_le_prod (fun _ _ ↦ norm_nonneg _) fun n _ ↦ tb n) ?_
+  refine le_trans (Finset.prod_le_prod₀ (fun _ _ ↦ norm_nonneg _) fun n _ ↦ tb n) ?_
   rw [← Real.exp_log (Finset.prod_pos fun n _ ↦ p n), Real.log_prod fun n _ ↦ (p n).ne']
   refine le_trans (Real.exp_le_exp.mpr (Finset.sum_le_sum fun n _ ↦ lb n)) ?_
   have geom := partial_scaled_geometric_bound (s.kt).toNNReal A one_half_pos.le
@@ -521,8 +521,8 @@ theorem SuperAtC.ga_of_fa (s : SuperAtC f d u) {t : Set (ℂ × ℂ)} (o : IsOpe
   refine Pair.hartogs o ?_ ?_
   · intro c z m
     simp only [g2, g]
-    by_cases zero : z = 0; · simp only [zero, if_true]; exact analyticAt_const
-    · simp only [zero, if_false]; refine AnalyticAt.div ?_ analyticAt_const (pow_ne_zero _ zero)
+    by_cases zero : z = 0; · simp only [zero, ite_true]; exact analyticAt_const
+    · simp only [zero, ite_false]; refine AnalyticAt.div ?_ analyticAt_const (pow_ne_zero _ zero)
       refine (fa _ ?_).comp₂ analyticAt_id analyticAt_const; exact m
   · intro c z m; apply (s.s (tc m)).ga_of_fa
     refine (fa _ ?_).comp₂ analyticAt_const analyticAt_id; exact m

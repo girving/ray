@@ -1,5 +1,5 @@
 module
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 public import Mathlib.Order.PartialSups
 public import Ray.Misc.Defs
 import Mathlib.Analysis.Complex.Basic
@@ -95,7 +95,7 @@ theorem norm_eq_duals_supr' {g : ℝ → ℝ} {k : NNReal} (gm : Monotone g) (gk
       have k11 : (k : ℝ≥0) = k * 1 * 1 := by norm_num
       rw [k11]
       apply (gk.comp lipschitzWith_one_norm).comp
-      exact (dualVector y).lipschitz.weaken (dualVector_nnnorm y)
+      exact (dualVector y).lipschitzWith.weaken (dualVector_nnnorm y)
     calc g ‖x‖
       _ ≤ g ‖y‖ + k * 1 * dist x y := (gk.comp lipschitzWith_one_norm).le x y
       _ ≤ g ‖y‖ + k * 1 * (e / 2 / k) := by bound

@@ -9,9 +9,9 @@ import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Calculus.FormalMultilinearSeries
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Topology.Basic
 import Ray.Analytic.Analytic
