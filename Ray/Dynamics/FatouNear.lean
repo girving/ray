@@ -3,7 +3,12 @@ public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import Mathlib.Analysis.Calculus.DiffContOnCl
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Normed.Group.FunctionSeries
+import Mathlib.Analysis.Normed.Group.Tannery
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.PSeries
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.Tactic.Bound
@@ -23,8 +28,15 @@ an orbit are summable and
 
   `Φ w = lim (φ (G^[n] w) - n)`
 
-converges uniformly.  This first part proves the hypotheses' basic consequences: `G` maps the half-plane into itself,
-orbits march right, and the one-step error of `φ`.
+converges uniformly.  We prove:
+
+1. `mapsTo`, `re_iter`: `G` maps the half-plane into itself and orbits march right.
+2. `approxFatou_step`: the one-step error of `φ` is `O(‖w‖^(-1-δ))`.
+3. `fatou_analytic`, `fatou_eqn`: `Φ` is analytic and `Φ (G w) = Φ w + 1`.
+4. `fatou_sub_approx_le`, `tendsto_tailBound`: `Φ = φ + o(1)` as `re w → ∞`.
+5. `fatou_injOn`: `Φ` is injective on a smaller half-plane, where `Φ' ≈ 1`.
+
+The repelling coordinate, the petals of a tangent-to-identity germ, and the horn map build on this.
 -/
 
 open Complex (log arg slitPlane)
@@ -318,5 +330,113 @@ public theorem fatou_eqn (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ 
     ring
   rw [e] at t1
   exact tendsto_nhds_unique t1 (t2.add_const 1)
+
+/-!
+### Asymptotics and injectivity
+-/
+
+/-- The tail bound `S a = ∑ K / (a + n / 2)^(1 + δ)` on `‖Φ - φ‖` where `a ≤ re w` -/
+@[expose] public noncomputable def tailBound (β : ℂ) (A δ a : ℝ) : ℝ :=
+  ∑' n : ℕ, errC β A / (a + n / 2) ^ (1 + δ)
+
+/-- `‖Φ w - φ w‖ ≤ S a` where `R ≤ a ≤ re w` -/
+public lemma fatou_sub_approx_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) {a : ℝ}
+    (Ra : R ≤ a) (aw : a ≤ w.re) : ‖fatou G β w - approxFatou β w‖ ≤ tailBound β A δ a := by
+  have a4 : 4 ≤ a := le_trans h.four_le Ra
+  rw [fatou, add_sub_cancel_left]
+  refine tsum_of_norm_bounded (h.summable_bound (by linarith)).hasSum fun n ↦ ?_
+  refine le_trans (h.term_le m n) ?_
+  have n0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+  exact div_le_div_of_nonneg_left (errC_nonneg h) (Real.rpow_pos_of_pos (by linarith) _)
+    (Real.rpow_le_rpow (by linarith) (by linarith) (by linarith [h.δ0]))
+
+/-- The tail bound vanishes as `a → ∞`: `Φ = φ + o(1)` -/
+public lemma tendsto_tailBound (h : NearTranslation G β R A δ) :
+    Filter.Tendsto (tailBound β A δ) Filter.atTop (nhds 0) := by
+  have z : (0 : ℝ) = ∑' _ : ℕ, (0 : ℝ) := by simp
+  rw [z]
+  refine tendsto_tsum_of_dominated_convergence (h.summable_bound (a := R) (by linarith [h.four_le]))
+    (fun n ↦ ?_) ?_
+  · -- each term vanishes
+    have t : Filter.Tendsto (fun a : ℝ ↦ (a + n / 2) ^ (1 + δ)) Filter.atTop Filter.atTop :=
+      (tendsto_rpow_atTop (by linarith [h.δ0])).comp (Filter.tendsto_atTop_add_const_right _ _ Filter.tendsto_id)
+    simpa [div_eq_mul_inv] using t.inv_tendsto_atTop.const_mul (errC β A)
+  · filter_upwards [Filter.eventually_ge_atTop R] with a Ra n
+    have n0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+    have r4 := h.four_le
+    rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg (errC_nonneg h) (Real.rpow_nonneg (by linarith) _))]
+    exact div_le_div_of_nonneg_left (errC_nonneg h) (Real.rpow_pos_of_pos (by linarith) _)
+      (Real.rpow_le_rpow (by linarith) (by linarith) (by linarith [h.δ0]))
+
+/-- The derivative of `φ`: `φ' w = 1 - β / w` -/
+lemma hasDerivAt_approxFatou (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
+    HasDerivAt (approxFatou β) (1 - β * (1 / w)) w := by
+  have d := (hasDerivAt_id' w).clog (h.mem_slitPlane m)
+  exact ((hasDerivAt_id' w).sub (d.const_mul β)).congr_deriv (by ring)
+
+/-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
+public theorem fatou_injOn (h : NearTranslation G β R A δ) :
+    ∃ R' ≥ R, InjOn (fatou G β) (rightHalf R') := by
+  -- choose `a ≥ R` with `S a ≤ 1/4` and `‖β‖ ≤ a / 2`, and use the half-plane `2a < re w`
+  obtain ⟨a, Ra, Sa, βa⟩ : ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 := by
+    have e := ((h.tendsto_tailBound.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))).and
+      ((Filter.eventually_ge_atTop R).and (Filter.eventually_ge_atTop (2 * ‖β‖)))).exists
+    obtain ⟨a, Sa, Ra, βa⟩ := e
+    exact ⟨a, Ra, Sa, by linarith⟩
+  have a4 : 4 ≤ a := le_trans h.four_le Ra
+  refine ⟨2 * a, by linarith, ?_⟩
+  set E := fun z ↦ fatou G β z - approxFatou β z with hE
+  have Ea : AnalyticOnNhd ℂ E (rightHalf R) := fun z m ↦ (h.fatou_analytic z m).sub (h.approxFatou_analytic z m)
+  -- `f z = Φ z - z` has `‖f'‖ ≤ 1/2` on the half-plane `2a < re z`
+  set f := fun z ↦ fatou G β z - z with hf
+  have sub : ∀ {z : ℂ}, z ∈ rightHalf (2 * a) → z ∈ rightHalf R := fun {z} m ↦ by
+    simp only [rightHalf, mem_ofPred_eq] at m ⊢; linarith
+  have fd : ∀ z ∈ rightHalf (2 * a), DifferentiableAt ℂ f z := fun z m ↦
+    ((h.fatou_analytic z (sub m)).differentiableAt).sub differentiableAt_id
+  have fb : ∀ z ∈ rightHalf (2 * a), ‖deriv f z‖ ≤ 1 / 2 := by
+    intro z m
+    have mR := sub m
+    have zr : 2 * a < z.re := m
+    -- Cauchy: `‖E' z‖ ≤ S a / a ≤ 1/4`
+    have ball_sub : Metric.closedBall z a ⊆ rightHalf R := by
+      intro y yb
+      have := le_trans (Complex.abs_re_le_norm (y - z)) (by simpa [dist_eq_norm] using yb)
+      rw [abs_le, Complex.sub_re] at this
+      simp only [rightHalf, mem_ofPred_eq]; linarith
+    have dE : ‖deriv E z‖ ≤ tailBound β A δ a / a := by
+      refine Complex.norm_deriv_le_of_forall_mem_sphere_norm_le (by linarith)
+        ((Ea.differentiableOn).diffContOnCl_ball ball_sub) fun y ys ↦ ?_
+      have yb : y ∈ Metric.closedBall z a := Metric.sphere_subset_closedBall ys
+      have yr : a ≤ y.re := by
+        have := le_trans (Complex.abs_re_le_norm (y - z)) (by simpa [dist_eq_norm] using yb)
+        rw [abs_le, Complex.sub_re] at this; linarith
+      exact h.fatou_sub_approx_le (ball_sub yb) Ra yr
+    have dE' : ‖deriv E z‖ ≤ 1 / 4 := by
+      refine le_trans dE ?_
+      rw [div_le_iff₀ (by linarith)]; nlinarith
+    -- `f' = E' + φ' - 1 = E' - β / z`
+    have hd : deriv f z = deriv E z - β * (1 / z) := by
+      have d1 : HasDerivAt E (deriv E z) z := (Ea z mR).differentiableAt.hasDerivAt
+      have d2 := h.hasDerivAt_approxFatou mR
+      have d3 : HasDerivAt f (deriv E z + (1 - β * (1 / z)) - 1) z := by
+        have := (d1.add d2).sub (hasDerivAt_id z)
+        convert this using 1
+        funext y; simp [hf, hE]
+      rw [d3.deriv]; ring
+    have zn : 2 * a < ‖z‖ := lt_of_lt_of_le zr (Complex.re_le_norm z)
+    have βz : ‖β * (1 / z)‖ ≤ 1 / 4 := by
+      rw [norm_mul, norm_div, norm_one, mul_one_div, div_le_iff₀ (by linarith)]; nlinarith
+    rw [hd]
+    calc ‖deriv E z - β * (1 / z)‖ ≤ ‖deriv E z‖ + ‖β * (1 / z)‖ := norm_sub_le _ _
+      _ ≤ 1 / 4 + 1 / 4 := add_le_add dE' βz
+      _ = 1 / 2 := by norm_num
+  -- the mean value inequality on the convex half-plane
+  have cv : Convex ℝ (rightHalf (2 * a)) := convex_halfSpace_re_gt (2 * a)
+  intro x xm y ym e
+  have mv := Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv xm ym
+  have : f y - f x = x - y := by simp only [hf, e]; ring
+  rw [this, norm_sub_rev] at mv
+  have : ‖y - x‖ = 0 := by linarith [norm_nonneg (y - x)]
+  exact (sub_eq_zero.mp (norm_eq_zero.mp this)).symm
 
 end NearTranslation
