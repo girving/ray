@@ -90,7 +90,7 @@ lemma eps_le (h : NearTranslationOut G β R A δ) {w : ℂ} (m : w ∈ slitOut R
   linarith
 
 /-- `‖ε w‖ ≤ 1/4` -/
-lemma eps_le_quarter (h : NearTranslationOut G β R A δ) {w : ℂ} (m : w ∈ slitOut R) : ‖G w - w - 1‖ ≤ 1 / 4 := by
+public lemma eps_le_quarter (h : NearTranslationOut G β R A δ) {w : ℂ} (m : w ∈ slitOut R) : ‖G w - w - 1‖ ≤ 1 / 4 := by
   refine le_trans (h.eps_le m) ?_
   have : R < ‖w‖ := m.1
   rw [div_le_iff₀ (h.norm_pos m)]

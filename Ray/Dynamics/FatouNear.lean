@@ -93,7 +93,7 @@ lemma dev (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
   linarith
 
 /-- The step is within `1/4` of `1` -/
-lemma dev_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) : ‖G w - (w + 1)‖ ≤ 1 / 4 := by
+public lemma dev_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) : ‖G w - (w + 1)‖ ≤ 1 / 4 := by
   refine le_trans (h.dev m) ?_
   rw [div_le_iff₀ (h.norm_pos m)]
   linarith [h.large, lt_norm m]
