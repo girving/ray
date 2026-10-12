@@ -243,7 +243,7 @@ public theorem parabolic_attracting (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 =
       IsOpen (basin g P) ∧ MapsTo g (basin g P) (basin g P) ∧
       AnalyticOnNhd ℂ (basinExt g Φ P) (basin g P) ∧
       ∀ z ∈ basin g P, basinExt g Φ P (g z) = basinExt g Φ P z + 1 := by
-  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
+  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, -, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r ε0
   obtain ⟨P', Φ', Po, Pne, Pb, PM, Φa, Φe⟩ := pg.local_attracting hc δ0
   obtain ⟨Po', gP, Φa', Φe'⟩ := transport_attr δ0 inj (fun z m ↦ ⟨(hδ z m).1, (hδ z m).2.1, (hδ z m).2.2.1,
@@ -263,7 +263,7 @@ public theorem parabolic_repelling (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 
       AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ Metric.ball 0 ε) ∧ (∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) ∧
       (∀ ζ, AnalyticAt ℂ (paramExt g Ψ V) ζ) ∧ (∀ ζ, paramExt g Ψ V (ζ + 1) = g (paramExt g Ψ V ζ)) ∧
       ∀ ζ ∈ V, paramExt g Ψ V ζ = Ψ ζ := by
-  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
+  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, -, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, -, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r ε0
   obtain ⟨V, Ψ', Vo, Vl, reach, Ψa, Ψb, Ψe⟩ := pg.local_repelling hc δ0
   obtain ⟨Ψa', Ψe'⟩ := transport_rep (fun z m ↦ ⟨(hδ z m).2.1, (hδ z m).2.2.2.1⟩) Vl Ψa Ψb Ψe

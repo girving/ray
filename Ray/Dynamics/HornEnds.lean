@@ -1055,7 +1055,7 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
       (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
       Tendsto (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ) (comap Complex.im atBot)
         (𝓝 (π * I * petalResidue k a b)) := by
-  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
+  obtain ⟨h, φ, b, ha, φa, h0, -, l, r, -, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r one_pos
   obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩, ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩,
     ⟨Vo, Vl, reach, Ψa, Ψb, Ψe⟩, endu, endl⟩ := pg.local_horn_both hc δ0

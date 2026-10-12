@@ -1,5 +1,6 @@
 module
 public import Ray.Dynamics.Petal
+public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Analytic.Order
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.Analytic
 import Mathlib.Analysis.Calculus.MeanValue
@@ -28,7 +29,7 @@ variable {g : ℂ → ℂ} {k : ℕ} {a : ℂ}
 -/
 
 /-- An analytic `F` with `F = O(z^n)` near `0` factors as `z^n q` with `q` analytic -/
-lemma exists_pow_mul_of_isBigO {F : ℂ → ℂ} {n : ℕ} (fa : AnalyticAt ℂ F 0) (o : F =O[𝓝 0] fun z ↦ z ^ n) :
+public lemma exists_pow_mul_of_isBigO {F : ℂ → ℂ} {n : ℕ} (fa : AnalyticAt ℂ F 0) (o : F =O[𝓝 0] fun z ↦ z ^ n) :
     ∃ q, AnalyticAt ℂ q 0 ∧ ∀ᶠ z in 𝓝 0, F z = z ^ n * q z := by
   suffices le : (n : ℕ∞) ≤ analyticOrderAt F 0 by
     obtain ⟨q, qa, hq⟩ := (natCast_le_analyticOrderAt fa).mp le
@@ -60,7 +61,7 @@ lemma exists_pow_mul_of_isBigO {F : ℂ → ℂ} {n : ℕ} (fa : AnalyticAt ℂ 
   exact q0 (norm_le_zero_iff.mp this)
 
 /-- Second-order Taylor bound for an analytic function near `0` -/
-lemma taylor2 {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0) : ∃ C r : ℝ, 0 ≤ C ∧ 0 < r ∧ ∀ x y : ℂ, ‖x‖ < r → ‖y‖ < r →
+public lemma taylor2 {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0) : ∃ C r : ℝ, 0 ≤ C ∧ 0 < r ∧ ∀ x y : ℂ, ‖x‖ < r → ‖y‖ < r →
     ‖f x - f y - deriv f y * (x - y)‖ ≤ C * ‖x - y‖ ^ 2 := by
   obtain ⟨R, R0, fa⟩ := fa.exists_ball_analyticOnNhd
   have d2 : ContinuousAt (deriv (deriv f)) 0 :=
@@ -137,10 +138,10 @@ def NForm (g : ℂ → ℂ) (k : ℕ) (a : ℂ) (n : ℕ) : Prop :=
 /-- `h` and `φ` are analytic local inverses fixing `0` -/
 def InvPair (h φ : ℂ → ℂ) : Prop :=
   AnalyticAt ℂ h 0 ∧ AnalyticAt ℂ φ 0 ∧ h 0 = 0 ∧ φ 0 = 0 ∧ (∀ᶠ z in 𝓝 0, φ (h z) = z) ∧
-    (∀ᶠ z in 𝓝 0, h (φ z) = z)
+    (∀ᶠ z in 𝓝 0, h (φ z) = z) ∧ deriv h 0 = 1
 
 lemma InvPair.id : InvPair id id :=
-  ⟨analyticAt_id, analyticAt_id, rfl, rfl, by simp, by simp⟩
+  ⟨analyticAt_id, analyticAt_id, rfl, rfl, by simp, by simp, by simp⟩
 
 lemma tendsto_zero {f : ℂ → ℂ} (fa : AnalyticAt ℂ f 0) (f0 : f 0 = 0) : Tendsto f (𝓝 0) (𝓝 0) := by
   have := fa.continuousAt.tendsto; rwa [f0] at this
@@ -151,14 +152,17 @@ lemma analyticAt_comp_zero {f g : ℂ → ℂ} (fa : AnalyticAt ℂ f 0) (ga : A
 
 lemma InvPair.comp {h₁ φ₁ h₂ φ₂ : ℂ → ℂ} (p : InvPair h₁ φ₁) (q : InvPair h₂ φ₂) :
     InvPair (h₁ ∘ h₂) (φ₂ ∘ φ₁) := by
-  obtain ⟨h1a, φ1a, h10, φ10, l1, r1⟩ := p
-  obtain ⟨h2a, φ2a, h20, φ20, l2, r2⟩ := q
+  obtain ⟨h1a, φ1a, h10, φ10, l1, r1, d1⟩ := p
+  obtain ⟨h2a, φ2a, h20, φ20, l2, r2, d2⟩ := q
   refine ⟨analyticAt_comp_zero h1a h2a h20, analyticAt_comp_zero φ2a φ1a φ10, by simp [h10, h20],
-    by simp [φ10, φ20], ?_, ?_⟩
+    by simp [φ10, φ20], ?_, ?_, ?_⟩
   · filter_upwards [(tendsto_zero h2a h20).eventually l1, l2] with z e1 e2
     simp [e1, e2]
   · filter_upwards [(tendsto_zero φ1a φ10).eventually r2, r1] with z e1 e2
     simp [e1, e2]
+  · have d1' : HasDerivAt h₁ 1 (h₂ 0) := by rw [h20, ← d1]; exact h1a.differentiableAt.hasDerivAt
+    have := d1'.comp 0 (d2 ▸ h2a.differentiableAt.hasDerivAt)
+    simpa using this.deriv
 
 /-- Conjugating by `z + c z^(j+2)` kills the `z^(k+j+2)` coefficient, for the right `c` -/
 lemma step {j : ℕ} (a0 : a ≠ 0) (jk : j + 2 ≤ k) (hg : NForm g k a (k + j + 2)) :
@@ -204,7 +208,8 @@ lemma step {j : ℕ} (a0 : a ≠ 0) (jk : j + 2 ≤ k) (hg : NForm g k a (k + j 
   have gh0 : (g ∘ hh) 0 = 0 := by simp [hh0, g0]
   have Ga : AnalyticAt ℂ G 0 := analyticAt_comp_zero φa gha gh0
   have G0 : G 0 = 0 := by simp [G, hh0, g0, φ0]
-  refine ⟨hh, φ, ⟨hha, φa, hh0, φ0, left, right⟩, Ga, G0, ?_⟩
+  have dh1 : deriv hh 0 = 1 := by rw [(dhh 0).deriv]; simp [H]
+  refine ⟨hh, φ, ⟨hha, φa, hh0, φ0, left, right, dh1⟩, Ga, G0, ?_⟩
   have thh := tendsto_zero hha hh0
   have tG := tendsto_zero Ga G0
   have conj : ∀ᶠ y in 𝓝 0, hh (G y) = g (hh y) := (tendsto_zero gha gh0).eventually right
@@ -305,7 +310,8 @@ the petal normal form: there are local inverses `h`, `φ` fixing `0` and a `b` w
 public theorem PetalGerm.normalize (k0 : 0 < k) (a0 : a ≠ 0) (ga : AnalyticAt ℂ g 0) (g0 : g 0 = 0)
     (approx : (fun z ↦ g z - (z + a * z ^ (k + 1))) =O[𝓝 0] fun z ↦ z ^ (k + 2)) :
     ∃ h φ : ℂ → ℂ, ∃ b, AnalyticAt ℂ h 0 ∧ AnalyticAt ℂ φ 0 ∧ h 0 = 0 ∧ φ 0 = 0 ∧
-      (∀ᶠ z in 𝓝 0, φ (h z) = z) ∧ (∀ᶠ z in 𝓝 0, h (φ z) = z) ∧ PetalGerm (φ ∘ g ∘ h) k a b := by
+      (∀ᶠ z in 𝓝 0, φ (h z) = z) ∧ (∀ᶠ z in 𝓝 0, h (φ z) = z) ∧ deriv h 0 = 1 ∧
+      PetalGerm (φ ∘ g ∘ h) k a b := by
   have ind : ∀ j, j + 1 ≤ k → ∃ h φ, InvPair h φ ∧ NForm (φ ∘ g ∘ h) k a (k + j + 2) := by
     intro j
     induction j with
@@ -315,12 +321,12 @@ public theorem PetalGerm.normalize (k0 : 0 < k) (a0 : a ≠ 0) (ga : AnalyticAt 
       obtain ⟨h, φ, p, n⟩ := ih (by omega)
       obtain ⟨h', φ', p', n'⟩ := step a0 (by omega : j + 2 ≤ k) n
       exact ⟨h ∘ h', φ' ∘ φ, p.comp p', n'⟩
-  obtain ⟨h, φ, ⟨ha, φa, h0, φ0, l, r⟩, Ga, G0, Go⟩ := ind (k - 1) (by omega)
+  obtain ⟨h, φ, ⟨ha, φa, h0, φ0, l, r, dh⟩, Ga, G0, Go⟩ := ind (k - 1) (by omega)
   rw [show k + (k - 1) + 2 = 2 * k + 1 by omega] at Go
   have Fa : AnalyticAt ℂ (fun z ↦ (φ ∘ g ∘ h) z - (z + a * z ^ (k + 1))) 0 :=
     Ga.sub (analyticAt_id.add (analyticAt_const.mul (analyticAt_id.pow _)))
   obtain ⟨q, qa, hq⟩ := exists_pow_mul_of_isBigO Fa Go
-  refine ⟨h, φ, q 0, ha, φa, h0, φ0, l, r, k0, a0, Ga, ?_⟩
+  refine ⟨h, φ, q 0, ha, φa, h0, φ0, l, r, dh, k0, a0, Ga, ?_⟩
   have qd : (fun z ↦ q z - q 0) =O[𝓝 0] fun z ↦ z := by
     simpa using qa.differentiableAt.hasDerivAt.isBigO_sub
   refine ((isBigO_refl (fun z : ℂ ↦ z ^ (2 * k + 1)) _).mul qd).congr' ?_ ?_
@@ -331,7 +337,7 @@ public theorem PetalGerm.normalize (k0 : 0 < k) (a0 : a ≠ 0) (ga : AnalyticAt 
 /-- Example: the second iterate `z - 2 z³ + z⁴` of `z ↦ -z + z²` (the parabolic point of `c = -3/4`, after a
 translation) has two petals and a petal normal form -/
 example : ∃ h φ : ℂ → ℂ, ∃ b, AnalyticAt ℂ h 0 ∧ AnalyticAt ℂ φ 0 ∧ h 0 = 0 ∧ φ 0 = 0 ∧
-    (∀ᶠ z in 𝓝 0, φ (h z) = z) ∧ (∀ᶠ z in 𝓝 0, h (φ z) = z) ∧
+    (∀ᶠ z in 𝓝 0, φ (h z) = z) ∧ (∀ᶠ z in 𝓝 0, h (φ z) = z) ∧ deriv h 0 = 1 ∧
     PetalGerm (φ ∘ (fun z ↦ z - 2 * z ^ 3 + z ^ 4) ∘ h) 2 (-2) b := by
   refine PetalGerm.normalize (by norm_num) (by norm_num) (by fun_prop) (by simp) ?_
   have e : (fun z : ℂ ↦ z - 2 * z ^ 3 + z ^ 4 - (z + -2 * z ^ (2 + 1))) = fun z ↦ z ^ (2 + 2) := by
