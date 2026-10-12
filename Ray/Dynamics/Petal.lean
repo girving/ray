@@ -55,13 +55,13 @@ public structure PetalGerm (g : ℂ → ℂ) (k : ℕ) (a b : ℂ) : Prop where
 ### Power expansions
 -/
 
-lemma pow_isBigO_pow {m n : ℕ} (h : m ≤ n) : (fun z : ℂ ↦ z ^ n) =O[𝓝 0] fun z ↦ z ^ m := by
+public lemma pow_isBigO_pow {m n : ℕ} (h : m ≤ n) : (fun z : ℂ ↦ z ^ n) =O[𝓝 0] fun z ↦ z ^ m := by
   rcases h.lt_or_eq with h | h
   · exact (isLittleO_pow_pow h).isBigO
   · subst h; exact isBigO_refl _ _
 
 /-- `(1 + u)^k = 1 + k u + k (k - 1) / 2 u² + O(u³)` -/
-lemma one_add_pow_expand (k : ℕ) :
+public lemma one_add_pow_expand (k : ℕ) :
     (fun u : ℂ ↦ (1 + u) ^ k - (1 + k * u + k * (k - 1) / 2 * u ^ 2)) =O[𝓝 0] fun u ↦ u ^ 3 := by
   induction k with
   | zero => exact (isBigO_zero (fun u : ℂ ↦ u ^ 3) _).congr_left (fun u ↦ by simp)

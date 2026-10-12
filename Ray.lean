@@ -4,6 +4,7 @@ import Ray.Dynamics.Bottcher
 import Ray.Dynamics.FatouNear
 import Ray.Dynamics.FatouRepel
 import Ray.Dynamics.Petal
+import Ray.Dynamics.PetalNormal
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
