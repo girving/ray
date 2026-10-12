@@ -14,6 +14,7 @@ import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
 import Ray.Koebe.Bieberbach
+import Ray.Koebe.DiskArea
 import Ray.Koebe.Gronwall
 import Ray.Koebe.Koebe
 import Ray.Koebe.KoebePick
