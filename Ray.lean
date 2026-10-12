@@ -5,6 +5,7 @@ import Ray.Dynamics.FatouExtend
 import Ray.Dynamics.FatouNear
 import Ray.Dynamics.FatouParam
 import Ray.Dynamics.FatouRepel
+import Ray.Dynamics.HornEnds
 import Ray.Dynamics.Parabolic
 import Ray.Dynamics.Petal
 import Ray.Dynamics.PetalNormal

@@ -435,6 +435,18 @@ public lemma tendsto_fatou_sub_approx (h : NearTranslation G β R A δ) {α : Ty
     exact div_le_div_of_nonneg_left (errC_nonneg h) (Real.rpow_pos_of_pos (by linarith) _)
       (Real.rpow_le_rpow (by linarith) r (by linarith [h.δ0]))
 
+/-- `‖Φ - φ‖ < η` far out in the half-plane -/
+public lemma exists_norm_bound (h : NearTranslation G β R A δ) {η : ℝ} (η0 : 0 < η) :
+    ∃ M : ℝ, ∀ w ∈ rightHalf R, M ≤ ‖w‖ → ‖fatou G β w - approxFatou β w‖ < η := by
+  set l := Filter.comap norm Filter.atTop ⊓ Filter.principal (rightHalf R)
+  have t := h.tendsto_fatou_sub_approx (l := l) (w := id) (Filter.eventually_inf_principal.mpr
+    (Filter.Eventually.of_forall fun _ m ↦ m))
+    (Filter.tendsto_comap.mono_left inf_le_left)
+  have e := (t.eventually (Metric.ball_mem_nhds 0 η0))
+  rw [Filter.eventually_inf_principal, Filter.eventually_comap, Filter.eventually_atTop] at e
+  obtain ⟨M, hM⟩ := e
+  exact ⟨M, fun w m Mw ↦ by simpa using hM ‖w‖ Mw w rfl m⟩
+
 /-- The derivative of `φ`: `φ' w = 1 - β / w` -/
 lemma hasDerivAt_approxFatou (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
     HasDerivAt (approxFatou β) (1 - β * (1 / w)) w := by

@@ -37,7 +37,7 @@ variable {g : ℂ → ℂ} {k : ℕ} {a b : ℂ}
 -/
 
 /-- An injective analytic map on a preconnected open set is an open map there -/
-lemma isOpen_image_of_injOn {f : ℂ → ℂ} {U S : Set ℂ} (fa : AnalyticOnNhd ℂ f U) (Uc : IsPreconnected U)
+public lemma isOpen_image_of_injOn {f : ℂ → ℂ} {U S : Set ℂ} (fa : AnalyticOnNhd ℂ f U) (Uc : IsPreconnected U)
     (inj : InjOn f U) {x y : ℂ} (xU : x ∈ U) (yU : y ∈ U) (xy : x ≠ y) (SU : S ⊆ U) (So : IsOpen S) :
     IsOpen (f '' S) := by
   rcases fa.is_constant_or_isOpen Uc with ⟨w, hw⟩ | o
@@ -48,40 +48,45 @@ lemma isOpen_image_of_injOn {f : ℂ → ℂ} {U S : Set ℂ} (fa : AnalyticOnNh
 ### Petal branches
 -/
 
-lemma root_ne_zero {c s : ℂ} (c0 : c ≠ 0) : petalRoot k c s ≠ 0 :=
+public lemma root_ne_zero {c s : ℂ} (c0 : c ≠ 0) : petalRoot k c s ≠ 0 :=
   mul_ne_zero c0 (Complex.exp_ne_zero _)
 
-lemma coord_root {c w : ℂ} (k0 : 0 < k) (a0 : a ≠ 0) (hc : c ^ k = -1 / (k * a)) (w0 : w ≠ 0) :
+public lemma coord_root {c w : ℂ} (k0 : 0 < k) (a0 : a ≠ 0) (hc : c ^ k = -1 / (k * a)) (w0 : w ≠ 0) :
     petalCoord k a (petalRoot k c w) = w := by
   have kc : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr k0.ne'
   simp only [petalCoord]
   rw [PetalGerm.root_pow w0 k0, hc]
   field_simp
 
-lemma norm_root_lt {c s : ℂ} {ε : ℝ} (k0 : 0 < k) (ε0 : 0 < ε) (s0 : s ≠ 0) (big : ‖c‖ ^ k / ε ^ k < ‖s‖) :
+public lemma norm_root_lt {c s : ℂ} {ε : ℝ} (k0 : 0 < k) (ε0 : 0 < ε) (s0 : s ≠ 0) (big : ‖c‖ ^ k / ε ^ k < ‖s‖) :
     ‖petalRoot k c s‖ < ε := by
   refine (pow_lt_pow_iff_left₀ (norm_nonneg _) ε0.le k0.ne').mp ?_
   rw [← norm_pow, PetalGerm.root_pow s0 k0, norm_div, norm_pow, div_lt_iff₀ (norm_pos_iff.mpr s0)]
   rw [div_lt_iff₀ (by positivity)] at big
   linarith
 
-lemma c_ne_zero {c : ℂ} {t : ℂ} (k0 : 0 < k) (t0 : t ≠ 0) (hc : c ^ k = t) : c ≠ 0 := by
+public lemma c_ne_zero {c : ℂ} {t : ℂ} (k0 : 0 < k) (t0 : t ≠ 0) (hc : c ^ k = t) : c ≠ 0 := by
   rintro rfl; rw [zero_pow k0.ne'] at hc; exact t0 hc.symm
 
 /-!
 ### Local objects for a germ in normal form
 -/
 
-/-- An attracting petal near `0` with its Fatou coordinate, for a germ in normal form -/
-lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = -1 / (k * a)) {ε : ℝ}
-    (ε0 : 0 < ε) : ∃ P : Set ℂ, ∃ Φ : ℂ → ℂ, IsOpen P ∧ P.Nonempty ∧ P ⊆ Metric.ball 0 ε ∧ MapsTo g P P ∧
-      AnalyticOnNhd ℂ Φ P ∧ ∀ z ∈ P, Φ (g z) = Φ z + 1 := by
+/-- The explicit attracting petal `ψ (re w > R₁)` and Fatou coordinate `Φ_G ∘ w`, given the petal near-translation -/
+public lemma PetalGerm.attr_objects (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = -1 / (k * a)) {R A : ℝ}
+    (nt : NearTranslation (fun w ↦ petalCoord k a (g (petalRoot k c w))) (petalResidue k a b) R A (k : ℝ)⁻¹)
+    (semi : ∀ w ∈ rightHalf R, g (petalRoot k c w) = petalRoot k c (petalCoord k a (g (petalRoot k c w))))
+    {R₁ ε : ℝ} (RR : R ≤ R₁) (Rε : ‖c‖ ^ k / ε ^ k ≤ R₁) (ε0 : 0 < ε) :
+    let P := (fun w ↦ petalRoot k c w) '' rightHalf R₁
+    let Φ := fun z ↦ NearTranslation.fatou (fun w ↦ petalCoord k a (g (petalRoot k c w))) (petalResidue k a b)
+      (petalCoord k a z)
+    IsOpen P ∧ P.Nonempty ∧ P ⊆ Metric.ball 0 ε ∧ MapsTo g P P ∧ AnalyticOnNhd ℂ Φ P ∧
+      ∀ z ∈ P, Φ (g z) = Φ z + 1 := by
+  intro P Φ
   have k0 := h.k0
   have kc : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr k0.ne'
   have c0 : c ≠ 0 := c_ne_zero k0 (div_ne_zero (by norm_num) (mul_ne_zero kc h.a0)) hc
-  obtain ⟨R, A, nt, semi⟩ := h.attracting hc
-  set R₁ := max R (‖c‖ ^ k / ε ^ k)
-  have nt1 := nt.mono (le_max_left R (‖c‖ ^ k / ε ^ k))
+  have nt1 := nt.mono RR
   set β := petalResidue k a b
   set G := fun w ↦ petalCoord k a (g (petalRoot k c w))
   have R4 := nt1.four_le
@@ -90,9 +95,8 @@ lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k =
     have wn := lt_of_lt_of_le wr (Complex.re_le_norm w)
     refine ⟨fun e ↦ by rw [e] at wr; simp at wr; linarith, ?_, ?_, wn⟩
     · rw [Complex.mem_slitPlane_iff]; left; linarith
-    · show R < w.re; have := le_max_left R (‖c‖ ^ k / ε ^ k); linarith
-  refine ⟨(fun w ↦ petalRoot k c w) '' rightHalf R₁, fun z ↦ NearTranslation.fatou G β (petalCoord k a z),
-    ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · show R < w.re; linarith
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
   · -- open: the branch is injective, with left inverse the petal coordinate
     have m1 : ((R₁ + 1 : ℝ) : ℂ) ∈ rightHalf R₁ := by show R₁ < _; simp
     have m2 : ((R₁ + 2 : ℝ) : ℂ) ∈ rightHalf R₁ := by show R₁ < _; simp
@@ -104,7 +108,7 @@ lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k =
   · exact ⟨_, mem_image_of_mem _ (show ((R₁ + 1 : ℝ) : ℂ) ∈ rightHalf R₁ by show R₁ < _; simp)⟩
   · rintro _ ⟨w, m, rfl⟩
     simp only [Metric.mem_ball, dist_zero_right]
-    exact norm_root_lt k0 ε0 (facts w m).1 (lt_of_le_of_lt (le_max_right _ _) (facts w m).2.2.2)
+    exact norm_root_lt k0 ε0 (facts w m).1 (lt_of_le_of_lt Rε (facts w m).2.2.2)
   · rintro _ ⟨w, m, rfl⟩
     exact ⟨G w, nt1.mapsTo m, (semi w (facts w m).2.2.1).symm⟩
   · rintro _ ⟨w, m, rfl⟩
@@ -113,37 +117,54 @@ lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k =
     rw [← e] at fa
     exact fa.comp (PetalGerm.analyticAt_petalCoord (root_ne_zero c0) kc h.a0)
   · rintro _ ⟨w, m, rfl⟩
-    simp only
+    simp only [Φ]
     rw [coord_root k0 h.a0 hc (facts w m).1]
     exact nt.fatou_eqn (facts w m).2.2.1
+
+/-- An attracting petal near `0` with its Fatou coordinate, for a germ in normal form -/
+lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = -1 / (k * a)) {ε : ℝ}
+    (ε0 : 0 < ε) : ∃ P : Set ℂ, ∃ Φ : ℂ → ℂ, IsOpen P ∧ P.Nonempty ∧ P ⊆ Metric.ball 0 ε ∧ MapsTo g P P ∧
+      AnalyticOnNhd ℂ Φ P ∧ ∀ z ∈ P, Φ (g z) = Φ z + 1 := by
+  obtain ⟨R, A, nt, semi⟩ := h.attracting hc
+  exact ⟨_, _, h.attr_objects hc nt semi (le_max_left R (‖c‖ ^ k / ε ^ k)) (le_max_right _ _) ε0⟩
+
+/-- The explicit repelling parametrisation `ψ ∘ (-Ψ_w)`, given a parametrisation `Ψ_w` in the petal plane -/
+public lemma PetalGerm.rep_objects (h : PetalGerm g k a b) {c : ℂ} {R : ℝ}
+    (semi : ∀ w ∈ leftHalf R,
+      g (petalRoot k c (-w)) = petalRoot k c (-petalCoord k a (g (petalRoot k c (-w)))))
+    (R4 : 0 ≤ R) {R₁ ε : ℝ} (RR : R ≤ R₁) (Rε : ‖c‖ ^ k / ε ^ k ≤ R₁) (ε0 : 0 < ε) {V : Set ℂ} {Ψw : ℂ → ℂ}
+    (Vl : ∀ ζ ∈ V, ζ - 1 ∈ V) (Ψa : AnalyticOnNhd ℂ Ψw V) (Ψm : ∀ ζ ∈ V, Ψw ζ ∈ leftHalf R₁)
+    (Ψe : ∀ ζ ∈ V, petalCoord k a (g (petalRoot k c (-Ψw (ζ - 1)))) = Ψw ζ) :
+    let Ψ := fun ζ ↦ petalRoot k c (-Ψw ζ)
+    AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ Metric.ball 0 ε) ∧ ∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ := by
+  intro Ψ
+  have k0 := h.k0
+  have facts : ∀ ζ ∈ V, -Ψw ζ ≠ 0 ∧ -Ψw ζ ∈ slitPlane ∧ Ψw ζ ∈ leftHalf R ∧
+      ‖c‖ ^ k / ε ^ k < ‖-Ψw ζ‖ := fun ζ m ↦ by
+    have r : (Ψw ζ).re < -R₁ := Ψm ζ m
+    have nr : -(Ψw ζ).re ≤ ‖-Ψw ζ‖ := by rw [← Complex.neg_re]; exact Complex.re_le_norm _
+    refine ⟨fun e ↦ by rw [neg_eq_zero] at e; rw [e] at r; simp at r; linarith, ?_, ?_, by linarith⟩
+    · rw [Complex.mem_slitPlane_iff, Complex.neg_re]; left; linarith
+    · show (Ψw ζ).re < -R; linarith
+  refine ⟨fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_⟩
+  · exact (PetalGerm.analyticAt_root (facts ζ m).2.1).comp (f := fun ζ ↦ -Ψw ζ) (Ψa ζ m).neg
+  · simp only [Metric.mem_ball, dist_zero_right]
+    exact norm_root_lt k0 ε0 (facts ζ m).1 (facts ζ m).2.2.2
+  · have m' := Vl ζ m
+    simp only [Ψ]
+    rw [semi _ (facts _ m').2.2.1]
+    congr 2
+    exact Ψe ζ m
 
 /-- A repelling parametrisation near `0`, for a germ in normal form -/
 lemma PetalGerm.local_repelling (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 1 / (k * a)) {ε : ℝ}
     (ε0 : 0 < ε) : ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧
       (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧ AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ Metric.ball 0 ε) ∧
       (∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) := by
-  have k0 := h.k0
   obtain ⟨R, A, nt, semi⟩ := h.repelling hc
   obtain ⟨V, Ψw, Vo, Vl, reach, Ψa, Ψm, Ψe, -, -⟩ := nt.repel_param (max R (‖c‖ ^ k / ε ^ k))
-  have R4 := nt.four_le
-  have facts : ∀ ζ ∈ V, -Ψw ζ ≠ 0 ∧ -Ψw ζ ∈ slitPlane ∧ Ψw ζ ∈ leftHalf R ∧
-      ‖c‖ ^ k / ε ^ k < ‖-Ψw ζ‖ := fun ζ m ↦ by
-    have r : (Ψw ζ).re < -max R (‖c‖ ^ k / ε ^ k) := Ψm ζ m
-    have m1 := le_max_left R (‖c‖ ^ k / ε ^ k)
-    have m2 := le_max_right R (‖c‖ ^ k / ε ^ k)
-    have nr : -(Ψw ζ).re ≤ ‖-Ψw ζ‖ := by rw [← Complex.neg_re]; exact Complex.re_le_norm _
-    refine ⟨fun e ↦ by rw [neg_eq_zero] at e; rw [e] at r; simp at r; linarith, ?_, ?_, by linarith⟩
-    · rw [Complex.mem_slitPlane_iff, Complex.neg_re]; left; linarith
-    · show (Ψw ζ).re < -R; linarith
-  refine ⟨V, fun ζ ↦ petalRoot k c (-Ψw ζ), Vo, Vl, reach, fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_⟩
-  · exact (PetalGerm.analyticAt_root (facts ζ m).2.1).comp (f := fun ζ ↦ -Ψw ζ) (Ψa ζ m).neg
-  · simp only [Metric.mem_ball, dist_zero_right]
-    exact norm_root_lt k0 ε0 (facts ζ m).1 (facts ζ m).2.2.2
-  · have m' := Vl ζ m
-    simp only
-    rw [semi _ (facts _ m').2.2.1]
-    congr 2
-    exact Ψe ζ m
+  exact ⟨V, _, Vo, Vl, reach, h.rep_objects semi (by linarith [nt.four_le]) (le_max_left _ _)
+    (le_max_right _ _) ε0 Vl Ψa Ψm Ψe⟩
 
 /-!
 ### Transport through the normalising conjugacy
@@ -151,7 +172,7 @@ lemma PetalGerm.local_repelling (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 
 
 /-- Small balls on which the normalising conjugacy behaves: `φ ∘ h = id`, `h` maps into a given ball, and
 `g ∘ h = h ∘ (φ ∘ g ∘ h)` -/
-lemma conj_setup {h φ : ℂ → ℂ} (ga : AnalyticAt ℂ g 0) (g0 : g 0 = 0) (ha : AnalyticAt ℂ h 0)
+public lemma conj_setup {h φ : ℂ → ℂ} (ga : AnalyticAt ℂ g 0) (g0 : g 0 = 0) (ha : AnalyticAt ℂ h 0)
     (φa : AnalyticAt ℂ φ 0) (h0 : h 0 = 0) (l : ∀ᶠ z in 𝓝 0, φ (h z) = z) (r : ∀ᶠ z in 𝓝 0, h (φ z) = z)
     {ε : ℝ} (ε0 : 0 < ε) : ∃ δ > 0, InjOn h (Metric.ball 0 δ) ∧ ∀ z ∈ Metric.ball (0 : ℂ) δ,
       φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧ g (h z) = h (φ (g (h z))) ∧
@@ -170,12 +191,46 @@ lemma conj_setup {h φ : ℂ → ℂ} (ga : AnalyticAt ℂ g 0) (g0 : g 0 = 0) (
   · obtain ⟨e1, a1, b1, b2, b3⟩ := hδ zm
     exact ⟨e1, a1, (hε' b1).2, ((hε' b2).1).symm, b3⟩
 
-lemma continuous_of_entire (ga : ∀ z, AnalyticAt ℂ g z) : Continuous g :=
+public lemma continuous_of_entire (ga : ∀ z, AnalyticAt ℂ g z) : Continuous g :=
   continuous_iff_continuousAt.mpr fun z ↦ (ga z).continuousAt
 
 /-!
 ### Attracting Fatou coordinates and repelling parametrisations
 -/
+
+/-- Transporting attracting objects through the normalising conjugacy -/
+public lemma transport_attr {h φ Φ' : ℂ → ℂ} {P' : Set ℂ} {δ : ℝ} (δ0 : 0 < δ) (inj : InjOn h (Metric.ball 0 δ))
+    (hδ : ∀ z ∈ Metric.ball (0 : ℂ) δ, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
+      g (h z) = h (φ (g (h z))))
+    (Po : IsOpen P') (Pb : P' ⊆ Metric.ball 0 δ) (PM : MapsTo (φ ∘ g ∘ h) P' P')
+    (Φa : AnalyticOnNhd ℂ Φ' P') (Φe : ∀ z ∈ P', Φ' ((φ ∘ g ∘ h) z) = Φ' z + 1) :
+    IsOpen (h '' P') ∧ MapsTo g (h '' P') (h '' P') ∧ AnalyticOnNhd ℂ (Φ' ∘ φ) (h '' P') ∧
+      ∀ y ∈ h '' P', (Φ' ∘ φ) (g y) = (Φ' ∘ φ) y + 1 := by
+  have sub : ∀ {z}, z ∈ P' → z ∈ Metric.ball (0 : ℂ) δ := fun m ↦ Pb m
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · refine isOpen_image_of_injOn (fun z m ↦ (hδ z m).2.1) (convex_ball _ _).isPreconnected inj
+      (Metric.mem_ball_self δ0) (x := 0) (y := ((δ / 2 : ℝ) : ℂ)) (by simp; linarith [abs_of_pos δ0])
+      (by rw [Ne, eq_comm, Complex.ofReal_eq_zero]; linarith) (fun z m ↦ Pb m) Po
+  · rintro _ ⟨z, m, rfl⟩
+    exact ⟨_, PM m, ((hδ z (sub m)).2.2.2).symm⟩
+  · rintro _ ⟨z, m, rfl⟩
+    have fa := Φa z m
+    rw [← (hδ z (sub m)).1] at fa
+    exact fa.comp (hδ z (sub m)).2.2.1
+  · rintro _ ⟨z, m, rfl⟩
+    simp only [Function.comp_apply, (hδ z (sub m)).1]
+    exact Φe z m
+
+/-- Transporting a repelling parametrisation through the normalising conjugacy -/
+public lemma transport_rep {h φ Ψ' : ℂ → ℂ} {V : Set ℂ} {δ : ℝ}
+    (hδ : ∀ z ∈ Metric.ball (0 : ℂ) δ, AnalyticAt ℂ h z ∧ g (h z) = h (φ (g (h z))))
+    (Vl : ∀ ζ ∈ V, ζ - 1 ∈ V) (Ψa : AnalyticOnNhd ℂ Ψ' V) (Ψb : ∀ ζ ∈ V, Ψ' ζ ∈ Metric.ball 0 δ)
+    (Ψe : ∀ ζ ∈ V, (φ ∘ g ∘ h) (Ψ' (ζ - 1)) = Ψ' ζ) :
+    AnalyticOnNhd ℂ (h ∘ Ψ') V ∧ ∀ ζ ∈ V, g ((h ∘ Ψ') (ζ - 1)) = (h ∘ Ψ') ζ := by
+  refine ⟨fun ζ m ↦ (hδ _ (Ψb ζ m)).1.comp (Ψa ζ m), fun ζ m ↦ ?_⟩
+  simp only [Function.comp_apply]
+  rw [(hδ _ (Ψb _ (Vl ζ m))).2]
+  exact congrArg h (Ψe ζ m)
 
 /-- Attracting petals and Fatou coordinates of a parabolic fixed point.  For each `k`-th root `c` of `-1 / (k a)`
 there is a petal `P` in any given ball around `0`, with `g P ⊆ P` and an analytic `Φ` with `Φ ∘ g = Φ + 1` on `P`;
@@ -191,27 +246,12 @@ public theorem parabolic_attracting (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 =
   obtain ⟨h, φ, b, ha, φa, h0, -, l, r, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r ε0
   obtain ⟨P', Φ', Po, Pne, Pb, PM, Φa, Φe⟩ := pg.local_attracting hc δ0
-  have sub : ∀ {z}, z ∈ P' → z ∈ Metric.ball (0 : ℂ) δ := fun m ↦ Pb m
-  have Po' : IsOpen (h '' P') := by
-    refine isOpen_image_of_injOn (fun z m ↦ (hδ z m).2.1) (convex_ball _ _).isPreconnected inj
-      (Metric.mem_ball_self δ0) (x := 0) (y := ((δ / 2 : ℝ) : ℂ)) (by simp; linarith [abs_of_pos δ0])
-      (by rw [Ne, eq_comm, Complex.ofReal_eq_zero]; linarith) (fun z m ↦ Pb m) Po
-  have gP : MapsTo g (h '' P') (h '' P') := by
-    rintro _ ⟨z, m, rfl⟩
-    exact ⟨_, PM m, ((hδ z (sub m)).2.2.2.1).symm⟩
-  have Φa' : AnalyticOnNhd ℂ (Φ' ∘ φ) (h '' P') := by
-    rintro _ ⟨z, m, rfl⟩
-    have fa := Φa z m
-    rw [← (hδ z (sub m)).1] at fa
-    exact fa.comp (hδ z (sub m)).2.2.1
-  have Φe' : ∀ y ∈ h '' P', (Φ' ∘ φ) (g y) = (Φ' ∘ φ) y + 1 := by
-    rintro _ ⟨z, m, rfl⟩
-    simp only [Function.comp_apply, (hδ z (sub m)).1]
-    exact Φe z m
+  obtain ⟨Po', gP, Φa', Φe'⟩ := transport_attr δ0 inj (fun z m ↦ ⟨(hδ z m).1, (hδ z m).2.1, (hδ z m).2.2.1,
+    (hδ z m).2.2.2.1⟩) Po Pb PM Φa Φe
   refine ⟨h '' P', Φ' ∘ φ, Po', Pne.image _, ?_, gP, Φa', Φe', isOpen_basin (continuous_of_entire ga) Po',
     mapsTo_basin gP, basinExt_analytic ga Po' gP Φe' Φa', fun z m ↦ basinExt_eqn gP Φe' m⟩
   rintro _ ⟨z, m, rfl⟩
-  exact (hδ z (sub m)).2.2.2.2
+  exact (hδ z (Pb m)).2.2.2.2
 
 /-- Repelling parametrisations of a parabolic fixed point.  For each `k`-th root `c` of `1 / (k a)` there is an open
 `V`, closed under `ζ ↦ ζ - 1` and reached from every point, and an analytic `Ψ` on `V` with values in any given ball
@@ -226,11 +266,7 @@ public theorem parabolic_repelling (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 
   obtain ⟨h, φ, b, ha, φa, h0, -, l, r, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, -, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r ε0
   obtain ⟨V, Ψ', Vo, Vl, reach, Ψa, Ψb, Ψe⟩ := pg.local_repelling hc δ0
-  have Ψa' : AnalyticOnNhd ℂ (h ∘ Ψ') V := fun ζ m ↦ (hδ _ (Ψb ζ m)).2.1.comp (Ψa ζ m)
-  have Ψe' : ∀ ζ ∈ V, g ((h ∘ Ψ') (ζ - 1)) = (h ∘ Ψ') ζ := fun ζ m ↦ by
-    simp only [Function.comp_apply]
-    rw [(hδ _ (Ψb _ (Vl ζ m))).2.2.2.1]
-    exact congrArg h (Ψe ζ m)
+  obtain ⟨Ψa', Ψe'⟩ := transport_rep (fun z m ↦ ⟨(hδ z m).2.1, (hδ z m).2.2.2.1⟩) Vl Ψa Ψb Ψe
   exact ⟨V, h ∘ Ψ', Vo, Vl, reach, Ψa', fun ζ m ↦ (hδ _ (Ψb ζ m)).2.2.2.2, Ψe',
     paramExt_analytic ga Vo Vl Ψe' reach Ψa', paramExt_eqn Vl Ψe' reach, fun ζ m ↦ paramExt_eq Vl Ψe' m⟩
 
