@@ -523,3 +523,87 @@ public lemma transport_deriv {h φ Φ' Ψ' : ℂ → ℂ} {P' V : Set ℂ} {δ :
     exact mul_ne_zero (Φd z m) (dd z (Pb m)).1
   · rw [deriv_comp _ (hδ _ (Ψb ζ m)).2.1.differentiableAt (Ψa ζ m).differentiableAt]
     exact mul_ne_zero (dd _ (Ψb ζ m)).2 (Ψd ζ m)
+
+/-- The critical points of the horn map are simple (the islands are `2:1`), if those of `g` are and no critical
+point of `g` lies on the forward orbit of a critical value -/
+public theorem horn_crit_simple {Φ Ψ : ℂ → ℂ} {P V : Set ℂ} (ga : ∀ z, AnalyticAt ℂ g z) (Po : IsOpen P)
+    (gP : MapsTo g P P) (Φa : AnalyticOnNhd ℂ Φ P) (Φe : ∀ z ∈ P, Φ (g z) = Φ z + 1) (Vo : IsOpen V)
+    (Vl : ∀ ζ ∈ V, ζ - 1 ∈ V) (reach : ∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) (Ψa : AnalyticOnNhd ℂ Ψ V)
+    (Ψe : ∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) (Φd : ∀ z ∈ P, deriv Φ z ≠ 0) (Ψd : ∀ ζ ∈ V, deriv Ψ ζ ≠ 0)
+    (simple : ∀ c₀, deriv g c₀ = 0 → deriv (deriv g) c₀ ≠ 0)
+    (post : ∀ c₀ c₁, deriv g c₀ = 0 → deriv g c₁ = 0 → ∀ n : ℕ, g^[n + 1] c₀ ≠ c₁)
+    {ζ : ℂ} (mD : ζ ∈ hornDomain g Ψ P V) (crit : deriv (hornMap g Φ Ψ P V) ζ = 0) :
+    deriv (deriv (hornMap g Φ Ψ P V)) ζ ≠ 0 := by
+  obtain ⟨N, hN⟩ := reach ζ
+  obtain ⟨n, hn⟩ := mD
+  rw [paramExt_eq_of Vl Ψe hN, ← Function.iterate_add_apply] at hn
+  set m := n + N
+  set y := fun ξ : ℂ ↦ Ψ (ξ - N)
+  have sa : ∀ ξ, HasDerivAt (fun ξ : ℂ ↦ ξ - N) 1 ξ := fun ξ ↦ (hasDerivAt_id ξ).sub_const _
+  have ev1 : ∀ᶠ ξ : ℂ in 𝓝 ζ, ξ - (N : ℂ) ∈ V :=
+    (sa ζ).differentiableAt.continuousAt.preimage_mem_nhds (Vo.mem_nhds hN)
+  have qa : AnalyticAt ℂ (fun ξ ↦ g^[m] (y ξ)) ζ :=
+    (iterate_analyticAt ga _ _).comp ((Ψa _ hN).comp (f := fun ξ : ℂ ↦ ξ - N)
+      (analyticAt_id.sub analyticAt_const))
+  have ev2 : ∀ᶠ ξ in 𝓝 ζ, g^[m] (y ξ) ∈ P := qa.continuousAt.preimage_mem_nhds (Po.mem_nhds hn)
+  -- near `ζ`, `H = Φ ∘ g^[m] ∘ y - n` and `H' = A · B · C`
+  set A := fun ξ ↦ deriv Φ (g^[m] (y ξ))
+  set f := fun (i : ℕ) (ξ : ℂ) ↦ deriv g (g^[i] (y ξ))
+  set B := fun ξ ↦ ∏ i ∈ Finset.range m, f i ξ
+  set C := fun ξ : ℂ ↦ deriv Ψ (ξ - N) * 1
+  have dH : ∀ᶠ ξ in 𝓝 ζ, deriv (hornMap g Φ Ψ P V) ξ = A ξ * (B ξ * C ξ) := by
+    have eq : hornMap g Φ Ψ P V =ᶠ[𝓝 ζ] fun ξ ↦ Φ (g^[m] (y ξ)) - n := by
+      filter_upwards [ev1, ev2] with ξ m1 m2
+      simp only [hornMap, paramExt_eq_of Vl Ψe m1]
+      have m2' : g^[n] (g^[N] (Ψ (ξ - N))) ∈ P := by rwa [← Function.iterate_add_apply]
+      rw [basinExt_eq_of gP Φe m2', ← Function.iterate_add_apply]
+    filter_upwards [eq.eventuallyEq_nhds, ev1, ev2] with ξ e m1 m2
+    rw [e.deriv_eq]
+    have dΨ : HasDerivAt y (deriv Ψ (ξ - N) * 1) ξ :=
+      (Ψa _ m1).differentiableAt.hasDerivAt.comp ξ (sa ξ)
+    have dg := (hasDerivAt_iterate ga m (y ξ)).comp ξ dΨ
+    exact (((Φa _ m2).differentiableAt.hasDerivAt.comp ξ dg).sub_const _).deriv
+  have crit' : A ζ * (B ζ * C ζ) = 0 := by rw [← dH.self_of_nhds]; exact crit
+  have A0 : A ζ ≠ 0 := Φd _ hn
+  have C0 : C ζ ≠ 0 := by simp only [C, mul_one]; exact Ψd _ hN
+  have B0 : B ζ = 0 := by
+    rcases mul_eq_zero.mp crit' with h | h
+    · exact absurd h A0
+    · rcases mul_eq_zero.mp h with h | h
+      · exact h
+      · exact absurd h C0
+  obtain ⟨j, jm, hj⟩ := Finset.prod_eq_zero_iff.mp B0
+  -- only the `j`-th factor vanishes
+  have only : ∀ i ∈ Finset.range m, i ≠ j → f i ζ ≠ 0 := by
+    intro i im ij e
+    rcases lt_or_gt_of_ne ij with lt | gt
+    · apply post _ _ e hj (j - i - 1)
+      rw [← Function.iterate_add_apply, show j - i - 1 + 1 + i = j by omega]
+    · apply post _ _ hj e (i - j - 1)
+      rw [← Function.iterate_add_apply, show i - j - 1 + 1 + j = i by omega]
+  -- derivatives of the factors
+  have dy : HasDerivAt y (deriv Ψ (ζ - N) * 1) ζ := (Ψa _ hN).differentiableAt.hasDerivAt.comp ζ (sa ζ)
+  have df : ∀ i ∈ Finset.range m, HasDerivAt (f i)
+      (deriv (deriv g) (g^[i] (y ζ)) * ((∏ k ∈ Finset.range i, deriv g (g^[k] (y ζ))) * (deriv Ψ (ζ - N) * 1)))
+      ζ := fun i _ ↦
+    ((ga _).deriv.differentiableAt.hasDerivAt).comp ζ ((hasDerivAt_iterate ga i (y ζ)).comp ζ dy)
+  have dB := HasDerivAt.fun_finsetProd df
+  have dA : DifferentiableAt ℂ A ζ :=
+    ((Φa _ hn).deriv.differentiableAt).comp (f := fun ξ ↦ g^[m] (y ξ)) ζ qa.differentiableAt
+  have dC : DifferentiableAt ℂ C ζ :=
+    (((Ψa _ hN).deriv.differentiableAt).comp ζ (sa ζ).differentiableAt).mul_const _
+  have dP := dA.hasDerivAt.mul (dB.mul dC.hasDerivAt)
+  rw [Filter.EventuallyEq.deriv_eq dH,
+    show (fun x ↦ A x * (B x * C x)) = A * ((fun x ↦ ∏ i ∈ Finset.range m, f i x) * C) from rfl, dP.deriv]
+  have Bz : (∏ i ∈ Finset.range m, f i ζ) = 0 := B0
+  simp only [Pi.mul_apply, Bz, zero_mul, mul_zero, zero_add, add_zero, smul_eq_mul]
+  rw [Finset.sum_eq_single j]
+  · refine mul_ne_zero A0 (mul_ne_zero (mul_ne_zero ?_ ?_) C0)
+    · exact Finset.prod_ne_zero_iff.mpr fun k km ↦ only k (Finset.mem_of_mem_erase km) (Finset.ne_of_mem_erase km)
+    · refine mul_ne_zero (simple _ hj) (mul_ne_zero ?_ (by simpa using Ψd _ hN))
+      exact Finset.prod_ne_zero_iff.mpr fun k km ↦ only k
+        (Finset.mem_range.mpr (lt_trans (Finset.mem_range.mp km) (Finset.mem_range.mp jm)))
+        (Nat.ne_of_lt (Finset.mem_range.mp km))
+  · intro i im ij
+    rw [Finset.prod_eq_zero (Finset.mem_erase.mpr ⟨Ne.symm ij, jm⟩) hj, zero_mul]
+  · intro jn; exact absurd jm jn

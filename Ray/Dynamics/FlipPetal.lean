@@ -541,10 +541,12 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
       (∃ ε > 0, ∀ z : ℂ, z ≠ 0 → ‖z‖ < ε →
         ‖z / (c * exp (π * I / (2 : ℕ)) * (‖z‖ / ‖c * exp (π * I / (2 : ℕ))‖ : ℝ)) - 1‖ ≤ 1 / 16 → z ∈ Pu) ∧
       Disjoint (basin g Pu) (basin g Pl) ∧
-      (IsOpen Pu ∧ Pu.Nonempty ∧ MapsTo g Pu Pu ∧ AnalyticOnNhd ℂ Φu Pu ∧ ∀ z ∈ Pu, Φu (g z) = Φu z + 1) ∧
-      (IsOpen Pl ∧ Pl.Nonempty ∧ MapsTo g Pl Pl ∧ AnalyticOnNhd ℂ Φl Pl ∧ ∀ z ∈ Pl, Φl (g z) = Φl z + 1) ∧
+      (IsOpen Pu ∧ Pu.Nonempty ∧ MapsTo g Pu Pu ∧ AnalyticOnNhd ℂ Φu Pu ∧ (∀ z ∈ Pu, Φu (g z) = Φu z + 1) ∧
+        ∀ z ∈ Pu, deriv Φu z ≠ 0) ∧
+      (IsOpen Pl ∧ Pl.Nonempty ∧ MapsTo g Pl Pl ∧ AnalyticOnNhd ℂ Φl Pl ∧ (∀ z ∈ Pl, Φl (g z) = Φl z + 1) ∧
+        ∀ z ∈ Pl, deriv Φl z ≠ 0) ∧
       (IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧ AnalyticOnNhd ℂ Ψ V ∧
-        ∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) ∧
+        (∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) ∧ ∀ ζ ∈ V, deriv Ψ ζ ≠ 0) ∧
       (∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g Ψ Pu V) ∧
       Tendsto (fun ζ ↦ hornMap g Φu Ψ Pu V ζ - ζ) (comap Complex.im atTop)
         (𝓝 (-(π * I * petalResidue 2 a b))) ∧
@@ -783,8 +785,8 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
       rw [Function.iterate_add_apply]; exact (gPl.iterate n) zm
     exact Set.disjoint_left.mp disj a1 a2
   exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨h, φ, ha, h0, dh, pg, conjg⟩, sectorPu, disjB,
-    ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
-    ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml,
+    ⟨Pou', Pneu.image _, gPu, Φau', Φeu', Φdu'⟩,
+    ⟨Pol', Pnel.image _, gPl, Φal', Φel', Φdl'⟩, ⟨Vo, Vl, reach, Ψa', Ψe', Ψd'⟩, domu, limu, doml, liml,
     (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left (fun ζ ↦ by ring),
     (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left (fun ζ ↦ by ring),
     fun ζ m crit ↦ horn_crit_values ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe' Φdu' Ψd' m crit,
@@ -996,25 +998,27 @@ lemma gr_iter_cast (x : ℝ) (n : ℕ) :
   | zero => rfl
   | succ n ih => rw [Function.iterate_succ_apply', ih, gr_cast, Function.iterate_succ_apply']
 
+lemma gr_step (x : ℝ) (x1 : -1 / 4 ≤ x) (x0 : x < 0) : x < gr x ∧ gr x < 0 := by
+  simp only [gr]
+  constructor
+  · nlinarith [mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0), mul_pos (mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0))
+      (neg_pos.mpr x0)]
+  · have : 0 < 1 - 2 * x ^ 2 + x ^ 3 := by nlinarith [sq_nonneg x]
+    nlinarith
+
+lemma gr_iter_mem (n : ℕ) : -1 / 4 ≤ gr^[n] (-1 / 4) ∧ gr^[n] (-1 / 4) < 0 := by
+  induction n with
+  | zero => simp; norm_num
+  | succ n ih =>
+    have := gr_step _ ih.1 ih.2
+    rw [Function.iterate_succ_apply']
+    exact ⟨by linarith [ih.1, this.1], this.2⟩
+
 /-- The critical orbit `-1/4 ↦ ...` of `f ∘ f` increases to `0` from below -/
 lemma gr_orbit {ε : ℝ} (ε0 : 0 < ε) : ∃ n : ℕ, -ε < gr^[n] (-1 / 4) ∧ gr^[n] (-1 / 4) < 0 := by
   set s := fun n : ℕ ↦ gr^[n] (-1 / 4)
-  have step : ∀ x : ℝ, -1 / 4 ≤ x → x < 0 → x < gr x ∧ gr x < 0 := fun x x1 x0 ↦ by
-    simp only [gr]
-    constructor
-    · nlinarith [mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0), mul_pos (mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0))
-        (neg_pos.mpr x0)]
-    · have : 0 < 1 - 2 * x ^ 2 + x ^ 3 := by nlinarith [sq_nonneg x]
-      nlinarith
-  have inv : ∀ n, -1 / 4 ≤ s n ∧ s n < 0 := by
-    intro n
-    induction n with
-    | zero => simp [s]; norm_num
-    | succ n ih =>
-      have := step _ ih.1 ih.2
-      simp only [s, Function.iterate_succ_apply'] at this ⊢
-      have ih1 : -1 / 4 ≤ gr^[n] (-1 / 4) := ih.1
-      exact ⟨by linarith [this.1], this.2⟩
+  have step := gr_step
+  have inv : ∀ n, -1 / 4 ≤ s n ∧ s n < 0 := gr_iter_mem
   have mono : Monotone s := monotone_nat_of_le_succ fun n ↦ by
     have := step _ (inv n).1 (inv n).2
     simp only [s, Function.iterate_succ_apply']; exact this.1.le
@@ -1040,6 +1044,69 @@ lemma gr_orbit {ε : ℝ} (ε0 : 0 < ε) : ∃ n : ℕ, -ε < gr^[n] (-1 / 4) �
   obtain ⟨n, hn⟩ := Filter.eventually_atTop.mp (t.eventually (Ioi_mem_nhds (by linarith : -ε < 0)))
   exact ⟨n, hn n le_rfl, (inv n).2⟩
 
+lemma tq_hasDeriv (z : ℂ) : HasDerivAt (fun z ↦ threeQuarters (threeQuarters z))
+    ((-1 + 2 * threeQuarters z) * (-1 + 2 * z)) z :=
+  (threeQuarters_deriv (threeQuarters z)).comp z (threeQuarters_deriv z)
+
+lemma tq_deriv : deriv (fun z ↦ threeQuarters (threeQuarters z)) =
+    fun z ↦ (-1 + 2 * threeQuarters z) * (-1 + 2 * z) := funext fun z ↦ (tq_hasDeriv z).deriv
+
+lemma tq_deriv2 (z : ℂ) : deriv (deriv (fun z ↦ threeQuarters (threeQuarters z))) z =
+    2 * (-1 + 2 * z) ^ 2 + 2 * (-1 + 2 * threeQuarters z) := by
+  rw [tq_deriv]
+  have d := (((threeQuarters_deriv z).const_mul 2).const_add (-1)).mul (((hasDerivAt_id z).const_mul 2).const_add (-1))
+  rw [show (fun z ↦ (-1 + 2 * threeQuarters z) * (-1 + 2 * z)) =
+    (fun x ↦ -1 + 2 * threeQuarters x) * (fun x ↦ -1 + 2 * id x) from rfl, d.deriv]
+  simp only [id]; ring
+
+/-- The critical points of `f ∘ f` are simple -/
+lemma tq_simple (c₀ : ℂ) (h : deriv (fun z ↦ threeQuarters (threeQuarters z)) c₀ = 0) :
+    deriv (deriv (fun z ↦ threeQuarters (threeQuarters z))) c₀ ≠ 0 := by
+  rw [tq_deriv] at h
+  rw [tq_deriv2]
+  rcases mul_eq_zero.mp h with h | h
+  · -- `f c₀ = 1/2`, so `c₀ ≠ 1/2`
+    rw [h, mul_zero, add_zero]
+    have : -1 + 2 * c₀ ≠ 0 := by
+      intro e
+      have c : c₀ = 1 / 2 := by linear_combination e / 2
+      rw [c] at h; simp only [threeQuarters] at h; norm_num at h
+    exact mul_ne_zero two_ne_zero (pow_ne_zero 2 this)
+  · have c : c₀ = 1 / 2 := by linear_combination h / 2
+    rw [c]; simp only [threeQuarters]; norm_num
+
+/-- No critical point of `f ∘ f` lies on the forward orbit of a critical value: the postcritical set is in
+`[-1/4, 5/16]` -/
+lemma tq_post (c₀ c₁ : ℂ) (h₀ : deriv (fun z ↦ threeQuarters (threeQuarters z)) c₀ = 0)
+    (h₁ : deriv (fun z ↦ threeQuarters (threeQuarters z)) c₁ = 0) (n : ℕ) :
+    (fun z ↦ threeQuarters (threeQuarters z))^[n + 1] c₀ ≠ c₁ := by
+  set g := fun z ↦ threeQuarters (threeQuarters z)
+  -- the orbit stays real in `[-1/4, 5/16]`
+  have orb : ∃ x : ℝ, g^[n + 1] c₀ = x ∧ -1 / 4 ≤ x ∧ x ≤ 5 / 16 := by
+    rw [Function.iterate_succ_apply]
+    have mem := gr_iter_mem n
+    rcases threeQuarters_crit h₀ with v | v
+    · refine ⟨gr^[n] (-1 / 4), ?_, mem.1, by linarith [mem.2]⟩
+      show g^[n] (g c₀) = _
+      rw [show g c₀ = (((-1 / 4 : ℝ)) : ℂ) by
+        show threeQuarters (threeQuarters c₀) = _; rw [v]; push_cast; ring, gr_iter_cast]
+    · refine ⟨-gr^[n] (-1 / 4) + (gr^[n] (-1 / 4)) ^ 2, ?_, by nlinarith [mem.1, mem.2], by nlinarith [mem.1, mem.2]⟩
+      show g^[n] (g c₀) = _
+      have e : g c₀ = threeQuarters (((-1 / 4 : ℝ)) : ℂ) := by
+        rw [show g c₀ = 5 / 16 from v]; simp only [threeQuarters]; push_cast; norm_num
+      rw [e, iterate_commute (f := threeQuarters) (g := g) (fun _ ↦ rfl), gr_iter_cast]
+      simp only [threeQuarters]; push_cast; ring
+  obtain ⟨x, hx, x1, x2⟩ := orb
+  rw [hx]
+  intro e
+  rw [← e, tq_deriv] at h₁
+  rcases mul_eq_zero.mp h₁ with h | h
+  · have : (-1 + 2 * (-x + x ^ 2) : ℝ) = 0 := by
+      have := h; simp only [threeQuarters] at this; exact_mod_cast this
+    nlinarith
+  · have : (-1 + 2 * x : ℝ) = 0 := by exact_mod_cast h
+    linarith
+
 /-- The Lavaurs horn maps at the root `c = -3/4` of the period-2 bulb.  For `f w = -w + w²` (`z² - 3/4` at its
 parabolic point `-1/2`), `g = f ∘ f = w - 2w³ + w⁴`, and the repelling direction `i/2` of `g`: there are attracting
 petals `Pu`, `Pl` (directions `∓1/2`) with Fatou coordinates `Φu`, `Φl` and a repelling parametrisation `Ψ`.  The horn
@@ -1048,7 +1115,8 @@ maps `Hu = Φu ∘ Ψ`, `Hl = Φl ∘ Ψ` are defined on an upper and a lower ha
 (so the ends differ by `11 π i / 8 = 4.3197 i`, the `τ` of the numerics).
 The critical orbit `-1/4 ↦ 5/16 ↦ ...` of `f` alternates between the two (disjoint) attracting basins, so all
 critical values lie in one orbit: those of `Hu` in `ζ₀ + ℤ` and those of `Hl` in `ζ₀ + 1/2 + ℤ`, `ζ₀ = Φu (-1/4)`
-(in the numerics' consistent coordinate this is the lattice `ζ₀ + ℤ + ℤ (1/2 + τ)`).  `f` swaps the two attracting
+(in the numerics' consistent coordinate this is the lattice `ζ₀ + ℤ + ℤ (1/2 + τ)`).  Every critical point of either
+horn map is simple, so the islands are `2:1`.  `f` swaps the two attracting
 basins with a half step in the Fatou coordinates. -/
 public theorem lavaurs_three_quarters :
     ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
@@ -1074,6 +1142,10 @@ public theorem lavaurs_three_quarters :
         ∃ j : ℤ, hornMap g Φu Ψ Pu V ζ = basinExt g Φu Pu (-1 / 4) + j) ∧
       (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 →
         ∃ j : ℤ, hornMap g Φl Ψ Pl V ζ = basinExt g Φu Pu (-1 / 4) + 1 / 2 + j) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, deriv (hornMap g Φu Ψ Pu V) ζ = 0 →
+        deriv (deriv (hornMap g Φu Ψ Pu V)) ζ ≠ 0) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 →
+        deriv (deriv (hornMap g Φl Ψ Pl V)) ζ ≠ 0) ∧
       (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
       (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) := by
   have fa : ∀ z, AnalyticAt ℂ threeQuarters z := threeQuarters_analytic
@@ -1085,8 +1157,9 @@ public theorem lavaurs_three_quarters :
     rw [e]
   have hc : (I / 2) ^ 2 = 1 / (2 * (-2 : ℂ)) := by
     rw [div_pow, Complex.I_sq]; norm_num
-  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨h, φ, ha, h0, dh, pg, conj⟩, ⟨εs, εs0, sect⟩, disj, ⟨Pou, -, gPu, Φau, Φeu⟩,
-    ⟨Pol, -, gPl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψe⟩, domu, -, doml, -, decu, decl, critu, critl, fu, fl, -, -⟩ :=
+  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨h, φ, ha, h0, dh, pg, conj⟩, ⟨εs, εs0, sect⟩, disj,
+    ⟨Pou, -, gPu, Φau, Φeu, Φdu⟩, ⟨Pol, -, gPl, Φal, Φel, Φdl⟩, ⟨Vo, Vl, reach, Ψa, Ψe, Ψd⟩, domu, -, doml, -,
+    decu, decl, critu, critl, fu, fl, -, -⟩ :=
     parabolic_flip fa f0 fd (by norm_num) approx hc
   -- the residue: `b = -d² / a = 1/2`, so `β = 3/4 - (1/2) / 8 = 11/16`
   have gO : (fun z ↦ threeQuarters (threeQuarters z) - quart₃ (-2) 1 z) =O[𝓝 0] fun z ↦ z ^ 6 := by
@@ -1118,7 +1191,9 @@ public theorem lavaurs_three_quarters :
   have ml : (5 / 16 : ℂ) ∈ basin (fun z ↦ threeQuarters (threeQuarters z)) Pl := by
     rw [← f14]; exact fu.1 mu
   refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, Dou, Dol, Dpu, Dpl, domu, doml, Hau, Hal, Heu, Hel, decu, decl, mu, ml,
-    disj, fun ζ m crit ↦ ?_, fun ζ m crit ↦ ?_, fu, fl⟩
+    disj, fun ζ m crit ↦ ?_, fun ζ m crit ↦ ?_,
+    fun ζ m crit ↦ horn_crit_simple ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe Φdu Ψd tq_simple tq_post m crit,
+    fun ζ m crit ↦ horn_crit_simple ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe Φdl Ψd tq_simple tq_post m crit, fu, fl⟩
   · obtain ⟨c₀, dc, mc, j, e⟩ := critu ζ m crit
     beta_reduce at mc e
     rcases threeQuarters_crit dc with v | v
