@@ -536,6 +536,8 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     (hc : c ^ 2 = 1 / (2 * a)) :
     ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
       let g := fun z ↦ f (f z)
+      (∃ h φ : ℂ → ℂ, AnalyticAt ℂ h 0 ∧ h 0 = 0 ∧ deriv h 0 = 1 ∧ PetalGerm (φ ∘ g ∘ h) 2 a b ∧
+        ∀ᶠ z in 𝓝 0, h ((φ ∘ g ∘ h) z) = g (h z)) ∧
       (IsOpen Pu ∧ Pu.Nonempty ∧ MapsTo g Pu Pu ∧ AnalyticOnNhd ℂ Φu Pu ∧ ∀ z ∈ Pu, Φu (g z) = Φu z + 1) ∧
       (IsOpen Pl ∧ Pl.Nonempty ∧ MapsTo g Pl Pl ∧ AnalyticOnNhd ℂ Φl Pl ∧ ∀ z ∈ Pl, Φl (g z) = Φl z + 1) ∧
       (IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧ AnalyticOnNhd ℂ Ψ V ∧
@@ -699,13 +701,179 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     obtain ⟨dm, e⟩ := horn_land hδ3 gPl Φel' Vl Ψe' mV small land'
     rw [dist_eq_norm, (horn_shift Dpl Hel ζ m dm).2, e]
     simpa [← sub_eq_add_neg] using est
-  exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
+  have tgh : Tendsto (fun z ↦ g (h z)) (𝓝 0) (𝓝 0) := by
+    have := ((ga (h 0)).continuousAt.comp ha.continuousAt).tendsto
+    rwa [Function.comp_apply, h0, g0] at this
+  have conjg : ∀ᶠ z in 𝓝 0, h ((φ ∘ g ∘ h) z) = g (h z) := by
+    filter_upwards [tgh.eventually r] with z e; exact e
+  exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨h, φ, ha, h0, dh, pg, conjg⟩,
+    ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
     ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml,
     (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left (fun ζ ↦ by ring),
     (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left (fun ζ ↦ by ring),
     fun ζ m crit ↦ horn_crit_values ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe' Φdu' Ψd' m crit,
     fun ζ m crit ↦ horn_crit_values ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe' Φdl' Ψd' m crit, ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
     fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩
+
+/-!
+### The iterative residue for `k = 2`
+-/
+
+/-- The quintic truncation `x + h₂ x² + h₃ x³ + h₄ x⁴ + h₅ x⁵` -/
+noncomputable def quint (h₂ h₃ h₄ h₅ x : ℂ) : ℂ := x + h₂ * x ^ 2 + h₃ * x ^ 3 + h₄ * x ^ 4 + h₅ * x ^ 5
+
+/-- `x + a x³ + d x⁴` -/
+@[expose] public noncomputable def quart₃ (a d x : ℂ) : ℂ := x + a * x ^ 3 + d * x ^ 4
+
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 20000 in
+/-- The degree `≥ 6` part of `res_poly` -/
+noncomputable def resS (a b d h₂ h₃ h₄ h₅ z : ℂ) : ℂ :=
+      a*h₄ + a^2*h₂ - a*h₂^3 - 6*d*h₂^2 - 4*d*h₃ + 2*b*h₂ + b^2*h₂*z^4 + a^3*h₃*z^3 + b^3*h₃*z^9
+      + a^4*h₄*z^6 + b^4*h₄*z^14 + a^5*h₅*z^9 + b^5*h₅*z^19 - a*h₃^3*z^3 - a*h₄^3*z^6 - a*h₅^3*z^9
+      - d*h₂^4*z^2 - d*h₃^4*z^6 - d*h₄^4*z^10 - d*h₅^4*z^14 - 6*a*h₂*h₃ - 6*d*h₃^2*z^2 - 6*d*h₄^2*z^4
+      - 6*d*h₅^2*z^6 - 4*d*h₄*z - 4*d*h₅*z^2 - 4*d*h₂^3*z - 4*d*h₃^3*z^4 - 4*d*h₄^3*z^7 - 4*d*h₅^3*z^10
+      - 3*a*h₃^2*z - 3*a*h₄^2*z^3 - 3*a*h₅^2*z^5 + 2*a*h₅*z + 3*b*h₃*z + 3*a^2*h₃*z + 3*b^2*h₃*z^5
+      + 4*b*h₄*z^2 + 4*a^3*h₄*z^4 + 4*b^3*h₄*z^10 + 5*b*h₅*z^3 + 5*a^4*h₅*z^7 + 5*b^4*h₅*z^15 + 6*a^2*h₄*z^2
+      + 6*b^2*h₄*z^6 + 10*a^2*h₅*z^3 + 10*a^3*h₅*z^5 + 10*b^2*h₅*z^7 + 10*b^3*h₅*z^11 - 12*d*h₂*h₃*z
+      - 12*d*h₂*h₄*z^2 - 12*d*h₂*h₅*z^3 - 12*d*h₂*h₃^2*z^3 - 12*d*h₂*h₄^2*z^5 - 12*d*h₂*h₅^2*z^7
+      - 12*d*h₃*h₄*z^3 - 12*d*h₃*h₅*z^4 - 12*d*h₂^2*h₃*z^2 - 12*d*h₃*h₄^2*z^6 - 12*d*h₃*h₅^2*z^8
+      - 12*d*h₄*h₅*z^5 - 12*d*h₂^2*h₄*z^3 - 12*d*h₃^2*h₄*z^5 - 12*d*h₄*h₅^2*z^9 - 12*d*h₂^2*h₅*z^4
+      - 12*d*h₃^2*h₅*z^6 - 12*d*h₄^2*h₅*z^8 - 6*a*h₂*h₄*z - 6*a*h₂*h₅*z^2 - 6*a*h₃*h₄*z^2
+      - 6*a*h₃*h₅*z^3 - 6*a*h₄*h₅*z^4 - 6*d*h₂^2*h₃^2*z^4 - 6*d*h₂^2*h₄^2*z^6 - 6*d*h₂^2*h₅^2*z^8
+      - 6*d*h₃^2*h₄^2*z^8 - 6*d*h₃^2*h₅^2*z^10 - 6*d*h₄^2*h₅^2*z^12 - 4*d*h₂*h₃^3*z^5 - 4*d*h₂*h₄^3*z^8
+      - 4*d*h₂*h₅^3*z^11 - 4*d*h₂^3*h₃*z^3 - 4*d*h₃*h₄^3*z^9 - 4*d*h₃*h₅^3*z^12 - 4*d*h₂^3*h₄*z^4
+      - 4*d*h₃^3*h₄*z^7 - 4*d*h₄*h₅^3*z^13 - 4*d*h₂^3*h₅*z^5 - 4*d*h₃^3*h₅*z^8 - 4*d*h₄^3*h₅*z^11
+      - 3*a*h₂*h₃^2*z^2 - 3*a*h₂*h₄^2*z^4 - 3*a*h₂*h₅^2*z^6 - 3*a*h₂^2*h₃*z - 3*a*h₃*h₄^2*z^5
+      - 3*a*h₃*h₅^2*z^7 - 3*a*h₂^2*h₄*z^2 - 3*a*h₃^2*h₄*z^4 - 3*a*h₄*h₅^2*z^8 - 3*a*h₂^2*h₅*z^3
+      - 3*a*h₃^2*h₅*z^5 - 3*a*h₄^2*h₅*z^7 + 2*a*b*h₂*z^2 + 3*a*b^2*h₃*z^7 + 3*a^2*b*h₃*z^5 + 4*a*b^3*h₄*z^12
+      + 4*a^3*b*h₄*z^8 + 5*a*b^4*h₅*z^17 + 5*a^4*b*h₅*z^11 + 6*a*b*h₃*z^3 + 6*a^2*b^2*h₄*z^10
+      + 10*a^2*b^3*h₅*z^15 + 10*a^3*b^2*h₅*z^13 + 12*a*b*h₄*z^4 + 12*a*b^2*h₄*z^8 + 12*a^2*b*h₄*z^6
+      + 20*a*b*h₅*z^5 + 20*a*b^3*h₅*z^13 + 20*a^3*b*h₅*z^9 + 30*a*b^2*h₅*z^9 + 30*a^2*b*h₅*z^7
+      + 30*a^2*b^2*h₅*z^11 - 24*d*h₂*h₃*h₄*z^4 - 24*d*h₂*h₃*h₅*z^5 - 24*d*h₂*h₄*h₅*z^6 - 24*d*h₃*h₄*h₅*z^7
+      - 12*d*h₂*h₃*h₄^2*z^7 - 12*d*h₂*h₃*h₅^2*z^9 - 12*d*h₂*h₃^2*h₄*z^6 - 12*d*h₂*h₄*h₅^2*z^10
+      - 12*d*h₂*h₃^2*h₅*z^7 - 12*d*h₂*h₄^2*h₅*z^9 - 12*d*h₂^2*h₃*h₄*z^5 - 12*d*h₃*h₄*h₅^2*z^11
+      - 12*d*h₂^2*h₃*h₅*z^6 - 12*d*h₃*h₄^2*h₅*z^10 - 12*d*h₂^2*h₄*h₅*z^7 - 12*d*h₃^2*h₄*h₅*z^9
+      - 6*a*h₂*h₃*h₄*z^3 - 6*a*h₂*h₃*h₅*z^4 - 6*a*h₂*h₄*h₅*z^5 - 6*a*h₃*h₄*h₅*z^6 - 24*d*h₂*h₃*h₄*h₅*z^8
+
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 20000 in
+lemma continuous_resS (a b d h₂ h₃ h₄ h₅ : ℂ) : Continuous (resS a b d h₂ h₃ h₄ h₅) := by
+  unfold resS; fun_prop
+
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 20000 in
+/-- The fifth-order polynomial identity behind `residue_two` -/
+lemma res_poly (a b d h₂ h₃ h₄ h₅ z : ℂ) :
+    quint h₂ h₃ h₄ h₅ (z + a * z ^ 3 + b * z ^ 5) - quart₃ a d (quint h₂ h₃ h₄ h₅ z) =
+      (-a * h₂ - d) * z ^ 4 + (-3 * a * h₂ ^ 2 + b - 4 * d * h₂) * z ^ 5 + z ^ 6 * resS a b d h₂ h₃ h₄ h₅ z := by
+  simp only [quint, quart₃, resS]; ring
+
+
+/-- Two adjacent coefficients that are `O(z^(n+2))` together vanish -/
+lemma coeff_zero_pair {c₁ c₂ : ℂ} {n : ℕ} (o : (fun z ↦ c₁ * z ^ n + c₂ * z ^ (n + 1)) =O[𝓝 0] fun z ↦ z ^ (n + 2)) :
+    c₁ = 0 ∧ c₂ = 0 := by
+  have h1 : c₁ = 0 := by
+    refine coeff_zero (n := n) ?_
+    refine ((o.trans (pow_isBigO_pow (by omega))).sub
+      ((isBigO_refl (fun z : ℂ ↦ z ^ (n + 1)) _).const_mul_left c₂)).congr_left fun z ↦ by ring
+  subst h1
+  exact ⟨rfl, coeff_zero (n := n + 1) (o.congr_left fun z ↦ by ring)⟩
+
+/-- A tangent-to-identity analytic germ to fifth order -/
+lemma tangent_expand5 {h : ℂ → ℂ} (ha : AnalyticAt ℂ h 0) (h0 : h 0 = 0) (dh : deriv h 0 = 1) :
+    ∃ h₂ h₃ h₄ h₅ : ℂ, (fun z ↦ h z - quint h₂ h₃ h₄ h₅ z) =O[𝓝 0] fun z ↦ z ^ 6 := by
+  set F := fun z ↦ h z - z
+  have Fa : AnalyticAt ℂ F 0 := ha.sub analyticAt_id
+  have F0 : F 0 = 0 := by simp [F, h0]
+  have Fd : deriv F 0 = 0 := by
+    have := (ha.differentiableAt.hasDerivAt.sub (hasDerivAt_id (0 : ℂ))).deriv
+    rw [dh] at this; rw [show F = h - id from rfl, this]; ring
+  obtain ⟨C, r, -, r0, tay⟩ := taylor2 Fa
+  have F2 : F =O[𝓝 0] fun z ↦ z ^ 2 := by
+    refine IsBigO.of_bound C ?_
+    filter_upwards [Metric.ball_mem_nhds (0 : ℂ) r0] with z zm
+    have := tay z 0 (by simpa using zm) (by simpa using r0)
+    simpa [F0, Fd, norm_pow] using this
+  have poly : ∀ c₂ c₃ c₄ : ℂ, AnalyticAt ℂ (fun z ↦ F z - (c₂ * z ^ 2 + c₃ * z ^ 3 + c₄ * z ^ 4)) 0 :=
+    fun _ _ _ ↦ Fa.sub (by fun_prop)
+  obtain ⟨h₂, e2⟩ := coeff_step Fa F2
+  obtain ⟨h₃, e3⟩ := coeff_step ((poly h₂ 0 0).congr (by filter_upwards with z; simp)) e2
+  have e3' : (fun z ↦ F z - (h₂ * z ^ 2 + h₃ * z ^ 3 + 0 * z ^ 4)) =O[𝓝 0] fun z ↦ z ^ 4 :=
+    e3.congr_left fun z ↦ by ring
+  obtain ⟨h₄, e4⟩ := coeff_step (poly h₂ h₃ 0) e3'
+  have e4' : (fun z ↦ F z - (h₂ * z ^ 2 + h₃ * z ^ 3 + h₄ * z ^ 4)) =O[𝓝 0] fun z ↦ z ^ 5 :=
+    e4.congr_left fun z ↦ by ring
+  obtain ⟨h₅, e5⟩ := coeff_step (poly h₂ h₃ h₄) e4'
+  exact ⟨h₂, h₃, h₄, h₅, e5.congr_left fun z ↦ by simp only [F, quint]; ring⟩
+
+/-- For `k = 2` the normal form coefficient `b` is determined by `g = z + a z³ + d z⁴ + O(z⁶)`: any analytic
+tangent-to-identity `h` conjugating `g` to petal normal form has `b = -d² / a`.  So the iterative residue is
+`β = 3/4 + d² / (2 a³)`. -/
+public lemma residue_two {g h g' : ℂ → ℂ} {a b d : ℂ} (a0 : a ≠ 0)
+    (gO : (fun z ↦ g z - quart₃ a d z) =O[𝓝 0] fun z ↦ z ^ 6) (ha : AnalyticAt ℂ h 0) (h0 : h 0 = 0)
+    (dh : deriv h 0 = 1) (pg : PetalGerm g' 2 a b) (conj : ∀ᶠ z in 𝓝 0, h (g' z) = g (h z)) :
+    b = -d ^ 2 / a := by
+  obtain ⟨h₂, h₃, h₄, h₅, hO⟩ := tangent_expand5 ha h0 dh
+  set H := quint h₂ h₃ h₄ h₅
+  set G := fun z : ℂ ↦ z + a * z ^ 3 + b * z ^ 5
+  have g'O : (fun z ↦ g' z - G z) =O[𝓝 0] fun z ↦ z ^ 6 := by
+    have := pg.approx; norm_num at this; exact this
+  have bnd : ∀ {F : ℂ → ℂ}, Continuous F → (fun z ↦ F z) =O[𝓝 0] fun _ ↦ (1 : ℂ) :=
+    fun c ↦ (c.tendsto 0).isBigO_one ℂ
+  have z6 : ∀ {m : ℕ}, m ≤ 6 → (fun z : ℂ ↦ z ^ 6) =O[𝓝 0] fun z ↦ z ^ m := fun h ↦ pow_isBigO_pow h
+  have z1 : (fun z : ℂ ↦ z ^ 1) = fun z ↦ z := by funext; simp
+  -- `g'` and `h` are `O(z)`
+  have GO : (fun z ↦ G z) =O[𝓝 0] fun z ↦ z := by
+    have c : (fun z ↦ G z) = fun z ↦ z * (1 + a * z ^ 2 + b * z ^ 4) := by funext z; simp only [G]; ring
+    rw [c]
+    exact ((isBigO_refl (fun z : ℂ ↦ z) _).mul (bnd (by fun_prop))).congr_right fun z ↦ by simp
+  have HO : (fun z ↦ H z) =O[𝓝 0] fun z ↦ z := by
+    have c : (fun z ↦ H z) = fun z ↦ z * (1 + h₂ * z + h₃ * z ^ 2 + h₄ * z ^ 3 + h₅ * z ^ 4) := by
+      funext z; simp only [H, quint]; ring
+    rw [c]
+    exact ((isBigO_refl (fun z : ℂ ↦ z) _).mul (bnd (by fun_prop))).congr_right fun z ↦ by simp
+  have g'z : g' =O[𝓝 0] fun z ↦ z :=
+    ((g'O.trans ((z6 (m := 1) (by norm_num)).congr_right fun z ↦ by simp)).add GO).congr_left
+      fun z ↦ by ring
+  have hz : h =O[𝓝 0] fun z ↦ z :=
+    ((hO.trans ((z6 (m := 1) (by norm_num)).congr_right fun z ↦ by simp)).add HO).congr_left
+      fun z ↦ by ring
+  have tg' : Tendsto g' (𝓝 0) (𝓝 0) := g'z.trans_tendsto tendsto_id
+  have th : Tendsto h (𝓝 0) (𝓝 0) := hz.trans_tendsto tendsto_id
+  -- the five pieces
+  have E1 := (hO.comp_tendsto tg').trans (g'z.pow 6)
+  set Q := fun u v : ℂ ↦ 1 + h₂ * (u + v) + h₃ * (u ^ 2 + u * v + v ^ 2) +
+    h₄ * (u ^ 3 + u ^ 2 * v + u * v ^ 2 + v ^ 3) + h₅ * (u ^ 4 + u ^ 3 * v + u ^ 2 * v ^ 2 + u * v ^ 3 + v ^ 4)
+  have Qe : ∀ u v, H u - H v = (u - v) * Q u v := fun u v ↦ by simp only [H, quint, Q]; ring
+  have tG : Tendsto (fun z ↦ G z) (𝓝 0) (𝓝 0) := GO.trans_tendsto tendsto_id
+  have cQ : Continuous (fun p : ℂ × ℂ ↦ Q p.1 p.2) := by simp only [Q]; fun_prop
+  have E2 : (fun z ↦ H (g' z) - H (G z)) =O[𝓝 0] fun z ↦ z ^ 6 :=
+    ((g'O.mul (((cQ.tendsto (0, 0)).comp (tg'.prodMk_nhds tG)).isBigO_one ℂ)).congr_right
+      fun z ↦ by simp).congr_left fun z ↦ (Qe _ _).symm
+  have E3 := (gO.comp_tendsto th).trans (hz.pow 6)
+  set Q' := fun u v : ℂ ↦ 1 + a * (u ^ 2 + u * v + v ^ 2) + d * (u ^ 3 + u ^ 2 * v + u * v ^ 2 + v ^ 3)
+  have Qe' : ∀ u v, quart₃ a d u - quart₃ a d v = (u - v) * Q' u v := fun u v ↦ by
+    simp only [quart₃, Q']; ring
+  have tH : Tendsto (fun z ↦ H z) (𝓝 0) (𝓝 0) := HO.trans_tendsto tendsto_id
+  have cQ' : Continuous (fun p : ℂ × ℂ ↦ Q' p.1 p.2) := by simp only [Q']; fun_prop
+  have E4 : (fun z ↦ quart₃ a d (h z) - quart₃ a d (H z)) =O[𝓝 0] fun z ↦ z ^ 6 :=
+    ((hO.mul (((cQ'.tendsto (0, 0)).comp (th.prodMk_nhds tH)).isBigO_one ℂ)).congr_right
+      fun z ↦ by simp).congr_left fun z ↦ (Qe' _ _).symm
+  -- so `H (G z) - quart₃ (H z) = O(z⁶)`, and its `z⁴`, `z⁵` coefficients vanish
+  have tot : (fun z ↦ H (G z) - quart₃ a d (H z)) =O[𝓝 0] fun z ↦ z ^ 6 := by
+    refine ((((E2.neg_left.sub E1).add E3).add E4)).congr' ?_ (Eventually.of_forall fun _ ↦ rfl)
+    filter_upwards [conj] with z e
+    simp only [Function.comp_apply]
+    rw [← e]; ring
+  have co := coeff_zero_pair (n := 4) (c₁ := -a * h₂ - d) (c₂ := -3 * a * h₂ ^ 2 + b - 4 * d * h₂)
+    ((tot.sub ((isBigO_refl (fun z : ℂ ↦ z ^ 6) _).mul (bnd (continuous_resS a b d h₂ h₃ h₄ h₅)) |>.congr_right
+      fun z ↦ by simp)).congr_left fun z ↦ by simp only [H, G]; rw [res_poly]; ring)
+  obtain ⟨c4, c5⟩ := co
+  have e2 : h₂ = -d / a := by field_simp; linear_combination -c4
+  rw [e2] at c5
+  field_simp at c5 ⊢
+  linear_combination c5
 
 /-!
 ### The parabolic point of `z² - 3/4`
@@ -740,14 +908,16 @@ lemma threeQuarters_crit {c₀ : ℂ} (h : deriv (fun w ↦ threeQuarters (three
 parabolic point `-1/2`), `g = f ∘ f = w - 2w³ + w⁴`, and the repelling direction `i/2` of `g`: there are attracting
 petals `Pu`, `Pl` (directions `∓1/2`) with Fatou coordinates `Φu`, `Φl` and a repelling parametrisation `Ψ`.  The horn
 maps `Hu = Φu ∘ Ψ`, `Hl = Φl ∘ Ψ` are defined on an upper and a lower half-plane, and
-`Hu ζ = ζ - π i β + O(e^(-2π im ζ))`, `Hl ζ = ζ + π i β + O(e^(2π im ζ))`, `β` the iterative residue.
+`Hu ζ = ζ - π i β + O(e^(-2π im ζ))`, `Hl ζ = ζ + π i β + O(e^(2π im ζ))`, with iterative residue `β = 11/16`
+(so the ends differ by `11 π i / 8 = 4.3197 i`, the `τ` of the numerics).
 Every critical value of `Hu` is `Φu (-1/4) + j` or `Φu (5/16) + j` with `j ∈ ℤ`, and likewise for `Hl`.  `f` swaps the
 two attracting basins with a half step in the Fatou coordinates. -/
 public theorem lavaurs_three_quarters :
     ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
       let f := threeQuarters
       let g := fun z ↦ f (f z)
-      let β := petalResidue 2 (-2) b
+      let β : ℂ := 11 / 16
+      petalResidue 2 (-2) b = β ∧
       (∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g Ψ Pu V) ∧
       (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
       AnalyticOnNhd ℂ (hornMap g Φu Ψ Pu V) (hornDomain g Ψ Pu V) ∧
@@ -773,12 +943,22 @@ public theorem lavaurs_three_quarters :
     rw [e]
   have hc : (I / 2) ^ 2 = 1 / (2 * (-2 : ℂ)) := by
     rw [div_pow, Complex.I_sq]; norm_num
-  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨Pou, -, gPu, Φau, Φeu⟩, ⟨Pol, -, gPl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψe⟩,
-    domu, -, doml, -, decu, decl, critu, critl, fu, fl, -, -⟩ := parabolic_flip fa f0 fd (by norm_num) approx hc
+  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨h, φ, ha, h0, dh, pg, conj⟩, ⟨Pou, -, gPu, Φau, Φeu⟩,
+    ⟨Pol, -, gPl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψe⟩, domu, -, doml, -, decu, decl, critu, critl, fu, fl, -, -⟩ :=
+    parabolic_flip fa f0 fd (by norm_num) approx hc
+  -- the residue: `b = -d² / a = 1/2`, so `β = 3/4 - (1/2) / 8 = 11/16`
+  have gO : (fun z ↦ threeQuarters (threeQuarters z) - quart₃ (-2) 1 z) =O[𝓝 0] fun z ↦ z ^ 6 := by
+    have e : (fun z ↦ threeQuarters (threeQuarters z) - quart₃ (-2) 1 z) = fun _ ↦ 0 := by
+      funext z; simp only [threeQuarters, quart₃]; ring
+    rw [e]; exact isBigO_zero _ _
+  have hb := residue_two (by norm_num) gO ha h0 dh pg conj
+  have hβ : petalResidue 2 (-2) b = 11 / 16 := by
+    simp only [petalResidue, hb]; norm_num
+  rw [hβ] at decu decl
   have ga : ∀ z, AnalyticAt ℂ (fun z ↦ threeQuarters (threeQuarters z)) z := fun z ↦ (fa _).comp (fa z)
   obtain ⟨-, -, Hau, Heu⟩ := horn_map ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe
   obtain ⟨-, -, Hal, Hel⟩ := horn_map ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe
-  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
+  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
     fun ζ m crit ↦ ?_, fu, fl⟩
   · obtain ⟨c₀, dc, mc, j, e⟩ := critu ζ m crit
     exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
