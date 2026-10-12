@@ -918,6 +918,9 @@ public theorem lavaurs_three_quarters :
       let g := fun z ↦ f (f z)
       let β : ℂ := 11 / 16
       petalResidue 2 (-2) b = β ∧
+      IsOpen (hornDomain g Ψ Pu V) ∧ IsOpen (hornDomain g Ψ Pl V) ∧
+      (∀ ζ, ζ ∈ hornDomain g Ψ Pu V ↔ ζ + 1 ∈ hornDomain g Ψ Pu V) ∧
+      (∀ ζ, ζ ∈ hornDomain g Ψ Pl V ↔ ζ + 1 ∈ hornDomain g Ψ Pl V) ∧
       (∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g Ψ Pu V) ∧
       (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
       AnalyticOnNhd ℂ (hornMap g Φu Ψ Pu V) (hornDomain g Ψ Pu V) ∧
@@ -956,9 +959,9 @@ public theorem lavaurs_three_quarters :
     simp only [petalResidue, hb]; norm_num
   rw [hβ] at decu decl
   have ga : ∀ z, AnalyticAt ℂ (fun z ↦ threeQuarters (threeQuarters z)) z := fun z ↦ (fa _).comp (fa z)
-  obtain ⟨-, -, Hau, Heu⟩ := horn_map ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe
-  obtain ⟨-, -, Hal, Hel⟩ := horn_map ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe
-  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
+  obtain ⟨Dou, Dpu, Hau, Heu⟩ := horn_map ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe
+  obtain ⟨Dol, Dpl, Hal, Hel⟩ := horn_map ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe
+  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, Dou, Dol, Dpu, Dpl, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
     fun ζ m crit ↦ ?_, fu, fl⟩
   · obtain ⟨c₀, dc, mc, j, e⟩ := critu ζ m crit
     exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
