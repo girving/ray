@@ -1,7 +1,9 @@
 module
 import Ray.Analytic.Log
 import Ray.Dynamics.Bottcher
+import Ray.Dynamics.FatouExtend
 import Ray.Dynamics.FatouNear
+import Ray.Dynamics.FatouParam
 import Ray.Dynamics.FatouRepel
 import Ray.Dynamics.Petal
 import Ray.Dynamics.PetalNormal

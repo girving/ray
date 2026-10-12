@@ -374,9 +374,11 @@ lemma hasDerivAt_approxFatou (h : NearTranslation G β R A δ) {w : ℂ} (m : w 
   have d := (hasDerivAt_id' w).clog (h.mem_slitPlane m)
   exact ((hasDerivAt_id' w).sub (d.const_mul β)).congr_deriv (by ring)
 
-/-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
-public theorem fatou_injOn (h : NearTranslation G β R A δ) :
-    ∃ R' ≥ R, InjOn (fatou G β) (rightHalf R') := by
+/-- On a smaller half-plane `Φ - id` is `1/2`-Lipschitz, since `Φ' ≈ 1`.  The half-plane is `2a < re w`, where
+`S a ≤ 1/4` and `‖β‖ ≤ a / 2`. -/
+public lemma exists_lip (h : NearTranslation G β R A δ) :
+    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖ := by
   -- choose `a ≥ R` with `S a ≤ 1/4` and `‖β‖ ≤ a / 2`, and use the half-plane `2a < re w`
   obtain ⟨a, Ra, Sa, βa⟩ : ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 := by
     have e := ((h.tendsto_tailBound.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))).and
@@ -384,7 +386,7 @@ public theorem fatou_injOn (h : NearTranslation G β R A δ) :
     obtain ⟨a, Sa, Ra, βa⟩ := e
     exact ⟨a, Ra, Sa, by linarith⟩
   have a4 : 4 ≤ a := le_trans h.four_le Ra
-  refine ⟨2 * a, by linarith, ?_⟩
+  refine ⟨a, Ra, Sa, βa, ?_⟩
   set E := fun z ↦ fatou G β z - approxFatou β z with hE
   have Ea : AnalyticOnNhd ℂ E (rightHalf R) := fun z m ↦ (h.fatou_analytic z m).sub (h.approxFatou_analytic z m)
   -- `f z = Φ z - z` has `‖f'‖ ≤ 1/2` on the half-plane `2a < re z`
@@ -432,11 +434,17 @@ public theorem fatou_injOn (h : NearTranslation G β R A δ) :
       _ = 1 / 2 := by norm_num
   -- the mean value inequality on the convex half-plane
   have cv : Convex ℝ (rightHalf (2 * a)) := convex_halfSpace_re_gt (2 * a)
-  intro x xm y ym e
-  have mv := Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv xm ym
-  have : f y - f x = x - y := by simp only [hf, e]; ring
-  rw [this, norm_sub_rev] at mv
-  have : ‖y - x‖ = 0 := by linarith [norm_nonneg (y - x)]
-  exact (sub_eq_zero.mp (norm_eq_zero.mp this)).symm
+  intro x xm y ym
+  exact Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv ym xm
+
+/-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
+public theorem fatou_injOn (h : NearTranslation G β R A δ) :
+    ∃ R' ≥ R, InjOn (fatou G β) (rightHalf R') := by
+  obtain ⟨a, Ra, -, -, lip⟩ := h.exists_lip
+  refine ⟨2 * a, by linarith [h.four_le], fun x xm y ym e ↦ ?_⟩
+  have mv := lip x xm y ym
+  rw [show fatou G β x - x - (fatou G β y - y) = y - x by rw [e]; ring, norm_sub_rev] at mv
+  have : ‖x - y‖ = 0 := by linarith [norm_nonneg (x - y)]
+  exact sub_eq_zero.mp (norm_eq_zero.mp this)
 
 end NearTranslation
