@@ -706,3 +706,81 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     fun ζ m crit ↦ horn_crit_values ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe' Φdu' Ψd' m crit,
     fun ζ m crit ↦ horn_crit_values ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe' Φdl' Ψd' m crit, ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
     fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩
+
+/-!
+### The parabolic point of `z² - 3/4`
+-/
+
+/-- `z² - 3/4` in the coordinate `w = z + 1/2` of its parabolic fixed point -/
+@[expose] public def threeQuarters (w : ℂ) : ℂ := -w + w ^ 2
+
+lemma threeQuarters_analytic (w : ℂ) : AnalyticAt ℂ threeQuarters w := by
+  unfold threeQuarters; fun_prop
+
+lemma threeQuarters_deriv (w : ℂ) : HasDerivAt threeQuarters (-1 + 2 * w) w := by
+  have := (hasDerivAt_id w).neg.add ((hasDerivAt_id w).pow 2)
+  convert this using 1
+  · funext; simp [threeQuarters]
+  · simp
+
+/-- The critical values of `f ∘ f` for `f w = -w + w²` are `-1/4 = f (1/2)` and `5/16 = f (-1/4)` -/
+lemma threeQuarters_crit {c₀ : ℂ} (h : deriv (fun w ↦ threeQuarters (threeQuarters w)) c₀ = 0) :
+    threeQuarters (threeQuarters c₀) = -1 / 4 ∨ threeQuarters (threeQuarters c₀) = 5 / 16 := by
+  have d := (threeQuarters_deriv (threeQuarters c₀)).comp c₀ (threeQuarters_deriv c₀)
+  rw [show (fun w ↦ threeQuarters (threeQuarters w)) = threeQuarters ∘ threeQuarters from rfl, d.deriv] at h
+  rcases mul_eq_zero.mp h with h | h
+  · left
+    have e : threeQuarters c₀ = 1 / 2 := by linear_combination h / 2
+    rw [e]; simp only [threeQuarters]; norm_num
+  · right
+    have e : c₀ = 1 / 2 := by linear_combination h / 2
+    rw [e]; simp only [threeQuarters]; norm_num
+
+/-- The Lavaurs horn maps at the root `c = -3/4` of the period-2 bulb.  For `f w = -w + w²` (`z² - 3/4` at its
+parabolic point `-1/2`), `g = f ∘ f = w - 2w³ + w⁴`, and the repelling direction `i/2` of `g`: there are attracting
+petals `Pu`, `Pl` (directions `∓1/2`) with Fatou coordinates `Φu`, `Φl` and a repelling parametrisation `Ψ`.  The horn
+maps `Hu = Φu ∘ Ψ`, `Hl = Φl ∘ Ψ` are defined on an upper and a lower half-plane, and
+`Hu ζ = ζ - π i β + O(e^(-2π im ζ))`, `Hl ζ = ζ + π i β + O(e^(2π im ζ))`, `β` the iterative residue.
+Every critical value of `Hu` is `Φu (-1/4) + j` or `Φu (5/16) + j` with `j ∈ ℤ`, and likewise for `Hl`.  `f` swaps the
+two attracting basins with a half step in the Fatou coordinates. -/
+public theorem lavaurs_three_quarters :
+    ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
+      let f := threeQuarters
+      let g := fun z ↦ f (f z)
+      let β := petalResidue 2 (-2) b
+      (∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g Ψ Pu V) ∧
+      (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
+      AnalyticOnNhd ℂ (hornMap g Φu Ψ Pu V) (hornDomain g Ψ Pu V) ∧
+      AnalyticOnNhd ℂ (hornMap g Φl Ψ Pl V) (hornDomain g Ψ Pl V) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, hornMap g Φu Ψ Pu V (ζ + 1) = hornMap g Φu Ψ Pu V ζ + 1) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pl V, hornMap g Φl Ψ Pl V (ζ + 1) = hornMap g Φl Ψ Pl V ζ + 1) ∧
+      (fun ζ ↦ hornMap g Φu Ψ Pu V ζ - ζ + π * I * β) =O[comap Complex.im atTop]
+        (fun ζ ↦ Real.exp (-2 * π * ζ.im)) ∧
+      (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ - π * I * β) =O[comap Complex.im atBot]
+        (fun ζ ↦ Real.exp (2 * π * ζ.im)) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, deriv (hornMap g Φu Ψ Pu V) ζ = 0 → ∃ v : ℂ, (v = -1 / 4 ∨ v = 5 / 16) ∧
+        v ∈ basin g Pu ∧ ∃ j : ℤ, hornMap g Φu Ψ Pu V ζ = basinExt g Φu Pu v + j) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 → ∃ v : ℂ, (v = -1 / 4 ∨ v = 5 / 16) ∧
+        v ∈ basin g Pl ∧ ∃ j : ℤ, hornMap g Φl Ψ Pl V ζ = basinExt g Φl Pl v + j) ∧
+      (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
+      (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) := by
+  have fa : ∀ z, AnalyticAt ℂ threeQuarters z := threeQuarters_analytic
+  have f0 : threeQuarters 0 = 0 := by simp [threeQuarters]
+  have fd : deriv threeQuarters 0 = -1 := by simpa using (threeQuarters_deriv 0).deriv
+  have approx : (fun z ↦ threeQuarters (threeQuarters z) - (z + -2 * z ^ 3)) =O[𝓝 0] fun z ↦ z ^ 4 := by
+    have e : (fun z ↦ threeQuarters (threeQuarters z) - (z + -2 * z ^ 3)) = fun z ↦ z ^ 4 := by
+      funext z; simp only [threeQuarters]; ring
+    rw [e]
+  have hc : (I / 2) ^ 2 = 1 / (2 * (-2 : ℂ)) := by
+    rw [div_pow, Complex.I_sq]; norm_num
+  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨Pou, -, gPu, Φau, Φeu⟩, ⟨Pol, -, gPl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψe⟩,
+    domu, -, doml, -, decu, decl, critu, critl, fu, fl, -, -⟩ := parabolic_flip fa f0 fd (by norm_num) approx hc
+  have ga : ∀ z, AnalyticAt ℂ (fun z ↦ threeQuarters (threeQuarters z)) z := fun z ↦ (fa _).comp (fa z)
+  obtain ⟨-, -, Hau, Heu⟩ := horn_map ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe
+  obtain ⟨-, -, Hal, Hel⟩ := horn_map ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe
+  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
+    fun ζ m crit ↦ ?_, fu, fl⟩
+  · obtain ⟨c₀, dc, mc, j, e⟩ := critu ζ m crit
+    exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
+  · obtain ⟨c₀, dc, mc, j, e⟩ := critl ζ m crit
+    exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
