@@ -27,7 +27,7 @@ open scoped Topology
 variable {g Φ Ψ : ℂ → ℂ} {P V : Set ℂ}
 
 /-- Iterates of an entire function are entire -/
-lemma iterate_analyticAt (ga : ∀ z, AnalyticAt ℂ g z) (n : ℕ) (z : ℂ) : AnalyticAt ℂ g^[n] z := by
+public lemma iterate_analyticAt (ga : ∀ z, AnalyticAt ℂ g z) (n : ℕ) (z : ℂ) : AnalyticAt ℂ g^[n] z := by
   induction n generalizing z with
   | zero => exact analyticAt_id
   | succ n ih => rw [Function.iterate_succ]; exact (ih (g z)).comp (ga z)

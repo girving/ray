@@ -550,6 +550,10 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
         (fun ζ ↦ Real.exp (-2 * π * ζ.im)) ∧
       (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ - π * I * petalResidue 2 a b) =O[comap Complex.im atBot]
         (fun ζ ↦ Real.exp (2 * π * ζ.im)) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, deriv (hornMap g Φu Ψ Pu V) ζ = 0 → ∃ c₀ : ℂ, deriv g c₀ = 0 ∧
+        g c₀ ∈ basin g Pu ∧ ∃ j : ℤ, hornMap g Φu Ψ Pu V ζ = basinExt g Φu Pu (g c₀) + j) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 → ∃ c₀ : ℂ, deriv g c₀ = 0 ∧
+        g c₀ ∈ basin g Pl ∧ ∃ j : ℤ, hornMap g Φl Ψ Pl V ζ = basinExt g Φl Pl (g c₀) + j) ∧
       (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
       (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) ∧
       (∀ ζ ∈ hornDomain g Ψ Pu V, f (paramExt g Ψ V ζ) ∈ basin g Pl ∧
@@ -609,8 +613,8 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     simp only [cu, mul_pow, e, hc]; ring
   obtain ⟨R0u, hR0u⟩ := pg.flip_attr f'a f'0 f'd fg' hcu2
   obtain ⟨R0l, hR0l⟩ := pg.flip_attr f'a f'0 f'd fg' (c := -cu) (by rw [neg_sq]; exact hcu2)
-  obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨R₁, R₁ge, ePu, eΦu, ePl, eΦl⟩, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩,
-    ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψb, Ψe⟩, endu, endl⟩ :=
+  obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨R₁, R₁ge, ePu, eΦu, ePl, eΦl⟩, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu, Φdu⟩,
+    ⟨Pol, Pnel, Pbl, PMl, Φal, Φel, Φdl⟩, ⟨Vo, Vl, reach, Ψa, Ψb, Ψe, Ψd⟩, endu, endl⟩ :=
     pg.local_horn_both hc2 δ₀0 (max R0u R0l)
   rw [hcl] at ePl eΦl
   obtain ⟨muf, fu⟩ := hR0u R₁ (le_trans (le_max_left _ _) R₁ge)
@@ -659,6 +663,10 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
   obtain ⟨mbl, ebl⟩ := basin_half gPl gPu Φel' Φeu' ml el
   have hδ3 : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
       g (h z) = h (φ (g (h z))) := hδ''
+  have hδ4 : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) :=
+    fun z m ↦ ⟨(hδ'' z m).1, (hδ'' z m).2.1, (hδ'' z m).2.2.1⟩
+  obtain ⟨Φdu', Ψd'⟩ := transport_deriv hδ4 Pbu Φau Φdu Ψb Ψa Ψd
+  obtain ⟨Φdl', -⟩ := transport_deriv hδ4 Pbl Φal Φdl Ψb Ψa Ψd
   have domu : ∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g (h ∘ Ψ') (h '' Pu') V := by
     obtain ⟨T, hT⟩ := endu 1 one_pos
     refine ⟨T, fun ζ hζ ↦ ?_⟩
@@ -694,5 +702,7 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
   exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
     ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml,
     (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left (fun ζ ↦ by ring),
-    (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left (fun ζ ↦ by ring), ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
+    (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left (fun ζ ↦ by ring),
+    fun ζ m crit ↦ horn_crit_values ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe' Φdu' Ψd' m crit,
+    fun ζ m crit ↦ horn_crit_values ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe' Φdl' Ψd' m crit, ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
     fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩

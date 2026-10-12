@@ -2,6 +2,7 @@ module
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.Calculus.DiffContOnCl
 import Mathlib.Analysis.Calculus.MeanValue
@@ -453,11 +454,11 @@ lemma hasDerivAt_approxFatou (h : NearTranslation G β R A δ) {w : ℂ} (m : w 
   have d := (hasDerivAt_id' w).clog (h.mem_slitPlane m)
   exact ((hasDerivAt_id' w).sub (d.const_mul β)).congr_deriv (by ring)
 
-/-- On a smaller half-plane `Φ - id` is `1/2`-Lipschitz, since `Φ' ≈ 1`.  The half-plane is `2a < re w`, where
-`S a ≤ 1/4` and `‖β‖ ≤ a / 2`. -/
-public lemma exists_lip (h : NearTranslation G β R A δ) :
-    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
-      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖ := by
+/-- `exists_lip`, with the derivative bound `‖Φ' - 1‖ ≤ 1/2` -/
+public lemma exists_lip_deriv (h : NearTranslation G β R A δ) :
+    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ (∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖) ∧
+      ∀ z ∈ rightHalf (2 * a), deriv (fatou G β) z ≠ 0 := by
   -- choose `a ≥ R` with `S a ≤ 1/4` and `‖β‖ ≤ a / 2`, and use the half-plane `2a < re w`
   obtain ⟨a, Ra, Sa, βa⟩ : ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 := by
     have e := ((h.tendsto_tailBound.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))).and
@@ -513,8 +514,22 @@ public lemma exists_lip (h : NearTranslation G β R A δ) :
       _ = 1 / 2 := by norm_num
   -- the mean value inequality on the convex half-plane
   have cv : Convex ℝ (rightHalf (2 * a)) := convex_halfSpace_re_gt (2 * a)
-  intro x xm y ym
-  exact Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv ym xm
+  refine ⟨fun x xm y ym ↦ Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv ym xm, fun z m e ↦ ?_⟩
+  -- `Φ' = (Φ - id)' + 1`, with `‖(Φ - id)'‖ ≤ 1/2`
+  have d := ((fd z m).hasDerivAt.add (hasDerivAt_id z)).deriv
+  have : (fun z ↦ fatou G β z - z) + id = fatou G β := by funext; simp
+  rw [this, e] at d
+  have := fb z m
+  rw [show deriv (fun z ↦ fatou G β z - z) z = -1 by linear_combination -d] at this
+  norm_num at this
+
+/-- On a smaller half-plane `Φ - id` is `1/2`-Lipschitz, since `Φ' ≈ 1`.  The half-plane is `2a < re w`, where
+`S a ≤ 1/4` and `‖β‖ ≤ a / 2`. -/
+public lemma exists_lip (h : NearTranslation G β R A δ) :
+    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖ := by
+  obtain ⟨a, Ra, Sa, βa, lip, -⟩ := h.exists_lip_deriv
+  exact ⟨a, Ra, Sa, βa, lip⟩
 
 /-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
 public theorem fatou_injOn (h : NearTranslation G β R A δ) :

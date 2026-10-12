@@ -231,7 +231,8 @@ public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
     ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧
       AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ leftHalf R₁) ∧ (∀ ζ ∈ V, G (Ψ (ζ - 1)) = Ψ ζ) ∧
       (∀ ζ ∈ V, ζ = -NearTranslation.fatou (reflInv G) (-β) (-Ψ ζ)) ∧
-      ∃ C : ℝ, ∀ ζ : ℂ, C + 2 * ‖β‖ * Real.log (‖ζ‖ + 1) < -ζ.re → ζ ∈ V := by
+      (∃ C : ℝ, ∀ ζ : ℂ, C + 2 * ‖β‖ * Real.log (‖ζ‖ + 1) < -ζ.re → ζ ∈ V) ∧
+      ∀ ζ ∈ V, deriv Ψ ζ ≠ 0 := by
   set R₂ := max R₁ (repR β R A)
   have hF := h.reflInv_nearTranslation.mono (le_max_right R₁ (repR β R A))
   obtain ⟨R', RR, Ψ, -, Wo, reach, Ψa, Ψf, C, hC⟩ := hF.fatou_param
@@ -245,7 +246,7 @@ public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
   have Wr : ∀ ζ ∈ W, ζ + 1 ∈ W := by
     rintro _ ⟨w, wm, rfl⟩; exact ⟨F w, hF'.mapsTo wm, hF.fatou_eqn (sub wm)⟩
   refine ⟨(fun ζ ↦ -ζ) ⁻¹' W, fun ζ ↦ -Ψ (-ζ), Wo.preimage continuous_neg, fun ζ m ↦ ?_, fun ζ ↦ ?_,
-    fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, C, fun ζ ζr ↦ ?_⟩
+    fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, ⟨C, fun ζ ζr ↦ ?_⟩, fun ζ m ↦ ?_⟩
   · have := Wr _ m; simp only [mem_preimage] at this ⊢; rwa [neg_sub, sub_eq_neg_add]
   · obtain ⟨n, m⟩ := reach (-ζ); exact ⟨n, by simp only [mem_preimage, neg_sub]; rwa [sub_eq_neg_add]⟩
   · exact ((Ψa _ m).comp (f := fun ζ : ℂ ↦ -ζ) analyticAt_id.neg).neg
@@ -269,5 +270,20 @@ public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
     refine hC _ ?_
     rw [norm_neg, norm_neg, Complex.neg_re]
     exact ζr
+  · -- `Ψ ∘ Φ = id` near the preimage, so `Ψ' ≠ 0`
+    have m' : -ζ ∈ W := m
+    obtain ⟨v, vm, hv⟩ := m'
+    have vo : rightHalf R' ∈ 𝓝 v := (NearTranslation.isOpen_rightHalf R').mem_nhds vm
+    have fa := hF.fatou_analytic v (sub vm)
+    have e : (Ψ ∘ NearTranslation.fatou F (-β)) =ᶠ[𝓝 v] id := by
+      filter_upwards [vo] with x xm; exact Ψf x xm
+    have Ψa' := Ψa _ (mem_image_of_mem _ vm)
+    have d := e.deriv_eq
+    rw [deriv_comp _ Ψa'.differentiableAt fa.differentiableAt, deriv_id] at d
+    rw [hv] at d
+    have d0 : deriv Ψ (-ζ) ≠ 0 := left_ne_zero_of_mul_eq_one d
+    have hd := ((Ψa _ (show -ζ ∈ W from m)).differentiableAt.hasDerivAt.comp ζ (hasDerivAt_neg ζ)).neg
+    rw [show (fun ζ ↦ -Ψ (-ζ)) = -(Ψ ∘ fun ζ ↦ -ζ) by funext; simp, hd.deriv]
+    simpa using d0
 
 end NearTranslationOut
