@@ -1,11 +1,20 @@
 module
 import Ray.Analytic.Log
 import Ray.Dynamics.Bottcher
+import Ray.Dynamics.FatouExtend
 import Ray.Dynamics.FatouNear
+import Ray.Dynamics.FatouParam
+import Ray.Dynamics.FatouRepel
+import Ray.Dynamics.FlipPetal
+import Ray.Dynamics.HornEnds
+import Ray.Dynamics.Parabolic
+import Ray.Dynamics.Petal
+import Ray.Dynamics.PetalNormal
 import Ray.Dynamics.Ray
 import Ray.Hartogs.Hartogs
 import Ray.Hartogs.Osgood
 import Ray.Koebe.Bieberbach
+import Ray.Koebe.DiskArea
 import Ray.Koebe.Gronwall
 import Ray.Koebe.Koebe
 import Ray.Koebe.KoebePick
