@@ -911,9 +911,16 @@ lemma PetalGerm.end_lower (h : PetalGerm g k a b) {c : ℂ}
 
 /-- Both ends at once: one repelling parametrisation `Ψ` (direction `c`) and the two adjacent attracting petals
 (directions `c exp (± π i / k)`), with the upper end landing in the first and the lower end in the second -/
-lemma PetalGerm.local_horn_both (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 1 / (k * a)) {δ₀ : ℝ}
-    (δ0 : 0 < δ₀) :
+public lemma PetalGerm.local_horn_both (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 1 / (k * a)) {δ₀ : ℝ}
+    (δ0 : 0 < δ₀) (Rmin : ℝ) :
     ∃ Pᵤ : Set ℂ, ∃ Φᵤ : ℂ → ℂ, ∃ Pₗ : Set ℂ, ∃ Φₗ : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ,
+      (∃ R₁ : ℝ, Rmin ≤ R₁ ∧
+        Pᵤ = (fun w ↦ petalRoot k (c * exp (π * I / k)) w) '' rightHalf R₁ ∧
+        Φᵤ = (fun z ↦ NearTranslation.fatou (fun w ↦ petalCoord k a (g (petalRoot k (c * exp (π * I / k)) w)))
+          (petalResidue k a b) (petalCoord k a z)) ∧
+        Pₗ = (fun w ↦ petalRoot k (c * exp (-(π * I) / k)) w) '' rightHalf R₁ ∧
+        Φₗ = (fun z ↦ NearTranslation.fatou (fun w ↦ petalCoord k a (g (petalRoot k (c * exp (-(π * I) / k)) w)))
+          (petalResidue k a b) (petalCoord k a z))) ∧
       (IsOpen Pᵤ ∧ Pᵤ.Nonempty ∧ Pᵤ ⊆ Metric.ball 0 δ₀ ∧ MapsTo g Pᵤ Pᵤ ∧ AnalyticOnNhd ℂ Φᵤ Pᵤ ∧
         ∀ z ∈ Pᵤ, Φᵤ (g z) = Φᵤ z + 1) ∧
       (IsOpen Pₗ ∧ Pₗ.Nonempty ∧ Pₗ ⊆ Metric.ball 0 δ₀ ∧ MapsTo g Pₗ Pₗ ∧ AnalyticOnNhd ℂ Φₗ Pₗ ∧
@@ -952,13 +959,16 @@ lemma PetalGerm.local_horn_both (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 
   obtain ⟨Rl, Al, Rl4, Al0, -, lo⟩ := h.lower hcₗ
   obtain ⟨Rr, Ar, ntr, semir⟩ := h.repelling hc
   set RF := NearTranslationOut.repR β Rr Ar
-  set R₁ := max (max (max Raᵤ Ru) (max Raₗ Rl)) (max RF (‖c‖ ^ k / δ₀ ^ k))
-  have hRaᵤ : Raᵤ ≤ R₁ := le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) (le_max_left _ _)
-  have hRu : Ru ≤ R₁ := le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) (le_max_left _ _)
-  have hRaₗ : Raₗ ≤ R₁ := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) (le_max_left _ _)
-  have hRl : Rl ≤ R₁ := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) (le_max_left _ _)
-  have hRF : RF ≤ R₁ := le_trans (le_max_left _ _) (le_max_right _ _)
-  have hc0 : ‖c‖ ^ k / δ₀ ^ k ≤ R₁ := le_trans (le_max_right _ _) (le_max_right _ _)
+  set R₁ := max (max (max (max Raᵤ Ru) (max Raₗ Rl)) (max RF (‖c‖ ^ k / δ₀ ^ k))) Rmin
+  have m0 : max (max (max Raᵤ Ru) (max Raₗ Rl)) (max RF (‖c‖ ^ k / δ₀ ^ k)) ≤ R₁ := le_max_left _ _
+  have hRaᵤ : Raᵤ ≤ R₁ :=
+    le_trans (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) (le_max_left _ _)) m0
+  have hRu : Ru ≤ R₁ := le_trans (le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) (le_max_left _ _)) m0
+  have hRaₗ : Raₗ ≤ R₁ :=
+    le_trans (le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) (le_max_left _ _)) m0
+  have hRl : Rl ≤ R₁ := le_trans (le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) (le_max_left _ _)) m0
+  have hRF : RF ≤ R₁ := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) m0
+  have hc0 : ‖c‖ ^ k / δ₀ ^ k ≤ R₁ := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) m0
   have hRδᵤ : ‖cᵤ‖ ^ k / δ₀ ^ k ≤ R₁ := by rwa [nᵤ]
   have hRδₗ : ‖cₗ‖ ^ k / δ₀ ^ k ≤ R₁ := by rwa [nₗ]
   have Rr4 := ntr.four_le
@@ -969,7 +979,8 @@ lemma PetalGerm.local_horn_both (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 
   obtain ⟨Poᵤ, Pneᵤ, Pbᵤ, PMᵤ, Φaᵤ, Φeᵤ⟩ := h.attr_objects hcᵤ ntaᵤ semiaᵤ hRaᵤ hRδᵤ δ0
   obtain ⟨Poₗ, Pneₗ, Pbₗ, PMₗ, Φaₗ, Φeₗ⟩ := h.attr_objects hcₗ ntaₗ semiaₗ hRaₗ hRδₗ δ0
   obtain ⟨Ψa', Ψb', Ψe'⟩ := h.rep_objects semir (by linarith) (le_trans hRr hRF) hc0 δ0 Vl Ψa Ψm Ψe
-  exact ⟨_, _, _, _, V, _, ⟨Poᵤ, Pneᵤ, Pbᵤ, PMᵤ, Φaᵤ, Φeᵤ⟩, ⟨Poₗ, Pneₗ, Pbₗ, PMₗ, Φaₗ, Φeₗ⟩,
+  exact ⟨_, _, _, _, V, _, ⟨R₁, le_max_right _ _, rfl, rfl, rfl, rfl⟩,
+    ⟨Poᵤ, Pneᵤ, Pbᵤ, PMᵤ, Φaᵤ, Φeᵤ⟩, ⟨Poₗ, Pneₗ, Pbₗ, PMₗ, Φaₗ, Φeₗ⟩,
     ⟨Vo, Vl, reach, Ψa', Ψb', Ψe'⟩,
     h.end_upper hcᵤ ntaᵤ Ru4 Au0 up ntr δ0 hRaᵤ hRu hRF hRδᵤ Ψm Ψfat hCv,
     h.end_lower hcₗ ntaₗ Rl4 Al0 lo ntr δ0 hRaₗ hRl hRF hRδₗ Ψm Ψfat hCv⟩
@@ -979,7 +990,7 @@ lemma PetalGerm.local_horn_both (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 
 -/
 
 /-- Integer translations of a `1`-periodic domain and a map commuting with `ζ ↦ ζ + 1` -/
-lemma horn_int {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1)
+public lemma horn_int {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1)
     {ζ : ℂ} (mem : ζ ∈ D) (m : ℤ) : ζ + m ∈ D ∧ H (ζ + m) = H ζ + m := by
   induction m using Int.induction_on with
   | zero => simpa using mem
@@ -1000,7 +1011,7 @@ lemma horn_int {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1
     linear_combination e1
 
 /-- Transport of an orbit that lands in the petal: the parameter is in the horn domain, with the expected value -/
-lemma horn_land {h φ Φ' Ψ' : ℂ → ℂ} {P' V : Set ℂ} {δ : ℝ}
+public lemma horn_land {h φ Φ' Ψ' : ℂ → ℂ} {P' V : Set ℂ} {δ : ℝ}
     (hδ : ∀ z ∈ Metric.ball (0 : ℂ) δ, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
       g (h z) = h (φ (g (h z))))
     (gP : MapsTo g (h '' P') (h '' P')) (Φe' : ∀ y ∈ h '' P', (Φ' ∘ φ) (g y) = (Φ' ∘ φ) y + 1)
@@ -1026,7 +1037,7 @@ lemma horn_land {h φ Φ' Ψ' : ℂ → ℂ} {P' V : Set ℂ} {δ : ℝ}
   simp only [Function.comp_apply, (hδ _ (small N le_rfl)).1]
 
 /-- Integer translates in the horn domain -/
-lemma horn_shift {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1)
+public lemma horn_shift {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1)
     (ζ : ℂ) (m : ℤ) (mem : ζ - m ∈ D) : ζ ∈ D ∧ H ζ - ζ = H (ζ - m) - (ζ - m) := by
   obtain ⟨m1, e1⟩ := horn_int Dp He mem m
   simp only [sub_add_cancel] at m1 e1
@@ -1057,8 +1068,8 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
         (𝓝 (π * I * petalResidue k a b)) := by
   obtain ⟨h, φ, b, ha, φa, h0, -, l, r, -, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r one_pos
-  obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩, ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩,
-    ⟨Vo, Vl, reach, Ψa, Ψb, Ψe⟩, endu, endl⟩ := pg.local_horn_both hc δ0
+  obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', -, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩, ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩,
+    ⟨Vo, Vl, reach, Ψa, Ψb, Ψe⟩, endu, endl⟩ := pg.local_horn_both hc δ0 0
   have hδ' : ∀ z ∈ Metric.ball (0 : ℂ) δ, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
       g (h z) = h (φ (g (h z))) := fun z m ↦ ⟨(hδ z m).1, (hδ z m).2.1, (hδ z m).2.2.1, (hδ z m).2.2.2.1⟩
   obtain ⟨Pou', gPu, Φau', Φeu'⟩ := transport_attr δ0 inj hδ' Pou Pbu PMu Φau Φeu

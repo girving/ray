@@ -18,6 +18,12 @@ In the coordinate `h` normalising `g` (`PetalGerm.normalize`), `f̃ = φ ∘ f �
 `w ↦ w + √w + ...`.)  So in the petal coordinate `f` is `w ↦ w + 1/2 + O(w^(-1/2))`, swapping the two petals.
 
 1. `flip_odd`: the expansion of `f̃`.
+2. `flip_chart`: in the petal coordinate `f` is `w ↦ w + 1/2 + O(‖z‖)` and swaps the branches at `c`, `-c`.
+3. `NearTranslation.fatou_conj`: a map intertwining two near-translations (same `β`) that moves by `t + o(1)` shifts
+   their Fatou coordinates by exactly `t` (the difference is invariant along orbits and vanishes far out).
+4. `PetalGerm.flip_attr`: `Φ_{-c} (f z) = Φ_c z + 1/2` on the attracting petals.
+5. `parabolic_flip`: for entire `f`, the horn maps of `g = f ∘ f` with both ends, and `f` swapping the two attracting
+   basins with a half step; so `f ∘ Ψ` has horn maps `H± + 1/2` into the swapped petals.
 -/
 
 open Asymptotics Filter
@@ -498,3 +504,183 @@ public lemma PetalGerm.flip_attr {g : ℂ → ℂ} {a b : ℂ} (pg : PetalGerm g
       calc ‖F v - (v + 1 / 2)‖ ≤ C * ‖petalRoot 2 c v‖ := est
         _ ≤ C * (η / (C + 1)) := by gcongr
         _ < η := by rw [mul_div_assoc', div_lt_iff₀ (by positivity)]; nlinarith
+
+/-!
+### Multiplier `-1`: the global statement
+-/
+
+lemma exp_half_neg : exp (-(π * I) / (2 : ℕ)) = -exp (π * I / (2 : ℕ)) := by
+  have e : exp (π * I / (2 : ℕ)) = I := by
+    rw [show π * I / ((2 : ℕ) : ℂ) = (π / 2 : ℝ) * I by push_cast; ring, Complex.exp_mul_I]
+    simp
+  have e' : exp (-(π * I) / (2 : ℕ)) = -I := by
+    rw [show -(π * I) / ((2 : ℕ) : ℂ) = (-(π / 2) : ℝ) * I by push_cast; ring, Complex.exp_mul_I]
+    simp
+  rw [e, e']
+
+lemma iterate_commute {f g : ℂ → ℂ} (c : ∀ z, f (g z) = g (f z)) (n : ℕ) (z : ℂ) :
+    g^[n] (f z) = f (g^[n] z) := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply', ih, Function.iterate_succ_apply', c]
+
+/-- Parabolic points of multiplier `-1`.  Let `f` be entire with `f 0 = 0`, `f' 0 = -1` and
+`f (f z) = z + a z³ + O(z⁴)`, `a ≠ 0`, and let `c` be a repelling direction of `g = f ∘ f` (`c² = 1 / (2a)`), with
+repelling parametrisation `Ψ`.  The two adjacent attracting petals `Pu`, `Pl` (directions `± i c`) have Fatou
+coordinates `Φu`, `Φl`; the horn maps `Hu = Φu ∘ Ψ`, `Hl = Φl ∘ Ψ` live on an upper and a lower half-plane, with
+`Hu ζ = ζ - π i β + o(1)` and `Hl ζ = ζ + π i β + o(1)` (as in `horn_ends`).  In addition `f` swaps the two attracting
+basins with a half step, `Φl (f z) = Φu z + 1/2` and `Φu (f z) = Φl z + 1/2`; so `f ∘ Ψ` (a parametrisation of the
+opposite repelling petal) has horn maps `Hu + 1/2` and `Hl + 1/2` into the swapped petals. -/
+public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (fd : deriv f 0 = -1) {a : ℂ}
+    (a0 : a ≠ 0) (approx : (fun z ↦ f (f z) - (z + a * z ^ 3)) =O[𝓝 0] fun z ↦ z ^ 4) {c : ℂ}
+    (hc : c ^ 2 = 1 / (2 * a)) :
+    ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
+      let g := fun z ↦ f (f z)
+      (IsOpen Pu ∧ Pu.Nonempty ∧ MapsTo g Pu Pu ∧ AnalyticOnNhd ℂ Φu Pu ∧ ∀ z ∈ Pu, Φu (g z) = Φu z + 1) ∧
+      (IsOpen Pl ∧ Pl.Nonempty ∧ MapsTo g Pl Pl ∧ AnalyticOnNhd ℂ Φl Pl ∧ ∀ z ∈ Pl, Φl (g z) = Φl z + 1) ∧
+      (IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧ AnalyticOnNhd ℂ Ψ V ∧
+        ∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) ∧
+      (∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g Ψ Pu V) ∧
+      Tendsto (fun ζ ↦ hornMap g Φu Ψ Pu V ζ - ζ) (comap Complex.im atTop)
+        (𝓝 (-(π * I * petalResidue 2 a b))) ∧
+      (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
+      Tendsto (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ) (comap Complex.im atBot)
+        (𝓝 (π * I * petalResidue 2 a b)) ∧
+      (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
+      (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, f (paramExt g Ψ V ζ) ∈ basin g Pl ∧
+        basinExt g Φl Pl (f (paramExt g Ψ V ζ)) = hornMap g Φu Ψ Pu V ζ + 1 / 2) ∧
+      ∀ ζ ∈ hornDomain g Ψ Pl V, f (paramExt g Ψ V ζ) ∈ basin g Pu ∧
+        basinExt g Φu Pu (f (paramExt g Ψ V ζ)) = hornMap g Φl Ψ Pl V ζ + 1 / 2 := by
+  set g := fun z ↦ f (f z) with hg
+  have ga : ∀ z, AnalyticAt ℂ g z := fun z ↦ (fa (f z)).comp (fa z)
+  have g0 : g 0 = 0 := by simp [g, f0]
+  have gapprox : (fun z ↦ g z - (z + a * z ^ (2 + 1))) =O[𝓝 0] fun z ↦ z ^ (2 + 2) := by
+    have e : (fun z ↦ g z - (z + a * z ^ (2 + 1))) = fun z ↦ f (f z) - (z + a * z ^ 3) := by
+      funext z; norm_num [g]
+    rw [e]; simpa using approx
+  have hc2 : c ^ 2 = 1 / (((2 : ℕ) : ℂ) * a) := by push_cast; exact hc
+  obtain ⟨h, φ, b, ha, φa, h0, φ0, l, r, dh, pg⟩ := PetalGerm.normalize (k := 2) (by norm_num) a0 (ga 0) g0 gapprox
+  -- `f` in the normalising coordinate
+  set f' := φ ∘ f ∘ h
+  have fh0 : f (h 0) = 0 := by rw [h0, f0]
+  have φd : DifferentiableAt ℂ φ (h 0) := by rw [h0]; exact φa.differentiableAt
+  have dφ : deriv φ 0 = 1 := by
+    have l' : (φ ∘ h) =ᶠ[𝓝 0] id := l
+    have e := l'.deriv_eq
+    rw [deriv_comp _ φd ha.differentiableAt, h0, dh] at e
+    simpa using e
+  have fha : AnalyticAt ℂ (f ∘ h) 0 := (fa (h 0)).comp ha
+  have φd' : AnalyticAt ℂ φ ((f ∘ h) 0) := by rw [Function.comp_apply, fh0]; exact φa
+  have f'a : AnalyticAt ℂ f' 0 := AnalyticAt.comp (g := φ) (f := f ∘ h) φd' fha
+  have f'0 : f' 0 = 0 := by simp [f', h0, f0, φ0]
+  have f'd : deriv f' 0 = -1 := by
+    have d1 : deriv (f ∘ h) 0 = -1 := by
+      rw [deriv_comp _ (fa _).differentiableAt ha.differentiableAt, h0, fd, dh]; ring
+    have e : deriv (φ ∘ (f ∘ h)) 0 = deriv φ ((f ∘ h) 0) * deriv (f ∘ h) 0 :=
+      deriv_comp _ φd'.differentiableAt fha.differentiableAt
+    rw [Function.comp_apply, fh0, dφ, d1] at e
+    rw [show f' = φ ∘ (f ∘ h) from rfl, e]; ring
+  have tfh : Tendsto (fun z ↦ f (h z)) (𝓝 0) (𝓝 0) := by
+    have := ((fa (h 0)).continuousAt.comp ha.continuousAt).tendsto; rwa [Function.comp_apply, fh0] at this
+  have fg' : ∀ᶠ z in 𝓝 0, (φ ∘ g ∘ h) z = f' (f' z) := by
+    filter_upwards [tfh.eventually r] with z e
+    simp only [Function.comp_apply, f', g, e]
+  -- the conjugacy, for `g` and for `f`
+  obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r one_pos
+  obtain ⟨δ', δ'0, -, hδ'⟩ := conj_setup (fa 0) f0 ha φa h0 l r one_pos
+  set δ₀ := min δ δ'
+  have δ₀0 : 0 < δ₀ := lt_min δ0 δ'0
+  have bδ : ∀ {z : ℂ}, z ∈ Metric.ball (0 : ℂ) δ₀ → z ∈ Metric.ball (0 : ℂ) δ := fun m ↦
+    Metric.ball_subset_ball (min_le_left _ _) m
+  have bδ' : ∀ {z : ℂ}, z ∈ Metric.ball (0 : ℂ) δ₀ → z ∈ Metric.ball (0 : ℂ) δ' := fun m ↦
+    Metric.ball_subset_ball (min_le_right _ _) m
+  -- the two attracting directions and the half step between them
+  set cu := c * exp (π * I / ((2 : ℕ) : ℂ))
+  have hcl : c * exp (-(π * I) / ((2 : ℕ) : ℂ)) = -cu := by rw [exp_half_neg]; ring
+  have hcu2 : cu ^ 2 = -1 / (2 * a) := by
+    have e : exp (π * I / ((2 : ℕ) : ℂ)) ^ 2 = -1 := by
+      rw [← Complex.exp_nat_mul]; push_cast
+      rw [show (2 : ℂ) * (π * I / 2) = π * I by ring, Complex.exp_pi_mul_I]
+    simp only [cu, mul_pow, e, hc]; ring
+  obtain ⟨R0u, hR0u⟩ := pg.flip_attr f'a f'0 f'd fg' hcu2
+  obtain ⟨R0l, hR0l⟩ := pg.flip_attr f'a f'0 f'd fg' (c := -cu) (by rw [neg_sq]; exact hcu2)
+  obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨R₁, R₁ge, ePu, eΦu, ePl, eΦl⟩, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩,
+    ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψb, Ψe⟩, endu, endl⟩ :=
+    pg.local_horn_both hc2 δ₀0 (max R0u R0l)
+  rw [hcl] at ePl eΦl
+  obtain ⟨muf, fu⟩ := hR0u R₁ (le_trans (le_max_left _ _) R₁ge)
+  obtain ⟨mlf, fl⟩ := hR0l R₁ (le_trans (le_max_right _ _) R₁ge)
+  rw [neg_neg] at mlf fl
+  rw [← ePu, ← ePl] at muf mlf
+  -- transport through the conjugacy
+  have hδ'' : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
+      g (h z) = h (φ (g (h z))) := fun z m ↦
+    ⟨(hδ z (bδ m)).1, (hδ z (bδ m)).2.1, (hδ z (bδ m)).2.2.1, (hδ z (bδ m)).2.2.2.1⟩
+  have inj' : InjOn h (Metric.ball 0 δ₀) := inj.mono fun z m ↦ bδ m
+  obtain ⟨Pou', gPu, Φau', Φeu'⟩ := transport_attr δ₀0 inj' hδ'' Pou Pbu PMu Φau Φeu
+  obtain ⟨Pol', gPl, Φal', Φel'⟩ := transport_attr δ₀0 inj' hδ'' Pol Pbl PMl Φal Φel
+  obtain ⟨Ψa', Ψe'⟩ := transport_rep (fun z m ↦ ⟨(hδ'' z m).2.1, (hδ'' z m).2.2.2⟩) Vl Ψa Ψb Ψe
+  obtain ⟨-, Dpu, -, Heu⟩ := horn_map ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe'
+  obtain ⟨-, Dpl, -, Hel⟩ := horn_map ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe'
+  -- the half step in the `z`-plane: `f (h z) = h (f' z)`
+  have fhz : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, f (h z) = h (f' z) := fun z m ↦ (hδ' z (bδ' m)).2.2.2.1
+  have half : ∀ {P₁ P₂ : Set ℂ} {Φ₁ Φ₂ : ℂ → ℂ}, P₁ ⊆ Metric.ball 0 δ₀ → P₂ ⊆ Metric.ball 0 δ₀ →
+      MapsTo f' P₁ P₂ → (∀ z ∈ P₁, Φ₂ (f' z) = Φ₁ z + 1 / 2) →
+      MapsTo f (h '' P₁) (h '' P₂) ∧ ∀ y ∈ h '' P₁, (Φ₂ ∘ φ) (f y) = (Φ₁ ∘ φ) y + 1 / 2 := by
+    intro P₁ P₂ Φ₁ Φ₂ b1 b2 m e
+    refine ⟨?_, ?_⟩
+    · rintro _ ⟨z, zm, rfl⟩
+      exact ⟨f' z, m zm, (fhz z (b1 zm)).symm⟩
+    · rintro _ ⟨z, zm, rfl⟩
+      simp only [Function.comp_apply]
+      rw [fhz z (b1 zm), (hδ'' _ (b2 (m zm))).1, (hδ'' _ (b1 zm)).1]
+      exact e z zm
+  obtain ⟨mu, eu⟩ := half (Φ₁ := Φu') (Φ₂ := Φl') Pbu Pbl muf (by rw [eΦu, eΦl, ePu]; exact fu)
+  obtain ⟨ml, el⟩ := half (Φ₁ := Φl') (Φ₂ := Φu') Pbl Pbu mlf (by rw [eΦu, eΦl, ePl]; exact fl)
+  -- basins
+  have comm : ∀ z, f (g z) = g (f z) := fun z ↦ rfl
+  have basin_half : ∀ {P₁ P₂ : Set ℂ} {Φ₁ Φ₂ : ℂ → ℂ}, MapsTo g P₁ P₁ → MapsTo g P₂ P₂ →
+      (∀ z ∈ P₁, Φ₁ (g z) = Φ₁ z + 1) → (∀ z ∈ P₂, Φ₂ (g z) = Φ₂ z + 1) →
+      MapsTo f P₁ P₂ → (∀ y ∈ P₁, Φ₂ (f y) = Φ₁ y + 1 / 2) →
+      MapsTo f (basin g P₁) (basin g P₂) ∧
+        ∀ z ∈ basin g P₁, basinExt g Φ₂ P₂ (f z) = basinExt g Φ₁ P₁ z + 1 / 2 := by
+    intro P₁ P₂ Φ₁ Φ₂ g1 g2 e1 e2 m e
+    have it := iterate_commute comm
+    refine ⟨fun z ⟨n, zn⟩ ↦ ⟨n, by rw [it]; exact m zn⟩, fun z ⟨n, zn⟩ ↦ ?_⟩
+    have fz : g^[n] (f z) ∈ P₂ := by rw [it]; exact m zn
+    rw [basinExt_eq_of g2 e2 fz, basinExt_eq_of g1 e1 zn, it, e _ zn]
+    ring
+  obtain ⟨mbu, ebu⟩ := basin_half gPu gPl Φeu' Φel' mu eu
+  obtain ⟨mbl, ebl⟩ := basin_half gPl gPu Φel' Φeu' ml el
+  have hδ3 : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
+      g (h z) = h (φ (g (h z))) := hδ''
+  refine ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
+    ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, ?_, ?_, ?_, ?_, ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
+    fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩
+  · obtain ⟨T, hT⟩ := endu 1 one_pos
+    refine ⟨T, fun ζ hζ ↦ ?_⟩
+    obtain ⟨m, N, mV, small, land', -⟩ := hT ζ hζ
+    exact (horn_shift Dpu Heu ζ m (horn_land hδ3 gPu Φeu' Vl Ψe' mV small land').1).1
+  · rw [Metric.tendsto_nhds]
+    intro ε ε0
+    obtain ⟨T, hT⟩ := endu ε ε0
+    rw [Filter.eventually_comap]
+    filter_upwards [eventually_gt_atTop T] with y hy ζ hζ
+    obtain ⟨m, N, mV, small, land', est⟩ := hT ζ (by rw [hζ]; exact hy)
+    obtain ⟨dm, e⟩ := horn_land hδ3 gPu Φeu' Vl Ψe' mV small land'
+    rw [dist_eq_norm, (horn_shift Dpu Heu ζ m dm).2, e]
+    simpa [sub_neg_eq_add] using est
+  · obtain ⟨T, hT⟩ := endl 1 one_pos
+    refine ⟨-T, fun ζ hζ ↦ ?_⟩
+    obtain ⟨m, N, mV, small, land', -⟩ := hT ζ (by linarith)
+    exact (horn_shift Dpl Hel ζ m (horn_land hδ3 gPl Φel' Vl Ψe' mV small land').1).1
+  · rw [Metric.tendsto_nhds]
+    intro ε ε0
+    obtain ⟨T, hT⟩ := endl ε ε0
+    rw [Filter.eventually_comap]
+    filter_upwards [eventually_lt_atBot (-T)] with y hy ζ hζ
+    obtain ⟨m, N, mV, small, land', est⟩ := hT ζ (by rw [hζ]; linarith)
+    obtain ⟨dm, e⟩ := horn_land hδ3 gPl Φel' Vl Ψe' mV small land'
+    rw [dist_eq_norm, (horn_shift Dpl Hel ζ m dm).2, e]
+    simpa [← sub_eq_add_neg] using est
