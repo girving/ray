@@ -155,7 +155,7 @@ public lemma PetalGerm.attr_objects (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ 
 
 /-- The attracting petal contains a sector around its direction near `0`: `c r (1 + e)` is in `ψ (re w > R₁)` for
 `0 < r < ε` and `‖e‖ ≤ 1 / (4k)` -/
-public lemma petal_sector {c : ℂ} (k0 : 0 < k) (hc : c ^ k = -1 / (k * a)) (a0 : a ≠ 0) (R₁ : ℝ) :
+public lemma petal_sector (c : ℂ) (k0 : 0 < k) (R₁ : ℝ) :
     ∃ ε > 0, ∀ (r : ℝ) (e : ℂ), 0 < r → r < ε → ‖e‖ ≤ 1 / (4 * k) →
       c * r * (1 + e) ∈ (fun w ↦ petalRoot k c w) '' rightHalf R₁ := by
   have kc : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr k0.ne'
@@ -193,7 +193,7 @@ public lemma petal_sector {c : ℂ} (k0 : 0 < k) (hc : c ^ k = -1 / (k * a)) (a0
   have nu : ‖u‖ < 1 / M := by
     have : ‖1 + e‖ ≤ 3 / 2 := by
       have := norm_add_le (1 : ℂ) e; rw [norm_one] at this; linarith
-    calc ‖u‖ = r * ‖1 + e‖ := by simp [u, norm_mul, abs_of_pos r0]
+    calc ‖u‖ = r * ‖1 + e‖ := by simp [u, abs_of_pos r0]
       _ ≤ r * (3 / 2) := by gcongr
       _ < 1 / M := by
           rw [lt_div_iff₀ (by positivity)] at rε

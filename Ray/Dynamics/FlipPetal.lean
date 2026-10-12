@@ -715,7 +715,7 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     intro e; rw [e] at hcu2; rw [zero_pow two_ne_zero] at hcu2
     exact div_ne_zero (by norm_num) (mul_ne_zero two_ne_zero a0) hcu2.symm
   have hcu2' : cu ^ 2 = -1 / (((2 : ℕ) : ℂ) * a) := by push_cast; exact hcu2
-  obtain ⟨εs, εs0, sect⟩ := petal_sector (k := 2) (by norm_num) hcu2' a0 R₁
+  obtain ⟨εs, εs0, sect⟩ := petal_sector (k := 2) cu (by norm_num) R₁
   obtain ⟨Cφ, rφ, Cφ0, rφ0, tay⟩ := taylor2 φa
   have dφ' : deriv φ 0 = 1 := dφ
   have rr : ∀ᶠ z in 𝓝 (0 : ℂ), h (φ z) = z := r
