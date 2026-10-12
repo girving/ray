@@ -4,6 +4,8 @@ public import Ray.Dynamics.FatouParam
 public import Ray.Dynamics.PetalNormal
 import Mathlib.Analysis.Complex.Convex
 import Mathlib.Analysis.Complex.OpenMapping
+import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 import Mathlib.Tactic.Bound
 
 /-!
@@ -150,6 +152,93 @@ public lemma PetalGerm.attr_objects (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ 
     refine mul_ne_zero ?_ pd
     rw [coord_root k0 h.a0 hc (facts w m).1]
     exact Rd w m
+
+/-- The attracting petal contains a sector around its direction near `0`: `c r (1 + e)` is in `ψ (re w > R₁)` for
+`0 < r < ε` and `‖e‖ ≤ 1 / (4k)` -/
+public lemma petal_sector {c : ℂ} (k0 : 0 < k) (hc : c ^ k = -1 / (k * a)) (a0 : a ≠ 0) (R₁ : ℝ) :
+    ∃ ε > 0, ∀ (r : ℝ) (e : ℂ), 0 < r → r < ε → ‖e‖ ≤ 1 / (4 * k) →
+      c * r * (1 + e) ∈ (fun w ↦ petalRoot k c w) '' rightHalf R₁ := by
+  have kc : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr k0.ne'
+  have k1 : (1 : ℝ) ≤ k := by exact_mod_cast k0
+  set M := 2 * |R₁| + 2
+  have M0 : 0 < M := by positivity
+  refine ⟨1 / (2 * M), by positivity, fun r e r0 rε en ↦ ?_⟩
+  have en2 : ‖e‖ ≤ 1 / 2 := le_trans en (by rw [div_le_div_iff₀ (by positivity) (by norm_num)]; linarith)
+  set u : ℂ := r * (1 + e)
+  have e1 : 1 + e ≠ 0 := by
+    intro h; have : e = -1 := by linear_combination h
+    rw [this] at en2; norm_num at en2
+  have u0 : u ≠ 0 := mul_ne_zero (by exact_mod_cast r0.ne') e1
+  -- `Complex.arg u = Complex.arg (1 + e) = im (log (1 + e))` is small
+  have la := Complex.norm_log_one_add_half_le_self en2
+  have argu : |Complex.arg u| ≤ 3 / (8 * k) := by
+    rw [show u = (r : ℂ) * (1 + e) from rfl, Complex.arg_real_mul _ r0, ← Complex.log_im]
+    refine le_trans (Complex.abs_im_le_norm _) (le_trans la ?_)
+    rw [show (3 : ℝ) / (8 * k) = 3 / 2 * (1 / (4 * k)) by field_simp; ring]
+    gcongr
+  have karg : |(k : ℝ) * Complex.arg u| ≤ 3 / 8 := by
+    rw [abs_mul, Nat.abs_cast]
+    calc (k : ℝ) * |Complex.arg u| ≤ k * (3 / (8 * k)) := by gcongr
+      _ = 3 / 8 := by field_simp
+  set w := exp (-(k * log u))
+  have wim : (-(k * log u)).im = -(k * Complex.arg u) := by
+    simp [Complex.log_im]
+  have lw : log w = -(k * log u) := by
+    rw [abs_le] at karg
+    refine Complex.log_exp ?_ ?_ <;> rw [wim] <;> linarith [Real.two_le_pi]
+  have ψw : petalRoot k c w = c * r * (1 + e) := by
+    simp only [petalRoot, lw, neg_neg, mul_div_cancel_left₀ _ kc, Complex.exp_log u0, u]; ring
+  refine ⟨w, ?_, ψw⟩
+  -- `re w > R₁`: `‖w‖ = ‖u‖^(-k)` is large and `Complex.arg w = -k Complex.arg u` is small
+  have nu : ‖u‖ < 1 / M := by
+    have : ‖1 + e‖ ≤ 3 / 2 := by
+      have := norm_add_le (1 : ℂ) e; rw [norm_one] at this; linarith
+    calc ‖u‖ = r * ‖1 + e‖ := by simp [u, norm_mul, abs_of_pos r0]
+      _ ≤ r * (3 / 2) := by gcongr
+      _ < 1 / M := by
+          rw [lt_div_iff₀ (by positivity)] at rε
+          rw [lt_div_iff₀ M0]; nlinarith
+  have nu1 : ‖u‖ ≤ 1 := le_trans nu.le (by rw [div_le_one M0]; linarith [abs_nonneg R₁])
+  have nu0 : 0 < ‖u‖ := norm_pos_iff.mpr u0
+  have nw : ‖w‖ = (‖u‖ ^ k)⁻¹ := by
+    simp only [w, Complex.norm_exp, Complex.neg_re, Complex.mul_re, Complex.natCast_re, Complex.natCast_im,
+      zero_mul, sub_zero, Complex.log_re]
+    rw [Real.exp_neg, ← Real.log_pow, Real.exp_log (by positivity)]
+  have nwM : M < ‖w‖ := by
+    rw [nw, lt_inv_comm₀ M0 (by positivity)]
+    calc ‖u‖ ^ k ≤ ‖u‖ := pow_le_of_le_one nu0.le nu1 k0.ne'
+      _ < 1 / M := nu
+      _ = M⁻¹ := one_div M
+  have w0 : w ≠ 0 := Complex.exp_ne_zero _
+  have aw : Complex.arg w = -(k * Complex.arg u) := by rw [← Complex.log_im, lw, wim]
+  have cw : 1 / 2 ≤ Real.cos (Complex.arg w) := by
+    have := Real.one_sub_sq_div_two_le_cos (x := Complex.arg w)
+    rw [aw, neg_sq] at this
+    have : ((k : ℝ) * Complex.arg u) ^ 2 ≤ (3 / 8) ^ 2 := by
+      rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) karg 2
+    rw [aw]; linarith
+  have rw' : w.re = ‖w‖ * Real.cos (Complex.arg w) := by
+    rw [Complex.cos_arg w0]; field_simp
+  show R₁ < w.re
+  rw [rw']
+  have := le_abs_self R₁
+  nlinarith [norm_nonneg w]
+
+/-- Petals of distinct directions are disjoint -/
+public lemma petal_disjoint {c₁ c₂ : ℂ} (k0 : 0 < k) (a0 : a ≠ 0) (h₁ : c₁ ^ k = -1 / (k * a))
+    (h₂ : c₂ ^ k = -1 / (k * a)) (ne : c₁ ≠ c₂) {R₁ R₂ : ℝ} (R0 : 0 ≤ R₁) (R0' : 0 ≤ R₂) :
+    Disjoint ((fun w ↦ petalRoot k c₁ w) '' rightHalf R₁) ((fun w ↦ petalRoot k c₂ w) '' rightHalf R₂) := by
+  rw [Set.disjoint_left]
+  rintro _ ⟨w, wm, rfl⟩ ⟨w', wm', e⟩
+  have w0 : w ≠ 0 := fun h ↦ by have : R₁ < w.re := wm; rw [h] at this; simp at this; linarith
+  have w0' : w' ≠ 0 := fun h ↦ by have : R₂ < w'.re := wm'; rw [h] at this; simp at this; linarith
+  have ww : w' = w := by
+    have := congrArg (petalCoord k a) e
+    simp only at this
+    rwa [coord_root k0 a0 h₂ w0', coord_root k0 a0 h₁ w0] at this
+  subst ww
+  simp only [petalRoot] at e
+  exact ne (mul_right_cancel₀ (Complex.exp_ne_zero _) e).symm
 
 /-- An attracting petal near `0` with its Fatou coordinate, for a germ in normal form -/
 lemma PetalGerm.local_attracting (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = -1 / (k * a)) {ε : ℝ}

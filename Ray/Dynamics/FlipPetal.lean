@@ -538,6 +538,9 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
       let g := fun z ↦ f (f z)
       (∃ h φ : ℂ → ℂ, AnalyticAt ℂ h 0 ∧ h 0 = 0 ∧ deriv h 0 = 1 ∧ PetalGerm (φ ∘ g ∘ h) 2 a b ∧
         ∀ᶠ z in 𝓝 0, h ((φ ∘ g ∘ h) z) = g (h z)) ∧
+      (∃ ε > 0, ∀ z : ℂ, z ≠ 0 → ‖z‖ < ε →
+        ‖z / (c * exp (π * I / (2 : ℕ)) * (‖z‖ / ‖c * exp (π * I / (2 : ℕ))‖ : ℝ)) - 1‖ ≤ 1 / 16 → z ∈ Pu) ∧
+      Disjoint (basin g Pu) (basin g Pl) ∧
       (IsOpen Pu ∧ Pu.Nonempty ∧ MapsTo g Pu Pu ∧ AnalyticOnNhd ℂ Φu Pu ∧ ∀ z ∈ Pu, Φu (g z) = Φu z + 1) ∧
       (IsOpen Pl ∧ Pl.Nonempty ∧ MapsTo g Pl Pl ∧ AnalyticOnNhd ℂ Φl Pl ∧ ∀ z ∈ Pl, Φl (g z) = Φl z + 1) ∧
       (IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧ AnalyticOnNhd ℂ Ψ V ∧
@@ -617,10 +620,11 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
   obtain ⟨R0l, hR0l⟩ := pg.flip_attr f'a f'0 f'd fg' (c := -cu) (by rw [neg_sq]; exact hcu2)
   obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', ⟨R₁, R₁ge, ePu, eΦu, ePl, eΦl⟩, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu, Φdu⟩,
     ⟨Pol, Pnel, Pbl, PMl, Φal, Φel, Φdl⟩, ⟨Vo, Vl, reach, Ψa, Ψb, Ψe, Ψd⟩, endu, endl⟩ :=
-    pg.local_horn_both hc2 δ₀0 (max R0u R0l)
+    pg.local_horn_both hc2 δ₀0 (max (max R0u R0l) 0)
   rw [hcl] at ePl eΦl
-  obtain ⟨muf, fu⟩ := hR0u R₁ (le_trans (le_max_left _ _) R₁ge)
-  obtain ⟨mlf, fl⟩ := hR0l R₁ (le_trans (le_max_right _ _) R₁ge)
+  obtain ⟨muf, fu⟩ := hR0u R₁ (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) R₁ge)
+  obtain ⟨mlf, fl⟩ := hR0l R₁ (le_trans (le_trans (le_max_right _ _) (le_max_left _ _)) R₁ge)
+  have R₁0 : 0 ≤ R₁ := le_trans (le_max_right _ _) R₁ge
   rw [neg_neg] at mlf fl
   rw [← ePu, ← ePl] at muf mlf
   -- transport through the conjugacy
@@ -706,7 +710,79 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     rwa [Function.comp_apply, h0, g0] at this
   have conjg : ∀ᶠ z in 𝓝 0, h ((φ ∘ g ∘ h) z) = g (h z) := by
     filter_upwards [tgh.eventually r] with z e; exact e
-  exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨h, φ, ha, h0, dh, pg, conjg⟩,
+  -- sector containment in the `g`-plane, through `φ z = z (1 + O(z))`
+  have cu0 : cu ≠ 0 := by
+    intro e; rw [e] at hcu2; rw [zero_pow two_ne_zero] at hcu2
+    exact div_ne_zero (by norm_num) (mul_ne_zero two_ne_zero a0) hcu2.symm
+  have hcu2' : cu ^ 2 = -1 / (((2 : ℕ) : ℂ) * a) := by push_cast; exact hcu2
+  obtain ⟨εs, εs0, sect⟩ := petal_sector (k := 2) (by norm_num) hcu2' a0 R₁
+  obtain ⟨Cφ, rφ, Cφ0, rφ0, tay⟩ := taylor2 φa
+  have dφ' : deriv φ 0 = 1 := dφ
+  have rr : ∀ᶠ z in 𝓝 (0 : ℂ), h (φ z) = z := r
+  obtain ⟨εr, εr0, hεr⟩ := Metric.eventually_nhds_iff.mp rr
+  set ε := min (min εs εr) (min rφ (1 / (16 * (Cφ + 1))))
+  have ε0 : 0 < ε := by positivity
+  have sectorPu : ∃ ε > 0, ∀ z : ℂ, z ≠ 0 → ‖z‖ < ε →
+      ‖z / (cu * (‖z‖ / ‖cu‖ : ℝ)) - 1‖ ≤ 1 / 16 → z ∈ h '' Pu' := by
+    have ncu : 0 < ‖cu‖ := norm_pos_iff.mpr cu0
+    refine ⟨ε / (‖cu‖ + 2) * ‖cu‖, by positivity, fun z z0 zε zs ↦ ?_⟩
+    have nz : 0 < ‖z‖ := norm_pos_iff.mpr z0
+    have zε' : ‖z‖ < ε := lt_of_lt_of_le zε (by
+      rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]; nlinarith [ε0])
+    have m1 : ε ≤ εs := le_trans (min_le_left _ _) (min_le_left _ _)
+    have m2 : ε ≤ εr := le_trans (min_le_left _ _) (min_le_right _ _)
+    have m3 : ε ≤ rφ := le_trans (min_le_right _ _) (min_le_left _ _)
+    have m4 : ε ≤ 1 / (16 * (Cφ + 1)) := le_trans (min_le_right _ _) (min_le_right _ _)
+    set r := ‖z‖ / ‖cu‖
+    have r0 : 0 < r := by positivity
+    have rε : r < εs := by
+      simp only [r]; rw [div_lt_iff₀ ncu]
+      have : ε / (‖cu‖ + 2) * ‖cu‖ ≤ εs * ‖cu‖ := by
+        gcongr; exact le_trans (div_le_self ε0.le (by linarith)) m1
+      linarith
+    have cr0 : cu * (r : ℂ) ≠ 0 := mul_ne_zero cu0 (by exact_mod_cast r0.ne')
+    have ncr : ‖cu * (r : ℂ)‖ = ‖z‖ := by
+      simp only [r, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos r0]; field_simp
+    -- `‖φ z - z‖ ≤ C ‖z‖²`
+    have tz := tay z 0 (lt_of_lt_of_le zε' m3) (by simpa using rφ0)
+    simp only [φ0, dφ', sub_zero, one_mul] at tz
+    set e := φ z / (cu * r) - 1
+    have he : φ z = cu * r * (1 + e) := by
+      rw [show 1 + e = φ z / (cu * r) by simp only [e]; ring, mul_div_cancel₀ _ cr0]
+    have en : ‖e‖ ≤ 1 / (4 * ((2 : ℕ) : ℝ)) := by
+      have : e = (z / (cu * r) - 1) + (φ z - z) / (cu * r) := by simp only [e]; field_simp; ring
+      rw [this]
+      refine le_trans (norm_add_le _ _) ?_
+      rw [norm_div, ncr]
+      have : ‖φ z - z‖ / ‖z‖ ≤ 1 / 16 := by
+        rw [div_le_iff₀ nz]
+        have : Cφ * ‖z‖ ≤ 1 / 16 := by
+          have := lt_of_lt_of_le zε' m4
+          rw [lt_div_iff₀ (by positivity)] at this; nlinarith
+        nlinarith
+      push_cast; linarith
+    have mem := sect r e r0 rε en
+    rw [← he, ← ePu] at mem
+    exact ⟨φ z, mem, hεr (by simpa using lt_of_lt_of_le zε' m2)⟩
+  have disj : Disjoint (h '' Pu') (h '' Pl') := by
+    rw [ePu, ePl]
+    have pd := petal_disjoint (k := 2) (a := a) (by norm_num) a0 hcu2' (by rw [neg_sq]; exact hcu2')
+      (show cu ≠ -cu from fun e ↦ cu0 (by linear_combination e / 2)) R₁0 R₁0
+    rw [Set.disjoint_left] at pd ⊢
+    rintro _ ⟨z, zm, rfl⟩ ⟨z', zm', e⟩
+    have zb : z ∈ Metric.ball (0 : ℂ) δ₀ := by rw [← ePu] at zm; exact Pbu zm
+    have zb' : z' ∈ Metric.ball (0 : ℂ) δ₀ := by rw [← ePl] at zm'; exact Pbl zm'
+    rw [inj' zb' zb e] at zm'
+    exact pd zm zm'
+  have disjB : Disjoint (basin g (h '' Pu')) (basin g (h '' Pl')) := by
+    rw [Set.disjoint_left]
+    rintro z ⟨n, zn⟩ ⟨m, zm⟩
+    have a1 : g^[n + m] z ∈ h '' Pu' := by
+      rw [add_comm, Function.iterate_add_apply]; exact (gPu.iterate m) zn
+    have a2 : g^[n + m] z ∈ h '' Pl' := by
+      rw [Function.iterate_add_apply]; exact (gPl.iterate n) zm
+    exact Set.disjoint_left.mp disj a1 a2
+  exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨h, φ, ha, h0, dh, pg, conjg⟩, sectorPu, disjB,
     ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
     ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml,
     (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left (fun ζ ↦ by ring),
@@ -904,14 +980,76 @@ lemma threeQuarters_crit {c₀ : ℂ} (h : deriv (fun w ↦ threeQuarters (three
     have e : c₀ = 1 / 2 := by linear_combination h / 2
     rw [e]; simp only [threeQuarters]; norm_num
 
+lemma exp_half : exp (π * I / (2 : ℕ)) = I := by
+  rw [show π * I / ((2 : ℕ) : ℂ) = (π / 2 : ℝ) * I by push_cast; ring, Complex.exp_mul_I]
+  simp
+
+/-- `f ∘ f` on the real line -/
+def gr (x : ℝ) : ℝ := x - 2 * x ^ 3 + x ^ 4
+
+lemma gr_cast (x : ℝ) : threeQuarters (threeQuarters (x : ℂ)) = ((gr x : ℝ) : ℂ) := by
+  simp only [threeQuarters, gr]; push_cast; ring
+
+lemma gr_iter_cast (x : ℝ) (n : ℕ) :
+    (fun z ↦ threeQuarters (threeQuarters z))^[n] (x : ℂ) = ((gr^[n] x : ℝ) : ℂ) := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply', ih, gr_cast, Function.iterate_succ_apply']
+
+/-- The critical orbit `-1/4 ↦ ...` of `f ∘ f` increases to `0` from below -/
+lemma gr_orbit {ε : ℝ} (ε0 : 0 < ε) : ∃ n : ℕ, -ε < gr^[n] (-1 / 4) ∧ gr^[n] (-1 / 4) < 0 := by
+  set s := fun n : ℕ ↦ gr^[n] (-1 / 4)
+  have step : ∀ x : ℝ, -1 / 4 ≤ x → x < 0 → x < gr x ∧ gr x < 0 := fun x x1 x0 ↦ by
+    simp only [gr]
+    constructor
+    · nlinarith [mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0), mul_pos (mul_pos (neg_pos.mpr x0) (neg_pos.mpr x0))
+        (neg_pos.mpr x0)]
+    · have : 0 < 1 - 2 * x ^ 2 + x ^ 3 := by nlinarith [sq_nonneg x]
+      nlinarith
+  have inv : ∀ n, -1 / 4 ≤ s n ∧ s n < 0 := by
+    intro n
+    induction n with
+    | zero => simp [s]; norm_num
+    | succ n ih =>
+      have := step _ ih.1 ih.2
+      simp only [s, Function.iterate_succ_apply'] at this ⊢
+      have ih1 : -1 / 4 ≤ gr^[n] (-1 / 4) := ih.1
+      exact ⟨by linarith [this.1], this.2⟩
+  have mono : Monotone s := monotone_nat_of_le_succ fun n ↦ by
+    have := step _ (inv n).1 (inv n).2
+    simp only [s, Function.iterate_succ_apply']; exact this.1.le
+  have bdd : BddAbove (Set.range s) := ⟨0, by rintro _ ⟨n, rfl⟩; exact (inv n).2.le⟩
+  have t := tendsto_atTop_ciSup mono bdd
+  set L := ⨆ n, s n
+  have L0 : L ≤ 0 := ciSup_le fun n ↦ (inv n).2.le
+  have L1 : -1 / 4 ≤ L := le_trans (inv 0).1 (le_ciSup bdd 0)
+  -- `L` is a fixed point of `gr`, hence `0`
+  have fix : gr L = L := by
+    have c : Continuous gr := by unfold gr; fun_prop
+    have t1 : Filter.Tendsto (fun n ↦ s (n + 1)) Filter.atTop (𝓝 (gr L)) := by
+      have := (c.tendsto L).comp t
+      refine this.congr fun n ↦ ?_
+      simp only [Function.comp_apply, s, Function.iterate_succ_apply']
+    exact tendsto_nhds_unique t1 (t.comp (Filter.tendsto_add_atTop_nat 1))
+  have L00 : L = 0 := by
+    by_contra h
+    have Ln : L < 0 := lt_of_le_of_ne L0 h
+    have := (step L L1 Ln).1
+    linarith
+  rw [L00] at t
+  obtain ⟨n, hn⟩ := Filter.eventually_atTop.mp (t.eventually (Ioi_mem_nhds (by linarith : -ε < 0)))
+  exact ⟨n, hn n le_rfl, (inv n).2⟩
+
 /-- The Lavaurs horn maps at the root `c = -3/4` of the period-2 bulb.  For `f w = -w + w²` (`z² - 3/4` at its
 parabolic point `-1/2`), `g = f ∘ f = w - 2w³ + w⁴`, and the repelling direction `i/2` of `g`: there are attracting
 petals `Pu`, `Pl` (directions `∓1/2`) with Fatou coordinates `Φu`, `Φl` and a repelling parametrisation `Ψ`.  The horn
 maps `Hu = Φu ∘ Ψ`, `Hl = Φl ∘ Ψ` are defined on an upper and a lower half-plane, and
 `Hu ζ = ζ - π i β + O(e^(-2π im ζ))`, `Hl ζ = ζ + π i β + O(e^(2π im ζ))`, with iterative residue `β = 11/16`
 (so the ends differ by `11 π i / 8 = 4.3197 i`, the `τ` of the numerics).
-Every critical value of `Hu` is `Φu (-1/4) + j` or `Φu (5/16) + j` with `j ∈ ℤ`, and likewise for `Hl`.  `f` swaps the
-two attracting basins with a half step in the Fatou coordinates. -/
+The critical orbit `-1/4 ↦ 5/16 ↦ ...` of `f` alternates between the two (disjoint) attracting basins, so all
+critical values lie in one orbit: those of `Hu` in `ζ₀ + ℤ` and those of `Hl` in `ζ₀ + 1/2 + ℤ`, `ζ₀ = Φu (-1/4)`
+(in the numerics' consistent coordinate this is the lattice `ζ₀ + ℤ + ℤ (1/2 + τ)`).  `f` swaps the two attracting
+basins with a half step in the Fatou coordinates. -/
 public theorem lavaurs_three_quarters :
     ∃ Pu : Set ℂ, ∃ Φu : ℂ → ℂ, ∃ Pl : Set ℂ, ∃ Φl : ℂ → ℂ, ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, ∃ b : ℂ,
       let f := threeQuarters
@@ -931,10 +1069,11 @@ public theorem lavaurs_three_quarters :
         (fun ζ ↦ Real.exp (-2 * π * ζ.im)) ∧
       (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ - π * I * β) =O[comap Complex.im atBot]
         (fun ζ ↦ Real.exp (2 * π * ζ.im)) ∧
-      (∀ ζ ∈ hornDomain g Ψ Pu V, deriv (hornMap g Φu Ψ Pu V) ζ = 0 → ∃ v : ℂ, (v = -1 / 4 ∨ v = 5 / 16) ∧
-        v ∈ basin g Pu ∧ ∃ j : ℤ, hornMap g Φu Ψ Pu V ζ = basinExt g Φu Pu v + j) ∧
-      (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 → ∃ v : ℂ, (v = -1 / 4 ∨ v = 5 / 16) ∧
-        v ∈ basin g Pl ∧ ∃ j : ℤ, hornMap g Φl Ψ Pl V ζ = basinExt g Φl Pl v + j) ∧
+      (-1 / 4 : ℂ) ∈ basin g Pu ∧ (5 / 16 : ℂ) ∈ basin g Pl ∧ Disjoint (basin g Pu) (basin g Pl) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pu V, deriv (hornMap g Φu Ψ Pu V) ζ = 0 →
+        ∃ j : ℤ, hornMap g Φu Ψ Pu V ζ = basinExt g Φu Pu (-1 / 4) + j) ∧
+      (∀ ζ ∈ hornDomain g Ψ Pl V, deriv (hornMap g Φl Ψ Pl V) ζ = 0 →
+        ∃ j : ℤ, hornMap g Φl Ψ Pl V ζ = basinExt g Φu Pu (-1 / 4) + 1 / 2 + j) ∧
       (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
       (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) := by
   have fa : ∀ z, AnalyticAt ℂ threeQuarters z := threeQuarters_analytic
@@ -946,7 +1085,7 @@ public theorem lavaurs_three_quarters :
     rw [e]
   have hc : (I / 2) ^ 2 = 1 / (2 * (-2 : ℂ)) := by
     rw [div_pow, Complex.I_sq]; norm_num
-  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨h, φ, ha, h0, dh, pg, conj⟩, ⟨Pou, -, gPu, Φau, Φeu⟩,
+  obtain ⟨Pu, Φu, Pl, Φl, V, Ψ, b, ⟨h, φ, ha, h0, dh, pg, conj⟩, ⟨εs, εs0, sect⟩, disj, ⟨Pou, -, gPu, Φau, Φeu⟩,
     ⟨Pol, -, gPl, Φal, Φel⟩, ⟨Vo, Vl, reach, Ψa, Ψe⟩, domu, -, doml, -, decu, decl, critu, critl, fu, fl, -, -⟩ :=
     parabolic_flip fa f0 fd (by norm_num) approx hc
   -- the residue: `b = -d² / a = 1/2`, so `β = 3/4 - (1/2) / 8 = 11/16`
@@ -961,9 +1100,33 @@ public theorem lavaurs_three_quarters :
   have ga : ∀ z, AnalyticAt ℂ (fun z ↦ threeQuarters (threeQuarters z)) z := fun z ↦ (fa _).comp (fa z)
   obtain ⟨Dou, Dpu, Hau, Heu⟩ := horn_map ga Pou gPu Φau Φeu Vo Vl reach Ψa Ψe
   obtain ⟨Dol, Dpl, Hal, Hel⟩ := horn_map ga Pol gPl Φal Φel Vo Vl reach Ψa Ψe
-  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, Dou, Dol, Dpu, Dpl, domu, doml, Hau, Hal, Heu, Hel, decu, decl, fun ζ m crit ↦ ?_,
-    fun ζ m crit ↦ ?_, fu, fl⟩
+  -- the critical orbit enters the upper petal `Pu` (direction `-1/2`), along the negative reals
+  have cu : I / 2 * exp (π * I / (2 : ℕ)) = -1 / 2 := by rw [exp_half]; ring_nf; rw [Complex.I_sq]; ring
+  have mu : (-1 / 4 : ℂ) ∈ basin (fun z ↦ threeQuarters (threeQuarters z)) Pu := by
+    obtain ⟨n, n1, n0⟩ := gr_orbit (ε := εs) εs0
+    refine ⟨n, ?_⟩
+    have e : ((-1 / 4 : ℝ) : ℂ) = -1 / 4 := by push_cast; ring
+    rw [← e, gr_iter_cast]
+    set x := gr^[n] (-1 / 4)
+    have x0 : (x : ℂ) ≠ 0 := by exact_mod_cast n0.ne
+    refine sect _ x0 (by rw [Complex.norm_real, Real.norm_eq_abs, abs_of_neg n0]; linarith) ?_
+    rw [cu]
+    have : ((‖(x : ℂ)‖ / ‖(-1 / 2 : ℂ)‖ : ℝ) : ℂ) = -2 * x := by
+      rw [Complex.norm_real, Real.norm_eq_abs, abs_of_neg n0]; norm_num; ring
+    rw [this, show (-1 / 2 : ℂ) * (-2 * x) = x by ring, div_self x0, sub_self, norm_zero]; norm_num
+  have f14 : threeQuarters (-1 / 4) = 5 / 16 := by simp only [threeQuarters]; norm_num
+  have ml : (5 / 16 : ℂ) ∈ basin (fun z ↦ threeQuarters (threeQuarters z)) Pl := by
+    rw [← f14]; exact fu.1 mu
+  refine ⟨Pu, Φu, Pl, Φl, V, Ψ, b, hβ, Dou, Dol, Dpu, Dpl, domu, doml, Hau, Hal, Heu, Hel, decu, decl, mu, ml,
+    disj, fun ζ m crit ↦ ?_, fun ζ m crit ↦ ?_, fu, fl⟩
   · obtain ⟨c₀, dc, mc, j, e⟩ := critu ζ m crit
-    exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
+    beta_reduce at mc e
+    rcases threeQuarters_crit dc with v | v
+    · exact ⟨j, by rw [e, v]⟩
+    · rw [v] at mc; exact absurd mc (Set.disjoint_right.mp disj ml)
   · obtain ⟨c₀, dc, mc, j, e⟩ := critl ζ m crit
-    exact ⟨_, threeQuarters_crit dc, mc, j, e⟩
+    beta_reduce at mc e
+    rcases threeQuarters_crit dc with v | v
+    · rw [v] at mc; exact absurd mc (Set.disjoint_left.mp disj mu)
+    · refine ⟨j, ?_⟩
+      rw [e, v, ← f14, fu.2 _ mu]
