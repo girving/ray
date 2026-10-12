@@ -124,7 +124,7 @@ lemma PetalGerm.local_repelling (h : PetalGerm g k a b) {c : ℂ} (hc : c ^ k = 
       (∀ ζ ∈ V, g (Ψ (ζ - 1)) = Ψ ζ) := by
   have k0 := h.k0
   obtain ⟨R, A, nt, semi⟩ := h.repelling hc
-  obtain ⟨V, Ψw, Vo, Vl, reach, Ψa, Ψm, Ψe⟩ := nt.repel_param (max R (‖c‖ ^ k / ε ^ k))
+  obtain ⟨V, Ψw, Vo, Vl, reach, Ψa, Ψm, Ψe, -, -⟩ := nt.repel_param (max R (‖c‖ ^ k / ε ^ k))
   have R4 := nt.four_le
   have facts : ∀ ζ ∈ V, -Ψw ζ ≠ 0 ∧ -Ψw ζ ∈ slitPlane ∧ Ψw ζ ∈ leftHalf R ∧
       ‖c‖ ^ k / ε ^ k < ‖-Ψw ζ‖ := fun ζ m ↦ by

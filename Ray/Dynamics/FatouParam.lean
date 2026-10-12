@@ -56,6 +56,34 @@ lemma exists_fixed {T : ℂ → ℂ} {c : ℂ} {ρ : ℝ} (maps : MapsTo T (Metr
     (Metric.mem_closedBall_self ρ0) (edist_ne_top _ _)
   exact ⟨z, zm, fz⟩
 
+/-- If the disk of radius `2 ‖Φ t - t‖ + 1` around `t` lies in the half-plane where `Φ - id` is `1/2`-Lipschitz, then
+`t` is in the image of `Φ` (contraction fixed point) -/
+lemma mem_image_of_ball {a : ℝ}
+    (lip : ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖) {t : ℂ} (tH : t ∈ rightHalf (2 * a))
+    (bH : Metric.closedBall t (2 * ‖fatou G β t - t‖ + 1) ⊆ rightHalf (2 * a)) :
+    t ∈ fatou G β '' rightHalf (2 * a) := by
+  set f := fun z ↦ fatou G β z - z with hf
+  set ρ := 2 * ‖f t‖ + 1
+  obtain ⟨z, zb, fz⟩ := exists_fixed (T := fun z ↦ t - f z) (c := t) (ρ := ρ)
+    (fun z zb ↦ by
+      simp only [Metric.mem_closedBall, dist_eq_norm] at zb ⊢
+      have l := lip z (bH (by simpa [dist_eq_norm] using zb)) t tH
+      calc ‖t - f z - t‖ = ‖f z‖ := by rw [sub_sub_cancel_left, norm_neg]
+        _ ≤ ‖f t‖ + ‖f z - f t‖ := by
+            have := norm_add_le (f t) (f z - f t); simp only [add_sub_cancel] at this; exact this
+        _ ≤ ‖f t‖ + 1 / 2 * ‖z - t‖ := by simp only [hf] at l ⊢; linarith
+        _ ≤ ρ := by simp only [ρ]; nlinarith [norm_nonneg (f t)])
+    (fun x xb y yb ↦ by
+      have l := lip x (bH xb) y (bH yb)
+      rw [show t - f x - (t - f y) = -(f x - f y) by ring, norm_neg]
+      simpa only [hf] using l)
+    (by positivity)
+  refine ⟨z, bH zb, ?_⟩
+  have e : fatou G β z = z + f z := by simp [hf]
+  linear_combination e - fz
+
+
 /-- Every point enters the image of the Fatou coordinate after enough steps -/
 lemma exists_shift_mem (h : NearTranslation G β R A δ) {a : ℝ} (Ra : R ≤ a) (Sa : tailBound β A δ a ≤ 1 / 4)
     (lip : ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
@@ -124,31 +152,51 @@ lemma exists_shift_mem (h : NearTranslation G β R A δ) {a : ℝ} (Ra : R ≤ a
     show 2 * a < z.re
     simp only [ρ] at this
     linarith
-  obtain ⟨z, zb, fz⟩ := exists_fixed (T := fun z ↦ t - f z) (c := t) (ρ := ρ)
-    (fun z zb ↦ by
-      simp only [Metric.mem_closedBall, dist_eq_norm] at zb ⊢
-      have l := lip z (bH (by simpa [dist_eq_norm] using zb)) t tH
-      calc ‖t - f z - t‖ = ‖f z‖ := by rw [sub_sub_cancel_left, norm_neg]
-        _ ≤ ‖f t‖ + ‖f z - f t‖ := by
-            have := norm_add_le (f t) (f z - f t); simp only [add_sub_cancel] at this; exact this
-        _ ≤ ‖f t‖ + 1 / 2 * ‖z - t‖ := by simp only [hf] at l ⊢; linarith
-        _ ≤ ρ := by simp only [ρ]; nlinarith [norm_nonneg (f t)])
-    (fun x xb y yb ↦ by
-      have l := lip x (bH xb) y (bH yb)
-      rw [show t - f x - (t - f y) = -(f x - f y) by ring, norm_neg]
-      simpa only [hf] using l)
-    (by positivity)
-  refine ⟨n, z, bH zb, ?_⟩
-  have e : fatou G β z = z + f z := by simp [hf]
-  have ht : t = ζ + n := rfl
-  linear_combination e - fz + ht
+  obtain ⟨z, zm, e⟩ := mem_image_of_ball lip tH bH
+  exact ⟨n, z, zm, by rw [e]⟩
+
+/-- The image contains the log-shaped region `2a + 2 ‖β‖ (log (‖t‖ + 1) + 4) + 2 < re t` -/
+public lemma mem_image_of_re (h : NearTranslation G β R A δ) {a : ℝ} (Ra : R ≤ a) (Sa : tailBound β A δ a ≤ 1 / 4)
+    (lip : ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖) {t : ℂ}
+    (tr : 2 * a + 2 * ‖β‖ * (Real.log (‖t‖ + 1) + 4) + 2 < t.re) : t ∈ fatou G β '' rightHalf (2 * a) := by
+  have a4 : 4 ≤ a := le_trans h.four_le Ra
+  have tn : t.re ≤ ‖t‖ := Complex.re_le_norm t
+  have l1 : 0 ≤ Real.log (‖t‖ + 1) := Real.log_nonneg (by linarith [norm_nonneg t])
+  have b0 := norm_nonneg β
+  have big : 2 * a + 2 < t.re := by nlinarith
+  have t1 : 1 ≤ ‖t‖ := by linarith
+  have l0 : 0 ≤ Real.log ‖t‖ := Real.log_nonneg t1
+  have l2 : Real.log ‖t‖ ≤ Real.log (‖t‖ + 1) := Real.log_le_log (by linarith) (by linarith)
+  have tH : t ∈ rightHalf (2 * a) := by show 2 * a < t.re; linarith
+  have tR : t ∈ rightHalf R := by show R < t.re; linarith
+  -- `‖Φ t - t‖ ≤ ‖β‖ (log (‖t‖ + 1) + 4) + 1/4`
+  have lt : ‖log t‖ ≤ Real.log (‖t‖ + 1) + 4 := by
+    refine le_trans (Complex.norm_le_abs_re_add_abs_im _) ?_
+    rw [Complex.log_re, Complex.log_im, abs_of_nonneg l0]
+    have := Complex.abs_arg_le_pi t
+    linarith [Real.pi_le_four]
+  have ft : ‖fatou G β t - t‖ ≤ ‖β‖ * (Real.log (‖t‖ + 1) + 4) + 1 / 4 := by
+    have e := h.fatou_sub_approx_le tR Ra (by linarith)
+    calc ‖fatou G β t - t‖ = ‖(fatou G β t - approxFatou β t) - β * log t‖ := by
+          simp only [approxFatou]; ring_nf
+      _ ≤ ‖fatou G β t - approxFatou β t‖ + ‖β * log t‖ := norm_sub_le _ _
+      _ ≤ 1 / 4 + ‖β‖ * (Real.log (‖t‖ + 1) + 4) := by
+          rw [norm_mul]; nlinarith
+      _ = _ := by ring
+  refine mem_image_of_ball lip tH fun z zb ↦ ?_
+  have := le_trans (Complex.abs_re_le_norm (z - t)) (by simpa [dist_eq_norm] using zb)
+  rw [abs_le, Complex.sub_re] at this
+  show 2 * a < z.re
+  linarith
 
 /-- The Fatou parametrisation: on a half-plane `H` where `Φ` is injective, `Φ H` is open, every point enters it after
 enough steps, and `Φ⁻¹ : Φ H → H` is analytic -/
 public theorem fatou_param (h : NearTranslation G β R A δ) :
     ∃ R' ≥ R, ∃ Ψ : ℂ → ℂ, InjOn (fatou G β) (rightHalf R') ∧ IsOpen (fatou G β '' rightHalf R') ∧
       (∀ ζ : ℂ, ∃ n : ℕ, ζ + n ∈ fatou G β '' rightHalf R') ∧
-      AnalyticOnNhd ℂ Ψ (fatou G β '' rightHalf R') ∧ (∀ w ∈ rightHalf R', Ψ (fatou G β w) = w) := by
+      AnalyticOnNhd ℂ Ψ (fatou G β '' rightHalf R') ∧ (∀ w ∈ rightHalf R', Ψ (fatou G β w) = w) ∧
+      ∃ C : ℝ, ∀ t : ℂ, C + 2 * ‖β‖ * Real.log (‖t‖ + 1) < t.re → t ∈ fatou G β '' rightHalf R' := by
   obtain ⟨a, Ra, Sa, -, lip⟩ := h.exists_lip
   have a4 : 4 ≤ a := le_trans h.four_le Ra
   set H := rightHalf (2 * a)
@@ -161,7 +209,8 @@ public theorem fatou_param (h : NearTranslation G β R A δ) :
     exact sub_eq_zero.mp (norm_eq_zero.mp this)
   have fa : AnalyticOnNhd ℂ (fatou G β) H := fun w m ↦ h.fatou_analytic w (HR m)
   obtain ⟨Ψ, Ψa, Ψf⟩ := global_complex_inverse_fun_open'' fa inj (isOpen_rightHalf _)
-  refine ⟨2 * a, by linarith, Ψ, inj, ?_, h.exists_shift_mem Ra Sa lip, Ψa, Ψf⟩
+  refine ⟨2 * a, by linarith, Ψ, inj, ?_, h.exists_shift_mem Ra Sa lip, Ψa, Ψf,
+    2 * a + 8 * ‖β‖ + 2, fun t tr ↦ h.mem_image_of_re Ra Sa lip (by linarith)⟩
   -- open mapping: `Φ` is not constant, being injective
   rcases fa.is_constant_or_isOpen (convex_halfSpace_re_gt (2 * a)).isPreconnected with ⟨c, hc⟩ | o
   · exfalso
@@ -180,10 +229,12 @@ variable {G : ℂ → ℂ} {β : ℂ} {R A δ : ℝ}
 /-- The repelling Fatou parametrisation, with values in any given left half-plane -/
 public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
     ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧
-      AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ leftHalf R₁) ∧ (∀ ζ ∈ V, G (Ψ (ζ - 1)) = Ψ ζ) := by
+      AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ leftHalf R₁) ∧ (∀ ζ ∈ V, G (Ψ (ζ - 1)) = Ψ ζ) ∧
+      (∀ ζ ∈ V, ζ = -NearTranslation.fatou (reflInv G) (-β) (-Ψ ζ)) ∧
+      ∃ C : ℝ, ∀ ζ : ℂ, C + 2 * ‖β‖ * Real.log (‖ζ‖ + 1) < -ζ.re → ζ ∈ V := by
   set R₂ := max R₁ (repR β R A)
   have hF := h.reflInv_nearTranslation.mono (le_max_right R₁ (repR β R A))
-  obtain ⟨R', RR, Ψ, -, Wo, reach, Ψa, Ψf⟩ := hF.fatou_param
+  obtain ⟨R', RR, Ψ, -, Wo, reach, Ψa, Ψf, C, hC⟩ := hF.fatou_param
   set F := reflInv G
   set W := NearTranslation.fatou F (-β) '' rightHalf R'
   have sub : ∀ {w}, w ∈ rightHalf R' → w ∈ rightHalf R₂ := fun {w} m ↦ by
@@ -194,7 +245,7 @@ public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
   have Wr : ∀ ζ ∈ W, ζ + 1 ∈ W := by
     rintro _ ⟨w, wm, rfl⟩; exact ⟨F w, hF'.mapsTo wm, hF.fatou_eqn (sub wm)⟩
   refine ⟨(fun ζ ↦ -ζ) ⁻¹' W, fun ζ ↦ -Ψ (-ζ), Wo.preimage continuous_neg, fun ζ m ↦ ?_, fun ζ ↦ ?_,
-    fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_⟩
+    fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_, C, fun ζ ζr ↦ ?_⟩
   · have := Wr _ m; simp only [mem_preimage] at this ⊢; rwa [neg_sub, sub_eq_neg_add]
   · obtain ⟨n, m⟩ := reach (-ζ); exact ⟨n, by simp only [mem_preimage, neg_sub]; rwa [sub_eq_neg_add]⟩
   · exact ((Ψa _ m).comp (f := fun ζ : ℂ ↦ -ζ) analyticAt_id.neg).neg
@@ -212,5 +263,11 @@ public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
     have : 4 * R ≤ repR β R A := by
       unfold repR repA; have := h.A0; have := h.four_le; nlinarith [norm_nonneg β]
     have := le_max_right R₁ (repR β R A); linarith
+  · simp only [neg_neg]
+    rw [(ΨW _ m).2, neg_neg]
+  · show -ζ ∈ W
+    refine hC _ ?_
+    rw [norm_neg, norm_neg, Complex.neg_re]
+    exact ζr
 
 end NearTranslationOut

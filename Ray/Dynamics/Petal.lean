@@ -217,7 +217,7 @@ lemma core (h : PetalGerm g k a b) : ∃ C ε : ℝ, 0 < ε ∧ 0 ≤ C ∧ ∀ 
       rw [norm_pow]; field_simp; ring
 
 /-- Any `z` with `z^k = -1 / (k a w)`, for `w` far out, has `w (g z) = w + 1 + β / w + O(‖w‖^(-1-1/k))` -/
-lemma transfer (h : PetalGerm g k a b) : ∃ R₀ A : ℝ, 0 ≤ A ∧ ∀ w z : ℂ, R₀ < ‖w‖ → z ^ k = -1 / (k * a * w) →
+public lemma transfer (h : PetalGerm g k a b) : ∃ R₀ A : ℝ, 0 ≤ A ∧ ∀ w z : ℂ, R₀ < ‖w‖ → z ^ k = -1 / (k * a * w) →
     AnalyticAt ℂ g z ∧ g z ≠ 0 ∧ (∃ u, g z = z * (1 + u) ∧ k * ‖u‖ ≤ 1 / 2) ∧ petalCoord k a z = w ∧
       ‖petalCoord k a (g z) - (w + 1 + petalResidue k a b / w)‖ ≤ A / ‖w‖ ^ (1 + (k : ℝ)⁻¹) := by
   have k0 : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr h.k0.ne'
@@ -293,7 +293,7 @@ lemma root_eq {x L : ℂ} (k0 : 0 < k) (e : (x * exp L) ^ k = x ^ k) (x0 : x ≠
 
 /-- Branch consistency: if `z (1 + u)` and the root `c exp (-log s' / k)` have the same `k`-th power, `s' ≈ s` and
 `u ≈ 0`, they are equal -/
-lemma branch {c s s' u u' : ℂ} (k0 : 0 < k) (c0 : c ≠ 0) (sr : 0 < s.re) (hs : s' = s * (1 + u'))
+public lemma branch {c s s' u u' : ℂ} (k0 : 0 < k) (c0 : c ≠ 0) (sr : 0 < s.re) (hs : s' = s * (1 + u'))
     (un' : ‖u'‖ ≤ 5 / 16) (un : k * ‖u‖ ≤ 1 / 2)
     (e : (petalRoot k c s * (1 + u)) ^ k = (petalRoot k c s') ^ k) :
     petalRoot k c s * (1 + u) = petalRoot k c s' := by
@@ -336,13 +336,13 @@ lemma branch {c s s' u u' : ℂ} (k0 : 0 < k) (c0 : c ≠ 0) (sr : 0 < s.re) (hs
     _ < 2 * π := by nlinarith [Real.two_le_pi]
 
 /-- A near-translation step moves at most `5/4` -/
-lemma step_le {w w' : ℂ} (d : ‖w' - (w + 1)‖ ≤ 1 / 4) : ‖w' - w‖ ≤ 5 / 4 := by
+public lemma step_le {w w' : ℂ} (d : ‖w' - (w + 1)‖ ≤ 1 / 4) : ‖w' - w‖ ≤ 5 / 4 := by
   calc ‖w' - w‖ = ‖(w' - (w + 1)) + 1‖ := by ring_nf
     _ ≤ ‖w' - (w + 1)‖ + ‖(1 : ℂ)‖ := norm_add_le _ _
     _ ≤ 5 / 4 := by rw [norm_one]; linarith
 
 /-- `w' = w (1 + u')` with `‖u'‖ ≤ 5/16`, for a near-translation step -/
-lemma step_ratio {w w' : ℂ} (n4 : 4 ≤ ‖w‖) (dn : ‖w' - w‖ ≤ 5 / 4) :
+public lemma step_ratio {w w' : ℂ} (n4 : 4 ≤ ‖w‖) (dn : ‖w' - w‖ ≤ 5 / 4) :
     ∃ u', w' = w * (1 + u') ∧ ‖u'‖ ≤ 5 / 16 := by
   have n0 : 0 < ‖w‖ := by linarith
   have w0 : w ≠ 0 := norm_pos_iff.mp n0
