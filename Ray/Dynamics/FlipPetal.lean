@@ -546,6 +546,10 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
       (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
       Tendsto (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ) (comap Complex.im atBot)
         (𝓝 (π * I * petalResidue 2 a b)) ∧
+      (fun ζ ↦ hornMap g Φu Ψ Pu V ζ - ζ + π * I * petalResidue 2 a b) =O[comap Complex.im atTop]
+        (fun ζ ↦ Real.exp (-2 * π * ζ.im)) ∧
+      (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ - π * I * petalResidue 2 a b) =O[comap Complex.im atBot]
+        (fun ζ ↦ Real.exp (2 * π * ζ.im)) ∧
       (MapsTo f (basin g Pu) (basin g Pl) ∧ ∀ z ∈ basin g Pu, basinExt g Φl Pl (f z) = basinExt g Φu Pu z + 1 / 2) ∧
       (MapsTo f (basin g Pl) (basin g Pu) ∧ ∀ z ∈ basin g Pl, basinExt g Φu Pu (f z) = basinExt g Φl Pl z + 1 / 2) ∧
       (∀ ζ ∈ hornDomain g Ψ Pu V, f (paramExt g Ψ V ζ) ∈ basin g Pl ∧
@@ -621,8 +625,8 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
   obtain ⟨Pou', gPu, Φau', Φeu'⟩ := transport_attr δ₀0 inj' hδ'' Pou Pbu PMu Φau Φeu
   obtain ⟨Pol', gPl, Φal', Φel'⟩ := transport_attr δ₀0 inj' hδ'' Pol Pbl PMl Φal Φel
   obtain ⟨Ψa', Ψe'⟩ := transport_rep (fun z m ↦ ⟨(hδ'' z m).2.1, (hδ'' z m).2.2.2⟩) Vl Ψa Ψb Ψe
-  obtain ⟨-, Dpu, -, Heu⟩ := horn_map ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe'
-  obtain ⟨-, Dpl, -, Hel⟩ := horn_map ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe'
+  obtain ⟨Dou, Dpu, Hau, Heu⟩ := horn_map ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe'
+  obtain ⟨Dol, Dpl, Hal, Hel⟩ := horn_map ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe'
   -- the half step in the `z`-plane: `f (h z) = h (f' z)`
   have fhz : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, f (h z) = h (f' z) := fun z m ↦ (hδ' z (bδ' m)).2.2.2.1
   have half : ∀ {P₁ P₂ : Set ℂ} {Φ₁ Φ₂ : ℂ → ℂ}, P₁ ⊆ Metric.ball 0 δ₀ → P₂ ⊆ Metric.ball 0 δ₀ →
@@ -655,14 +659,14 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
   obtain ⟨mbl, ebl⟩ := basin_half gPl gPu Φel' Φeu' ml el
   have hδ3 : ∀ z ∈ Metric.ball (0 : ℂ) δ₀, φ (h z) = z ∧ AnalyticAt ℂ h z ∧ AnalyticAt ℂ φ (h z) ∧
       g (h z) = h (φ (g (h z))) := hδ''
-  refine ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
-    ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, ?_, ?_, ?_, ?_, ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
-    fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩
-  · obtain ⟨T, hT⟩ := endu 1 one_pos
+  have domu : ∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g (h ∘ Ψ') (h '' Pu') V := by
+    obtain ⟨T, hT⟩ := endu 1 one_pos
     refine ⟨T, fun ζ hζ ↦ ?_⟩
     obtain ⟨m, N, mV, small, land', -⟩ := hT ζ hζ
     exact (horn_shift Dpu Heu ζ m (horn_land hδ3 gPu Φeu' Vl Ψe' mV small land').1).1
-  · rw [Metric.tendsto_nhds]
+  have limu : Tendsto (fun ζ ↦ hornMap g (Φu' ∘ φ) (h ∘ Ψ') (h '' Pu') V ζ - ζ) (comap Complex.im atTop)
+      (𝓝 (-(π * I * petalResidue 2 a b))) := by
+    rw [Metric.tendsto_nhds]
     intro ε ε0
     obtain ⟨T, hT⟩ := endu ε ε0
     rw [Filter.eventually_comap]
@@ -671,11 +675,14 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     obtain ⟨dm, e⟩ := horn_land hδ3 gPu Φeu' Vl Ψe' mV small land'
     rw [dist_eq_norm, (horn_shift Dpu Heu ζ m dm).2, e]
     simpa [sub_neg_eq_add] using est
-  · obtain ⟨T, hT⟩ := endl 1 one_pos
+  have doml : ∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g (h ∘ Ψ') (h '' Pl') V := by
+    obtain ⟨T, hT⟩ := endl 1 one_pos
     refine ⟨-T, fun ζ hζ ↦ ?_⟩
     obtain ⟨m, N, mV, small, land', -⟩ := hT ζ (by linarith)
     exact (horn_shift Dpl Hel ζ m (horn_land hδ3 gPl Φel' Vl Ψe' mV small land').1).1
-  · rw [Metric.tendsto_nhds]
+  have liml : Tendsto (fun ζ ↦ hornMap g (Φl' ∘ φ) (h ∘ Ψ') (h '' Pl') V ζ - ζ) (comap Complex.im atBot)
+      (𝓝 (π * I * petalResidue 2 a b)) := by
+    rw [Metric.tendsto_nhds]
     intro ε ε0
     obtain ⟨T, hT⟩ := endl ε ε0
     rw [Filter.eventually_comap]
@@ -684,3 +691,8 @@ public theorem parabolic_flip (fa : ∀ z, AnalyticAt ℂ f z) (f0 : f 0 = 0) (f
     obtain ⟨dm, e⟩ := horn_land hδ3 gPl Φel' Vl Ψe' mV small land'
     rw [dist_eq_norm, (horn_shift Dpl Hel ζ m dm).2, e]
     simpa [← sub_eq_add_neg] using est
+  exact ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', b, ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩,
+    ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩, ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml,
+    (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left (fun ζ ↦ by ring),
+    (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left (fun ζ ↦ by ring), ⟨mbu, ebu⟩, ⟨mbl, ebl⟩,
+    fun ζ m ↦ ⟨mbu m, ebu _ m⟩, fun ζ m ↦ ⟨mbl m, ebl _ m⟩⟩

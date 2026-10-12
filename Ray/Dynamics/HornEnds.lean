@@ -1,6 +1,8 @@
 module
 public import Ray.Dynamics.Parabolic
 import Mathlib.Analysis.Analytic.Composition
+import Mathlib.Analysis.Calculus.FDeriv.Analytic
+import Mathlib.Analysis.Complex.Periodic
 import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 import Mathlib.Tactic.Bound
@@ -1043,6 +1045,87 @@ public lemma horn_shift {D : Set ℂ} {H : ℂ → ℂ} (Dp : ∀ ζ, ζ ∈ D �
   simp only [sub_add_cancel] at m1 e1
   exact ⟨m1, by rw [e1]; ring⟩
 
+/-- Exponential convergence at the upper end: a map commuting with `ζ ↦ ζ + 1` on a `1`-periodic open domain
+containing an upper half-plane, with `H ζ - ζ → c` as `im ζ → ∞`, has `H ζ - ζ - c = O(exp (-2π im ζ))` (the
+`q`-expansion of the periodic `H - id`, with a removable singularity at `q = 0`). -/
+public lemma horn_exp_decay {D : Set ℂ} {H : ℂ → ℂ} {c : ℂ} (Do : IsOpen D) (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D)
+    (Ha : AnalyticOnNhd ℂ H D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1) (dom : ∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ D)
+    (lim : Tendsto (fun ζ ↦ H ζ - ζ) (comap Complex.im atTop) (𝓝 c)) :
+    (fun ζ ↦ H ζ - ζ - c) =O[comap Complex.im atTop] fun ζ ↦ Real.exp (-2 * π * ζ.im) := by
+  obtain ⟨T, hT⟩ := dom
+  set F := fun ζ ↦ if ζ ∈ D then H ζ - ζ - c else 0
+  have up : ∀ᶠ ζ in comap Complex.im atTop, ζ ∈ D := by
+    rw [Filter.eventually_comap]
+    filter_upwards [eventually_gt_atTop T] with y hy ζ hζ
+    exact hT ζ (by rw [hζ]; exact hy)
+  have FD : ∀ ζ ∈ D, F ζ = H ζ - ζ - c := fun ζ m ↦ by simp [F, m]
+  have per : Function.Periodic F 1 := by
+    intro ζ
+    by_cases m : ζ ∈ D
+    · rw [FD _ ((Dp ζ).mp m), FD _ m, He ζ m]; ring
+    · have m' : ζ + 1 ∉ D := fun h ↦ m ((Dp ζ).mpr h)
+      simp [F, m, m']
+  have hol : ∀ᶠ ζ in comap Complex.im atTop, DifferentiableAt ℂ F ζ := by
+    filter_upwards [up] with ζ m
+    have e : F =ᶠ[𝓝 ζ] fun ζ ↦ H ζ - ζ - c := by
+      filter_upwards [Do.mem_nhds m] with x xm; exact FD x xm
+    exact (((Ha ζ m).differentiableAt.sub differentiableAt_id).sub_const c).congr_of_eventuallyEq e
+  have zer : Tendsto F (comap Complex.im atTop) (𝓝 0) := by
+    have t := lim.sub_const c
+    rw [sub_self] at t
+    refine t.congr' ?_
+    filter_upwards [up] with ζ m
+    exact (FD ζ m).symm
+  have dec := per.exp_decay_of_zero_at_inf one_pos hol zer
+  refine (dec.congr' ?_ (Eventually.of_forall fun ζ ↦ by simp)).congr_left fun _ ↦ rfl
+  filter_upwards [up] with ζ m
+  exact FD ζ m
+
+/-- Exponential convergence at the lower end, by reflection -/
+public lemma horn_exp_decay_lower {D : Set ℂ} {H : ℂ → ℂ} {c : ℂ} (Do : IsOpen D)
+    (Dp : ∀ ζ, ζ ∈ D ↔ ζ + 1 ∈ D) (Ha : AnalyticOnNhd ℂ H D) (He : ∀ ζ ∈ D, H (ζ + 1) = H ζ + 1)
+    (dom : ∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ D)
+    (lim : Tendsto (fun ζ ↦ H ζ - ζ) (comap Complex.im atBot) (𝓝 c)) :
+    (fun ζ ↦ H ζ - ζ - c) =O[comap Complex.im atBot] fun ζ ↦ Real.exp (2 * π * ζ.im) := by
+  -- `H' ζ = -H (-ζ)` on `-D`
+  set D' := (fun ζ ↦ -ζ) ⁻¹' D
+  set H' := fun ζ ↦ -H (-ζ)
+  have Do' : IsOpen D' := Do.preimage continuous_neg
+  have Dp' : ∀ ζ, ζ ∈ D' ↔ ζ + 1 ∈ D' := fun ζ ↦ by
+    simp only [D', mem_preimage]
+    have := Dp (-(ζ + 1)); rw [show -(ζ + 1) + 1 = -ζ by ring] at this; exact this.symm
+  have Ha' : AnalyticOnNhd ℂ H' D' := fun ζ m ↦
+    ((Ha _ m).comp (f := fun ζ ↦ -ζ) analyticAt_id.neg).neg
+  have He' : ∀ ζ ∈ D', H' (ζ + 1) = H' ζ + 1 := fun ζ m ↦ by
+    have m' : -(ζ + 1) ∈ D := (Dp' ζ).mp m
+    simp only [H']
+    have := He _ m'; rw [show -(ζ + 1) + 1 = -ζ by ring] at this
+    rw [this]; ring
+  have tn : Tendsto (fun ζ : ℂ ↦ -ζ) (comap Complex.im atTop) (comap Complex.im atBot) := by
+    rw [tendsto_comap_iff]
+    have : Complex.im ∘ (fun ζ : ℂ ↦ -ζ) = (fun y : ℝ ↦ -y) ∘ Complex.im := by funext ζ; simp
+    rw [this]
+    exact tendsto_neg_atTop_atBot.comp tendsto_comap
+  have tn' : Tendsto (fun ζ : ℂ ↦ -ζ) (comap Complex.im atBot) (comap Complex.im atTop) := by
+    rw [tendsto_comap_iff]
+    have : Complex.im ∘ (fun ζ : ℂ ↦ -ζ) = (fun y : ℝ ↦ -y) ∘ Complex.im := by funext ζ; simp
+    rw [this]
+    exact tendsto_neg_atBot_atTop.comp tendsto_comap
+  obtain ⟨T, hT⟩ := dom
+  have dom' : ∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ D' :=
+    ⟨-T, fun ζ hζ ↦ hT (-ζ) (by simp; linarith)⟩
+  have lim' : Tendsto (fun ζ ↦ H' ζ - ζ) (comap Complex.im atTop) (𝓝 (-c)) := by
+    have := (lim.comp tn).neg
+    refine this.congr fun ζ ↦ ?_
+    simp [H']; ring
+  have dec := horn_exp_decay Do' Dp' Ha' He' dom' lim'
+  have dec' := dec.comp_tendsto tn'
+  have e1 : ∀ ζ, ((fun ζ ↦ H' ζ - ζ - -c) ∘ fun ζ ↦ -ζ) ζ = -(H ζ - ζ - c) := fun ζ ↦ by
+    simp only [Function.comp_apply, H', neg_neg]; ring
+  have e2 : ∀ ζ : ℂ, ((fun ζ : ℂ ↦ Real.exp (-2 * π * ζ.im)) ∘ fun ζ ↦ -ζ) ζ = Real.exp (2 * π * ζ.im) :=
+    fun ζ ↦ by simp
+  exact (((dec'.congr_left e1).neg_left).congr_left fun ζ ↦ neg_neg _).congr_right e2
+
 /-- The ends of the horn map.  Let `g` be entire with `g z = z + a z^(k+1) + O(z^(k+2))`, `a ≠ 0`, and let `c` be a
 repelling direction (a `k`-th root of `1 / (k a)`), with repelling parametrisation `Ψ`.  The adjacent attracting
 directions `c exp (± π i / k)` have petals `P±` and Fatou coordinates `Φ±`.  The horn maps `H± = Φ± ∘ Ψ` are defined
@@ -1065,7 +1148,11 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
         (𝓝 (-(π * I * petalResidue k a b))) ∧
       (∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g Ψ Pl V) ∧
       Tendsto (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ) (comap Complex.im atBot)
-        (𝓝 (π * I * petalResidue k a b)) := by
+        (𝓝 (π * I * petalResidue k a b)) ∧
+      (fun ζ ↦ hornMap g Φu Ψ Pu V ζ - ζ + π * I * petalResidue k a b) =O[comap Complex.im atTop]
+        (fun ζ ↦ Real.exp (-2 * π * ζ.im)) ∧
+      (fun ζ ↦ hornMap g Φl Ψ Pl V ζ - ζ - π * I * petalResidue k a b) =O[comap Complex.im atBot]
+        (fun ζ ↦ Real.exp (2 * π * ζ.im)) := by
   obtain ⟨h, φ, b, ha, φa, h0, -, l, r, -, pg⟩ := PetalGerm.normalize k0 a0 (ga 0) g0 approx
   obtain ⟨δ, δ0, inj, hδ⟩ := conj_setup (ga 0) g0 ha φa h0 l r one_pos
   obtain ⟨Pu', Φu', Pl', Φl', V, Ψ', -, ⟨Pou, Pneu, Pbu, PMu, Φau, Φeu⟩, ⟨Pol, Pnel, Pbl, PMl, Φal, Φel⟩,
@@ -1075,16 +1162,16 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
   obtain ⟨Pou', gPu, Φau', Φeu'⟩ := transport_attr δ0 inj hδ' Pou Pbu PMu Φau Φeu
   obtain ⟨Pol', gPl, Φal', Φel'⟩ := transport_attr δ0 inj hδ' Pol Pbl PMl Φal Φel
   obtain ⟨Ψa', Ψe'⟩ := transport_rep (fun z m ↦ ⟨(hδ z m).2.1, (hδ z m).2.2.2.1⟩) Vl Ψa Ψb Ψe
-  obtain ⟨-, Dpu, -, Heu⟩ := horn_map ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe'
-  obtain ⟨-, Dpl, -, Hel⟩ := horn_map ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe'
-  refine ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', h, φ, b, ⟨ha, φa, h0, l, r, pg⟩,
-    ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩, ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩,
-    ⟨Vo, Vl, reach, Ψa', Ψe'⟩, ?_, ?_, ?_, ?_⟩
-  · obtain ⟨T, hT⟩ := endu 1 one_pos
+  obtain ⟨Dou, Dpu, Hau, Heu⟩ := horn_map ga Pou' gPu Φau' Φeu' Vo Vl reach Ψa' Ψe'
+  obtain ⟨Dol, Dpl, Hal, Hel⟩ := horn_map ga Pol' gPl Φal' Φel' Vo Vl reach Ψa' Ψe'
+  have domu : ∃ T : ℝ, ∀ ζ : ℂ, T < ζ.im → ζ ∈ hornDomain g (h ∘ Ψ') (h '' Pu') V := by
+    obtain ⟨T, hT⟩ := endu 1 one_pos
     refine ⟨T, fun ζ hζ ↦ ?_⟩
     obtain ⟨m, N, mV, small, land', -⟩ := hT ζ hζ
     exact (horn_shift Dpu Heu ζ m (horn_land hδ' gPu Φeu' Vl Ψe' mV small land').1).1
-  · rw [Metric.tendsto_nhds]
+  have limu : Tendsto (fun ζ ↦ hornMap g (Φu' ∘ φ) (h ∘ Ψ') (h '' Pu') V ζ - ζ) (comap Complex.im atTop)
+      (𝓝 (-(π * I * petalResidue k a b))) := by
+    rw [Metric.tendsto_nhds]
     intro ε ε0
     obtain ⟨T, hT⟩ := endu ε ε0
     rw [Filter.eventually_comap]
@@ -1093,11 +1180,14 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
     obtain ⟨dm, e⟩ := horn_land hδ' gPu Φeu' Vl Ψe' mV small land'
     rw [dist_eq_norm, (horn_shift Dpu Heu ζ m dm).2, e]
     simpa [sub_neg_eq_add] using est
-  · obtain ⟨T, hT⟩ := endl 1 one_pos
+  have doml : ∃ T : ℝ, ∀ ζ : ℂ, ζ.im < T → ζ ∈ hornDomain g (h ∘ Ψ') (h '' Pl') V := by
+    obtain ⟨T, hT⟩ := endl 1 one_pos
     refine ⟨-T, fun ζ hζ ↦ ?_⟩
     obtain ⟨m, N, mV, small, land', -⟩ := hT ζ (by linarith)
     exact (horn_shift Dpl Hel ζ m (horn_land hδ' gPl Φel' Vl Ψe' mV small land').1).1
-  · rw [Metric.tendsto_nhds]
+  have liml : Tendsto (fun ζ ↦ hornMap g (Φl' ∘ φ) (h ∘ Ψ') (h '' Pl') V ζ - ζ) (comap Complex.im atBot)
+      (𝓝 (π * I * petalResidue k a b)) := by
+    rw [Metric.tendsto_nhds]
     intro ε ε0
     obtain ⟨T, hT⟩ := endl ε ε0
     rw [Filter.eventually_comap]
@@ -1106,3 +1196,8 @@ public theorem horn_ends (ga : ∀ z, AnalyticAt ℂ g z) (g0 : g 0 = 0) (k0 : 0
     obtain ⟨dm, e⟩ := horn_land hδ' gPl Φel' Vl Ψe' mV small land'
     rw [dist_eq_norm, (horn_shift Dpl Hel ζ m dm).2, e]
     simpa [← sub_eq_add_neg] using est
+  refine ⟨h '' Pu', Φu' ∘ φ, h '' Pl', Φl' ∘ φ, V, h ∘ Ψ', h, φ, b, ⟨ha, φa, h0, l, r, pg⟩,
+    ⟨Pou', Pneu.image _, gPu, Φau', Φeu'⟩, ⟨Pol', Pnel.image _, gPl, Φal', Φel'⟩,
+    ⟨Vo, Vl, reach, Ψa', Ψe'⟩, domu, limu, doml, liml, ?_, ?_⟩
+  · exact (horn_exp_decay Dou Dpu Hau Heu domu limu).congr_left fun ζ ↦ by ring
+  · exact (horn_exp_decay_lower Dol Dpl Hal Hel doml liml).congr_left fun ζ ↦ by ring
