@@ -1,5 +1,6 @@
 module
 public import Ray.Dynamics.FatouNear
+public import Ray.Dynamics.FatouRepel
 import Mathlib.Analysis.Complex.Convex
 import Mathlib.Analysis.Complex.OpenMapping
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -13,7 +14,11 @@ import Ray.Manifold.GlobalInverse
 The Fatou coordinate `Φ` of a near-translation `G` (`FatouNear.lean`) is injective on a right half-plane `H`.  Its
 image `Φ H` is open, invariant under `ζ ↦ ζ + 1`, and every point enters it after enough steps: for each `ζ` there is an
 `n` with `ζ + n ∈ Φ H`.  (`Φ H` is not a half-plane in general: `Φ w ≈ w - β log w` bends it logarithmically.)  The
-inverse `Ψ : Φ H → H` is analytic, and `G (Ψ ζ) = Ψ (ζ + 1)`.
+inverse `Ψ : Φ H → H` is analytic.
+
+For a repelling near-translation (`NearTranslationOut`), reflecting gives the repelling parametrisation
+`repel_param`: an open `V` closed under `ζ ↦ ζ - 1` that every point reaches after enough steps left, and an analytic
+`Ψ` on `V` with values far out in a left half-plane and `G (Ψ (ζ - 1)) = Ψ ζ`.
 
 Surjectivity is a contraction argument: `Φ = id + f` with `f` `1/2`-Lipschitz, so `z = t - f z` has a fixed point in
 the disk around `t` of radius `2 ‖f t‖ + 1`, which lies in `H` once `re t` beats `‖f t‖ = O(log ‖t‖)`.
@@ -167,3 +172,45 @@ public theorem fatou_param (h : NearTranslation G β R A δ) :
   · exact o H subset_rfl (isOpen_rightHalf _)
 
 end NearTranslation
+
+namespace NearTranslationOut
+
+variable {G : ℂ → ℂ} {β : ℂ} {R A δ : ℝ}
+
+/-- The repelling Fatou parametrisation, with values in any given left half-plane -/
+public theorem repel_param (h : NearTranslationOut G β R A δ) (R₁ : ℝ) :
+    ∃ V : Set ℂ, ∃ Ψ : ℂ → ℂ, IsOpen V ∧ (∀ ζ ∈ V, ζ - 1 ∈ V) ∧ (∀ ζ : ℂ, ∃ n : ℕ, ζ - n ∈ V) ∧
+      AnalyticOnNhd ℂ Ψ V ∧ (∀ ζ ∈ V, Ψ ζ ∈ leftHalf R₁) ∧ (∀ ζ ∈ V, G (Ψ (ζ - 1)) = Ψ ζ) := by
+  set R₂ := max R₁ (repR β R A)
+  have hF := h.reflInv_nearTranslation.mono (le_max_right R₁ (repR β R A))
+  obtain ⟨R', RR, Ψ, -, Wo, reach, Ψa, Ψf⟩ := hF.fatou_param
+  set F := reflInv G
+  set W := NearTranslation.fatou F (-β) '' rightHalf R'
+  have sub : ∀ {w}, w ∈ rightHalf R' → w ∈ rightHalf R₂ := fun {w} m ↦ by
+    simp only [rightHalf, mem_ofPred_eq] at m ⊢; linarith
+  have hF' := hF.mono RR
+  have ΨW : ∀ ζ ∈ W, Ψ ζ ∈ rightHalf R' ∧ NearTranslation.fatou F (-β) (Ψ ζ) = ζ := by
+    rintro _ ⟨w, wm, rfl⟩; rw [Ψf w wm]; exact ⟨wm, rfl⟩
+  have Wr : ∀ ζ ∈ W, ζ + 1 ∈ W := by
+    rintro _ ⟨w, wm, rfl⟩; exact ⟨F w, hF'.mapsTo wm, hF.fatou_eqn (sub wm)⟩
+  refine ⟨(fun ζ ↦ -ζ) ⁻¹' W, fun ζ ↦ -Ψ (-ζ), Wo.preimage continuous_neg, fun ζ m ↦ ?_, fun ζ ↦ ?_,
+    fun ζ m ↦ ?_, fun ζ m ↦ ?_, fun ζ m ↦ ?_⟩
+  · have := Wr _ m; simp only [mem_preimage] at this ⊢; rwa [neg_sub, sub_eq_neg_add]
+  · obtain ⟨n, m⟩ := reach (-ζ); exact ⟨n, by simp only [mem_preimage, neg_sub]; rwa [sub_eq_neg_add]⟩
+  · exact ((Ψa _ m).comp (f := fun ζ : ℂ ↦ -ζ) analyticAt_id.neg).neg
+  · have := (ΨW _ m).1
+    simp only [leftHalf, rightHalf, mem_ofPred_eq, Complex.neg_re] at this ⊢
+    have := le_max_left R₁ (repR β R A); linarith
+  · -- `Ψ (-(ζ - 1)) = F (Ψ (-ζ))`, and `-F w = G⁻¹ (-w)`
+    obtain ⟨wm, fw⟩ := ΨW _ m
+    set w := Ψ (-ζ)
+    have e1 : Ψ (-(ζ - 1)) = F w := by
+      rw [← Ψf (F w) (hF'.mapsTo wm), hF.fatou_eqn (sub wm), fw]; ring_nf
+    simp only [e1, F, reflInv, neg_neg]
+    refine h.apply_inv ?_
+    simp only [leftHalf, rightHalf, mem_ofPred_eq, Complex.neg_re] at wm ⊢
+    have : 4 * R ≤ repR β R A := by
+      unfold repR repA; have := h.A0; have := h.four_le; nlinarith [norm_nonneg β]
+    have := le_max_right R₁ (repR β R A); linarith
+
+end NearTranslationOut

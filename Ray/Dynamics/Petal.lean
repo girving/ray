@@ -255,14 +255,14 @@ lemma transfer (h : PetalGerm g k a b) : ∃ R₀ A : ℝ, 0 ≤ A ∧ ∀ w z :
     Real.mul_rpow (by positivity) (by positivity), Real.inv_rpow w0.le, ← div_eq_mul_inv, mul_div_assoc]
 
 /-- `c exp (-log w / k)` is a `k`-th root of `c^k / w` -/
-lemma root_pow {c w : ℂ} (w0 : w ≠ 0) (k0 : 0 < k) : (petalRoot k c w) ^ k = c ^ k / w := by
+public lemma root_pow {c w : ℂ} (w0 : w ≠ 0) (k0 : 0 < k) : (petalRoot k c w) ^ k = c ^ k / w := by
   have k0 : (k : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr k0.ne'
   rw [petalRoot, mul_pow, ← Complex.exp_nat_mul, mul_div_cancel₀ _ k0, Complex.exp_neg, Complex.exp_log w0, div_eq_mul_inv]
 
-lemma analyticAt_root {c w : ℂ} (m : w ∈ slitPlane) : AnalyticAt ℂ (fun w ↦ petalRoot k c w) w :=
+public lemma analyticAt_root {c w : ℂ} (m : w ∈ slitPlane) : AnalyticAt ℂ (fun w ↦ petalRoot k c w) w :=
   analyticAt_const.mul ((analyticAt_clog m).neg.div_const).cexp
 
-lemma analyticAt_petalCoord {y : ℂ} (y0 : y ≠ 0) (k0 : (k : ℂ) ≠ 0) (a0 : a ≠ 0) :
+public lemma analyticAt_petalCoord {y : ℂ} (y0 : y ≠ 0) (k0 : (k : ℂ) ≠ 0) (a0 : a ≠ 0) :
     AnalyticAt ℂ (petalCoord k a) y :=
   analyticAt_const.div (analyticAt_const.mul (analyticAt_id.pow k))
     (mul_ne_zero (mul_ne_zero k0 a0) (pow_ne_zero _ y0))
