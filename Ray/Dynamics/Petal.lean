@@ -76,7 +76,7 @@ public lemma one_add_pow_expand (k : ℕ) :
     exact (t.isBigO_one ℂ |>.mul ih |>.congr_right (by simp)).add ((isBigO_refl _ _).const_mul_left _)
 
 /-- `(1 + u)^(-k) = 1 - k u + k (k + 1) / 2 u² + O(u³)` -/
-lemma one_add_pow_inv_expand (k : ℕ) :
+public lemma one_add_pow_inv_expand (k : ℕ) :
     (fun u : ℂ ↦ ((1 + u) ^ k)⁻¹ - (1 - k * u + k * (k + 1) / 2 * u ^ 2)) =O[𝓝 0] fun u ↦ u ^ 3 := by
   set Q : ℂ → ℂ := fun u ↦ 1 + k * u + k * (k - 1) / 2 * u ^ 2
   set P : ℂ → ℂ := fun u ↦ 1 - k * u + k * (k + 1) / 2 * u ^ 2
