@@ -69,7 +69,7 @@ theorem SuperAt.not_local_inj {f : ℂ → ℂ} {d : ℕ} (s : SuperAt f d) :
   rcases s.superNear with ⟨t, s⟩
   have ba : AnalyticAt ℂ (bottcherNear f d) 0 := bottcherNear_analytic_z s _ s.t0
   have nc : mfderiv I I (bottcherNear f d) 0 ≠ 0 := by
-    rw [mfderiv_eq_fderiv, ← toSpanSingleton_deriv, (bottcherNear_monic s).deriv]
+    rw [mfderiv_eq_fderiv', ← toSpanSingleton_deriv, (bottcherNear_monic s).deriv]
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   rcases complex_inverse_fun' (ba.mAnalyticAt I I) nc with ⟨i, ia, ib, bi⟩
   rw [bottcherNear_zero] at bi ia

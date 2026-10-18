@@ -2,6 +2,7 @@ module
 public import Mathlib.Analysis.Calculus.ContDiff.Defs
 public import Ray.Analytic.Defs
 import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.Deriv.Comp
 import Ray.Analytic.Analytic
 import Ray.Koebe.Koebe
 import Ray.Schwarz.Mobius

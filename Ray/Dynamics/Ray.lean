@@ -186,7 +186,7 @@ public theorem Super.ray_noncritical (s : Super f d a) [OnePreimage s] (post : (
     have e : s.bottcherNearIter n c ∘ s.ray c =ᶠ[𝓝 x] fun x ↦ x ^ d ^ n :=
       (continuousAt_const.prodMk continuousAt_id).eventually (s.ray_eqn_iter' post)
     rw [e.mfderiv_eq]; contrapose x0
-    rw [mfderiv_eq_fderiv] at x0
+    rw [mfderiv_eq_fderiv'] at x0
     have dp := (differentiableAt_pow (x := x) (d ^ n)).hasFDerivAt.hasDerivAt.deriv
     replace x0 := ContinuousLinearMap.ext_iff.mp x0 (1 : ℂ)
     rw [show (fderiv ℂ (fun x ↦ x ^ d ^ n) x) 1 = 0 from x0] at dp

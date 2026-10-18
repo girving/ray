@@ -1,5 +1,6 @@
 module
 public import Ray.Multibrot.Defs
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Ray.Dynamics.Potential

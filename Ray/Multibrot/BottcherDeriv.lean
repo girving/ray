@@ -1,6 +1,7 @@
 module
 public import Ray.Multibrot.Defs
 import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Calculus.FDeriv.Mul
 import Ray.Manifold.Analytic
 import Ray.Manifold.Manifold
 import Ray.Manifold.OneDimension

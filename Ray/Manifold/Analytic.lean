@@ -2,6 +2,7 @@ module
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 public import Mathlib.Geometry.Manifold.IsManifold.Basic
+public import Mathlib.Geometry.Manifold.MFDeriv.Defs
 public import Mathlib.Topology.UniformSpace.Cauchy
 public import Ray.Manifold.Defs
 import Mathlib.Analysis.Analytic.Basic
@@ -12,6 +13,7 @@ import Mathlib.Basic.Complex.Basic
 import Mathlib.Geometry.Manifold.ChartedSpace
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.LocalInvariantProperties
+import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 import Ray.Manifold.Manifold
 
@@ -39,6 +41,13 @@ variable {N : Type} {J : ModelWithCorners 𝕜 F B} [TopologicalSpace N]
 variable {O : Type} {K : ModelWithCorners 𝕜 G C} [TopologicalSpace O]
 variable {P : Type} {L : ModelWithCorners 𝕜 H D} [TopologicalSpace P]
 variable [ChartedSpace A M] [ChartedSpace B N] [ChartedSpace C O] [ChartedSpace D P]
+
+/-- `mfderiv_eq_fderiv` in its pre-v4.35 form, using the definitional equality
+`TangentSpace 𝓘(𝕜, E) x = E` rather than `NormedSpace.fromTangentSpace` -/
+public theorem mfderiv_eq_fderiv' {f : E → F} {x : E} :
+    mfderiv 𝓘(𝕜, E) 𝓘(𝕜, F) f x = fderiv 𝕜 f x := by
+  rw [mfderiv_eq_fderiv]
+  rfl
 
 /-- Functions are `ContMDiffAt` iff they are continuous and analytic in charts -/
 theorem mAnalyticAt_iff {f : M → N} {x : M} [CompleteSpace F] :

@@ -175,7 +175,7 @@ lemma FormalMultilinearSeries.unshift_coeff_succ (p : FormalMultilinearSeries �
     (n : ℕ) : (p.unshift' c).coeff (n + 1) = p.coeff n := by
   simp only [FormalMultilinearSeries.coeff, FormalMultilinearSeries.unshift',
     FormalMultilinearSeries.unshift, ContinuousLinearMap.compFormalMultilinearSeries_apply]
-  simp [ContinuousLinearMap.smulRightL, Finset.univ, Fintype.elems, Fin.init]
+  simp [Finset.univ, Fintype.elems, Fin.init]
 
 /-- The power series of `(z - c)^n • f z` -/
 def FormalMultilinearSeries.unshiftIter (p : FormalMultilinearSeries 𝕜 𝕜 E) (n : ℕ) :=
