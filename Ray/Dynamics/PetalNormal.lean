@@ -2,6 +2,7 @@ module
 public import Ray.Dynamics.Petal
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.Calculus.InverseFunctionTheorem.Analytic
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Tactic.Bound
