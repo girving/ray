@@ -435,7 +435,6 @@ theorem pow1p_small' {z w : ℂ} {r s : ℝ} (zr : ‖z‖ ≤ r) (ws : ‖w‖ 
   grw [ls]
   · apply le_of_eq
     grind
-  · bound
 
 public theorem pow1p_small {z w : ℂ} (zs : ‖z‖ ≤ 1/2) (ws : ‖w‖ ≤ 1) :
     ‖(1 + z) ^ w - 1‖ ≤ 4 * ‖z‖ * ‖w‖ := by

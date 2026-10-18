@@ -1,5 +1,6 @@
 module
 public import Mathlib.Analysis.Calculus.Deriv.Inv
+public import Mathlib.Analysis.Calculus.FDeriv.Comp
 
 /-!
 ## Derivative facts

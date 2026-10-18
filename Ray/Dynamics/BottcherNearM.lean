@@ -138,7 +138,7 @@ theorem Super.fl0 (s : Super f d a) {c : ℂ} : s.fl c 0 = 0 := by
 
 /-- `0` is a critical point for `fl` -/
 theorem Super.critical_0 (s : Super f d a) (c : ℂ) : Critical (s.fl c) 0 := by
-  simp only [Critical, mfderiv_eq_fderiv, Super.fl]
+  simp only [Critical, mfderiv_eq_fderiv', Super.fl]
   have p := (s.fla c).along_snd.leading_approx
   simp only [sub_zero, smul_eq_mul, Super.fl, s.fd, s.fc, mul_one, uncurry] at p
   generalize hg : _root_.fl f a c = g; rw [hg] at p
@@ -166,13 +166,13 @@ public theorem Super.critical_a (s : Super f d a) (c : ℂ) : Critical (f c) a :
   have h := s.critical_0 c
   have e := PartialEquiv.left_inv _ (mem_extChartAt_source (I := I) a)
   contrapose h; simp only [Critical, Super.fl, fl, ← ne_eq] at h ⊢
-  simp only [mfderiv_eq_fderiv, _root_.fl, Function.comp_def]
-  rw [fderiv_sub_const, ←mfderiv_eq_fderiv]
+  simp only [mfderiv_eq_fderiv', _root_.fl, Function.comp_def]
+  rw [fderiv_sub_const, ←mfderiv_eq_fderiv']
   apply mderiv_comp_ne_zero' (extChartAt_mderiv_ne_zero' ?_)
   · apply mderiv_comp_ne_zero' (f := f c)
     · rw [zero_add, e]; exact h
     · apply mderiv_comp_ne_zero' (extChartAt_symm_mderiv_ne_zero' ?_)
-      · rw [mfderiv_eq_fderiv, fderiv_add_const, ←mfderiv_eq_fderiv]; exact id_mderiv_ne_zero
+      · rw [mfderiv_eq_fderiv', fderiv_add_const, ←mfderiv_eq_fderiv']; exact id_mderiv_ne_zero
       · rw [zero_add]; apply mem_extChartAt_target
   · simp only [zero_add, e, s.f0]
     apply mem_extChartAt_source
@@ -520,7 +520,7 @@ public theorem Super.bottcherNear_a (s : Super f d a) : s.bottcherNear c a = 0 :
 public theorem Super.bottcherNear_mfderiv_ne_zero (s : Super f d a) (c : ℂ) :
     mfderiv I I (s.bottcherNear c) a ≠ 0 := by
   apply mderiv_comp_ne_zero' (f := _root_.bottcherNear (s.fl c) d)
-  · simp only [sub_self, mfderiv_eq_fderiv,
+  · simp only [sub_self, mfderiv_eq_fderiv',
       (_root_.bottcherNear_monic (s.superNearC.s (Set.mem_univ c))).hasFDerivAt.fderiv]
     exact ContinuousLinearMap.smulRight_ne_zero ContinuousLinearMap.one_ne_zero (by norm_num)
   · have u : (fun z : S ↦ extChartAt I a z - extChartAt I a a) =
