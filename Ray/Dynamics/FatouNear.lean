@@ -2,6 +2,7 @@ module
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.Calculus.DiffContOnCl
 import Mathlib.Analysis.Calculus.MeanValue
@@ -93,7 +94,7 @@ lemma dev (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
   linarith
 
 /-- The step is within `1/4` of `1` -/
-lemma dev_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) : ‖G w - (w + 1)‖ ≤ 1 / 4 := by
+public lemma dev_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) : ‖G w - (w + 1)‖ ≤ 1 / 4 := by
   refine le_trans (h.dev m) ?_
   rw [div_le_iff₀ (h.norm_pos m)]
   linarith [h.large, lt_norm m]
@@ -131,12 +132,15 @@ lemma mem_slitPlane (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ right
   simp only [rightHalf, mem_ofPred_eq] at m
   linarith
 
-/-- The one-step error of the approximate coordinate: `‖φ (G w) - φ w - 1‖ ≤ K / ‖w‖^(1 + δ)` -/
-public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
+/-- The one-step error of the approximate coordinate, from explicit hypotheses at one point `w`: the step estimate,
+the step within `1/4` of `1`, `4 ≤ ‖w‖`, and additivity of `log` along the step -/
+public lemma approxFatou_step_of {G : ℂ → ℂ} {β : ℂ} {A δ : ℝ} {w : ℂ} (A0 : 0 ≤ A) (δ0 : 0 < δ) (δ1 : δ ≤ 1)
+    (n4 : 4 ≤ ‖w‖) (approx : ‖G w - (w + 1 + β / w)‖ ≤ A / ‖w‖ ^ (1 + δ)) (dv : ‖G w - (w + 1)‖ ≤ 1 / 4)
+    (hlog : log (G w) = log w + log (1 + (G w - w) / w)) :
     ‖approxFatou β (G w) - approxFatou β w - 1‖ ≤ (A + ‖β‖ * (‖β‖ + A + 2)) / ‖w‖ ^ (1 + δ) := by
-  have n0 := h.norm_pos m
+  have n0 : 0 < ‖w‖ := by linarith
   have w0 : w ≠ 0 := norm_pos_iff.mp n0
-  have n4 : 4 ≤ ‖w‖ := by linarith [lt_norm m, h.four_le]
+  have n1 : 1 ≤ ‖w‖ := by linarith
   set e := G w - (w + 1 + β / w) with he
   set u := (G w - w) / w with hu
   have gw : G w = w * (1 + u) := by rw [hu]; field_simp; ring
@@ -144,26 +148,13 @@ public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w
   have dn : ‖G w - w‖ ≤ 5 / 4 := by
     calc ‖G w - w‖ = ‖(G w - (w + 1)) + 1‖ := by ring_nf
       _ ≤ ‖G w - (w + 1)‖ + ‖(1 : ℂ)‖ := norm_add_le _ _
-      _ ≤ 1 / 4 + 1 := by rw [norm_one]; linarith [h.dev_le m]
+      _ ≤ 1 / 4 + 1 := by rw [norm_one]; linarith
       _ = 5 / 4 := by norm_num
   have un : ‖u‖ ≤ 5 / 4 / ‖w‖ := by rw [hu, norm_div]; exact div_le_div_of_nonneg_right dn n0.le
   have un' : ‖u‖ ≤ 5 / 16 := by
     refine le_trans un ?_
     rw [div_le_iff₀ n0]; linarith
-  -- `log (G w) = log w + log (1 + u)`: both lie in the right half-plane
-  have wr : 0 < w.re := by have := h.four_le; simp only [rightHalf, mem_ofPred_eq] at m; linarith
-  have ur : 0 < (1 + u).re := by
-    have := Complex.abs_re_le_norm u
-    simp only [Complex.add_re, Complex.one_re]
-    rw [abs_le] at this; linarith
-  have u0 : 1 + u ≠ 0 := fun z ↦ by simp [z] at ur
-  have hlog : log (G w) = log w + log (1 + u) := by
-    rw [gw]
-    refine (Complex.log_mul_eq_add_log_iff w0 u0).mpr ?_
-    have a1 := Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl wr)
-    have a2 := Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl ur)
-    rw [abs_lt] at a1 a2
-    constructor <;> linarith
+  have hlog : log (G w) = log w + log (1 + u) := hlog
   -- the exact error: `e - β (β / w + e) / w - β (log (1 + u) - u)`
   have key : approxFatou β (G w) - approxFatou β w - 1 =
       e - β * ((β / w + e) / w) - β * (log (1 + u) - u) := by
@@ -177,9 +168,11 @@ public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w
   -- the three terms
   set P := ‖w‖ ^ (1 + δ) with hP
   have P0 : 0 < P := Real.rpow_pos_of_pos n0 _
-  have Psq : P ≤ ‖w‖ ^ 2 := h.rpow_le_sq m
-  have en : ‖e‖ ≤ A / P := h.approx w m
-  have en' : ‖e‖ ≤ A / ‖w‖ := le_trans en (div_le_div_of_nonneg_left h.A0 n0 (h.norm_le_rpow m))
+  have Psq : P ≤ ‖w‖ ^ 2 := by
+    simpa using Real.rpow_le_rpow_of_exponent_le n1 (by linarith : 1 + δ ≤ (2 : ℝ))
+  have Pw : ‖w‖ ≤ P := by simpa using Real.rpow_le_rpow_of_exponent_le n1 (by linarith : (1 : ℝ) ≤ 1 + δ)
+  have en : ‖e‖ ≤ A / P := approx
+  have en' : ‖e‖ ≤ A / ‖w‖ := le_trans en (div_le_div_of_nonneg_left A0 n0 Pw)
   have t2 : ‖β * ((β / w + e) / w)‖ ≤ ‖β‖ * (‖β‖ + A) / P := by
     have b1 : ‖β / w + e‖ ≤ (‖β‖ + A) / ‖w‖ := by
       calc ‖β / w + e‖ ≤ ‖β / w‖ + ‖e‖ := norm_add_le _ _
@@ -188,7 +181,7 @@ public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w
     calc ‖β * ((β / w + e) / w)‖ = ‖β‖ * (‖β / w + e‖ / ‖w‖) := by rw [norm_mul, norm_div]
       _ ≤ ‖β‖ * ((‖β‖ + A) / ‖w‖ / ‖w‖) := by gcongr
       _ = ‖β‖ * (‖β‖ + A) / ‖w‖ ^ 2 := by ring
-      _ ≤ ‖β‖ * (‖β‖ + A) / P := by have := h.A0; gcongr
+      _ ≤ ‖β‖ * (‖β‖ + A) / P := by gcongr
   have t3 : ‖β * (log (1 + u) - u)‖ ≤ ‖β‖ * 2 / P := by
     have l1 := Complex.norm_log_one_add_sub_self_le (by linarith : ‖u‖ < 1)
     have l2 : ‖u‖ ^ 2 * (1 - ‖u‖)⁻¹ / 2 ≤ ‖u‖ ^ 2 := by
@@ -209,6 +202,35 @@ public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w
         exact norm_sub_le _ _
     _ ≤ A / P + ‖β‖ * (‖β‖ + A) / P + ‖β‖ * 2 / P := by gcongr
     _ = (A + ‖β‖ * (‖β‖ + A + 2)) / P := by ring
+
+/-- The one-step error of the approximate coordinate: `‖φ (G w) - φ w - 1‖ ≤ K / ‖w‖^(1 + δ)` -/
+public lemma approxFatou_step (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
+    ‖approxFatou β (G w) - approxFatou β w - 1‖ ≤ (A + ‖β‖ * (‖β‖ + A + 2)) / ‖w‖ ^ (1 + δ) := by
+  have n0 := h.norm_pos m
+  have w0 : w ≠ 0 := norm_pos_iff.mp n0
+  have n4 : 4 ≤ ‖w‖ := by linarith [lt_norm m, h.four_le]
+  refine approxFatou_step_of h.A0 h.δ0 h.δ1 n4 (h.approx w m) (h.dev_le m) ?_
+  -- `log (G w) = log w + log (1 + u)`: both lie in the right half-plane
+  set u := (G w - w) / w with hu
+  have gw : G w = w * (1 + u) := by rw [hu]; field_simp; ring
+  have un : ‖u‖ ≤ 5 / 16 := by
+    have dn : ‖G w - w‖ ≤ 5 / 4 := by
+      calc ‖G w - w‖ = ‖(G w - (w + 1)) + 1‖ := by ring_nf
+        _ ≤ ‖G w - (w + 1)‖ + ‖(1 : ℂ)‖ := norm_add_le _ _
+        _ ≤ 5 / 4 := by rw [norm_one]; linarith [h.dev_le m]
+    rw [hu, norm_div, div_le_iff₀ n0]; linarith
+  have wr : 0 < w.re := by have := h.four_le; simp only [rightHalf, mem_ofPred_eq] at m; linarith
+  have ur : 0 < (1 + u).re := by
+    have := Complex.abs_re_le_norm u
+    simp only [Complex.add_re, Complex.one_re]
+    rw [abs_le] at this; linarith
+  have u0 : 1 + u ≠ 0 := fun z ↦ by simp [z] at ur
+  rw [gw]
+  refine (Complex.log_mul_eq_add_log_iff w0 u0).mpr ?_
+  have a1 := Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl wr)
+  have a2 := Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl ur)
+  rw [abs_lt] at a1 a2
+  constructor <;> linarith
 
 /-!
 ### The Fatou coordinate
@@ -368,15 +390,75 @@ public lemma tendsto_tailBound (h : NearTranslation G β R A δ) :
     exact div_le_div_of_nonneg_left (errC_nonneg h) (Real.rpow_pos_of_pos (by linarith) _)
       (Real.rpow_le_rpow (by linarith) (by linarith) (by linarith [h.δ0]))
 
+/-- Orbits move at most `5/4` per step -/
+lemma norm_iter_sub_le (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) (n : ℕ) :
+    ‖G^[n] w - w‖ ≤ 5 / 4 * n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    have mn : G^[n] w ∈ rightHalf R := (h.mapsTo.iterate n) m
+    have d := h.dev_le mn
+    rw [Function.iterate_succ_apply']
+    calc ‖G (G^[n] w) - w‖ = ‖(G (G^[n] w) - (G^[n] w + 1)) + 1 + (G^[n] w - w)‖ := by ring_nf
+      _ ≤ ‖G (G^[n] w) - (G^[n] w + 1)‖ + ‖(1 : ℂ)‖ + ‖G^[n] w - w‖ := norm_add₃_le
+      _ ≤ 1 / 4 + 1 + 5 / 4 * n := by rw [norm_one]; linarith
+      _ = 5 / 4 * ((n + 1 : ℕ) : ℝ) := by push_cast; ring
+
+/-- `Φ - φ → 0` as `‖w‖ → ∞` anywhere in the half-plane (not only as `re w → ∞`) -/
+public lemma tendsto_fatou_sub_approx (h : NearTranslation G β R A δ) {α : Type*} {l : Filter α} {w : α → ℂ}
+    (lH : ∀ᶠ x in l, w x ∈ rightHalf R) (ln : Filter.Tendsto (fun x ↦ ‖w x‖) l Filter.atTop) :
+    Filter.Tendsto (fun x ↦ fatou G β (w x) - approxFatou β (w x)) l (nhds 0) := by
+  have R4 := h.four_le
+  have z : (0 : ℂ) = ∑' _ : ℕ, (0 : ℂ) := by simp
+  simp only [fatou, add_sub_cancel_left]
+  rw [z]
+  refine tendsto_tsum_of_dominated_convergence (h.summable_bound (a := R) (by linarith)) (fun n ↦ ?_) ?_
+  · -- each term is `O(‖G^[n] w‖^(-1-δ))`, and `‖G^[n] w‖ ≥ ‖w‖ - 5n/4 → ∞`
+    have gn : Filter.Tendsto (fun x ↦ ‖G^[n] (w x)‖) l Filter.atTop := by
+      refine Filter.tendsto_atTop_mono' l ?_ (Filter.tendsto_atTop_add_const_right _ (-(5 / 4 * (n : ℝ))) ln)
+      filter_upwards [lH] with x m
+      have := h.norm_iter_sub_le m n
+      have := norm_sub_norm_le (w x) (G^[n] (w x))
+      rw [norm_sub_rev] at this
+      linarith
+    have t : Filter.Tendsto (fun x ↦ errC β A / ‖G^[n] (w x)‖ ^ (1 + δ)) l (nhds 0) := by
+      have := ((tendsto_rpow_atTop (by linarith [h.δ0] : 0 < 1 + δ)).comp gn).inv_tendsto_atTop.const_mul
+        (errC β A)
+      simpa [div_eq_mul_inv] using this
+    refine squeeze_zero_norm' ?_ t
+    filter_upwards [lH] with x m
+    rw [fatouSeq_succ_sub]
+    exact h.approxFatou_step ((h.mapsTo.iterate n) m)
+  · filter_upwards [lH] with x m n
+    refine le_trans (h.term_le m n) ?_
+    have r : R + n / 2 ≤ (w x).re + n / 2 := by simp only [rightHalf, mem_ofPred_eq] at m; linarith
+    have n0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+    exact div_le_div_of_nonneg_left (errC_nonneg h) (Real.rpow_pos_of_pos (by linarith) _)
+      (Real.rpow_le_rpow (by linarith) r (by linarith [h.δ0]))
+
+/-- `‖Φ - φ‖ < η` far out in the half-plane -/
+public lemma exists_norm_bound (h : NearTranslation G β R A δ) {η : ℝ} (η0 : 0 < η) :
+    ∃ M : ℝ, ∀ w ∈ rightHalf R, M ≤ ‖w‖ → ‖fatou G β w - approxFatou β w‖ < η := by
+  set l := Filter.comap norm Filter.atTop ⊓ Filter.principal (rightHalf R)
+  have t := h.tendsto_fatou_sub_approx (l := l) (w := id) (Filter.eventually_inf_principal.mpr
+    (Filter.Eventually.of_forall fun _ m ↦ m))
+    (Filter.tendsto_comap.mono_left inf_le_left)
+  have e := (t.eventually (Metric.ball_mem_nhds 0 η0))
+  rw [Filter.eventually_inf_principal, Filter.eventually_comap, Filter.eventually_atTop] at e
+  obtain ⟨M, hM⟩ := e
+  exact ⟨M, fun w m Mw ↦ by simpa using hM ‖w‖ Mw w rfl m⟩
+
 /-- The derivative of `φ`: `φ' w = 1 - β / w` -/
 lemma hasDerivAt_approxFatou (h : NearTranslation G β R A δ) {w : ℂ} (m : w ∈ rightHalf R) :
     HasDerivAt (approxFatou β) (1 - β * (1 / w)) w := by
   have d := (hasDerivAt_id' w).clog (h.mem_slitPlane m)
   exact ((hasDerivAt_id' w).sub (d.const_mul β)).congr_deriv (by ring)
 
-/-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
-public theorem fatou_injOn (h : NearTranslation G β R A δ) :
-    ∃ R' ≥ R, InjOn (fatou G β) (rightHalf R') := by
+/-- `exists_lip`, with the derivative bound `‖Φ' - 1‖ ≤ 1/2` -/
+public lemma exists_lip_deriv (h : NearTranslation G β R A δ) :
+    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ (∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖) ∧
+      ∀ z ∈ rightHalf (2 * a), deriv (fatou G β) z ≠ 0 := by
   -- choose `a ≥ R` with `S a ≤ 1/4` and `‖β‖ ≤ a / 2`, and use the half-plane `2a < re w`
   obtain ⟨a, Ra, Sa, βa⟩ : ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 := by
     have e := ((h.tendsto_tailBound.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))).and
@@ -384,7 +466,7 @@ public theorem fatou_injOn (h : NearTranslation G β R A δ) :
     obtain ⟨a, Sa, Ra, βa⟩ := e
     exact ⟨a, Ra, Sa, by linarith⟩
   have a4 : 4 ≤ a := le_trans h.four_le Ra
-  refine ⟨2 * a, by linarith, ?_⟩
+  refine ⟨a, Ra, Sa, βa, ?_⟩
   set E := fun z ↦ fatou G β z - approxFatou β z with hE
   have Ea : AnalyticOnNhd ℂ E (rightHalf R) := fun z m ↦ (h.fatou_analytic z m).sub (h.approxFatou_analytic z m)
   -- `f z = Φ z - z` has `‖f'‖ ≤ 1/2` on the half-plane `2a < re z`
@@ -432,11 +514,31 @@ public theorem fatou_injOn (h : NearTranslation G β R A δ) :
       _ = 1 / 2 := by norm_num
   -- the mean value inequality on the convex half-plane
   have cv : Convex ℝ (rightHalf (2 * a)) := convex_halfSpace_re_gt (2 * a)
-  intro x xm y ym e
-  have mv := Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv xm ym
-  have : f y - f x = x - y := by simp only [hf, e]; ring
-  rw [this, norm_sub_rev] at mv
-  have : ‖y - x‖ = 0 := by linarith [norm_nonneg (y - x)]
-  exact (sub_eq_zero.mp (norm_eq_zero.mp this)).symm
+  refine ⟨fun x xm y ym ↦ Convex.norm_image_sub_le_of_norm_deriv_le fd fb cv ym xm, fun z m e ↦ ?_⟩
+  -- `Φ' = (Φ - id)' + 1`, with `‖(Φ - id)'‖ ≤ 1/2`
+  have d := ((fd z m).hasDerivAt.add (hasDerivAt_id z)).deriv
+  have : (fun z ↦ fatou G β z - z) + id = fatou G β := by funext; simp
+  rw [this, e] at d
+  have := fb z m
+  rw [show deriv (fun z ↦ fatou G β z - z) z = -1 by linear_combination -d] at this
+  norm_num at this
+
+/-- On a smaller half-plane `Φ - id` is `1/2`-Lipschitz, since `Φ' ≈ 1`.  The half-plane is `2a < re w`, where
+`S a ≤ 1/4` and `‖β‖ ≤ a / 2`. -/
+public lemma exists_lip (h : NearTranslation G β R A δ) :
+    ∃ a, R ≤ a ∧ tailBound β A δ a ≤ 1 / 4 ∧ ‖β‖ ≤ a / 2 ∧ ∀ x ∈ rightHalf (2 * a), ∀ y ∈ rightHalf (2 * a),
+      ‖(fatou G β x - x) - (fatou G β y - y)‖ ≤ 1 / 2 * ‖x - y‖ := by
+  obtain ⟨a, Ra, Sa, βa, lip, -⟩ := h.exists_lip_deriv
+  exact ⟨a, Ra, Sa, βa, lip⟩
+
+/-- The Fatou coordinate is injective on a smaller half-plane, where `Φ' ≈ 1` -/
+public theorem fatou_injOn (h : NearTranslation G β R A δ) :
+    ∃ R' ≥ R, InjOn (fatou G β) (rightHalf R') := by
+  obtain ⟨a, Ra, -, -, lip⟩ := h.exists_lip
+  refine ⟨2 * a, by linarith [h.four_le], fun x xm y ym e ↦ ?_⟩
+  have mv := lip x xm y ym
+  rw [show fatou G β x - x - (fatou G β y - y) = y - x by rw [e]; ring, norm_sub_rev] at mv
+  have : ‖x - y‖ = 0 := by linarith [norm_nonneg (x - y)]
+  exact sub_eq_zero.mp (norm_eq_zero.mp this)
 
 end NearTranslation
